@@ -1,15 +1,12 @@
 """py2max: a pure python script to generate .maxpat patcher files.
-
-Intended to facilitate structured offline generation of objects and patchlines.
-
 """
-import copy
+#import copy
 import json
 
 
 class Patcher:
     """Build Max patchers from the ground up"""
-    def __init__(self):
+    def __init__(self, classnamespace=None):
         self.fileversion = 1
         self.appversion = {
             'major': 8,
@@ -18,7 +15,7 @@ class Patcher:
             'architecture': "x64",
             'modernui': 1
         }
-        self.classnamespace = "box"
+        self.classnamespace = classnamespace or "box"
         self.rect = [85.0, 104.0, 640.0, 480.0]
         self.bglocked = 0
         self.openinpresentation = 0
@@ -59,10 +56,6 @@ class Patcher:
     def to_json(self):
         return json.dumps(self.to_dict(), indent=4)
 
-    def saveas(self, path):
-        with open(path, 'w') as f:
-            json.dump(self.to_dict(), f, indent=4)
-
 
 class Box:
     """Generic Max Box object"""
@@ -95,6 +88,18 @@ class TextBox(Box):
         super().__init__(id, maxclass, numinlets, numoutlets, outlettype,
                          patching_rect, varname, **kwds)
         self.text = text
+
+
+class SubPatcher(TextBox):
+    """Subpatcher textbox subclass"""
+
+    def __init__(self, id: str, maxclass: str,
+                 numinlets: int, numoutlets: int, outlettype: list[str],
+                 patching_rect: list[float], text: str, patcher: Patcher = None, 
+                 varname: str = None, **kwds):
+        super().__init__(id, maxclass, numinlets, numoutlets, outlettype,
+                         patching_rect, text, varname, **kwds)
+        self.patcher = vars(patcher)
 
 
 class NumberBox(Box):       
@@ -166,8 +171,10 @@ class Patchline:
 class MaxPatch:
     """Generate a basic Max .maxpat file"""
 
-    def __init__(self, path):
+    def __init__(self, path=None, parent=None):
         self.path = path
+        self.parent = parent
+        self.children = []
         self.patcher = Patcher()
         self.ids = []
         self.objects = {}
@@ -186,8 +193,12 @@ class MaxPatch:
     def height(self):
         return self.patcher.rect[3]
 
+    def saveas(self, path):
+        with open(path, 'w') as f:
+            json.dump(self.patcher.to_dict(), f, indent=4)
+
     def save(self):
-        self.patcher.saveas(self.path)
+        self.saveas(self.path)
 
     def get_id(self):
         self.id_counter += 1
@@ -226,6 +237,12 @@ class MaxPatch:
         self.patcher.boxes.append(box.to_dict())
         return box
 
+    def add_subbox(self, box, subpatcher):
+        """registers the box and adds it to the patcher"""
+        box = self.add_box(box)
+        self.children.append(subpatcher)
+        return (subpatcher, box)
+
     def add_patchline_by_index(self, src_i: int, src_outlet, dst_i, dst_inlet):
         src_id = self.ids[src_i]
         dst_id = self.ids[dst_i]
@@ -258,6 +275,27 @@ class MaxPatch:
                 varname=varname,
                 **kwds
             )
+        )
+
+    def add_subpatcher(self, text: str, maxclass: str = None, 
+                    numinlets: int = None, numoutlets: int = None,
+                    outlettype: list[str] = None, patching_rect: list[float] = None,
+                    id: str = None, varname: str = None, **kwds):
+        
+        sp = MaxPatch(parent=self)
+        return self.add_subbox(
+            SubPatcher(
+                id=id or self.get_id(),
+                text=text,
+                maxclass=maxclass or 'newobj',
+                numinlets=numinlets or 1,
+                numoutlets=numoutlets or 0,
+                outlettype=outlettype or [""],
+                patching_rect=patching_rect or self.get_pos(),
+                varname=varname,
+                patcher=sp.patcher,
+                **kwds
+            ), subpatcher=sp
         )
 
     def _add_numberbox(self, maxclass: str, numinlets: int = None, numoutlets: int = None,
@@ -356,12 +394,29 @@ def test_colors():
         p.add_textbox('cycle~ 400', bgcolor=[1.0-m, 0.32, 0.0+m, 0.5])
     p.save()
 
-
-if __name__ == '__main__':
+def test_basic():
     p = MaxPatch('out.maxpat')
     osc1 = p.add_textbox('cycle~ 440')
     gain = p.add_textbox('gain~')
     dac = p.add_textbox('ezdac~')
-    osc1_gain = p.add_line(osc1, gain)
-    gain_dac = p.add_line(gain, dac)
+    p.add_line(osc1, gain)
+    p.add_line(gain, dac)
     p.save()
+
+def test_subpatch():
+    p = MaxPatch('out.maxpat')
+    sp, sbox = p.add_subpatcher('p mysub')
+    i = sp.add_textbox('inlet')
+    g = sp.add_textbox('gain~')
+    o = sp.add_textbox('outlet')
+    osc = p.add_textbox('cycle~ 440')
+    dac = p.add_textbox('ezdac~')
+    sp.add_line(i, g)
+    sp.add_line(g, o)
+    p.add_line(osc, sbox)
+    p.add_line(sbox, dac)
+    p.save()
+
+
+if __name__ == '__main__':
+    test_subpatch()
