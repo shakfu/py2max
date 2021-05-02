@@ -1,6 +1,21 @@
 """py2max: a pure python script to generate .maxpat patcher files.
+
+basic usage:
+
+    >>> p = Patcher('out.maxpat')
+    >>> osc1 = p.add_textbox('cycle~ 440')
+    >>> gain = p.add_textbox('gain~')
+    >>> dac = p.add_textbox('ezdac~')
+    >>> p.add_line(osc1, gain)
+    >>> p.add_line(gain, dac)
+    >>> p.save()
+
 """
 import json
+
+LAYOUT_DEFAULT_PAD = 32.0
+LAYOUT_DEFAULT_BOX_WIDTH = 66.0
+LAYOUT_DEFAULT_BOX_HEIGHT = 22.0
 
 
 class Box:
@@ -17,6 +32,9 @@ class Box:
         self.patching_rect = patching_rect
         self.varname = varname
         self._kwds = kwds
+
+    def render(self):
+        """convert python subobjects to dicts"""
 
     def to_dict(self):
         """create dict from object with extra kwds included"""
@@ -109,18 +127,20 @@ class Patcher:
     
     Top level Patcher can be converted to .maxpat file
     """
-    def __init__(self, path=None, parent=None, classnamespace=None):
+
+    def __init__(self, path=None, parent=None, classnamespace=None, reset_on_render=True):
         self._path = path
         self._parent = parent
-        self._children = []
-        self._ids = []
-        self._objects = {}
-        self._patchlines = []
+        self._ids = []          # ids by order of creation
+        self._objects = {}      # dict of objects by id
+        self._boxes = []        # store objects
+        self._lines = []        # store patchline objects
         self._id_counter = 0
         self._x_layout_counter = 0
         self._y_layout_counter = 0
         self._link_counter = 0
         self._last_link = None
+        self._reset_on_render = reset_on_render
 
         # begin max attributes
         self.fileversion = 1
@@ -175,6 +195,7 @@ class Patcher:
         return dict(patcher=d)
 
     def to_json(self):
+        self.render()
         return json.dumps(self.to_dict(), indent=4)
 
     @property
@@ -185,7 +206,17 @@ class Patcher:
     def height(self):
         return self.rect[3]
 
+    def render(self, reset=False):
+        if reset or self._reset_on_render:
+            self.boxes = []
+            self.lines = []
+        for box in self._boxes:
+            box.render()
+            self.boxes.append(box.to_dict())
+        self.lines = [line.to_dict() for line in self._lines]
+
     def saveas(self, path):
+        self.render()
         with open(path, 'w') as f:
             json.dump(self.to_dict(), f, indent=4)
 
@@ -197,15 +228,15 @@ class Patcher:
         return f'obj-{self._id_counter}'
  
     def get_pos(self):
-        """auto-layout of objects"""
-        pad = 32.0
+        """rough auto-layout of objects"""
+        pad = LAYOUT_DEFAULT_PAD  # 32.0
         x_pad = pad
         y_pad = pad
         x_shift =   3 * pad * self._x_layout_counter
         y_shift = 1.5 * pad * self._y_layout_counter
         x = x_pad + x_shift
-        w = 66.0
-        h = 22.0
+        w = LAYOUT_DEFAULT_BOX_WIDTH  # 66.0
+        h = LAYOUT_DEFAULT_BOX_HEIGHT  # 22.0
         self._x_layout_counter += 1
         if x + w + 2 * x_pad > self.width:
             self._x_layout_counter = 0
@@ -226,14 +257,8 @@ class Patcher:
         """registers the box and adds it to the patcher"""
         self._ids.append(box.id)
         self._objects[box.id] = box
-        self.boxes.append(box.to_dict())
+        self._boxes.append(box)
         return box
-
-    def add_subbox(self, box, subpatcher):
-        """registers the box and adds it to the patcher"""
-        box = self.add_box(box)
-        self._children.append(subpatcher)
-        return (subpatcher, box)
 
     def add_patchline_by_index(self, src_i: int, src_outlet, dst_i, dst_inlet):
         src_id = self._ids[src_i]
@@ -243,8 +268,7 @@ class Patcher:
     def add_patchline(self, src_id, src_outlet, dst_id, dst_inlet):
         order = self.get_link_order(src_id, dst_id)
         patchline = Patchline(src_id, src_outlet, dst_id, dst_inlet, order)
-        self._patchlines.append(patchline)
-        self.lines.append(patchline.to_dict())
+        self._lines.append(patchline)
         return patchline
 
     def add_line(self, src_obj, dst_obj):
@@ -269,13 +293,12 @@ class Patcher:
             )
         )
 
-    def add_subpatcher(self, text: str, maxclass: str = None, 
-                    numinlets: int = None, numoutlets: int = None,
-                    outlettype: list[str] = None, patching_rect: list[float] = None,
-                    id: str = None, varname: str = None, **kwds):
-        
-        sp = Patcher(parent=self)
-        return self.add_subbox(
+    def add_subpatcher(self, text: str, maxclass: str = None,
+                       numinlets: int = None, numoutlets: int = None,
+                       outlettype: list[str] = None, patching_rect: list[float] = None,
+                       id: str = None, varname: str = None, **kwds):
+
+        return self.add_box(
             SubPatcher(
                 id=id or self.get_id(),
                 text=text,
@@ -285,9 +308,9 @@ class Patcher:
                 outlettype=outlettype or [""],
                 patching_rect=patching_rect or self.get_pos(),
                 varname=varname,
-                patcher=sp,
+                patcher=Patcher(parent=self),
                 **kwds
-            ), subpatcher=sp
+            )
         )
 
     def _add_numberbox(self, maxclass: str, numinlets: int = None, numoutlets: int = None,
@@ -389,7 +412,15 @@ class SubPatcher(TextBox):
                  varname: str = None, **kwds):
         super().__init__(id, maxclass, numinlets, numoutlets, outlettype,
                          patching_rect, text, varname, **kwds)
-        self.patcher = patcher.to_dict()
+        self._patcher = patcher
+
+    def render(self):
+        self._patcher.render()
+        self.patcher = self._patcher.to_dict()
+    
+    @property
+    def subpatcher(self):
+        return self._patcher
 
 
 def test_colors():
@@ -410,7 +441,8 @@ def test_basic():
 
 def test_subpatch():
     p = Patcher('out.maxpat')
-    sp, sbox = p.add_subpatcher('p mysub')
+    sbox = p.add_subpatcher('p mysub')
+    sp = sbox.subpatcher
     i = sp.add_textbox('inlet')
     g = sp.add_textbox('gain~')
     o = sp.add_textbox('outlet')

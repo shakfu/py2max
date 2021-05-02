@@ -6,7 +6,15 @@ It was originally created to automate the creation of .maxhelp files for the
 [sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough
 that it should have its own repo.
 
-Usage example:
+## Possible use cases
+
+- generation of test cases during external development
+- takes the pain out of creating parameter objects
+- help to save time if you have may objects with slightly different arguments
+- generative patch generation (-;
+
+
+## Usage examples
 
 ```python
 p = MaxPatch('out.maxpat')
@@ -24,7 +32,8 @@ And you can even create subpatchers:
 
 ```python
 p = Patcher('out.maxpat')
-sp, sbox = p.add_subpatcher('p mysub')
+sbox = p.add_subpatcher('p mysub')
+sp = sbox.subpatcher
 i = sp.add_textbox('inlet')
 g = sp.add_textbox('gain~')
 o = sp.add_textbox('outlet')
@@ -37,5 +46,4 @@ p.add_line(sbox, dac)
 p.save()
 ```
 
-For the case of subpatchers, note that `.add_subpatcher` returns a tuple of two objects: the (sub)Patcher object  and the subpatcher's textbox.
 
