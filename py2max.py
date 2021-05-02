@@ -1,60 +1,6 @@
 """py2max: a pure python script to generate .maxpat patcher files.
 """
-#import copy
 import json
-
-
-class Patcher:
-    """Build Max patchers from the ground up"""
-    def __init__(self, classnamespace=None):
-        self.fileversion = 1
-        self.appversion = {
-            'major': 8,
-            'minor': 1,
-            'revision': 11,
-            'architecture': "x64",
-            'modernui': 1
-        }
-        self.classnamespace = classnamespace or "box"
-        self.rect = [85.0, 104.0, 640.0, 480.0]
-        self.bglocked = 0
-        self.openinpresentation = 0
-        self.default_fontsize = 12.0
-        self.default_fontface = 0
-        self.default_fontname = "Arial"
-        self.gridonopen = 1
-        self.gridsize = [15.0, 15.0]
-        self.gridsnaponopen = 1
-        self.objectsnaponopen = 1
-        self.statusbarvisible = 2
-        self.toolbarvisible = 1
-        self.lefttoolbarpinned = 0
-        self.toptoolbarpinned = 0
-        self.righttoolbarpinned = 0
-        self.bottomtoolbarpinned = 0
-        self.toolbars_unpinned_last_save = 0
-        self.tallnewobj = 0
-        self.boxanimatetime = 200
-        self.enablehscroll = 1
-        self.enablevscroll = 1
-        self.devicewidth = 0.0
-        self.description = ""
-        self.digest = ""
-        self.tags = ""
-        self.style = ""
-        self.subpatcher_template = ""
-        self.assistshowspatchername = 0
-        self.boxes = []
-        self.lines = []
-        self.parameters = {}
-        self.dependency_cache = []
-        self.autosave = 0
-
-    def to_dict(self):
-        return dict(patcher=vars(self))
-
-    def to_json(self):
-        return json.dumps(self.to_dict(), indent=4)
 
 
 class Box:
@@ -70,13 +16,15 @@ class Box:
         self.outlettype = outlettype
         self.patching_rect = patching_rect
         self.varname = varname
-        self.kwds = kwds
+        self._kwds = kwds
 
     def to_dict(self):
         """create dict from object with extra kwds included"""
         d = vars(self).copy()
-        del d['kwds']
-        d.update(self.kwds)
+        to_del = [k for k in d if k.startswith('_')]
+        for k in to_del:
+            del d[k]
+        d.update(self._kwds)
         return dict(box=d)
 
 class TextBox(Box):
@@ -88,18 +36,6 @@ class TextBox(Box):
         super().__init__(id, maxclass, numinlets, numoutlets, outlettype,
                          patching_rect, varname, **kwds)
         self.text = text
-
-
-class SubPatcher(TextBox):
-    """Subpatcher textbox subclass"""
-
-    def __init__(self, id: str, maxclass: str,
-                 numinlets: int, numoutlets: int, outlettype: list[str],
-                 patching_rect: list[float], text: str, patcher: Patcher = None, 
-                 varname: str = None, **kwds):
-        super().__init__(id, maxclass, numinlets, numoutlets, outlettype,
-                         patching_rect, text, varname, **kwds)
-        self.patcher = vars(patcher)
 
 
 class NumberBox(Box):       
@@ -168,91 +104,147 @@ class Patchline:
         return dict(patchline=vars(self))
 
 
-class MaxPatch:
-    """Generate a basic Max .maxpat file"""
+class Patcher:
+    """Build Max patchers from the ground up
+    
+    Top level Patcher can be converted to .maxpat file
+    """
+    def __init__(self, path=None, parent=None, classnamespace=None):
+        self._path = path
+        self._parent = parent
+        self._children = []
+        self._ids = []
+        self._objects = {}
+        self._patchlines = []
+        self._id_counter = 0
+        self._x_layout_counter = 0
+        self._y_layout_counter = 0
+        self._link_counter = 0
+        self._last_link = None
 
-    def __init__(self, path=None, parent=None):
-        self.path = path
-        self.parent = parent
-        self.children = []
-        self.patcher = Patcher()
-        self.ids = []
-        self.objects = {}
-        self.patchlines = []
-        self.id_counter = 0
-        self.x_layout_counter = 0
-        self.y_layout_counter = 0
-        self.link_counter = 0
-        self.last_link = None
+        # begin max attributes
+        self.fileversion = 1
+        self.appversion = {
+            'major': 8,
+            'minor': 1,
+            'revision': 11,
+            'architecture': "x64",
+            'modernui': 1
+        }
+        self.classnamespace = classnamespace or "box"
+        self.rect = [85.0, 104.0, 640.0, 480.0]
+        self.bglocked = 0
+        self.openinpresentation = 0
+        self.default_fontsize = 12.0
+        self.default_fontface = 0
+        self.default_fontname = "Arial"
+        self.gridonopen = 1
+        self.gridsize = [15.0, 15.0]
+        self.gridsnaponopen = 1
+        self.objectsnaponopen = 1
+        self.statusbarvisible = 2
+        self.toolbarvisible = 1
+        self.lefttoolbarpinned = 0
+        self.toptoolbarpinned = 0
+        self.righttoolbarpinned = 0
+        self.bottomtoolbarpinned = 0
+        self.toolbars_unpinned_last_save = 0
+        self.tallnewobj = 0
+        self.boxanimatetime = 200
+        self.enablehscroll = 1
+        self.enablevscroll = 1
+        self.devicewidth = 0.0
+        self.description = ""
+        self.digest = ""
+        self.tags = ""
+        self.style = ""
+        self.subpatcher_template = ""
+        self.assistshowspatchername = 0
+        self.boxes = []
+        self.lines = []
+        self.parameters = {}
+        self.dependency_cache = []
+        self.autosave = 0
+
+    def to_dict(self):
+        """create dict from object with extra kwds included"""
+        d = vars(self).copy()
+        to_del = [k for k in d if k.startswith('_')]
+        for k in to_del:
+            del d[k]
+        return dict(patcher=d)
+
+    def to_json(self):
+        return json.dumps(self.to_dict(), indent=4)
 
     @property
     def width(self):
-        return self.patcher.rect[2]
+        return self.rect[2]
 
     @property
     def height(self):
-        return self.patcher.rect[3]
+        return self.rect[3]
 
     def saveas(self, path):
         with open(path, 'w') as f:
-            json.dump(self.patcher.to_dict(), f, indent=4)
+            json.dump(self.to_dict(), f, indent=4)
 
     def save(self):
-        self.saveas(self.path)
+        self.saveas(self._path)
 
     def get_id(self):
-        self.id_counter += 1
-        return f'obj-{self.id_counter}'
+        self._id_counter += 1
+        return f'obj-{self._id_counter}'
  
     def get_pos(self):
         """auto-layout of objects"""
         pad = 32.0
         x_pad = pad
         y_pad = pad
-        x_shift =   3 * pad * self.x_layout_counter
-        y_shift = 1.5 * pad * self.y_layout_counter
+        x_shift =   3 * pad * self._x_layout_counter
+        y_shift = 1.5 * pad * self._y_layout_counter
         x = x_pad + x_shift
         w = 66.0
         h = 22.0
-        self.x_layout_counter += 1
+        self._x_layout_counter += 1
         if x + w + 2 * x_pad > self.width:
-            self.x_layout_counter = 0
-            self.y_layout_counter += 1
+            self._x_layout_counter = 0
+            self._y_layout_counter += 1
         y = y_pad + y_shift
         return [x, y, w, h]
 
     def get_link_order(self, src_id, dst_id):
         """get order of lines between the same pair of objects"""
-        if ((src_id, dst_id) == self.last_link):
-            self.link_counter += 1
+        if ((src_id, dst_id) == self._last_link):
+            self._link_counter += 1
         else:
-            self.link_counter = 0
-            self.last_link = (src_id, dst_id)
-        return self.link_counter
+            self._link_counter = 0
+            self._last_link = (src_id, dst_id)
+        return self._link_counter
 
     def add_box(self, box):
         """registers the box and adds it to the patcher"""
-        self.ids.append(box.id)
-        self.objects[box.id] = box
-        self.patcher.boxes.append(box.to_dict())
+        self._ids.append(box.id)
+        self._objects[box.id] = box
+        self.boxes.append(box.to_dict())
         return box
 
     def add_subbox(self, box, subpatcher):
         """registers the box and adds it to the patcher"""
         box = self.add_box(box)
-        self.children.append(subpatcher)
+        self._children.append(subpatcher)
         return (subpatcher, box)
 
     def add_patchline_by_index(self, src_i: int, src_outlet, dst_i, dst_inlet):
-        src_id = self.ids[src_i]
-        dst_id = self.ids[dst_i]
+        src_id = self._ids[src_i]
+        dst_id = self._ids[dst_i]
         self.add_patchline(src_id, src_outlet, dst_id, dst_inlet)
 
     def add_patchline(self, src_id, src_outlet, dst_id, dst_inlet):
         order = self.get_link_order(src_id, dst_id)
         patchline = Patchline(src_id, src_outlet, dst_id, dst_inlet, order)
-        self.patchlines.append(patchline)
-        self.patcher.lines.append(patchline.to_dict())
+        self._patchlines.append(patchline)
+        self.lines.append(patchline.to_dict())
         return patchline
 
     def add_line(self, src_obj, dst_obj):
@@ -282,7 +274,7 @@ class MaxPatch:
                     outlettype: list[str] = None, patching_rect: list[float] = None,
                     id: str = None, varname: str = None, **kwds):
         
-        sp = MaxPatch(parent=self)
+        sp = Patcher(parent=self)
         return self.add_subbox(
             SubPatcher(
                 id=id or self.get_id(),
@@ -293,7 +285,7 @@ class MaxPatch:
                 outlettype=outlettype or [""],
                 patching_rect=patching_rect or self.get_pos(),
                 varname=varname,
-                patcher=sp.patcher,
+                patcher=sp,
                 **kwds
             ), subpatcher=sp
         )
@@ -387,15 +379,28 @@ class MaxPatch:
             )
         )
 
+
+class SubPatcher(TextBox):
+    """Subpatcher textbox subclass"""
+
+    def __init__(self, id: str, maxclass: str,
+                 numinlets: int, numoutlets: int, outlettype: list[str],
+                 patching_rect: list[float], text: str, patcher: Patcher = None,
+                 varname: str = None, **kwds):
+        super().__init__(id, maxclass, numinlets, numoutlets, outlettype,
+                         patching_rect, text, varname, **kwds)
+        self.patcher = patcher.to_dict()
+
+
 def test_colors():
-    p = MaxPatch('out.maxpat')
+    p = Patcher('out.maxpat')
     for i in range(54):
         m = i/54.
         p.add_textbox('cycle~ 400', bgcolor=[1.0-m, 0.32, 0.0+m, 0.5])
     p.save()
 
 def test_basic():
-    p = MaxPatch('out.maxpat')
+    p = Patcher('out.maxpat')
     osc1 = p.add_textbox('cycle~ 440')
     gain = p.add_textbox('gain~')
     dac = p.add_textbox('ezdac~')
@@ -404,7 +409,7 @@ def test_basic():
     p.save()
 
 def test_subpatch():
-    p = MaxPatch('out.maxpat')
+    p = Patcher('out.maxpat')
     sp, sbox = p.add_subpatcher('p mysub')
     i = sp.add_textbox('inlet')
     g = sp.add_textbox('gain~')
@@ -419,4 +424,6 @@ def test_subpatch():
 
 
 if __name__ == '__main__':
+    # test_colors()
+    # test_basic()
     test_subpatch()
