@@ -4,6 +4,7 @@ A pure python library without any dependencies intended to facilitate the offlin
 
 It was originally created to automate the creation of hehlp (`.maxhelp`) files for the [sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough that it should have its own repo.
 
+
 ## Possible use cases
 
 - generation of test cases during external development
@@ -12,6 +13,7 @@ It was originally created to automate the creation of hehlp (`.maxhelp`) files f
 - use graph drawing algorithms on generated patches
 - generative patch generation (-;
 - etc..
+
 
 ## Usage examples
 
@@ -44,5 +46,12 @@ p.add_line(osc, sbox)
 p.add_line(sbox, dac)
 p.save()
 ```
+
+Further tests are in the `py2max/tests` folder and can be output to an `output` folder all at once by running `pytest` in the project root, or individually, by doing something like the following:
+
+```bash
+python3 -m pytest.tests.test_basic
+```
+
 
 
