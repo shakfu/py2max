@@ -1,18 +1,17 @@
 # py2max
 
-A pure python library without any dependencies intended to facilitate the offline generation of Max patcher (.maxpat) files.
+A pure python library without any dependencies intended to facilitate the offline generation of Max patcher (`.maxpat`) files.
 
-It was originally created to automate the creation of .maxhelp files for the
-[sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough
-that it should have its own repo.
+It was originally created to automate the creation of hehlp (`.maxhelp`) files for the [sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough that it should have its own repo.
 
 ## Possible use cases
 
 - generation of test cases during external development
 - takes the pain out of creating parameter objects
-- help to save time if you have may objects with slightly different arguments
+- help to save time if you have many objects with slightly different arguments
+- use graph drawing algorithms on generated patches
 - generative patch generation (-;
-
+- etc..
 
 ## Usage examples
 
