@@ -14,7 +14,7 @@ basic usage:
 import json
 import os
 
-from .odb import OBJECT_DEFAULTS
+from .defaults import OBJECT_DEFAULTS
 
 LAYOUT_DEFAULT_PAD = 32.0
 LAYOUT_DEFAULT_BOX_WIDTH = 66.0
