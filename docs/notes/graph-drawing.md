@@ -1,12 +1,10 @@
 # Graph Drawing Algorithms
 
-
 ## Research
 
 - [graph drawing layout algorithms](http://cs.brown.edu/people/rtamassi/papers/gd-tutorial/gd-constraints.pdf) - nice overview by one of the current experts in the field.
 
-- (graphdrawing.org)[http://graphdrawing.org] - research and publication overview for field of graph drawing edited by same author as above.
-
+- [graphdrawing.org](http://graphdrawing.org) - research and publication overview for field of graph drawing edited by same author as above.
 
 ## Python Packages
 
@@ -16,46 +14,39 @@
 
 - [graphviz](http://www.graphviz.org) -- [python bindings](http://www.graphviz.org/resources/#python) -- mature open source graph visualization software. See also graphviz c library [libgvc](http://www.graphviz.org/pdf/gvc.3.pdf)
 
-
 - [gandalf](https://github.com/bdcht/grandalf) -- promising new graph and drawing algorithms framework
-
 
 - [toyplot](https://github.com/sandialabs/toyplot) -- plotting toolkit from one of the major reseach labs.
 
-
 - [jaal](https://github.com/imohitmayank/jaal) -- interactive network visualization
 
-
 - [orthogonal-drawing-algorithm](https://github.com/rawfh/orthogonal-drawing-algorithm) and its fork [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing)
+
+- [netgraph](https://github.com/paulbrodersen/netgraph) -- Python module to make publication quality plots of weighted, directed graphs of medium size (10-100 nodes).see also [here](https://stackoverflow.com/questions/39801880/how-to-use-the-pos-argument-in-networkx-to-create-a-flowchart-style-graph/39863493)
 
 ## Non-Python
 
 - [gephi](https://gephi.org) java based mature graph visualization application.
 
-
 ## Articles
 
 - [Visualizing Networks in Pythnon](https://towardsdatascience.com/visualizing-networks-in-python-d70f4cbeb259) by the author of Jaal
 
-
 ## Stack Overflow
 
-- https://stackoverflow.com/questions/21978487/improving-python-networkx-graph-layout
+- <https://stackoverflow.com/questions/21978487/improving-python-networkx-graph-layout>
 
-- https://stackoverflow.com/questions/5028433/graph-auto-layout-algorithm
+- <https://stackoverflow.com/questions/5028433/graph-auto-layout-algorithm>
 
+- <https://stackoverflow.com/questions/45174962/getting-layout-coordinates-of-graph-vertices-using-python-networkx-pygraphviz> (includes a trick to  generate svg from graphviz and then get coordinates from the svg)
 
-- https://stackoverflow.com/questions/45174962/getting-layout-coordinates-of-graph-vertices-using-python-networkx-pygraphviz (includes a trick to  generate svg from graphviz and then get coordinates from the svg)
+- <https://stackoverflow.com/questions/13938770/how-to-get-the-coordinates-from-layout-from-graphviz>
 
-- https://stackoverflow.com/questions/13938770/how-to-get-the-coordinates-from-layout-from-graphviz
+- <https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-graph-plot-in-python>
 
-- https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-graph-plot-in-python
+- <https://stackoverflow.com/questions/35109590/how-to-graph-nodes-on-a-grid-in-networkx> especially about `nx.grid_2d_graph`
 
-- https://stackoverflow.com/questions/35109590/how-to-graph-nodes-on-a-grid-in-networkx especially about `nx.grid_2d_graph`
-
-
-- https://stackoverflow.com/questions/64986306/how-to-plot-a-networkx-graph-using-the-x-y-coordinates-of-the-points-list 
-
+- <https://stackoverflow.com/questions/64986306/how-to-plot-a-networkx-graph-using-the-x-y-coordinates-of-the-points-list>
 
 ## igraph
 
@@ -92,7 +83,3 @@ Out[11]:
  [0.0, 6.0],
  [1.0, 1.0]]
 ```
-
-
-
-

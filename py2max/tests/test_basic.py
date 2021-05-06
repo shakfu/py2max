@@ -2,7 +2,7 @@ from .. import Patcher
 
 
 def test_basic():
-    p = Patcher('output/basic.maxpat')
+    p = Patcher('outputs/basic.maxpat')
     osc1 = p.add_textbox('cycle~ 440')
     gain = p.add_textbox('gain~')
     dac = p.add_textbox('ezdac~')

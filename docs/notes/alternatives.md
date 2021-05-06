@@ -1,4 +1,4 @@
-
+# Alternatives & Prototypes
 
 ```python
 class SmartBox:
@@ -22,5 +22,4 @@ class SmartBox:
             del d[k]
         d.update(self._kwds)
         return dict(box=d)
-
 ```

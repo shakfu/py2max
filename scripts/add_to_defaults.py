@@ -82,9 +82,6 @@ if __name__ == '__main__':
     if args.command == 'dump':
         dump_registry(args.path, args.size)
 
-    elif args.commend == 'gen':
+    if args.commend == 'gen':
         gen_defaults(args.from_folder, args.output)
-
-    else:
-        print('command not implemeted')
 

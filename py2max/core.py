@@ -36,6 +36,18 @@ class Box:
         self.varname = varname
         self._kwds = kwds
 
+    @property
+    def label(self):
+        if hasattr(self, 'text'):
+            return self.text
+        elif hasattr(self, 'parameter_longname'):
+            return getattr(self, 'parameter_longname')
+        elif hasattr(self, 'maxclass'):
+            return self.maxclass
+        else:
+            return self.id
+
+
     def render(self):
         """convert python subobjects to dicts"""
 
@@ -158,7 +170,9 @@ class Patchline:
     """A class for Max patchlines."""
 
     def __init__(self, src: str, src_outlet: int, dst: str, dst_inlet: int, order: int = 0):
+        self.src = src
         self.source = [src, src_outlet]
+        self.dst = dst
         self.destination = [dst, dst_inlet]
         self.order = order
 
@@ -219,10 +233,11 @@ class Patcher:
                  reset_on_render=True, auto_hints=False):
         self._path = path
         self._parent = parent
-        self._ids = []          # ids by order of creation
+        self._node_ids = []     # ids by order of creation
         self._objects = {}      # dict of objects by id
-        self._boxes = []        # store objects
+        self._boxes = []        # store child objects (boxes, etc.)
         self._lines = []        # store patchline objects
+        self._edge_ids = []     # store edge (src_id, dst_id) by order of creation
         self._id_counter = 0
         self._x_layout_counter = 0
         self._y_layout_counter = 0
@@ -242,7 +257,8 @@ class Patcher:
             'modernui': 1
         }
         self.classnamespace = classnamespace or "box"
-        self.rect = [85.0, 104.0, 640.0, 480.0]
+        self.rect = [85.0, 104.0, 400.0, 400.0]
+        # self.rect = [85.0, 104.0, 640.0, 480.0]
         self.bglocked = 0
         self.openinpresentation = 0
         self.default_fontsize = 12.0
@@ -309,6 +325,83 @@ class Patcher:
             self.boxes.append(box.to_dict())
         self.lines = [line.to_dict() for line in self._lines]
 
+    def reposition(self):
+        import networkx as nx
+
+        G = nx.DiGraph()
+
+        # add nodes
+        for box in self._boxes:
+            if box.maxclass == 'comment':
+                continue
+            G.add_node(box.id)
+
+        # edd edges
+        for line in self._lines:
+            G.add_edge(line.src, line.dst)
+
+        # layout
+        scale = self.rect[2]
+        # pos = nx.circular_layout(G, scale=scale)
+        # pos = nx.kamada_kawai_layout(G, scale=scale)
+        # pos = nx.planar_layout(G, scale=scale)
+        # pos = nx.shell_layout(G, scale=scale)
+        # pos = nx.spectral_layout(G, scale=scale)
+        # pos = nx.spiral_layout(G. scale=scale)
+        pos = nx.spring_layout(G, scale=scale)
+ 
+        repos = []
+        for p in pos.items():
+            _, coord = p
+            x, y = coord
+            repos.append((x+scale, y+scale))
+
+        _boxes = []
+        for box, xy in zip(self._boxes, repos):
+            x, y, h, w = box.patching_rect
+            newx, newy = xy
+            box.patching_rect = newx, newy, h, w
+            _boxes.append(box)
+        self.boxes = _boxes
+
+    def graph(self):
+        import networkx as nx
+        import matplotlib.pyplot as plt
+
+        G = nx.DiGraph()
+
+        # make labels
+        # labels = {b.id: b.label for b in self._boxes}
+        
+        # add nodes
+        for box in self._boxes:
+            if box.maxclass == 'comment':
+                continue
+            G.add_node(box.id)
+        
+        # edd edges
+        for line in self._lines:
+            G.add_edge(line.src, line.dst)
+
+        # layout
+        pos = nx.spring_layout(G)
+        # pos = nx.circular_layout(G)
+        # pos = nx.kamada_kawai_layout(G)
+        # pos = nx.planar_layout(G)
+        # pos = nx.shell_layout(G)
+        # pos = nx.spectral_layout(G)
+        # pos = nx.spiral_layout(G)
+        # pos = nx.kamada_kawai_layout(G)
+
+        # G = nx.convert_node_labels_to_integers(G)
+        # G = nx.relabel_nodes(G, labels)
+        # nx.draw(G, with_labels=True)
+        nx.draw(G, pos=pos, with_labels=True)
+        # nx.draw(G, pos=pos, with_labels=False)
+        plt.show()
+
+
+
     def saveas(self, path):
         """save as .maxpat json file"""
         parent_dir = os.path.dirname(path)
@@ -356,7 +449,7 @@ class Patcher:
     def add_box(self, box, comment=None, comment_pos=None):
         """registers the box and adds it to the patcher"""
 
-        self._ids.append(box.id)
+        self._node_ids.append(box.id)
         self._objects[box.id] = box
         self._boxes.append(box)
         if comment:
@@ -377,8 +470,8 @@ class Patcher:
     def add_patchline_by_index(self, src_i, src_outlet, dst_i, dst_inlet):
         """Patchline creation between two objects using stored indexes"""
 
-        src_id = self._ids[src_i]
-        dst_id = self._ids[dst_i]
+        src_id = self._node_ids[src_i]
+        dst_id = self._node_ids[dst_i]
         self.add_patchline(src_id, src_outlet, dst_id, dst_inlet)
 
     def add_patchline(self, src_id, src_outlet, dst_id, dst_inlet):
@@ -387,6 +480,7 @@ class Patcher:
         order = self.get_link_order(src_id, dst_id)
         patchline = Patchline(src_id, src_outlet, dst_id, dst_inlet, order)
         self._lines.append(patchline)
+        self._edge_ids.append((src_id, dst_id))
         return patchline
 
     def add_line(self, src_obj, dst_obj, outlet=0, inlet=0):
@@ -412,7 +506,7 @@ class Patcher:
                 numoutlets=numoutlets or 0,
                 outlettype=outlettype or [""],
                 patching_rect=patching_rect or self.get_pos(),
-                varname=varname,
+                varname=varname or '',
                 **kwds
             ),
             comment,
@@ -557,7 +651,7 @@ class Patcher:
                 hint=hint or (longname if self._auto_hints else ""),
                 **kwds
             ),
-            comment,
+            comment or longname,
             comment_pos
         )
 

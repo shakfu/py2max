@@ -1,5 +1,5 @@
 # project specific
-output/
+outputs/
 
 # general detritus
 .DS_Store

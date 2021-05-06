@@ -1,9 +1,9 @@
 from .. import Patcher
 
 
-def test_mix_two_sinusoids():
+def test_graph():
     p = Patcher('outputs/two-sines.maxpat')
-    
+
     fparam = p.add_floatparam
     iparam = p.add_intparam
     tbox = p.add_textbox
@@ -40,8 +40,10 @@ def test_mix_two_sinusoids():
     link(add1, scop)
     link(scp1, scop)
     link(scp2, scop, inlet=1)
+    p.reposition()
     p.save()
+    p.graph()
 
 
 if __name__ == '__main__':
-    test_mix_two_sinusoids()
+    test_graph()

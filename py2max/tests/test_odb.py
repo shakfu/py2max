@@ -2,7 +2,7 @@ from .. import Patcher
 
 
 def test_odb():
-    p = Patcher('output/odb.maxpat')
+    p = Patcher('outputs/odb.maxpat')
     fg = p.add_textbox('filtergraph~')
     scop = p.add_textbox('scope~')
     p.save()

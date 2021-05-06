@@ -2,7 +2,7 @@ from .. import Patcher
 
 
 def test_subpatch():
-    p = Patcher('output/subpatch.maxpat')
+    p = Patcher('outputs/subpatch.maxpat')
     sbox = p.add_subpatcher('p mysub')
     sp = sbox.subpatcher
     i = sp.add_textbox('inlet')
