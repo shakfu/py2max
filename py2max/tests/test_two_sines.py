@@ -2,7 +2,7 @@ from .. import Patcher
 
 
 def test_mix_two_sinusoids():
-    p = Patcher('outputs/two-sines.maxpat')
+    p = Patcher('outputs/test_two_sines.maxpat')
     
     fparam = p.add_floatparam
     iparam = p.add_intparam

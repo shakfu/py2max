@@ -24,9 +24,13 @@
 
 - [netgraph](https://github.com/paulbrodersen/netgraph) -- Python module to make publication quality plots of weighted, directed graphs of medium size (10-100 nodes).see also [here](https://stackoverflow.com/questions/39801880/how-to-use-the-pos-argument-in-networkx-to-create-a-flowchart-style-graph/39863493)
 
+- [tulip-python](https://tulip.labri.fr/site/) -- 
+
 ## Non-Python
 
 - [gephi](https://gephi.org) java based mature graph visualization application.
+
+- [dagre-d3](https://github.com/dagrejs/dagre-d3/) A D3-based renderer for the [Dagre](https://github.com/dagrejs/dagre) graph-drawing engine
 
 ## Articles
 

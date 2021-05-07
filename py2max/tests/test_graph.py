@@ -1,8 +1,87 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
 from .. import Patcher
 
 
+def reposition(patcher):
+    self = patcher
+
+    G = nx.DiGraph()
+
+    # add nodes
+    for box in self._boxes:
+        if box.maxclass == 'comment':
+            continue
+        G.add_node(box.id)
+
+    # edd edges
+    for line in self._lines:
+        G.add_edge(line.src, line.dst)
+
+    # layout
+    scale = self.rect[2]
+    # pos = nx.circular_layout(G, scale=scale)
+    # pos = nx.kamada_kawai_layout(G, scale=scale)
+    # pos = nx.planar_layout(G, scale=scale)
+    # pos = nx.shell_layout(G, scale=scale)
+    # pos = nx.spectral_layout(G, scale=scale)
+    # pos = nx.spiral_layout(G. scale=scale)
+    pos = nx.spring_layout(G, scale=scale)
+
+    repos = []
+    for p in pos.items():
+        _, coord = p
+        x, y = coord
+        repos.append((x+scale, y+scale))
+
+    _boxes = []
+    for box, xy in zip(self._boxes, repos):
+        x, y, h, w = box.patching_rect
+        newx, newy = xy
+        box.patching_rect = newx, newy, h, w
+        _boxes.append(box)
+    self.boxes = _boxes
+
+
+def graph(patcher):
+    self = patcher
+
+    G = nx.DiGraph()
+
+    # make labels
+    # labels = {b.id: b.label for b in self._boxes}
+
+    # add nodes
+    for box in self._boxes:
+        if box.maxclass == 'comment':
+            continue
+        G.add_node(box.id)
+
+    # edd edges
+    for line in self._lines:
+        G.add_edge(line.src, line.dst)
+
+    # layout
+    pos = nx.spring_layout(G)
+    # pos = nx.circular_layout(G)
+    # pos = nx.kamada_kawai_layout(G)
+    # pos = nx.planar_layout(G)
+    # pos = nx.shell_layout(G)
+    # pos = nx.spectral_layout(G)
+    # pos = nx.spiral_layout(G)
+    # pos = nx.kamada_kawai_layout(G)
+
+    # G = nx.convert_node_labels_to_integers(G)
+    # G = nx.relabel_nodes(G, labels)
+    # nx.draw(G, with_labels=True)
+    nx.draw(G, pos=pos, with_labels=True)
+    # nx.draw(G, pos=pos, with_labels=False)
+    plt.show()
+
+
 def test_graph():
-    p = Patcher('outputs/two-sines.maxpat')
+    p = Patcher('outputs/test_graph.maxpat')
 
     fparam = p.add_floatparam
     iparam = p.add_intparam
@@ -40,9 +119,9 @@ def test_graph():
     link(add1, scop)
     link(scp1, scop)
     link(scp2, scop, inlet=1)
-    p.reposition()
+    reposition(p)
+    # graph(p)
     p.save()
-    p.graph()
 
 
 if __name__ == '__main__':
