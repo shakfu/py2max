@@ -187,7 +187,7 @@ class Patchline:
 
 
 class PositionManager:
-    """Utiltiy class to help with object position calculations."""
+    """Utility class to help with object position calculations."""
 
     def __init__(self, parent):
         self.parent = parent
@@ -440,6 +440,7 @@ class Patcher:
     def add_coll(self, name: str = None, dictionary: dict = None, embed: bool = True,
                  patching_rect: list[float] = None, id: str = None,
                  comment: str = None, comment_pos: str = None, **kwds):
+        """Add a coll object with option to pre-populate from a py dictionary."""
         extra = {
             'saved_object_attributes': {
                 'embed': embed,
@@ -470,7 +471,7 @@ class Patcher:
 
     def add_comment(self, text: str, patching_rect: list[float] = None,
                     id: str = None, **kwds):
-
+        """Add a basic comment object."""
         return self.add_box(
             CommentBox(
                 id=id or self.get_id(),
@@ -484,6 +485,7 @@ class Patcher:
                        numinlets: int = None, numoutlets: int = None,
                        outlettype: list[str] = None, patching_rect: list[float] = None,
                        id: str = None, patcher: 'Patcher' = None, **kwds):
+        """Add a subpatcher object."""
 
         return self.add_box(
             SubPatcher(
@@ -500,6 +502,8 @@ class Patcher:
         )
     
     def add_gen(self, text: str = 'gen~',  **kwds):
+        """Add a gen~ object."""
+
         return self.add_subpatcher(text, 
             patcher=Patcher(parent=self, classnamespace='gen.dsp'), **kwds)
 
@@ -509,7 +513,8 @@ class Patcher:
                        outlettype: list[str] = None, patching_rect: list[float] = None,
                        id: str = None,
                        comment: str = None, comment_pos: str = None, **kwds):
-        
+        """Private helper function to create numeric objects."""
+
         return self.add_box(
             NumberBox(
                 id=id or self.get_id(),
@@ -528,7 +533,8 @@ class Patcher:
                    outlettype: list[str] = None, patching_rect: list[float] = None,
                    id: str = None,
                    comment: str = None, comment_pos: str = None, **kwds):
-        
+        """Add an int box object."""
+
         return self._add_numberbox(
             maxclass='number',
             numinlets=numinlets,
@@ -543,6 +549,7 @@ class Patcher:
     def add_floatbox(self, numinlets: int = None, numoutlets: int = None,
                      outlettype: list[str] = None, patching_rect: list[float] = None,
                      comment: str = None, comment_pos: str = None, **kwds):
+        """Add an float box object."""
 
         return self._add_numberbox(
             maxclass='flonum',
@@ -560,7 +567,8 @@ class Patcher:
                        numinlets: int = None, numoutlets: int = None, outlettype: list[str] = None,
                        id: str = None, rect: list[float] = None, hint: str = None,
                        comment: str = None, comment_pos: str = None, **kwds):
-        
+        """Add a float parameter object."""
+
         return self.add_box(
             FloatParam(
                 id=id or self.get_id(),
@@ -585,6 +593,7 @@ class Patcher:
                      numinlets: int = None, numoutlets: int = None, outlettype: list[str] = None,
                      id: str = None, rect: list[float] = None, hint: str = None,
                      comment: str = None, comment_pos: str = None, **kwds):
+        """Add an int parameter object."""
 
         return self.add_box(
             IntParam(
@@ -618,6 +627,7 @@ class SubPatcher(TextBox):
         self._patcher = patcher
 
     def render(self):
+        """convert self and children to dictionary."""
         self._patcher.render()
         self.patcher = self._patcher.to_dict()
         # self.patcher = self._patcher.to_dict()['patcher']

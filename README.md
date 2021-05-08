@@ -14,7 +14,6 @@ It was originally created to automate the creation of hehlp (`.maxhelp`) files f
 
 - Has a `maxclassdb` feature which recalls defaults configuration of Max Objects.
 
-
 ## Current Status
 
 ## Possible use cases
@@ -71,5 +70,3 @@ python3 -m pytest.tests.test_basic
 - The layout algorithm is extremely rudimentary at this stage. So you will necessarily have to most things around after generation.
 
 - While generation does not consume the py2max objects so changes can be made and the patcher file resaved from a terminal or ipython session, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes. As some consolation, it is possible to generate a live matplotlib graph of the patcher by using Networkx (see test_graph.py in the `tests` subfolder).
-
-
