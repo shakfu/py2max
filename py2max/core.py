@@ -13,6 +13,7 @@ basic usage:
 """
 import json
 import os
+from typing import Dict, Any, Optional
 
 from .maxclassdb import MAXCLASS_DEFAULTS
 
@@ -84,7 +85,8 @@ class TextBox(Box):
             props.update(self._kwds)
             self.__dict__.update(props)
         except KeyError:
-            print(f"warning: no default for {maxclass}")
+            pass
+            # print(f"warning: no default for {maxclass}")
 
 
 class CommentBox(BaseBox):
@@ -327,7 +329,8 @@ class Patcher:
     def saveas(self, path):
         """save as .maxpat json file"""
         parent_dir = os.path.dirname(path)
-        os.makedirs(parent_dir, exist_ok=True)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
         self.render()
         with open(path, 'w') as f:
             json.dump(self.to_dict(), f, indent=4)
@@ -434,6 +437,37 @@ class Patcher:
             comment_pos
         )
 
+    def add_coll(self, name: str = None, dictionary: dict = None, embed: bool = True,
+                 patching_rect: list[float] = None, id: str = None,
+                 comment: str = None, comment_pos: str = None, **kwds):
+        extra = {
+            'saved_object_attributes': {
+                'embed': embed,
+                'precision': 6
+            }
+        }
+        if dictionary:
+            extra['coll_data'] = {
+                'count': len(dictionary.keys()),
+                'data': [{'key': k, 'value': v} for k,v in dictionary.items()]
+            }
+        kwds.update(extra)
+        return self.add_box(
+            TextBox(
+                id=id or self.get_id(),
+                text=f"coll {name}" if name else "coll",
+                maxclass='newobj',
+                numinlets=1,
+                numoutlets=4,
+                outlettype=["", "", "", ""],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds
+            ),
+            comment,
+            comment_pos
+        )
+
+
     def add_comment(self, text: str, patching_rect: list[float] = None,
                     id: str = None, **kwds):
 
@@ -468,6 +502,8 @@ class Patcher:
     def add_gen(self, text: str = 'gen~',  **kwds):
         return self.add_subpatcher(text, 
             patcher=Patcher(parent=self, classnamespace='gen.dsp'), **kwds)
+
+
 
     def _add_numberbox(self, maxclass: str, numinlets: int = None, numoutlets: int = None,
                        outlettype: list[str] = None, patching_rect: list[float] = None,

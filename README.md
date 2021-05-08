@@ -4,16 +4,29 @@ A pure python library without any dependencies intended to facilitate the offlin
 
 It was originally created to automate the creation of hehlp (`.maxhelp`) files for the [sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough that it should have its own repo.
 
+## Features
+
+- Offline scripted generation of max patchers files using Python objects which correspond, on a one-to-one basic, with MAX objects stored in the `.maxpat` JSON format.
+
+- Allows precise layout and configuration of Max objects.
+
+- Patcher objects have generic methods such as `add_textbox` and can have specialized methods as required such as `add_coll`. In the latter case, the method makes to prepopulate the `coll` object from a python dictionary (see `py2max/tests/test_coll.py`).
+
+- Has a `maxclassdb` feature which recalls defaults configuration of Max Objects.
+
+
+## Current Status
 
 ## Possible use cases
 
+- create parametrizable objects with configuration from offline sources. For example, one-of-a-kind wavetable oscillators configured from random wavetable files.
 - generation of test cases during external development
 - takes the pain out of creating parameter objects
-- help to save time if you have many objects with slightly different arguments
+- prepopulate a `coll` object with data
+- help to save time creating many objects with slightly different arguments
 - use graph drawing algorithms on generated patches
 - generative patch generation (-;
 - etc..
-
 
 ## Usage examples
 
@@ -53,5 +66,10 @@ Further tests are in the `py2max/tests` folder and can be output to an `output` 
 python3 -m pytest.tests.test_basic
 ```
 
+## Caveats
+
+- The layout algorithm is extremely rudimentary at this stage. So you will necessarily have to most things around after generation.
+
+- While generation does not consume the py2max objects so changes can be made and the patcher file resaved from a terminal or ipython session, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes. As some consolation, it is possible to generate a live matplotlib graph of the patcher by using Networkx (see test_graph.py in the `tests` subfolder).
 
 

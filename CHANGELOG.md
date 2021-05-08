@@ -2,6 +2,8 @@
 
 ## 0.1
 
+- added coll object and tests.
+
 - add some tests which try to use generic layout algorithm in Networkx but the results are quite terrible using the so probably better to just create something fit-for-purpose.
 - added gen subpatcher
 - moved `varname` to optional kwds instead of being an explicit parameter since 
