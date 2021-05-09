@@ -20,3 +20,23 @@
 - comments objects added
 - refactor: MaxPatch and Patcher objects are now one.
 - initial release
+
+### objects so far
+
+- [x] abstraction
+- [x] subpatcher
+- [x] gen~
+- [x] dict
+- [x] coll
+- [x] table
+- [x] pv
+- [x] pvar
+- [x] value
+- [x] send
+- [x] send~
+- [x] receive
+- [x] receive~
+- [x] multislider
+- [x] itable
+- [x] poly~
+- [x] poly

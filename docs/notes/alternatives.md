@@ -23,3 +23,16 @@ class SmartBox:
         d.update(self._kwds)
         return dict(box=d)
 ```
+
+From this blog [article](https://codeyarns.com/tech/2017-02-27-how-to-convert-python-dict-to-class-object-with-fields.html):
+
+```python
+>>> from collections import namedtuple
+>>> d = {"name": "joe", "age": 20}
+>>> d
+{'age': 20, 'name': 'joe'}
+>>> d_named = namedtuple("Employee", d.keys())(*d.values())
+>>> d_named
+Employee(name='joe', age=20)
+>>> d_named.name
+```

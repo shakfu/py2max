@@ -557,6 +557,32 @@ class Patcher:
             comment_pos
         )
 
+    def add_itable(self, name: str = None, array: list[int] = None,
+                  patching_rect: list[float] = None, text: str = None, id: str = None,
+                  comment: str = None, comment_pos: str = None, **kwds):
+        """Add a itable object with option to pre-populate from a py list."""
+
+        extra = {
+            'range': kwds.get('range', 128),
+            'size': len(array) if array else 128,
+            'table_data': array or [],
+        }
+        kwds.update(extra)
+        return self.add_box(
+            TextBox(
+                id=id or self.get_id(),
+                text=text or f"itable {name}",
+                maxclass='itable',
+                numinlets=2,
+                numoutlets=2,
+                outlettype=["int", "bang"],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds
+            ),
+            comment,
+            comment_pos
+        )
+
     def add_comment(self, text: str, patching_rect: list[float] = None,
                     id: str = None, **kwds):
         """Add a basic comment object."""

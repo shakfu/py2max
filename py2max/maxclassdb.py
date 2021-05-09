@@ -129,9 +129,12 @@ MAXCLASS_DEFAULTS = {
         "maxclass": "multislider",
         "numinlets": 1,
         "numoutlets": 2,
+        "orientation": 1,
         "outlettype": ["", ""],
         "parameter_enable": 0,
         "patching_rect": [0.0, 0.0, 20.0, 140.0],
+        "setstyle": 0,
+        "size": 4,
     },
     "nodes": {
         "maxclass": "nodes",

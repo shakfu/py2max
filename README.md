@@ -72,16 +72,3 @@ python3 -m pytest.tests.test_basic
 - The layout algorithm is extremely rudimentary at this stage. So you will necessarily have to most things around after generation.
 
 - While generation does not consume the py2max objects so changes can be made and the patcher file resaved from a terminal or ipython session, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes. As some consolation, it is possible to generate a live matplotlib graph of the patcher by using Networkx (see test_graph.py in the `tests` subfolder).
-
-## TODO
-
-- Implement more objects: especially object with state stored in the `.maxpat` file.
-
-- Anchor certain objects in expected places in the grid:
-  - ezadc~ to top left
-  - ezdac~ to bottom left
-  - visualization object (scope, etc.) to bottom right
-
-- Parsing of .maxpat files to python objects -- would require rename py2max to py4max to signify py2max and max2py.
-
-- Convert patchlines to references (send/receive)
