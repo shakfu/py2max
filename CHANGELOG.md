@@ -2,10 +2,12 @@
 
 ## 0.1
 
+- added `test_tree_builder.py` which shows that the json tree can be converted to a python object tree which corresponds to it on a one-on-one basis, which itself can be used to generate the json tree for round-trip conversion.
+
 - added `from_file` classmethod to Patcher to populate object from .maxpat file.
 - added coll, dict and table objects and tests
 
-- add some tests which try to use generic layout algorithm in Networkx but the results are quite terrible using the so probably better to just create something fit-for-purpose.
+- add some tests which try to use generic layout algorithm in Networkx but the results are quite terrible using builtin algorithms so probably better to try to create something fit-for-purpose.
 - added gen subpatcher
 - moved `varname` to optional kwds instead of being an explicit parameter since it's optional and its inclusion when not populated is sometimes problematic.
 - renamed odb to maxclassdb since it only relates to defaults per maxclass

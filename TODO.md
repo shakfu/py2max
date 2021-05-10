@@ -15,7 +15,7 @@ Items are checked if they don't need special implementations or have an entry in
 
 ## Other stuff
 
-- Anchor certain objects in expected places in the grid:
+- Anchor certain objects in expected places in the grid. One way of doing it is to specify x,y ratios as percentages of the grid. So if `x` is 0.10 and the grid width is 500, then x is positioned at 50. The following are typical cases:
   - ezadc~ to top left
   - ezdac~ to bottom left
   - visualization object (scope, etc.) to bottom right

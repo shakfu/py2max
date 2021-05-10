@@ -445,6 +445,9 @@ class Patcher:
         """convenience line adding taking objects with default outlet to inlet"""
 
         return self.add_patchline(src_obj.id, outlet, dst_obj.id, inlet)
+    
+    # alias for add_line
+    link = add_line
 
     def add_textbox(self, text: str, maxclass: str = None,
                     numinlets: int = None, numoutlets: int = None, outlettype: list[str] = None,
@@ -469,6 +472,9 @@ class Patcher:
             comment,
             comment_pos
         )
+    
+    # alias for add_textbox
+    add = add_textbox
 
     def add_coll(self, name: str = None, dictionary: dict = None, embed: int = 1,
                  patching_rect: list[float] = None, text: str = None, id: str = None,
