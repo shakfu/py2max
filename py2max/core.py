@@ -180,6 +180,14 @@ class Patchline:
         self.destination = destination
         self._kwds = kwds
 
+    @property
+    def src(self):
+        return self.source[0]
+
+    @property
+    def dst(self):
+        return self.destination[0]
+
     def to_tuple(self):
         """Return a tuple describing the patchline."""
         return (self.source[0], self.source[1],
