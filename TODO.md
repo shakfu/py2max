@@ -3,6 +3,7 @@
 ## Max Classes
 
 Implement more objects: especially object with state stored in the `.maxpat` file.
+
 Items are checked if they don't need special implementations or have an entry in maxclassdb.
 
 - [ ] umenu
