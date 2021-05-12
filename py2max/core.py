@@ -246,16 +246,6 @@ class Patcher:
     def get_pos(self):
         return self._layout_mgr.get_pos()
 
-    def get_link_order(self, src_id, dst_id):
-        """get order of lines between the same pair of objects"""
-
-        if ((src_id, dst_id) == self._last_link):
-            self._link_counter += 1
-        else:
-            self._link_counter = 0
-            self._last_link = (src_id, dst_id)
-        return self._link_counter
-
     def add_box(self, box, comment=None, comment_pos=None):
         """registers the box and adds it to the patcher"""
 
@@ -263,13 +253,13 @@ class Patcher:
         self._objects[box.id] = box
         self._boxes.append(box)
         if comment:
-            rect = box.patching_rect.copy()
-            self.add_associated_comment(rect, comment, comment_pos)
+            self.add_associated_comment(box, comment, comment_pos)
         return box
 
-    def add_associated_comment(self, rect, comment, comment_pos=None):
+    def add_associated_comment(self, box: 'Box', comment: str, comment_pos: str = None):
         """add a comment associated with the object"""
-
+        
+        rect = box.patching_rect.copy()
         if comment_pos:
             assert comment_pos in ['above', 'below', 'right', 'left']
             patching_rect = getattr(self._layout_mgr, comment_pos)(rect)
@@ -277,17 +267,24 @@ class Patcher:
             patching_rect = self._layout_mgr.above(rect)
         self.add_comment(comment, patching_rect)
 
-    def add_patchline_by_index(self, src_i, src_outlet, dst_i, dst_inlet):
+    def add_patchline_by_index(self, src_id: str, dst_id: str, dst_inlet: int = 0, src_outlet: int = 0):
         """Patchline creation between two objects using stored indexes"""
 
-        src_id = self._node_ids[src_i]
-        dst_id = self._node_ids[dst_i]
+        src_id = self._objects[src_id]
+        dst_id = self._objects[dst_id]
         self.add_patchline(src_id, src_outlet, dst_id, dst_inlet)
 
-    def add_patchline(self, src_id, src_outlet, dst_id, dst_inlet):
+    def add_patchline(self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int):
         """primary patchline creation method"""
 
-        order = self.get_link_order(src_id, dst_id)
+        # get order of lines between same pair of objects
+        if ((src_id, dst_id) == self._last_link):
+            self._link_counter += 1
+        else:
+            self._link_counter = 0
+            self._last_link = (src_id, dst_id)
+        
+        order = self._link_counter
         src, dst = [src_id, src_outlet], [dst_id, dst_inlet]
         patchline = Patchline(source=src, destination=dst, order=order)
         self._lines.append(patchline)
@@ -328,6 +325,174 @@ class Patcher:
     
     # alias for add_textbox
     add = add_textbox
+
+
+    def add_message(self, text: str, patching_rect: list[float] = None, id: str = None,
+                    comment: str = None, comment_pos: str = None, **kwds):
+        """Add a max message."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text,
+                maxclass='message',
+                numinlets=2,
+                numoutlets=1,
+                outlettype=[""],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds
+            ),
+            comment,
+            comment_pos
+        )
+
+
+    def add_comment(self, text: str, patching_rect: list[float] = None,
+                    id: str = None, **kwds):
+        """Add a basic comment object."""
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text,
+                maxclass='comment',
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds
+            )
+        )
+
+
+    def add_intbox(self, patching_rect: list[float] = None, id: str = None,
+                   comment: str = None, comment_pos: str = None, **kwds):
+        """Add an int box object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass='number',
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds
+            ),
+            comment,
+            comment_pos
+        )
+
+
+    def add_floatbox(self,  patching_rect: list[float] = None, id: str = None,
+                     comment: str = None, comment_pos: str = None, **kwds):
+        """Add an float box object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass='flonum',
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds
+            ),
+            comment,
+            comment_pos
+        )
+
+    def add_floatparam(self, longname: str, initial: float = None,
+                       minimum: float = None, maximum: float = None, shortname: str = None,
+                       id: str = None, rect: list[float] = None, hint: str = None,
+                       comment: str = None, comment_pos: str = None, **kwds):
+        """Add a float parameter object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass='flonum',
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                parameter_enable=1,
+                saved_attribute_attributes=dict(
+                    valueof=dict(
+                        parameter_initial=[initial or 0.5],
+                        parameter_initial_enable=1,
+                        parameter_longname=longname,
+                        parameter_mmax=maximum,
+                        parameter_shortname=shortname or "",
+                        parameter_type=0,
+                    )
+                ),
+                maximum=maximum or 1.0,
+                minimum=minimum or 0.0,
+                patching_rect=rect or self.get_pos(),
+                hint=hint or (longname if self._auto_hints else ""),
+                **kwds
+            ),
+            comment or longname,  # units can also be added here
+            comment_pos
+        )
+
+    def add_intparam(self, longname: str, initial: int = None,
+                     minimum: int = None, maximum: int = None, shortname: str = None,
+                     id: str = None, rect: list[float] = None, hint: str = None,
+                     comment: str = None, comment_pos: str = None, **kwds):
+        """Add an int parameter object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass='number',
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                parameter_enable=1,
+                saved_attribute_attributes=dict(
+                    valueof=dict(
+                        parameter_initial=[initial or 5],
+                        parameter_initial_enable=1,
+                        parameter_longname=longname,
+                        parameter_mmax=maximum,
+                        parameter_shortname=shortname or "",
+                        parameter_type=1,
+                    )
+                ),
+                maximum=maximum or 10,
+                minimum=minimum or 0,
+                patching_rect=rect or self.get_pos(),
+                hint=hint or (longname if self._auto_hints else ""),
+                **kwds
+            ),
+            comment or longname,  # units can also be added here
+            comment_pos
+        )
+
+
+    def add_subpatcher(self, text: str, maxclass: str = None,
+                       numinlets: int = None, numoutlets: int = None,
+                       outlettype: list[str] = None, patching_rect: list[float] = None,
+                       id: str = None, patcher: 'Patcher' = None, **kwds):
+        """Add a subpatcher object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text,
+                maxclass=maxclass or 'newobj',
+                numinlets=numinlets or 1,
+                numoutlets=numoutlets or 0,
+                outlettype=outlettype or [""],
+                patching_rect=patching_rect or self.get_pos(),
+                patcher=patcher or Patcher(parent=self),
+                **kwds
+            )
+        )
+
+    def add_gen(self, text: str = 'gen~',  **kwds):
+        """Add a gen~ object."""
+
+        return self.add_subpatcher(text,
+                                   patcher=Patcher(parent=self, classnamespace='gen.dsp'), **kwds)
+
 
     def add_coll(self, name: str = None, dictionary: dict = None, embed: int = 1,
                  patching_rect: list[float] = None, text: str = None, id: str = None,
@@ -389,10 +554,10 @@ class Patcher:
         )
 
     def add_table(self, name: str = None, array: list[int] = None, embed: int = 1,
-                 patching_rect: list[float] = None, text: str = None, id: str = None,
-                 comment: str = None, comment_pos: str = None, **kwds):
+                  patching_rect: list[float] = None, text: str = None, id: str = None,
+                  comment: str = None, comment_pos: str = None, **kwds):
         """Add a table object with option to pre-populate from a py list."""
-        
+
         extra = {
             'embed': embed,
             'saved_object_attributes': {
@@ -425,8 +590,8 @@ class Patcher:
         )
 
     def add_itable(self, name: str = None, array: list[int] = None,
-                  patching_rect: list[float] = None, text: str = None, id: str = None,
-                  comment: str = None, comment_pos: str = None, **kwds):
+                   patching_rect: list[float] = None, text: str = None, id: str = None,
+                   comment: str = None, comment_pos: str = None, **kwds):
         """Add a itable object with option to pre-populate from a py list."""
 
         extra = {
@@ -450,158 +615,31 @@ class Patcher:
             comment_pos
         )
 
-    def add_comment(self, text: str, patching_rect: list[float] = None,
-                    id: str = None, **kwds):
-        """Add a basic comment object."""
-        return self.add_box(
-            Box(
-                id=id or self.get_id(),
-                text=text,
-                maxclass='comment',
-                patching_rect=patching_rect or self.get_pos(),
-                **kwds
-            )
-        )
+    def add_umenu(self, prefix: str = None, autopopulate: int = 1, items: list[str] = None,
+                  patching_rect: list[float] = None, depth:int = None, id: str = None,
+                  comment: str = None, comment_pos: str = None, **kwds):
+        """Add a umenu object with option to pre-populate items from a py list."""
 
-    def add_subpatcher(self, text: str, maxclass: str = None,
-                       numinlets: int = None, numoutlets: int = None,
-                       outlettype: list[str] = None, patching_rect: list[float] = None,
-                       id: str = None, patcher: 'Patcher' = None, **kwds):
-        """Add a subpatcher object."""
+        # interleave commas in a list
+        def commas(xs): return [i for pair in zip(xs, [',']*len(xs)) for i in pair]
 
         return self.add_box(
             Box(
                 id=id or self.get_id(),
-                text=text,
-                maxclass=maxclass or 'newobj',
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 0,
-                outlettype=outlettype or [""],
-                patching_rect=patching_rect or self.get_pos(),
-                patcher=patcher or Patcher(parent=self),
-                **kwds
-            )
-        )
-
-    def add_gen(self, text: str = 'gen~',  **kwds):
-        """Add a gen~ object."""
-
-        return self.add_subpatcher(text,
-            patcher=Patcher(parent=self, classnamespace='gen.dsp'), **kwds)
-
-
-    def add_intbox(self, numinlets: int = None, numoutlets: int = None,
-                   outlettype: list[str] = None, patching_rect: list[float] = None,
-                   id: str = None,
-                   comment: str = None, comment_pos: str = None, **kwds):
-        """Add an int box object."""
-
-        return self.add_box(
-            Box(
-                id=id or self.get_id(),
-                maxclass='number',
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 2,
-                outlettype=outlettype or ["", "bang"],
+                maxclass='umenu',
+                numinlets=1,
+                numoutlets=3,
+                outlettype=["int", "", ""],
+                autopopulate=autopopulate or 1,
+                depth=depth or 1,
+                items=commas(items) or [],
+                prefix=prefix or "",
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds
             ),
             comment,
             comment_pos
         )
-
-
-    def add_floatbox(self, numinlets: int = None, numoutlets: int = None,
-                     outlettype: list[str] = None, patching_rect: list[float] = None,
-                     id: str = None,
-                     comment: str = None, comment_pos: str = None, **kwds):
-        """Add an float box object."""
-
-        return self.self.add_box(
-            Box(
-                id=id or self.get_id(),
-                maxclass='flonum',
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 2,
-                outlettype=outlettype or ["", "bang"],
-                patching_rect=patching_rect or self.get_pos(),
-                **kwds
-            ),
-            comment,
-            comment_pos
-        )
-
-    def add_floatparam(self, longname: str, initial: float = None,
-                       minimum: float = None, maximum: float = None, shortname: str = None,
-                       numinlets: int = None, numoutlets: int = None, outlettype: list[str] = None,
-                       id: str = None, rect: list[float] = None, hint: str = None,
-                       comment: str = None, comment_pos: str = None, **kwds):
-        """Add a float parameter object."""
-
-        return self.add_box(
-            Box(
-                id=id or self.get_id(),
-                maxclass='flonum',
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 2,
-                outlettype=outlettype or ["", "bang"],
-                parameter_enable=1,
-                saved_attribute_attributes=dict(
-                    valueof=dict(
-                        parameter_initial=[initial or 0.5],
-                        parameter_initial_enable=1,
-                        parameter_longname=longname,
-                        parameter_mmax=maximum,
-                        parameter_shortname=shortname or "",
-                        parameter_type=0,
-                    )
-                ),
-                maximum=maximum or 1.0,
-                minimum=minimum or 0.0,
-                patching_rect=rect or self.get_pos(),
-                hint=hint or (longname if self._auto_hints else ""),
-                **kwds
-            ),
-            comment or longname,  # units can also be added here
-            comment_pos
-        )
-
-    def add_intparam(self, longname: str, initial: int = None,
-                     minimum: int = None, maximum: int = None, shortname: str = None,
-                     numinlets: int = None, numoutlets: int = None, outlettype: list[str] = None,
-                     id: str = None, rect: list[float] = None, hint: str = None,
-                     comment: str = None, comment_pos: str = None, **kwds):
-        """Add an int parameter object."""
-
-        return self.add_box(
-            Box(
-                id=id or self.get_id(),
-                maxclass='number',
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 2,
-                outlettype=outlettype or ["", "bang"],
-                parameter_enable=1,
-                saved_attribute_attributes=dict(
-                    valueof=dict(
-                        parameter_initial=[initial or 5],
-                        parameter_initial_enable=1,
-                        parameter_longname=longname,
-                        parameter_mmax=maximum,
-                        parameter_shortname=shortname or "",
-                        parameter_type=1,
-                    )
-                ),
-                maximum=maximum or 10,
-                minimum=minimum or 0,
-                patching_rect=rect or self.get_pos(),
-                hint=hint or (longname if self._auto_hints else ""),
-                **kwds
-            ),
-            comment or longname,  # units can also be added here
-            comment_pos
-        )
-
-
 
 class Box:
     """Max Box object"""
