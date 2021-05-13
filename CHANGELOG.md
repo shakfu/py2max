@@ -27,6 +27,7 @@
 
 ### objects so far
 
+- [x] bpatcher
 - [x] abstraction
 - [x] subpatcher
 - [x] gen~

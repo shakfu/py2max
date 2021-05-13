@@ -46,6 +46,10 @@ def test_add():
     # umenu
     p.add('umenu', items=['a','b', 'c'])
 
+    # bpatcher
+    p.add('bpatcher bp.LFO.maxpat', extract=1, numinlets=0, numoutlets=5, outlettype=[
+          "signal", "signal", "signal", "signal", "signal"], varname="bp.LFO") 
+    
     p.save()
 
 

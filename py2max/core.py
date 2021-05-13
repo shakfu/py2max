@@ -92,7 +92,8 @@ class Patcher:
 
     def __init__(self, path: str = None, parent: 'Patcher' = None, 
                  classnamespace: str = None, reset_on_render: bool = True, 
-                 layout_mgr_class: Type[LayoutManager] = None, auto_hints: bool = False):
+                 layout_mgr_class: Type[LayoutManager] = None, auto_hints: bool = False,
+                 openinpresentation: int = 0):
         self._path = path
         self._parent = parent
         self._node_ids = []     # ids by order of creation
@@ -108,13 +109,14 @@ class Patcher:
         self._auto_hints = auto_hints
         self._maxclass_methods = {
             # specialized methods
-            'm': self.add_message,
-            'c': self.add_comment,
+            'm': self.add_message,  # custom -- like keyboard shortcut
+            'c': self.add_comment,  # custom -- like keyboard shortcut
             'coll': self.add_coll,
             'dict': self.add_dict,
             'table': self.add_table,
             'itable': self.add_itable,
             'umenu': self.add_umenu,
+            'bpatcher': self.add_bpatcher,
         }
 
         # begin max attributes
@@ -129,7 +131,7 @@ class Patcher:
         self.classnamespace = classnamespace or "box"
         self.rect = [85.0, 104.0, 640.0, 480.0]
         self.bglocked = 0
-        self.openinpresentation = 0
+        self.openinpresentation = openinpresentation
         self.default_fontsize = 12.0
         self.default_fontface = 0
         self.default_fontname = "Arial"
@@ -178,15 +180,6 @@ class Patcher:
     def height(self):
         """height of patcher windows."""
         return self.rect[3]
-
-    # @staticmethod
-    # def box_from_dict(d):
-    #     if 'maxclass' in d:
-    #         try:
-    #             box_class = MAXCLASS_DEFAULTS[d['maxclass']]
-    #         except KeyError:
-    #             box_class = Box
-    #         return box_class.from_dict(d)
 
     @classmethod
     def from_dict(cls, patcher_dict):
@@ -408,7 +401,6 @@ class Patcher:
 
         return self.add_textbox(text=value, **kwds)
 
-
     def add(self, value, *args, **kwds):
         """generic adder: value can be a number or a list or text for an object."""
 
@@ -423,7 +415,6 @@ class Patcher:
 
         else:
             raise NotImplementedError
-
 
     def add_message(self, text: str, patching_rect: list[float] = None, id: str = None,
                     comment: str = None, comment_pos: str = None, **kwds):
@@ -561,7 +552,6 @@ class Patcher:
             comment_pos
         )
 
-
     def add_subpatcher(self, text: str, maxclass: str = None,
                        numinlets: int = None, numoutlets: int = None,
                        outlettype: list[str] = None, patching_rect: list[float] = None,
@@ -588,7 +578,6 @@ class Patcher:
         return self.add_subpatcher(text,
                                    patcher=Patcher(parent=self,
                                                    classnamespace='gen.dsp'), **kwds)
-
 
     def add_coll(self, name: str = None, dictionary: dict = None, embed: int = 1,
                  patching_rect: list[float] = None, text: str = None, id: str = None,
@@ -736,6 +725,37 @@ class Patcher:
             comment,
             comment_pos
         )
+
+    def add_bpatcher(self, name: str, numinlets: int = 1, numoutlets: int = 1, outlettype: list[str] = None,
+                     bgmode: int = 0, border: int = 0, clickthrough: int = 0, enablehscroll: int = 0,
+                     enablevscroll: int = 0, lockeddragscroll: int = 0, offset: list[float] = None,
+                     viewvisibility: int=1, patching_rect: list[float] = None, id: str = None,
+                     comment: str = None, comment_pos: str = None, **kwds):
+        """Add a bpatcher object -- name or patch of bpatcher .maxpat is required."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                name=name,
+                maxclass='bpatcher',
+                numinlets=numinlets,
+                numoutlets=numoutlets,
+                bgmode=bgmode,
+                border=border,
+                clickthrough=clickthrough,
+                enablehscroll=enablehscroll,
+                enablevscroll=enablevscroll,
+                lockeddragscroll=lockeddragscroll,
+                viewvisibility=viewvisibility,
+                outlettype=outlettype or ["float", "", ""],
+                patching_rect=patching_rect or self.get_pos(),
+                offset=offset or [0.0, 0.0],
+                **kwds
+            ),
+            comment,
+            comment_pos
+        )
+
 
 
 class Box:
