@@ -21,6 +21,7 @@ Items are checked if they don't need special implementations or have an entry in
 - [ ] funbuff
 - [ ] mc objects
 - [ ] zl objects
+- [ ] beap objects
 
 ## Other stuff
 

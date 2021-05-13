@@ -4,7 +4,7 @@ from .. import Patcher
 
 def test_table():
     p = Patcher('outputs/test_table.maxpat')
-    p.add_table('box', array=list(range(128)))
+    p.add_table('bob', array=list(range(128)))
     p.save()
 
 
