@@ -4,14 +4,9 @@
 
 Implement more objects: especially containers / objects with state stored in the `.maxpat` file.
 
-Items are checked if they don't need special implementations or have an entry in maxclassdb.
-
 - [ ] codebox
-- [ ] js
 - [ ] funbuff
-- [ ] mc objects
-- [ ] zl objects
-- [ ] beap objects
+- ...
 
 ## Other stuff
 

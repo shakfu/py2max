@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """parse_thesaurus.py: parse Max object thesaurus
 
 see: https://docs.cycling74.com/max8/vignettes/thesaurus

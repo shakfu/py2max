@@ -2,7 +2,9 @@
 
 ## 0.1
 
-- major refactoring after `test_tree_builder`, so we have now only one simple extendable Box class, and there is round trip conversion between .maxpat files and patchers.
+- added a generic `.add` method to `Patcher` objects which inlcude some logic to to figure out to which specialized method to dispatch to. See: `tests/test_add.py` for examples of this.
+
+- major refactoring after `test_tree_builder` design experiment, so we have now only one simple extendable Box class, and there is round trip conversion between .maxpat files and patchers.
 
 - added `test_tree_builder.py` which shows that the json tree can be converted to a python object tree which corresponds to it on a one-on-one basis, which itself can be used to generate the json tree for round-trip conversion.
 
@@ -24,26 +26,3 @@
 - comments objects added
 - refactor: MaxPatch and Patcher objects are now one.
 - initial release
-
-### objects so far
-
-- [x] bpatcher
-- [x] abstraction
-- [x] subpatcher
-- [x] gen~
-- [x] dict
-- [x] coll
-- [x] table
-- [x] pv
-- [x] pvar
-- [x] value
-- [x] send
-- [x] send~
-- [x] receive
-- [x] receive~
-- [x] multislider
-- [x] itable
-- [x] poly~
-- [x] poly
-- [x] umenu
-- [x] message

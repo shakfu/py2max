@@ -12,25 +12,34 @@ For use of python3 in a live Max patcher, see the [py-js](https://github.com/sha
 
 - Round-trip conversion between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
 
-- Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), and layout (in the context of graph-drawing algorithms).
+- Can handle potentially any Max object or maxclass.
+
+- Lots of unit tests.
+
+- Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (in the context of graph-drawing algorithms).
 
 - Allows precise layout and configuration of Max objects.
 
 - Patcher objects have generic methods such as `add_textbox` and can have specialized methods as required such as `add_coll`. In the latter case, the method makes to prepopulate the `coll` object from a python dictionary (see `py2max/tests/test_coll.py`).
 
-- DEFERRED FEATURE: Has a `maxclassdb` feature which recalls defaults configuration of Max Objects.
-
-## Current Status
+- Has a `maxclassdb` feature which recalls defaults configuration of Max Objects.
 
 ## Possible use cases
 
 - create parametrizable objects with configuration from offline sources. For example, one-of-a-kind wavetable oscillators configured from random wavetable files.
+
 - generation of test cases during external development
+
 - takes the pain out of creating parameter objects
-- prepopulate a `coll` object with data
+
+- prepopulate containers objects such as `coll`, `dict` and `table` objects with data
+
 - help to save time creating many objects with slightly different arguments
+
 - use graph drawing algorithms on generated patches
+
 - generative patch generation (-;
+
 - etc..
 
 ## Usage examples
@@ -85,9 +94,7 @@ p.link(sbox, dac)
 p.save()
 ```
 
-Since, the Python classes are basically just simple wrappers around their corresponding JSON spec the .maxpat file, almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_textbox` or `.add` method. There are also specialized methods for numbers and also for numeric parameters.
-
-In addition, objects which have their own `maxclass` may have their own corresponding method to provide specialized features. For example, the `.add_coll` method allows one to add a python dictionary which is then embedded in the patcher file which can be quite useful.
+The Python classes are basically just simple wrappers around their corresponding JSON spec the .maxpat file, almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_textbox` or the generic `.add` methods. There are also specialized methods in the form `.add_<type>` for numbers, numeric parameters, subpatchers, and container-type objects (see the design notes below for more details).
 
 Further tests are in the `py2max/tests` folder and can be output to an `outputs` folder all at once by running `pytest` in the project root, or individually, by doing something like the following:
 
@@ -97,6 +104,41 @@ python3 -m pytest.tests.test_basic
 
 ## Caveats
 
-- The current layout algorithm is extremely rudimentary at this stage, however there are some [promising directions](docs/notes/graph-drawing.md) to address this. In practice, you will necessarily have to move most things around after generation.
+- API Docs are still not available
+
+- The current layout algorithm is extremely rudimentary, however there are some [promising directions](docs/notes/graph-drawing.md) to address this. In practice, you will necessarily have to move most things around after generation.
 
 - While generation does not consume the py2max objects, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes to the object tree.
+
+- For those objects which have their own methods, the current implementation still has to address cases when two max objects are the same except for '~' symbol.
+
+## Design Notes
+
+The `.maxpat` JSON format is actually pretty minimal and hierarchical. It has a Parent `Patcher` object and child `Box` objectd and also `Patchlines`. Certain boxes can contain other `patcher` instances to represent nested subpatchers and gen` patches, etc..
+
+The above format maps onto the Python implementation: there are also 3 classes in the Python model: `Patcher`, `Box`, and `Patchline` classes. These classes are extendable via their respective `**kwds` and internal`__dict__` structures. In fact, this is the how the `.from_file` patcher classmethod is implemented.
+
+This turns out to be the most maintainable and flexible way to handle all the differences between the hundreds of Max, MSP, and Jitter objects.
+
+Certain patcher methods are implementated to specialize and ease the creation of certain classes of objects:
+
+- `.add_textbox`
+- `.add_message`
+- `.add_comment`
+- `.add_intbox`
+- `.add_floatbox`
+- `.add_intparam`
+- `.add_floatparam`
+- `.add_subpatcher`
+- `.add_gen`
+- `.add_coll`
+- `.add_dict`
+- `.add_table`
+- `.add_itable`
+- `.add_umenu`
+- `.add_bpatcher`
+- `.add_beap`
+
+This is a short list, but the `add_textbox` method alone can handle almost all case. The others are really just there for convenience and to save typing.
+
+Generally, it is recommended to start using `py2max`'s via these `add_<type>` methods, since they have most of the required parameters built into the methods and you can get IDE completion support.  Once you are comfortable with the parameters, then use the generic abbreviated form: `add`, which is less typing but you lose the IDE parameter completion support.

@@ -416,14 +416,14 @@ class Patcher:
         else:
             raise NotImplementedError
 
-    def add_message(self, text: str, patching_rect: list[float] = None, id: str = None,
+    def add_message(self, text: str = None, patching_rect: list[float] = None, id: str = None,
                     comment: str = None, comment_pos: str = None, **kwds):
         """Add a max message."""
 
         return self.add_box(
             Box(
                 id=id or self.get_id(),
-                text=text,
+                text=text or "",
                 maxclass='message',
                 numinlets=2,
                 numoutlets=1,
@@ -755,6 +755,12 @@ class Patcher:
             comment,
             comment_pos
         )
+    
+    def add_beap(self, name: str, **kwds):
+        """Add a beap bpatcher object."""
+
+        _varname = name if '.maxpat' not in name else name.rstrip('.maxpat')
+        return self.add_bpatcher(name=name, varname=_varname, extract=1, **kwds)
 
 
 

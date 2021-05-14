@@ -46,21 +46,7 @@
 
 - <https://stackoverflow.com/questions/13938770/how-to-get-the-coordinates-from-layout-from-graphviz>
 
-- <https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-graph-plot-in-python>
-
-- <https://stackoverflow.com/questions/35109590/how-to-graph-nodes-on-a-grid-in-networkx> especially about `nx.grid_2d_graph`
-
-- <https://stackoverflow.com/questions/64986306/how-to-plot-a-networkx-graph-using-the-x-y-coordinates-of-the-points-list>
-
-## igraph
-
-```python
-In [3]: from igraph import *
-
-In [4]: g = Graph()
-
-In [5]: g.add_vertices(10)
-
+- <https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-gr
 In [6]: g.add_edges(zip(range(10), range(1,9)))
 
 In [7]: summary(g)
