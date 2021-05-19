@@ -29,7 +29,7 @@ MAXCLASS_DEFAULTS = {
         "maxclass": "ezdac~",
         "numinlets": 2,
         "numoutlets": 0,
-        "patching_rect": [0.0, 0.0, 45.0, 45.0],
+        "patching_rect": [0.1, 1.0, 45.0, 45.0],
     },
     "filtergraph~": {
         "fontface": 0,
@@ -41,7 +41,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 7,
         "outlettype": ["list", "float", "float", "float", "float", "list", "int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 256.0, 128.0],
+        "patching_rect": [1.0, 1.0, 256.0, 128.0],
         "setfilter": [0, 5, 1, 0, 0, 40.0, 1.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     },
     "function": {

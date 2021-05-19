@@ -13,50 +13,109 @@ basic usage:
 """
 import json
 import os
-from typing import Dict, Any, Optional, Type
+from typing import Type
+from collections import namedtuple
 
 from .maxclassdb import MAXCLASS_DEFAULTS
 
 
 # ---------------------------------------------------------------------------
-# CONTSTANTS
+# CONSTANTS
 
-LAYOUT_DEFAULT_PAD = 32.0
-LAYOUT_DEFAULT_BOX_WIDTH = 66.0
-LAYOUT_DEFAULT_BOX_HEIGHT = 22.0
+# ---------------------------------------------------------------------------
+# Utility Classes and functions
+
+Rect = namedtuple('Rect', 'x y w h')
 
 
 # ---------------------------------------------------------------------------
 # Primary Classes
 
+
 class LayoutManager:
     """Utility class to help with object position calculations."""
 
-    def __init__(self, parent):
-        self.parent = parent
-        self.pad = LAYOUT_DEFAULT_PAD
-        self.box_width = LAYOUT_DEFAULT_BOX_WIDTH
-        self.box_height = LAYOUT_DEFAULT_BOX_HEIGHT
+    LAYOUT_DEFAULT_PAD = 32.0
+    LAYOUT_DEFAULT_BOX_WIDTH = 66.0
+    LAYOUT_DEFAULT_BOX_HEIGHT = 22.0
 
+    def __init__(self, parent: 'Patcher', pad: int = None,
+                 box_width: int = None, box_height: int = None):
+        self.parent = parent
+        self.pad = pad or self.LAYOUT_DEFAULT_PAD
+        self.box_width = box_width or self.LAYOUT_DEFAULT_BOX_WIDTH
+        self.box_height = box_height or self.LAYOUT_DEFAULT_BOX_HEIGHT
         self.x_layout_counter = 0
         self.y_layout_counter = 0
+        self.prior_rect = None
+        self.mclass_rect = None
 
-    def get_pos(self):
-        """helper func providing very rough auto-layout of objects"""
-        pad = LAYOUT_DEFAULT_PAD  # 32.0
-        x_pad = pad
-        y_pad = pad
+    def get_rect_from_maxclass(self, maxclass):
+        """retrieves default patching_rect from defaults dictionary."""
+        try:
+            rect = MAXCLASS_DEFAULTS[maxclass]['patching_rect']
+            return Rect(*rect)
+        except KeyError:
+            return
+
+    def get_absolute_pos(self, rect: Rect):
+        """returns an absolute position for the object"""
+        x, y, w, h = tuple(rect)
+
+        pad = self.pad
+
+        if x > 0.5 * self.parent.width:
+            x1 = x - (w + pad)
+            x = x1 - (x1 - self.parent.width) if x1 > self.parent.width else x1
+        else:
+            x1 = x + pad
+
+        print('x1', x1)
+
+        y1 = y - (h + pad)
+        y = y1 - (y1 - self.parent.height) if y1 > self.parent.height else y1
+
+        return [x, y, w, h]
+
+    def get_relative_pos(self, rect: Rect):
+        """returns a relative position for the object"""
+        x, y, w, h = tuple(rect)
+
+        pad = self.pad  # 32.0
+
         x_shift = 3 * pad * self.x_layout_counter
-        y_shift = 1.5 * pad * self.y_layout_counter
-        x = x_pad + x_shift
-        w = LAYOUT_DEFAULT_BOX_WIDTH   # 66.0
-        h = LAYOUT_DEFAULT_BOX_HEIGHT  # 22.0
+        y_shift = (1.5 * pad * self.y_layout_counter)
+        x = pad + x_shift
+
         self.x_layout_counter += 1
-        if x + w + 2 * x_pad > self.parent.width:
+        if x + w + 2 * pad > self.parent.width:
             self.x_layout_counter = 0
             self.y_layout_counter += 1
-        y = y_pad + y_shift
+
+        y = pad + y_shift
+
         return [x, y, w, h]
+
+    def get_pos(self, maxclass: str = None):
+        """helper func providing very rough auto-layout of objects"""
+        x = 0
+        y = 0
+        w = self.box_width   # 66.0
+        h = self.box_height  # 22.0
+
+        if maxclass:
+            mclass_rect = self.get_rect_from_maxclass(maxclass)
+            if mclass_rect and (mclass_rect.x or mclass_rect.y):
+                if mclass_rect.x:
+                    x = int(mclass_rect.x * self.parent.width)
+                if mclass_rect.y:
+                    y = int(mclass_rect.y * self.parent.height)
+
+                _rect = Rect(x, y, mclass_rect.w, mclass_rect.h)
+                return self.get_absolute_pos(_rect)
+
+        _rect = Rect(x, y, w, h)
+        return self.get_relative_pos(_rect)
 
     @property
     def patcher_rect(self):
@@ -82,6 +141,7 @@ class LayoutManager:
         """Return a position right of the object"""
         x, y, w, h = rect
         return [x + (self.box_width + w), y, w, h]
+
 
 
 class Patcher:
@@ -253,8 +313,11 @@ class Patcher:
         self._id_counter += 1
         return f'obj-{self._id_counter}'
 
-    def get_pos(self):
-        return self._layout_mgr.get_pos()
+    def get_pos(self, maxclass=None):
+        if maxclass:
+            return self._layout_mgr.get_pos(maxclass)
+        else:
+            return self._layout_mgr.get_pos()
 
     def add_box(self, box, comment=None, comment_pos=None):
         """registers the box and adds it to the patcher"""
@@ -317,6 +380,9 @@ class Patcher:
 
         Looks up default attributes from a dictionary.
         """
+        _maxclass, *tail = text.split()
+        if _maxclass in MAXCLASS_DEFAULTS and not maxclass:
+            maxclass = _maxclass
 
         return self.add_box(
             Box(
@@ -326,7 +392,7 @@ class Patcher:
                 numinlets=numinlets or 1,
                 numoutlets=numoutlets or 0,
                 outlettype=outlettype or [""],
-                patching_rect=patching_rect or self.get_pos(),
+                patching_rect=patching_rect or self.get_pos(maxclass) if maxclass else self.get_pos(),
                 **kwds
             ),
             comment,
@@ -387,19 +453,7 @@ class Patcher:
         elif maxclass == 'gen~':
             return self.add_gen(value, **kwds)
         else:
-            # then try from MAXCLASS_DEFAULTS
-            try:
-                props = MAXCLASS_DEFAULTS[maxclass]
-                assert 'text' not in props, "'text' field cannot be in default properties"
-                x1, y1, _, _ = self.__dict__['patching_rect']
-                _, _, w2, h2 = props['patching_rect']
-                props['patching_rect'] = [x1, y1, w2, h2]
-                props.update(kwds)
-                self.__dict__.update(props)
-            except KeyError:
-                pass
-
-        return self.add_textbox(text=value, **kwds)
+            return self.add_textbox(text=value, **kwds)
 
     def add(self, value, *args, **kwds):
         """generic adder: value can be a number or a list or text for an object."""

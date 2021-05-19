@@ -28,6 +28,8 @@
 
 ## Non-Python
 
+- [adaptagrams](http://www.adaptagrams.org) c++ library of tools and reusable code for adaptive diagramming applications, for example: drawing tools, automated document and diagram layout, smart presentation software, graph drawing, chart layout.
+
 - [gephi](https://gephi.org) java based mature graph visualization application.
 
 - [dagre-d3](https://github.com/dagrejs/dagre-d3/) A D3-based renderer for the [Dagre](https://github.com/dagrejs/dagre) graph-drawing engine

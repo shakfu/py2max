@@ -114,9 +114,9 @@ python3 -m pytest.tests.test_basic
 
 ## Design Notes
 
-The `.maxpat` JSON format is actually pretty minimal and hierarchical. It has a Parent `Patcher` object and child `Box` objectd and also `Patchlines`. Certain boxes can contain other `patcher` instances to represent nested subpatchers and gen` patches, etc..
+The `.maxpat` JSON format is actually pretty minimal and hierarchical. It has a parent `Patcher` and child `Box` entries and also `Patchlines`. Certain boxes contain other `patcher` instances to represent nested subpatchers and `gen~` patches, etc..
 
-The above format maps onto the Python implementation: there are also 3 classes in the Python model: `Patcher`, `Box`, and `Patchline` classes. These classes are extendable via their respective `**kwds` and internal`__dict__` structures. In fact, this is the how the `.from_file` patcher classmethod is implemented.
+The above structure directly maps onto the Python implementation which consists of 3 classes: `Patcher`, `Box`, and `Patchline`. These classes are extendable via their respective `**kwds` and internal`__dict__` structures. In fact, this is the how the `.from_file` patcher classmethod is implemented.
 
 This turns out to be the most maintainable and flexible way to handle all the differences between the hundreds of Max, MSP, and Jitter objects.
 
