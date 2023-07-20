@@ -452,6 +452,8 @@ class Patcher:
             return self.add_subpatcher(value, **kwds)
         elif maxclass == 'gen~':
             return self.add_gen(value, **kwds)
+        elif maxclass == 'rnbo~':
+            return self.add_rnbo(value, **kwds)
         else:
             return self.add_textbox(text=value, **kwds)
 
@@ -632,6 +634,13 @@ class Patcher:
         return self.add_subpatcher(text,
                                    patcher=Patcher(parent=self,
                                                    classnamespace='gen.dsp'), **kwds)
+
+    def add_rnbo(self, text: str = 'rnbo~',  **kwds):
+        """Add a rnbo~ object."""
+
+        return self.add_subpatcher(text,
+                                   patcher=Patcher(parent=self,
+                                                   classnamespace='rnbo.dsp'), **kwds)
 
     def add_coll(self, name: str = None, dictionary: dict = None, embed: int = 1,
                  patching_rect: list[float] = None, text: str = None, id: str = None,
