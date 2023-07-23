@@ -22,6 +22,10 @@ from .maxclassdb import MAXCLASS_DEFAULTS
 # ---------------------------------------------------------------------------
 # CONSTANTS
 
+MAX_VER_MAJOR = 8
+MAX_VER_MINOR = 5
+MAX_VER_REVISION = 5
+
 # ---------------------------------------------------------------------------
 # Utility Classes and functions
 
@@ -182,9 +186,9 @@ class Patcher:
         # begin max attributes
         self.fileversion = 1
         self.appversion = {
-            'major': 8,
-            'minor': 1,
-            'revision': 11,
+            'major': MAX_VER_MAJOR,
+            'minor': MAX_VER_MINOR,
+            'revision': MAX_VER_REVISION,
             'architecture': "x64",
             'modernui': 1
         }
@@ -452,6 +456,8 @@ class Patcher:
             return self.add_subpatcher(value, **kwds)
         elif maxclass == 'gen~':
             return self.add_gen(value, **kwds)
+        elif maxclass == 'rnbo~':
+            return self.add_rnbo(value, **kwds)            
         else:
             return self.add_textbox(text=value, **kwds)
 
@@ -632,6 +638,13 @@ class Patcher:
         return self.add_subpatcher(text,
                                    patcher=Patcher(parent=self,
                                                    classnamespace='gen.dsp'), **kwds)
+
+    def add_rnbo(self, text: str = 'rnbo~',  **kwds):
+        """Add an rnbo~ object."""
+
+        return self.add_subpatcher(text,
+                                   patcher=Patcher(parent=self,
+                                                   classnamespace='rnbo.dsp'), **kwds)
 
     def add_coll(self, name: str = None, dictionary: dict = None, embed: int = 1,
                  patching_rect: list[float] = None, text: str = None, id: str = None,
@@ -829,9 +842,9 @@ class Box:
         self.maxclass = maxclass or 'newobj'
         self.numinlets = numinlets or 0
         self.numoutlets = numoutlets or 1
-        self.patching_rect = patching_rect or [0, 0, 62, 22]
         # self.outlettype = outlettype
-
+        self.patching_rect = patching_rect or [0, 0, 62, 22]
+        
         self._kwds = self._remove_none_entries(kwds)
         self._patcher = self._kwds.pop('patcher', None)
         # self._parse(self.text)
