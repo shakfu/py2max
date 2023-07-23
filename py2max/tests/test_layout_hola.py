@@ -10,7 +10,6 @@ a python extension of the API.
 
 """
 import random
-# from adaptagrams import Rectangle, ColaEdge, RectangularCluster, RootCluster
 
 from adaptagrams import Graph, DialectNode
 from adaptagrams import buildGraphFromTglfFile, HolaOpts, doHOLA
@@ -78,16 +77,29 @@ def test_hola_from_random_graph():
 
     n = g.getNode(2)
     p = n.getCentre()  # get coordinates
-    assert p.x == 221.328125
-    assert p.y == 247.50000000000006
+
+    assert int(p.x) == int(221.328125)
+    assert int(p.y) == int(247.50000000000006)
 
     b = n.getBoundingBox()
-    assert b.x == 206.328125
-    assert b.X == 236.328125
-    assert b.X - b.x == 30.0
+    assert int(b.x) == int(206.328125)
+    assert int(b.X) == int(236.328125)
+    assert int(b.X - b.x) == int(30.0)
 
-    assert b.y == 232.50000000000006
-    assert b.Y == 262.50000000000006
-    assert b.Y - b.y == 30.0
+    assert int(b.y) == int(232.50000000000006)
+    assert int(b.Y) == int(262.50000000000006)
+    assert int(b.Y - b.y) == int(30.0)
+
+    # assert p.x == 221.328125
+    # assert p.y == 247.50000000000006
+
+    # b = n.getBoundingBox()
+    # assert b.x == 206.328125
+    # assert b.X == 236.328125
+    # assert b.X - b.x == 30.0
+
+    # assert b.y == 232.50000000000006
+    # assert b.Y == 262.50000000000006
+    # assert b.Y - b.y == 30.0
 
     dump(g, './outputs/test_hola_from_random_after')

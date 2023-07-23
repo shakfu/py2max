@@ -6,6 +6,15 @@
 
 - [graphdrawing.org](http://graphdrawing.org) - research and publication overview for field of graph drawing edited by same author as above.
 
+## Orthogonal Graph Layout
+
+- [adaptagrams](https://github.com/mjwybrow/adaptagrams) - see swig python wrapper
+
+- [pyhola](https://github.com/shakfu/pyhola): my wrapper of hola algo
+
+- [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing): orhogonal layout in python, a fork of [tsmpy](https://github.com/uknfire/tsmpy)
+
+
 ## Python Packages
 
 - [NetworkX](https://networkx.org) -- mature Python package for the creation, manipulation, and study of the structure, dynamics, and functions of complex networks.
@@ -25,6 +34,7 @@
 - [netgraph](https://github.com/paulbrodersen/netgraph) -- Python module to make publication quality plots of weighted, directed graphs of medium size (10-100 nodes).see also [here](https://stackoverflow.com/questions/39801880/how-to-use-the-pos-argument-in-networkx-to-create-a-flowchart-style-graph/39863493)
 
 - [tulip-python](https://tulip.labri.fr/site/) -- 
+
 
 ## Non-Python
 
