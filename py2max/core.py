@@ -375,7 +375,7 @@ class Patcher:
     
     # alias for add_line
     link = add_line
-
+    
     def add_textbox(self, text: str, maxclass: str = None,
                     numinlets: int = None, numoutlets: int = None, outlettype: list[str] = None,
                     patching_rect: list[float] = None, id: str = None,
@@ -387,6 +387,9 @@ class Patcher:
         _maxclass, *tail = text.split()
         if _maxclass in MAXCLASS_DEFAULTS and not maxclass:
             maxclass = _maxclass
+
+        if self.classnamespace == 'rnbo':
+            kwds['rnbo_classname'] = _maxclass
 
         return self.add_box(
             Box(
@@ -402,7 +405,7 @@ class Patcher:
             comment,
             comment_pos
         )
-    
+
     def _add_float(self, value, *args, **kwds):
         """type-handler for float values in `add`"""
 
@@ -475,6 +478,33 @@ class Patcher:
 
         else:
             raise NotImplementedError
+
+    def add_codebox(self, code: str, patching_rect: list[float] = None, id: str = None,
+                    comment: str = None, comment_pos: str = None,  **kwds):
+        """Add a codebox."""
+
+        _maxclass = 'codebox'
+        _code = code.replace('\n', '\r\n')
+
+        if self.classnamespace == 'rnbo':
+            kwds['rnbo_classname'] = _maxclass
+            kwds['rnbo_extra_attributes']= dict(
+                code=_code,
+                hot=0,
+            )
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                code=_code,
+                maxclass=_maxclass,
+                outlettype=[""],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds
+            ),
+            comment,
+            comment_pos
+        )
 
     def add_message(self, text: str = None, patching_rect: list[float] = None, id: str = None,
                     comment: str = None, comment_pos: str = None, **kwds):
@@ -641,10 +671,9 @@ class Patcher:
 
     def add_rnbo(self, text: str = 'rnbo~',  **kwds):
         """Add an rnbo~ object."""
-
         return self.add_subpatcher(text,
                                    patcher=Patcher(parent=self,
-                                                   classnamespace='rnbo.dsp'), **kwds)
+                                                   classnamespace='rnbo'), **kwds)
 
     def add_coll(self, name: str = None, dictionary: dict = None, embed: int = 1,
                  patching_rect: list[float] = None, text: str = None, id: str = None,

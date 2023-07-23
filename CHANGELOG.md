@@ -1,5 +1,11 @@
 # Changelog
 
+
+## 0.1.1
+
+- added preliminary support for rnbo~ include rnbo codebox
+
+
 ## 0.1
 
 - added a generic `.add` method to `Patcher` objects which inlcude some logic to to figure out to which specialized method to dispatch to. See: `tests/test_add.py` for examples of this.

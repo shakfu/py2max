@@ -4,7 +4,7 @@ A pure python library without dependencies intended to facilitate the offline ge
 
 It was created to automate the creation of help (`.maxhelp`) files for the [sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough that it should have its own repo.
 
-For the use of python3 in a live Max patcher, see the [py-js](https://github.com/shakfu/py-js) project.
+For the use of python3 in a live Max patcher, check out a bunch of python3 externals at the [py-js](https://github.com/shakfu/py-js) project.
 
 ## Features
 
@@ -133,6 +133,7 @@ Certain patcher methods are implementated to specialize and ease the creation of
 - `.add_floatparam`
 - `.add_subpatcher`
 - `.add_gen`
+- `.add_rnbo`
 - `.add_coll`
 - `.add_dict`
 - `.add_table`
@@ -140,7 +141,18 @@ Certain patcher methods are implementated to specialize and ease the creation of
 - `.add_umenu`
 - `.add_bpatcher`
 - `.add_beap`
+- `.add_codebox`
 
 This is a short list, but the `add_textbox` method alone can handle almost all case. The others are really just there for convenience and to save typing.
 
 Generally, it is recommended to start using `py2max`'s via these `add_<type>` methods, since they have most of the required parameters built into the methods and you can get IDE completion support.  Once you are comfortable with the parameters, then use the generic abbreviated form: `add`, which is less typing but you lose the IDE parameter completion support.
+
+
+
+
+## DEVNOTES
+
+- convert maxpat to yaml (see `scripts/convert.py`) for ease of reading during dev
+- compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html), see (`scripts/compare.py`)
+
+
