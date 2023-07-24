@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py2max"
+authors = [
+    {name = "Shakeeb Alireza", email = "me@org.me"},
+]
+version = "0.1.0"
+description = "A library for offline generation of Max/MSP patcher (.maxpat) files."
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["Max", "maxpat", "offline"]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = []

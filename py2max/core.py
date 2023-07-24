@@ -350,7 +350,7 @@ class Patcher:
 
         rect = box.patching_rect.copy()
         if comment_pos:
-            assert comment_pos in ["above", "below", "right", "left"]
+            assert comment_pos in ["above", "below", "right", "left"], f"comment:{comment} / comment_pos: {comment_pos}"
             patching_rect = getattr(self._layout_mgr, comment_pos)(rect)
         else:
             patching_rect = self._layout_mgr.above(rect)

@@ -108,7 +108,7 @@ python3 -m pytest.tests.test_basic
 
 - API Docs are still not available
 
-- The current layout algorithm is extremely rudimentary, however there are some [promising directions](docs/notes/graph-drawing.md) to address this. In practice, you will necessarily have to move most things around after generation.
+- The current layout algorithm is extremely rudimentary, however there are some [promising directions](docs/notes/graph-drawing.md) and you can see also see a [visual comparison](docs/auto-layouts.md) of how well different layout algorithms perform.
 
 - While generation does not consume the py2max objects, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes to the object tree.
 
@@ -160,5 +160,10 @@ Generally, it is recommended to start using `py2max`'s via these `add_<type>` me
 
 - convert maxpat to yaml (see `scripts/convert.py`) for ease of reading during dev
 - compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html), see (`scripts/compare.py`)
+
+
+
+
+
 
 
