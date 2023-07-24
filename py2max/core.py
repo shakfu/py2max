@@ -37,9 +37,13 @@ Rect = namedtuple("Rect", "x y w h")
 
 
 class LayoutManager:
-    """Utility class to help with object position calculations."""
+    """Utility class to help with object layout.
+    
+    This is a basic horizontal layout manager.
+    i.e. objects flow and wrap to the right.
+    """
 
-    LAYOUT_DEFAULT_PAD = 32.0
+    LAYOUT_DEFAULT_PAD = 1.5*32.0
     LAYOUT_DEFAULT_BOX_WIDTH = 66.0
     LAYOUT_DEFAULT_BOX_HEIGHT = 22.0
 
@@ -87,7 +91,7 @@ class LayoutManager:
         return [x, y, w, h]
 
     def get_relative_pos(self, rect: Rect):
-        """returns a relative position for the object"""
+        """returns a relative horizontal position for the object"""
         x, y, w, h = tuple(rect)
 
         pad = self.pad  # 32.0
@@ -102,6 +106,26 @@ class LayoutManager:
             self.y_layout_counter += 1
 
         y = pad + y_shift
+
+        return [x, y, w, h]
+
+    def get_relative_pos_v(self, rect: Rect):
+        """returns a relative vertical position for the object"""
+        x, y, w, h = tuple(rect)
+
+        pad = self.pad  # 32.0
+
+        x_shift = 3 * pad * self.x_layout_counter
+        y_shift = 1.5 * pad * self.y_layout_counter
+        y = pad + y_shift
+
+        self.y_layout_counter += 1
+        if y + h + 2 * pad > self.parent.height:
+        # if y + h + 2 * pad > 300:
+            self.x_layout_counter += 1
+            self.y_layout_counter = 0
+
+        x = pad + x_shift        
 
         return [x, y, w, h]
 
@@ -150,6 +174,36 @@ class LayoutManager:
         """Return a position right of the object"""
         x, y, w, h = rect
         return [x + (self.box_width + w), y, w, h]
+
+
+class VerticalLayoutManager(LayoutManager):
+    """Utility class to help with object layout.
+    
+    This is a basic horizontal layout manager.
+    i.e. objects fill from top to bottom of the 
+    grid and and wrap vertically.
+    """
+
+    def get_relative_pos(self, rect: Rect):
+        """returns a relative vertical position for the object"""
+        x, y, w, h = tuple(rect)
+
+        pad = self.pad  # 32.0
+
+        x_shift = 3 * pad * self.x_layout_counter
+        y_shift = 1.5 * pad * self.y_layout_counter
+        y = pad + y_shift
+
+        self.y_layout_counter += 1
+        if y + h + 2 * pad > self.parent.height:
+        # if y + h + 2 * pad > 300:
+            self.x_layout_counter += 1
+            self.y_layout_counter = 0
+
+        x = pad + x_shift        
+
+        return [x, y, w, h]
+
 
 
 class Patcher:

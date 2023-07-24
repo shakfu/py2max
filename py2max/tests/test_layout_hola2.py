@@ -10,8 +10,13 @@ a python extension of the API.
 
 """
 
-from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
 
+import pytest
+try:
+    from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
+    HAS_ADAPTAGRAMS = True
+except ImportError:
+    HAS_ADAPTAGRAMS = False
 
 from .. import Patcher
 
@@ -49,7 +54,7 @@ class HolaPatcher(Patcher):
 
         dump(g, './outputs/test_hola_graph2_after')
 
-
+@pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_graph():
     p = HolaPatcher('outputs/test_hola_graph2.maxpat')
 

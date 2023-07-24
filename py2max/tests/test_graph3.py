@@ -1,5 +1,12 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+import pytest
+try:
+    import networkx as nx
+    import matplotlib.pyplot as plt
+    import pygraphviz
+    HAS_REQS = True
+except ImportError:
+    HAS_REQS = False
+
 
 from .. import Patcher
 
@@ -44,7 +51,7 @@ class OrthogonalPatcher(Patcher):
             _boxes.append(box)
         self.boxes = _boxes
 
-
+@pytest.mark.skipif(not HAS_REQS, reason="requires networkx, matplotlib, pygraphviz")
 def test_graph():
     p = OrthogonalPatcher('outputs/test_graph3.maxpat')
 

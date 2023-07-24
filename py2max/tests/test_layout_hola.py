@@ -10,10 +10,13 @@ a python extension of the API.
 
 """
 import random
-
-from adaptagrams import Graph, DialectNode
-from adaptagrams import buildGraphFromTglfFile, HolaOpts, doHOLA
-
+import pytest
+try:
+    from adaptagrams import Graph, DialectNode
+    from adaptagrams import buildGraphFromTglfFile, HolaOpts, doHOLA
+    HAS_ADAPTAGRAMS = True
+except ImportError:
+    HAS_ADAPTAGRAMS = False
 
 def dump(g, prefix):
     with open(f'{prefix}.tglf', 'w') as f:
@@ -21,6 +24,7 @@ def dump(g, prefix):
     with open(f'{prefix}.svg', 'w') as f:
         f.write(g.writeSvg())
 
+@pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_build_graph():
     g = Graph()
 
@@ -48,7 +52,7 @@ def test_build_graph():
 
     dump(g, './outputs/test_build_hola_graph_before')
 
-
+@pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_hola_from_random_graph():
     g = buildGraphFromTglfFile("py2max/tests/graphs/random/v30e33.tglf")
     assert g.getNumNodes() == 30
