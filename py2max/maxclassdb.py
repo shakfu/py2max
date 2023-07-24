@@ -10,6 +10,20 @@ MAXCLASS_DEFAULTS = {
         "parameter_enable": 0,
         "patching_rect": [0.0, 0.0, 24.0, 24.0],
     },
+    "codebox": {
+        "maxclass": "codebox",
+        "numinlets": 1,
+        "numoutlets": 1,
+        "outlettype": [""],
+        "patching_rect": [191.0, 118.0, 200.0, 200.0],
+    },    
+    "codebox~": {
+        "maxclass": "codebox~",
+        "numinlets": 1,
+        "numoutlets": 1,
+        "outlettype": [""],
+        "patching_rect": [191.0, 118.0, 200.0, 200.0],
+    },    
     "dial": {
         "maxclass": "dial",
         "numinlets": 1,
