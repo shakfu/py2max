@@ -112,7 +112,13 @@ python3 -m pytest.tests.test_basic
 
 - While generation does not consume the py2max objects, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes to the object tree.
 
-- For those objects which have their own methods, the current implementation still has to address cases when two max objects are the same except for `~` symbol.
+- For the fiew objects which have their own methods, the current implementation differentiates `tilde` objects by providing a different method with a `_tilde` suffix:
+
+	```python
+	gen = p.add_gen()
+
+	gen_tilde = p.add_gen_tilde()
+	```
 
 ## Design Notes
 

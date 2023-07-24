@@ -416,7 +416,7 @@ class Patcher:
 
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = _maxclass
-            if _maxclass == "codebox":
+            if _maxclass in ["codebox", "codebox~"]:
                 if "code" in kwds:
                     kwds["code"] = kwds["code"].replace("\n", "\r\n")
                     kwds["rnbo_extra_attributes"] = dict(
@@ -551,6 +551,20 @@ class Patcher:
             comment_pos,
         )
 
+    def add_codebox_tilde(
+        self,
+        code: str,
+        patching_rect: list[float] = None,
+        id: str = None,
+        comment: str = None,
+        comment_pos: str = None,
+        **kwds,
+    ):
+        """Add a codebox_tilde"""
+        return self.codebox(
+            code, patching_rect, id, comment, comment_pos, tilde=True, **kwds
+        )
+
     def add_message(
         self,
         text: str = None,
@@ -614,6 +628,7 @@ class Patcher:
             comment,
             comment_pos,
         )
+
     # alias
     add_int = add_intbox
 
@@ -640,6 +655,7 @@ class Patcher:
             comment,
             comment_pos,
         )
+
     # alias
     add_float = add_floatbox
 
@@ -760,14 +776,15 @@ class Patcher:
         )
 
     def add_gen(self, tilde=False, **kwds):
-        """Add a gen~ object."""
-        text = "gen"
-        if tilde:
-            text += "~"
-
+        """Add a gen object."""
+        text = "gen~" if tilde else "gen"
         return self.add_subpatcher(
             text, patcher=Patcher(parent=self, classnamespace="dsp.gen"), **kwds
         )
+
+    def add_gen_tilde(self, **kwds):
+        """Add a gen~ object."""
+        return self.add_gen(tilde=True, **kwds)
 
     def add_rnbo(self, text: str = "rnbo~", **kwds):
         """Add an rnbo~ object."""
@@ -864,11 +881,7 @@ class Patcher:
         tilde=False,
         **kwds,
     ):
-        """Add a table or table~ object with option to pre-populate from a py list."""
-
-        table_type = 'table'
-        if tilde:
-            table_type += '~'
+        """Add a table object with option to pre-populate from a py list."""
 
         extra = {
             "embed": embed,
@@ -886,6 +899,7 @@ class Patcher:
             "editor_rect": [100.0, 100.0, 300.0, 300.0],
         }
         kwds.update(extra)
+        table_type = "table~" if tilde else "table"
         return self.add_box(
             Box(
                 id=id or self.get_id(),
@@ -901,6 +915,33 @@ class Patcher:
             ),
             comment,
             comment_pos,
+        )
+
+    def add_table_tilde(
+        self,
+        name: str = None,
+        array: list[int] = None,
+        embed: int = 1,
+        patching_rect: list[float] = None,
+        text: str = None,
+        id: str = None,
+        comment: str = None,
+        comment_pos: str = None,
+        **kwds,
+    ):
+        """Add a table~ object with option to pre-populate from a py list."""
+
+        return self.add_table(
+            name,
+            array,
+            embed,
+            patching_rect,
+            text,
+            id,
+            comment,
+            comment_pos,
+            tilde=True,
+            **kwds,
         )
 
     def add_itable(
