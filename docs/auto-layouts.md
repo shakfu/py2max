@@ -6,31 +6,37 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 1. [networkx](https://networkx.org) - a general network analysis library in python.
 
-2. [adaptagrams hola](http://www.adaptagrams.org) - using libdialect and HOLA: Human-like Orthogonal Network Layout 
+2. [graphviz](https://graphviz.org) - well known graphing library (activated via networkx and [pygraphviz](https://github.com/pygraphviz/pygraphviz))
 
-3. [tsmpy](https://github.com/uknfire/tsmpy) - An orthogonal layout algorithm, using TSM approach covers some of the experimentation in various methods on how to auto-layout objects in a pymax generated file.
+3. [adaptagrams hola](http://www.adaptagrams.org) - using the `libdialect` library and its HOLA algo: Human-like Orthogonal Network Layout
 
-### Default Layout
+4. [tsmpy](https://github.com/uknfire/tsmpy) - An orthogonal layout algorithm, using the TSM approach covers some of the experimentation in various methods on how to auto-layout objects in a pymax generated file.
+
+
+### The Default Layout
 
 ![default](assets/imgs/default.png)
 
 
-## Adaptragrams Layouts
 
-### adptagrams-hola Layout
+## Adaptagrams Layouts
+
+### adaptagrams-hola Layout
 
 ![hola](assets/imgs/hola.png)
 
 
 ## Networkx Layouts
 
+### networkx-spring-layout Layout
+
+![spring-layout](assets/imgs/spring-layout.png)
+
+
 ### networkx-hamada-kawai Layout
 
 ![kamada_kawai_layout](assets/imgs/kamada_kawai_layout.png)
 
-### graphviz-neato Layout
-
-![neato](assets/imgs/neato.png)
 
 ### networkx-planar Layout
 
@@ -44,13 +50,37 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ![spectral](assets/imgs/spectral.png)
 
-### networkx-spring-layout Layout
-
-![spring-layout](assets/imgs/spring-layout.png)
 
 ### networkx-circular Layout
 
 ![circular](assets/imgs/circular.png)
+
+
+
+## Graphviz Layouts
+
+### graphviz-dot Layout
+
+![dot](assets/imgs/dot.png)
+
+
+### graphviz-neato Layout
+
+![neato](assets/imgs/neato.png)
+
+### graphviz-fdp Layout
+
+![fdp](assets/imgs/fdp.png)
+
+
+### graphviz-sfdp Layout
+
+![sfdp](assets/imgs/sfdp.png)
+
+
+### graphviz-twopi Layout
+
+![twopi](assets/imgs/twopi.png)
 
 
 
@@ -68,25 +98,4 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ![tsmp1](assets/imgs/tsmp1.png)
 
-
-
-## Graphviz Layouts
-
-### graphviz-dot Layout
-
-![dot](assets/imgs/dot.png)
-
-### graphviz-fdp Layout
-
-![fdp](assets/imgs/fdp.png)
-
-
-### graphviz-twopi Layout
-
-![twopi](assets/imgs/twopi.png)
-
-
-### graphviz-sfdp Layout
-
-![sfdp](assets/imgs/sfdp.png)
 
