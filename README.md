@@ -96,23 +96,23 @@ p.link(sbox, dac)
 p.save()
 ```
 
-Note that Python classes are basically just simple wrappers around their corresponding JSON spec in the .maxpat file, and almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_textbox` or the generic `.add` methods. There are also specialized methods in the form `.add_<type>` for numbers, numeric parameters, subpatchers, and container-type objects (see the design notes below for more details).
+Note that Python classes are basically just simple wrappers around the JSON structures in a .maxpat file, and almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_textbox` or the generic `.add` methods. There are also specialized methods in the form `.add_<type>` for numbers, numeric parameters, subpatchers, and container-type objects (see the design notes below for more details).
 
 Further tests are in the `py2max/tests` folder and can be output to an `outputs` folder all at once by running `pytest` in the project root, or individually, by doing something like the following:
 
 ```bash
-python3 -m pytest.tests.test_basic
+python3 -m pytest tests.test_basic
 ```
 
 ## Caveats
 
 - API Docs are still not available
 
-- The current layout algorithm is extremely rudimentary, however there are some [promising directions](docs/notes/graph-drawing.md) and you can see also see a [visual comparison](docs/auto-layouts.md) of how well different layout algorithms perform.
+- The current default layout algorithm is extremely rudimentary, however there are some [promising directions](docs/notes/graph-drawing.md) and you can see also see a [visual comparison](docs/auto-layouts.md) of how well different layout algorithms perform in this context.
 
 - While generation does not consume the py2max objects, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes to the object tree.
 
-- For the fiew objects which have their own methods, the current implementation differentiates `tilde` objects by providing a different method with a `_tilde` suffix:
+- For the few objects which have their own methods, the current implementation differentiates tilde objects from non-tilde objects by providing a different method with a `_tilde` suffix:
 
 	```python
 	gen = p.add_gen()
@@ -128,7 +128,7 @@ The above structure directly maps onto the Python implementation which consists 
 
 This turns out to be the most maintainable and flexible way to handle all the differences between the hundreds of Max, MSP, and Jitter objects.
 
-Certain patcher methods are implementated to specialize and ease the creation of certain classes of objects:
+Certain patcher methods are implemented to specialize and ease the creation of certain classes of objects:
 
 - `.add_textbox`
 - `.add_message`
@@ -154,16 +154,7 @@ This is a short list, but the `add_textbox` method alone can handle almost all c
 Generally, it is recommended to start using `py2max`'s via these `add_<type>` methods, since they have most of the required parameters built into the methods and you can get IDE completion support.  Once you are comfortable with the parameters, then use the generic abbreviated form: `add`, which is less typing but you lose the IDE parameter completion support.
 
 
-
-
 ## DEVNOTES
 
 - convert maxpat to yaml (see `scripts/convert.py`) for ease of reading during dev
 - compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html), see (`scripts/compare.py`)
-
-
-
-
-
-
-
