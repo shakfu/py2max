@@ -3,9 +3,19 @@
 
 ## 0.1.1
 
+- Added pyhola layout.
+
+- Added graphviz layouts.
+
+- Fixed Adaptragrams layout.
+
+- Added graph layout comparison and additional layouts.
+
+- Added vertical layout variant.
+
 - Added boolean `tilde` parameter for objects which have a tilde sibling.
 
-- Added preliminary support for rnbo~ include rnbo codebox
+- Added preliminary support for `rnbo~` include rnbo codebox
 
 
 ## 0.1

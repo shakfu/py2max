@@ -30,6 +30,10 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ![hola](assets/imgs/hola.png)
 
+### pyhola Layout
+
+![pyhola](assets/imgs/pyhola.png)
+
 
 ## Networkx Layouts
 

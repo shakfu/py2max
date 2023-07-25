@@ -158,3 +158,23 @@ Generally, it is recommended to start using `py2max`'s via these `add_<type>` me
 
 - convert maxpat to yaml (see `scripts/convert.py`) for ease of reading during dev
 - compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html), see (`scripts/compare.py`)
+
+
+## Credits and Licensing
+
+All rights reserved to the original respective authors:
+
+> Steve Kieffer, Tim Dwyer, Kim Marriott, and Michael Wybrow. HOLA: Human-like Orthogonal Network Layout. In Visualization and Computer Graphics, IEEE Transactions on, Volume 22, Issue 1, pages 349 - 358. IEEE, 2016. DOI
+
+> Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart, “Exploring network structure, dynamics, and function using NetworkX”, in Proceedings of the 7th Python in Science Conference (SciPy2008), Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds), (Pasadena, CA USA), pp. 11–15, Aug 2008
+
+> A Technique for Drawing Directed Graphs
+Emden R. Gansner, Eleftherios Koutsofios, Stephen C. North, Kiem-phong Vo • IEEE TRANSACTIONS ON SOFTWARE ENGINEERING • Published 1993
+
+> Gansner, E.R., Koren, Y., North, S. (2005). Graph Drawing by Stress Majorization. In: Pach, J. (eds) Graph Drawing. GD 2004. Lecture Notes in Computer Science, vol 3383. Springer, Berlin, Heidelberg. https://doi.org/10.1007/978-3-540-31843-9_25
+
+> An open graph visualization system and its applications to software engineering
+Emden R. Gansner, Stephen C. North • SOFTWARE - PRACTICE AND EXPERIENCE • Published 2000
+
+The py2max code is placed in the public domain by its author.
+
