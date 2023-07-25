@@ -10,7 +10,9 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 3. [adaptagrams hola](http://www.adaptagrams.org) - using the `libdialect` library and its HOLA algo: Human-like Orthogonal Network Layout
 
-4. [tsmpy](https://github.com/uknfire/tsmpy) - An orthogonal layout algorithm, using the TSM approach covers some of the experimentation in various methods on how to auto-layout objects in a pymax generated file.
+4. [pyhola](https://github.com/shakfu/pyhola) - a sibling project which provides a pybind11 wrapper for the adaptagrams HOLA graph layout algorithm.
+
+5. [tsmpy](https://github.com/uknfire/tsmpy) - An orthogonal layout algorithm, using the TSM approach covers some of the experimentation in various methods on how to auto-layout objects in a pymax generated file.
 
 
 ## Default Layouts
