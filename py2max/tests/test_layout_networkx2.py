@@ -44,7 +44,7 @@ class OrthogonalPatcher(Patcher):
         if HAS_TSMPY:
             tsm = TSM(G, pos, uselp=True)
             tsm.display()
-            plt.savefig('outputs/test_graph2.svg')
+            plt.savefig('outputs/test_layout_networkx2.svg')
             plt.close()
             pos = tsm.pos
 
@@ -65,7 +65,7 @@ class OrthogonalPatcher(Patcher):
 
 
 def test_graph():
-    p = OrthogonalPatcher('outputs/test_graph2.maxpat')
+    p = OrthogonalPatcher('outputs/test_layout_networkx2.maxpat')
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

@@ -10,7 +10,6 @@ a python extension of the API.
 
 """
 
-
 import pytest
 try:
     from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
@@ -26,6 +25,12 @@ def dump(g, prefix):
         f.write(g.writeTglf())
     with open(f'{prefix}.svg', 'w') as f:
         f.write(g.writeSvg())
+
+
+def set_hola_opts(opts):
+    # opts.useACAforLinks = False
+    return opts
+
 
 class HolaPatcher(Patcher):
 
@@ -45,18 +50,37 @@ class HolaPatcher(Patcher):
         for line in self._lines:
             g.addEdge(nodes[line.src], nodes[line.dst])
 
-        dump(g, './outputs/test_layout_hola_2_before')
+        dump(g, './outputs/test_layout_hola_3_before')
         
         opts = HolaOpts()
+
+        # change opts
+        opts = set_hola_opts(opts)
         
         # orthogonal layout
         doHOLA(g, opts)
 
-        dump(g, './outputs/test_layout_hola_2_after')
+        dump(g, './outputs/test_layout_hola_3_after')
+
+        # scale = self.rect[2]
+        scale = 1
+        repos = []
+        for key, node in nodes.items():
+            p = node.getCentre()
+            repos.append((p.x*scale, p.y*scale))
+
+        _boxes = []
+        for box, xy in zip(self._boxes, repos):
+            x, y, h, w = box.patching_rect
+            newx, newy = xy
+            box.patching_rect = newx, newy, h, w
+            _boxes.append(box)
+        self.boxes = _boxes
+
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_graph():
-    p = HolaPatcher('outputs/test_layout_hola_2.maxpat')
+    p = HolaPatcher('outputs/test_layout_hola_3.maxpat')
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

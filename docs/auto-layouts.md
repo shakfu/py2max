@@ -13,10 +13,15 @@ The default is a very basic grid layout algo that's implemented in the current `
 4. [tsmpy](https://github.com/uknfire/tsmpy) - An orthogonal layout algorithm, using the TSM approach covers some of the experimentation in various methods on how to auto-layout objects in a pymax generated file.
 
 
-### The Default Layout
+## Default Layouts
 
-![default](assets/imgs/default.png)
+### Default Horizontal Layout
 
+![default_horizontal](assets/imgs/default_h.png)
+
+### Default Vertical Layout
+
+![default_vertical](assets/imgs/default_v.png)
 
 
 ## Adaptagrams Layouts
@@ -28,7 +33,7 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ## Networkx Layouts
 
-### networkx-spring-layout Layout
+### networkx-spring Layout
 
 ![spring-layout](assets/imgs/spring-layout.png)
 

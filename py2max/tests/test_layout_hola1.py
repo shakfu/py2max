@@ -50,7 +50,7 @@ def test_build_graph():
 
     assert g.getNumEdges() == 1
 
-    dump(g, './outputs/test_build_hola_graph_before')
+    dump(g, './outputs/test_layout_hola_1_before')
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_hola_from_random_graph():
@@ -73,7 +73,7 @@ def test_hola_from_random_graph():
     assert b.Y == 273.0
     assert b.Y - b.y == 30.0
 
-    dump(g, './outputs/test_hola_from_random_before')
+    dump(g, './outputs/test_layout_hola_random_1_before')
 
     # configure and execute Hola transform
     opts = HolaOpts()
@@ -106,4 +106,4 @@ def test_hola_from_random_graph():
     # assert b.Y == 262.50000000000006
     # assert b.Y - b.y == 30.0
 
-    dump(g, './outputs/test_hola_from_random_after')
+    dump(g, './outputs/test_layout_hola_random_1_after')

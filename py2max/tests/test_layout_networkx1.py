@@ -82,7 +82,7 @@ class GraphPatcher(Patcher):
 
 
 def test_graph():
-    p = GraphPatcher('outputs/test_graph.maxpat')
+    p = GraphPatcher('outputs/test_layout_networkx1.maxpat')
 
     fparam = p.add_floatparam
     iparam = p.add_intparam
