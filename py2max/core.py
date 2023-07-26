@@ -43,9 +43,12 @@ class LayoutManager:
     i.e. objects flow and wrap to the right.
     """
 
+
     LAYOUT_DEFAULT_PAD = 1.5*32.0
+    # LAYOUT_DEFAULT_PAD = 32.0
     LAYOUT_DEFAULT_BOX_WIDTH = 66.0
     LAYOUT_DEFAULT_BOX_HEIGHT = 22.0
+    LAYOUT_DEFAULT_COMMENT_PAD = 2
 
     def __init__(
         self,
@@ -53,11 +56,13 @@ class LayoutManager:
         pad: int = None,
         box_width: int = None,
         box_height: int = None,
+        comment_pad: int = None,
     ):
         self.parent = parent
         self.pad = pad or self.LAYOUT_DEFAULT_PAD
         self.box_width = box_width or self.LAYOUT_DEFAULT_BOX_WIDTH
         self.box_height = box_height or self.LAYOUT_DEFAULT_BOX_HEIGHT
+        self.comment_pad = comment_pad or self.LAYOUT_DEFAULT_COMMENT_PAD
         self.x_layout_counter = 0
         self.y_layout_counter = 0
         self.prior_rect = None
@@ -163,17 +168,20 @@ class LayoutManager:
     def below(self, rect):
         """Return a position below the object"""
         x, y, w, h = rect
-        return [x, y + (self.box_height + h), w, h]
+        # return [x, y + (self.box_height + h + self.comment_pad), w, h]
+        return [x, y + (self.box_height + self.comment_pad), w, h]
 
     def left(self, rect):
         """Return a position left of the object"""
         x, y, w, h = rect
-        return [x - self.box_width, y, w, h]
+        return [x - (self.box_width - self.comment_pad), y, w, h]
 
     def right(self, rect):
         """Return a position right of the object"""
         x, y, w, h = rect
-        return [x + (self.box_width + w), y, w, h]
+        # return [x + (self.box_width + w), y, w, h]
+        # return [x + (self.box_width - self.pad + w), y, w, h]
+        return [x + (self.box_width + self.comment_pad), y, w, h]
 
 
 class VerticalLayoutManager(LayoutManager):
@@ -464,9 +472,9 @@ class Patcher:
         _maxclass, *tail = text.split()
         if _maxclass in MAXCLASS_DEFAULTS and not maxclass:
             maxclass = _maxclass
-            _defaults = MAXCLASS_DEFAULTS[_maxclass]
-            if "patching_rect" in _defaults and not patching_rect:
-                patching_rect = _defaults["patching_rect"]
+            # _defaults = MAXCLASS_DEFAULTS[_maxclass]
+            # if "patching_rect" in _defaults and not patching_rect:
+            #     patching_rect = _defaults["patching_rect"]
 
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = _maxclass

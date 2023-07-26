@@ -16,7 +16,7 @@ def test_add_floatbox():
     p.save()
 
 
-def test_add_floatbox():
+def test_add_intbox():
     p = Patcher('outputs/test_intbox.maxpat')
 
     d = {}

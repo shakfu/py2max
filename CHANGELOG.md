@@ -3,6 +3,10 @@
 
 ## 0.1.1
 
+- Added number_tilde test
+
+- Fixed comment positioning
+
 - Added pyhola layout.
 
 - Added graphviz layouts.

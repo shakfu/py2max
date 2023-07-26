@@ -112,7 +112,7 @@ The default is a very basic grid layout algo that's implemented in the current `
 ![tsmpy1](assets/imgs/tsmp1.png)
 
 
-###  Layout
+### OrthogonalDrawing Layout
 
 ![orthogonal](assets/imgs/orthogonal.png)
 
