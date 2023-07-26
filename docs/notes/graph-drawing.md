@@ -12,7 +12,14 @@
 
 - [pyhola](https://github.com/shakfu/pyhola): my wrapper of hola algo
 
-- [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing): orhogonal layout in python, a fork of [tsmpy](https://github.com/uknfire/tsmpy)
+### Topology-Shaped-Metric
+
+- see [A Generic Framework for the Topology-Shape-Metrics Based Layout by
+Paul Klose](https://rtsys.informatik.uni-kiel.de/~biblio/downloads/theses/pkl-mt.pdf)
+
+- [tsmpy](https://github.com/uknfire/tsmpy)
+
+- A fork of tsmpy - [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing)
 
 
 ## Python Packages

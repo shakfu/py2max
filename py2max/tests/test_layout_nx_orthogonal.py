@@ -1,5 +1,28 @@
+import pytest
+
 import networkx as nx
 import matplotlib.pyplot as plt
+
+try:
+    from orthogonal.topologyShapeMetric.Orthogonalization import Orthogonalization
+    from orthogonal.topologyShapeMetric.Planarization import Planarization
+    from orthogonal.topologyShapeMetric.Compaction import Compaction
+
+    def generate(G, pos=None):
+        planar = Planarization(G, pos)
+        orthogonal = Orthogonalization(planar)
+        compact = Compaction(orthogonal)
+        return compact
+
+    HAS_ORTHOGONAL = True
+
+except ImportError:
+
+    HAS_ORTHOGONAL = False
+
+    def generate(G, pos=None):
+        """no-op"""
+
 
 from .. import Patcher
 
@@ -13,6 +36,8 @@ class OrthogonalPatcher(Patcher):
         # add nodes
         nodes = {}
         for i, box in enumerate(self._boxes):
+            # if box.maxclass == 'comment':
+            #     continue
             nodes[box.id] = i 
             G.add_node(i)
 
@@ -21,20 +46,30 @@ class OrthogonalPatcher(Patcher):
             G.add_edge(nodes[line.src], nodes[line.dst])
 
         # layout
-        scale = self.rect[2]/35
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='neato')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='fdp')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='sfdp')
-        pos = nx.nx_agraph.graphviz_layout(G, prog='twopi')
+        if HAS_ORTHOGONAL:
+            scale = self.rect[2]/4
+            # scale = self.rect[2]/8
+        else:
+            scale = self.rect[2]/35
+
+        # pos = nx.circular_layout(G, scale=scale)
+        # pos = nx.kamada_kawai_layout(G, scale=scale)
+        # pos = nx.planar_layout(G, scale=scale)
+        # pos = nx.shell_layout(G, scale=scale)
+        # pos = nx.spectral_layout(G, scale=scale)
+        pos = nx.spring_layout(G, scale=scale)
+
+        if HAS_ORTHOGONAL:
+            compact = generate(G, pos)
+            compact.draw()
+            plt.savefig("outputs/test_layout_nx_orthogonal.png")
+            pos = compact.pos
 
         repos = []
         for p in pos.items():
             _, coord = p
             x, y = coord
-            # repos.append((x*scale, y*scale))
-            repos.append((x, y))
-            # repos.append((x+scale, y+scale))
+            repos.append((x*scale, y*scale))
 
         _boxes = []
         for box, xy in zip(self._boxes, repos):
@@ -44,9 +79,9 @@ class OrthogonalPatcher(Patcher):
             _boxes.append(box)
         self.boxes = _boxes
 
-
+@pytest.mark.skipif(not HAS_ORTHOGONAL, reason="requires orthogonal")
 def test_graph():
-    p = OrthogonalPatcher('outputs/test_layout_networkx3.maxpat')
+    p = OrthogonalPatcher('outputs/test_layout_nx_orthogonal.maxpat')
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -86,7 +121,6 @@ def test_graph():
     link(scp1, scop)
     link(scp2, scop, inlet=1)
     p.reposition()
-    # p.graph()
     p.save()
 
 

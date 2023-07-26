@@ -12,7 +12,9 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 4. [pyhola](https://github.com/shakfu/pyhola) - a sibling project which provides a pybind11 wrapper for the adaptagrams HOLA graph layout algorithm.
 
-5. [tsmpy](https://github.com/uknfire/tsmpy) - An orthogonal layout algorithm, using the TSM approach covers some of the experimentation in various methods on how to auto-layout objects in a pymax generated file.
+5. [tsmpy](https://github.com/uknfire/tsmpy) - An orthogonal layout algorithm, using the Topology-Shaped-Metric (TSM) approach covers some of the experimentation in various methods on how to auto-layout objects in a pymax generated file.
+
+6. [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing) -- a fork of tsmpy using a variant of Topology-Shaped-Metric (TSM)
 
 
 ## Default Layouts
@@ -97,16 +99,21 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ## TSMP Layouts
 
-### tsmp0-uselp Layout
+### tsmpy-uselp-0 Layout
 
-![tsmp0-uselp](assets/imgs/tsmp0-uselp.png)
+![tsmpy0-uselp](assets/imgs/tsmp0-uselp.png)
 
-### tsmp1-uselp Layout
+### tsmpy-uselp-1 Layout
 
-![tsmp1-uselp](assets/imgs/tsmp1-uselp.png)
+![tsmpy1-uselp](assets/imgs/tsmp1-uselp.png)
 
-### tsmp1 Layout
+### tsmpy Layout
 
-![tsmp1](assets/imgs/tsmp1.png)
+![tsmpy1](assets/imgs/tsmp1.png)
+
+
+###  Layout
+
+![orthogonal](assets/imgs/orthogonal.png)
 
 

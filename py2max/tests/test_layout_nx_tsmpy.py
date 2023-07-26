@@ -1,11 +1,11 @@
-import pytest
+import networkx as nx
+import matplotlib.pyplot as plt
+
 try:
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import pygraphviz
-    HAS_REQS = True
+    from tsmpy import TSM
+    HAS_TSMPY = True
 except ImportError:
-    HAS_REQS = False
+    HAS_TSMPY = False
 
 
 from .. import Patcher
@@ -20,6 +20,8 @@ class OrthogonalPatcher(Patcher):
         # add nodes
         nodes = {}
         for i, box in enumerate(self._boxes):
+            # if box.maxclass == 'comment':
+            #     continue
             nodes[box.id] = i 
             G.add_node(i)
 
@@ -28,19 +30,29 @@ class OrthogonalPatcher(Patcher):
             G.add_edge(nodes[line.src], nodes[line.dst])
 
         # layout
-        scale = self.rect[2]/35
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='neato')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='fdp')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='sfdp')
-        pos = nx.nx_agraph.graphviz_layout(G, prog='twopi')
+        if HAS_TSMPY:
+            scale = self.rect[2]/8
+        else:
+            scale = self.rect[2]/35
+        # pos = nx.circular_layout(G, scale=scale)
+        # pos = nx.kamada_kawai_layout(G, scale=scale)
+        # pos = nx.planar_layout(G, scale=scale)
+        # pos = nx.shell_layout(G, scale=scale)
+        # pos = nx.spectral_layout(G, scale=scale)
+        pos = nx.spring_layout(G, scale=scale)
+
+        if HAS_TSMPY:
+            tsm = TSM(G, pos, uselp=True)
+            tsm.display()
+            plt.savefig('outputs/test_layout_nx_tsmpy.svg')
+            plt.close()
+            pos = tsm.pos
 
         repos = []
         for p in pos.items():
             _, coord = p
             x, y = coord
-            # repos.append((x*scale, y*scale))
-            repos.append((x, y))
+            repos.append((x*scale, y*scale))
             # repos.append((x+scale, y+scale))
 
         _boxes = []
@@ -51,9 +63,9 @@ class OrthogonalPatcher(Patcher):
             _boxes.append(box)
         self.boxes = _boxes
 
-@pytest.mark.skipif(not HAS_REQS, reason="requires networkx, matplotlib, pygraphviz")
+
 def test_graph():
-    p = OrthogonalPatcher('outputs/test_graph3.maxpat')
+    p = OrthogonalPatcher('outputs/test_layout_nx_tsmpy.maxpat')
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
