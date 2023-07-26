@@ -57,9 +57,8 @@ def test_rnb_codebox():
 def test_rnb_codebox_tilde():
     case = CaseTilde('outputs/test_rnbo_codebox_tilde.maxpat')
     sp = case.setup()
-    codebox = sp.add_codebox(
+    codebox = sp.add_codebox_tilde(
         code=CODE,                                 # required
-        tilde=True,
         patching_rect=[200.0, 120.0, 200.0, 200.0] # optional
     )
     case.save(codebox)

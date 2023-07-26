@@ -615,7 +615,7 @@ class Patcher:
         **kwds,
     ):
         """Add a codebox_tilde"""
-        return self.codebox(
+        return self.add_codebox(
             code, patching_rect, id, comment, comment_pos, tilde=True, **kwds
         )
 
