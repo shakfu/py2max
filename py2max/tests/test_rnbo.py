@@ -44,6 +44,11 @@ class CaseTilde(Case):
         self.out2 = self.sp.add_textbox('out~ 2')
         return self.sp
 
+def test_rnb_optimization():
+    p = Patcher('outputs/test_rnbo_optimization.maxpat')
+    sbox = p.add_rnbo(saved_object_attributes=dict(optimization="O3"))
+    p.save()
+
 
 def test_rnb_codebox():
     case = Case('outputs/test_rnbo_codebox.maxpat')
@@ -77,6 +82,7 @@ def test_rnbo_textbox_tilde():
 
 
 if __name__ == '__main__':
+    test_rnb()
     test_rnb_codebox()
     test_rnb_codebox_tilde()
     test_rnbo_textbox()

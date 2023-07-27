@@ -38,11 +38,12 @@ Rect = namedtuple("Rect", "x y w h")
 
 class LayoutManager:
     """Utility class to help with object layout.
-    
+
     This is a basic horizontal layout manager.
     i.e. objects flow and wrap to the right.
     """
-    DEFAULT_PAD = 1.5*32.0
+
+    DEFAULT_PAD = 1.5 * 32.0
     DEFAULT_BOX_WIDTH = 66.0
     DEFAULT_BOX_HEIGHT = 22.0
     DEFAULT_COMMENT_PAD = 2
@@ -123,11 +124,11 @@ class LayoutManager:
 
         self.y_layout_counter += 1
         if y + h + 2 * pad > self.parent.height:
-        # if y + h + 2 * pad > 300:
+            # if y + h + 2 * pad > 300:
             self.x_layout_counter += 1
             self.y_layout_counter = 0
 
-        x = pad + x_shift        
+        x = pad + x_shift
 
         return [x, y, w, h]
 
@@ -180,9 +181,9 @@ class LayoutManager:
 
 class VerticalLayoutManager(LayoutManager):
     """Utility class to help with obadject layout.
-    
+
     This is a basic horizontal layout manager.
-    i.e. objects fill from top to bottom of the 
+    i.e. objects fill from top to bottom of the
     grid and and wrap vertically.
     """
 
@@ -198,14 +199,13 @@ class VerticalLayoutManager(LayoutManager):
 
         self.y_layout_counter += 1
         if y + h + 2 * pad > self.parent.height:
-        # if y + h + 2 * pad > 300:
+            # if y + h + 2 * pad > 300:
             self.x_layout_counter += 1
             self.y_layout_counter = 0
 
-        x = pad + x_shift        
+        x = pad + x_shift
 
         return [x, y, w, h]
-
 
 
 class Patcher:
@@ -407,21 +407,26 @@ class Patcher:
         rect = box.patching_rect.copy()
         # normalize dimensions
         # rect = None
-        x, y, w, h  = rect
+        x, y, w, h = rect
         if h != self._layout_mgr.box_height:
             if box.maxclass in MAXCLASS_DEFAULTS:
-                _, _, _, dh = MAXCLASS_DEFAULTS[box.maxclass]['patching_rect']
+                _, _, _, dh = MAXCLASS_DEFAULTS[box.maxclass]["patching_rect"]
                 rect = x, y, w, dh
             else:
                 h = self._layout_mgr.box_height
                 rect = x, y, w, h
-        # rect = x, y, self._layout_mgr.box_width, self._layout_mgr.box_height 
+        # rect = x, y, self._layout_mgr.box_width, self._layout_mgr.box_height
         if comment_pos:
-            assert comment_pos in ["above", "below", "right", "left"], f"comment:{comment} / comment_pos: {comment_pos}"
+            assert comment_pos in [
+                "above",
+                "below",
+                "right",
+                "left",
+            ], f"comment:{comment} / comment_pos: {comment_pos}"
             patching_rect = getattr(self._layout_mgr, comment_pos)(rect)
         else:
             patching_rect = self._layout_mgr.above(rect)
-        if comment_pos == "left": # special case
+        if comment_pos == "left":  # special case
             self.add_comment(comment, patching_rect, justify="right")
         else:
             self.add_comment(comment, patching_rect)
@@ -662,15 +667,16 @@ class Patcher:
         )
 
     def add_comment(
-        self, text: str, patching_rect: list[float] = None, id: str = None, justify: str = None, **kwds
+        self,
+        text: str,
+        patching_rect: list[float] = None,
+        id: str = None,
+        justify: str = None,
+        **kwds,
     ):
         """Add a basic comment object."""
         if justify:
-            kwds['textjustification'] = {
-                'left':   0,
-                'center': 1,
-                'right':  2
-            }[justify]
+            kwds["textjustification"] = {"left": 0, "center": 1, "right": 2}[justify]
         return self.add_box(
             Box(
                 id=id or self.get_id(),
