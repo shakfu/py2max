@@ -53,16 +53,16 @@ class Patcher:
 class LayoutManager:
     """Utility class to help with object position calculations."""
 
-    LAYOUT_DEFAULT_PAD = 32.0
-    LAYOUT_DEFAULT_BOX_WIDTH = 66.0
-    LAYOUT_DEFAULT_BOX_HEIGHT = 22.0
+    DEFAULT_PAD = 32.0
+    DEFAULT_BOX_WIDTH = 66.0
+    DEFAULT_BOX_HEIGHT = 22.0
 
     def __init__(self, parent: 'Patcher', pad: int = None,
                  box_width: int = None, box_height: int = None):
         self.parent = parent
-        self.pad = pad or self.LAYOUT_DEFAULT_PAD
-        self.box_width = box_width or self.LAYOUT_DEFAULT_BOX_WIDTH
-        self.box_height = box_height or self.LAYOUT_DEFAULT_BOX_HEIGHT
+        self.pad = pad or self.DEFAULT_PAD
+        self.box_width = box_width or self.DEFAULT_BOX_WIDTH
+        self.box_height = box_height or self.DEFAULT_BOX_HEIGHT
         self.x_layout_counter = 0
         self.y_layout_counter = 0
         self.prior_rect = None

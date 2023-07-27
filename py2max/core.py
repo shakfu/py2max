@@ -42,13 +42,10 @@ class LayoutManager:
     This is a basic horizontal layout manager.
     i.e. objects flow and wrap to the right.
     """
-
-
-    LAYOUT_DEFAULT_PAD = 1.5*32.0
-    # LAYOUT_DEFAULT_PAD = 32.0
-    LAYOUT_DEFAULT_BOX_WIDTH = 66.0
-    LAYOUT_DEFAULT_BOX_HEIGHT = 22.0
-    LAYOUT_DEFAULT_COMMENT_PAD = 2
+    DEFAULT_PAD = 1.5*32.0
+    DEFAULT_BOX_WIDTH = 66.0
+    DEFAULT_BOX_HEIGHT = 22.0
+    DEFAULT_COMMENT_PAD = 2
 
     def __init__(
         self,
@@ -59,10 +56,10 @@ class LayoutManager:
         comment_pad: int = None,
     ):
         self.parent = parent
-        self.pad = pad or self.LAYOUT_DEFAULT_PAD
-        self.box_width = box_width or self.LAYOUT_DEFAULT_BOX_WIDTH
-        self.box_height = box_height or self.LAYOUT_DEFAULT_BOX_HEIGHT
-        self.comment_pad = comment_pad or self.LAYOUT_DEFAULT_COMMENT_PAD
+        self.pad = pad or self.DEFAULT_PAD
+        self.box_width = box_width or self.DEFAULT_BOX_WIDTH
+        self.box_height = box_height or self.DEFAULT_BOX_HEIGHT
+        self.comment_pad = comment_pad or self.DEFAULT_COMMENT_PAD
         self.x_layout_counter = 0
         self.y_layout_counter = 0
         self.prior_rect = None
@@ -161,31 +158,28 @@ class LayoutManager:
         return self.parent.rect
 
     def above(self, rect):
-        """Return a position above the object"""
+        """Return a position of a comment above the object"""
         x, y, w, h = rect
-        return [x, y - self.box_height, w, h]
+        return [x, y - h, w, h]
 
     def below(self, rect):
-        """Return a position below the object"""
+        """Return a position of a comment below the object"""
         x, y, w, h = rect
-        # return [x, y + (self.box_height + h + self.comment_pad), w, h]
-        return [x, y + (self.box_height + self.comment_pad), w, h]
+        return [x, y + h, w, h]
 
     def left(self, rect):
-        """Return a position left of the object"""
+        """Return a position of a comment left of the object"""
         x, y, w, h = rect
-        return [x - (self.box_width - self.comment_pad), y, w, h]
+        return [x - (w + self.comment_pad), y, w, h]
 
     def right(self, rect):
-        """Return a position right of the object"""
+        """Return a position of a comment right of the object"""
         x, y, w, h = rect
-        # return [x + (self.box_width + w), y, w, h]
-        # return [x + (self.box_width - self.pad + w), y, w, h]
-        return [x + (self.box_width + self.comment_pad), y, w, h]
+        return [x + (w + self.comment_pad), y, w, h]
 
 
 class VerticalLayoutManager(LayoutManager):
-    """Utility class to help with object layout.
+    """Utility class to help with obadject layout.
     
     This is a basic horizontal layout manager.
     i.e. objects fill from top to bottom of the 
@@ -411,12 +405,26 @@ class Patcher:
         """add a comment associated with the object"""
 
         rect = box.patching_rect.copy()
+        # normalize dimensions
+        # rect = None
+        x, y, w, h  = rect
+        if h != self._layout_mgr.box_height:
+            if box.maxclass in MAXCLASS_DEFAULTS:
+                _, _, _, dh = MAXCLASS_DEFAULTS[box.maxclass]['patching_rect']
+                rect = x, y, w, dh
+            else:
+                h = self._layout_mgr.box_height
+                rect = x, y, w, h
+        # rect = x, y, self._layout_mgr.box_width, self._layout_mgr.box_height 
         if comment_pos:
             assert comment_pos in ["above", "below", "right", "left"], f"comment:{comment} / comment_pos: {comment_pos}"
             patching_rect = getattr(self._layout_mgr, comment_pos)(rect)
         else:
             patching_rect = self._layout_mgr.above(rect)
-        self.add_comment(comment, patching_rect)
+        if comment_pos == "left": # special case
+            self.add_comment(comment, patching_rect, justify="right")
+        else:
+            self.add_comment(comment, patching_rect)
 
     def add_patchline_by_index(
         self, src_id: str, dst_id: str, dst_inlet: int = 0, src_outlet: int = 0
@@ -654,9 +662,15 @@ class Patcher:
         )
 
     def add_comment(
-        self, text: str, patching_rect: list[float] = None, id: str = None, **kwds
+        self, text: str, patching_rect: list[float] = None, id: str = None, justify: str = None, **kwds
     ):
         """Add a basic comment object."""
+        if justify:
+            kwds['textjustification'] = {
+                'left':   0,
+                'center': 1,
+                'right':  2
+            }[justify]
         return self.add_box(
             Box(
                 id=id or self.get_id(),
