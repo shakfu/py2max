@@ -128,36 +128,38 @@ The above structure directly maps onto the Python implementation which consists 
 
 This turns out to be the most maintainable and flexible way to handle all the differences between the hundreds of Max, MSP, and Jitter objects.
 
-Certain patcher methods are implemented to specialize and ease the creation of certain classes of objects:
+A growing list of patcher methods have been implemented to specialize and facilitate the creation of certain classes of objects which require additional configuration:
 
-- `.add_textbox`
-- `.add_message`
-- `.add_comment`
-- `.add_intbox`
-- `.add_floatbox`
-- `.add_intparam`
-- `.add_floatparam`
-- `.add_subpatcher`
-- `.add_gen`
-- `.add_rnbo`
-- `.add_coll`
-- `.add_dict`
-- `.add_table`
-- `.add_itable`
-- `.add_umenu`
-- `.add_bpatcher`
+- `.add_attr`
 - `.add_beap`
+- `.add_bpatcher`
 - `.add_codebox`
+- `.add_coll`
+- `.add_comment`
+- `.add_dict`
+- `.add_floatbox`
+- `.add_floatparam`
+- `.add_gen`
+- `.add_intbox`
+- `.add_intparam`
+- `.add_itable`
+- `.add_message`
+- `.add_rnbo`
+- `.add_subpatcher`
+- `.add_table`
+- `.add_textbox`
+- `.add_umenu`
 
 This is a short list, but the `add_textbox` method alone can handle almost all case. The others are really just there for convenience and to save typing.
 
-Generally, it is recommended to start using `py2max`'s via these `add_<type>` methods, since they have most of the required parameters built into the methods and you can get IDE completion support.  Once you are comfortable with the parameters, then use the generic abbreviated form: `add`, which is less typing but you lose the IDE parameter completion support.
+Generally, it is recommended to start using `py2max`'s via these `add_<type>` methods, since they have most of the required parameters built into the methods and you can get IDE completion support.  Once you are comfortable with the parameters, then use the generic abbreviated form: `add`, which is less typing but tbe tradeoff is you lose the IDE parameter completion support.
 
+## Scripts
 
-## DEVNOTES
+The project has a couple of scripts to help with analyzing .maxpat patterns:
 
-- convert maxpat to yaml (see `scripts/convert.py`) for ease of reading during dev
-- compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html), see (`scripts/compare.py`)
+- `convert.py`: convert maxpat to yaml for ease of reading during dev
+- `compary.py`: compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html)
 
 
 ## Credits and Licensing

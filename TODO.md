@@ -33,4 +33,11 @@ Implement more objects: especially containers / objects with state stored in the
 
 
 
+## Development Notes
+
+- convert maxpat to yaml (see `scripts/convert.py`) for ease of reading during dev
+- compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html), see (`scripts/compare.py`)
+
+
+
 
