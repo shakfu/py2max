@@ -829,6 +829,46 @@ class Patcher:
             comment_pos,
         )
 
+    def add_attr(self, 
+            name: str, 
+            value: float, 
+            shortname: str = None,
+            id: str = None,
+            rect: list[float] = None,
+            hint: str = None,
+            comment: str = None,
+            comment_pos: str = None,
+            autovar=True,
+            show_label=False,
+            **kwds):
+        """create a param-linke attrui entry"""
+        if autovar:
+            kwds['varname'] = name
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text="attrui",
+                maxclass="attrui",
+                attr=name,
+                parameter_enable=1,
+                attr_display=show_label,
+                saved_attribute_attributes = dict(
+                    valueof = dict(
+                        parameter_initial = [ name, value ],
+                        parameter_initial_enable = 1,
+                        parameter_longname = name,
+                        parameter_shortname = shortname or "",
+                    )
+                ),
+                patching_rect=rect or self.get_pos(),
+                hint=name if self._auto_hints else "",
+                **kwds,
+            ),
+            comment or name,  # units can also be added here
+            comment_pos,
+        )
+ 
     def add_subpatcher(
         self,
         text: str,
