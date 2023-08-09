@@ -910,6 +910,35 @@ class Patcher:
 
     def add_rnbo(self, text: str = "rnbo~", **kwds):
         """Add an rnbo~ object."""
+        inletInfo = None
+        outletInfo = None
+        if 'numinlets' in kwds:
+            inletInfo={'IOInfo': []}
+            for i in range(kwds['numinlets']):
+                inletInfo['IOInfo'].append(
+                    dict(
+                        comment='',
+                        index= i+1,
+                        tag=f'in{i+1}',
+                        type='signal'
+                    )
+                )
+        if 'numoutlets' in kwds:
+            outletInfo={'IOInfo': []}
+            for i in range(kwds['numoutlets']):
+                outletInfo['IOInfo'].append(
+                    dict(
+                        comment='',
+                        index= i+1,
+                        tag=f'out{i+1}',
+                        type='signal'
+                    )
+                )
+
+        if inletInfo:
+            kwds['inletInfo'] = inletInfo
+        if outletInfo:
+            kwds['outletInfo'] = outletInfo
         return self.add_subpatcher(
             text, patcher=Patcher(parent=self, classnamespace="rnbo"), **kwds
         )

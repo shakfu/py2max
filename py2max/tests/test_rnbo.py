@@ -81,10 +81,106 @@ def test_rnbo_textbox_tilde():
     case.save(codebox)
 
 
+def test_rnbo_ezdac():
+    p = Patcher('outputs/test_rnbo_ezdac.maxpat')
+    rnbo = p.add_rnbo(
+
+        inletInfo=dict(
+            IOInfo=[
+                dict(
+                    comment='',
+                    index= 1,
+                    tag='in1',
+                    type='signal'
+                ),
+                dict(
+                    comment='',
+                    index= 2,
+                    tag='in2',
+                    type='signal'
+                ),            
+            ],
+        ),
+        outletInfo=dict(
+            IOInfo=[
+                dict(
+                    comment='',
+                    index= 1,
+                    tag='out1',
+                    type='signal'
+                ),
+                dict(
+                    comment='',
+                    index= 2,
+                    tag='out2',
+                    type='signal'
+                ),            
+            ],
+        ),
+      # outlettype = ['signal', 'signal', 'list'],
+    )
+
+    sp = rnbo.subpatcher
+
+    in1 = sp.add_textbox('in~ 1')
+    in2 = sp.add_textbox('in~ 2')
+
+    out1 = sp.add_textbox('out~ 1')
+    out2 = sp.add_textbox('out~ 2')
+
+    codebox = sp.add_textbox('codebox~', code=CODE)
+
+    sp.add_line(in1, codebox)
+    sp.add_line(in2, codebox, inlet=1)
+
+    sp.add_line(codebox, out1)
+    sp.add_line(codebox, out2, outlet=1)
+
+    osc = p.add_textbox('cycle~ 440')
+    dac = p.add_textbox('ezdac~')
+
+    p.add_line(osc, rnbo)
+    p.add_line(osc, rnbo, inlet=1)
+    p.add_line(rnbo, dac)
+    p.add_line(rnbo, dac, outlet=1, inlet=1)
+    p.save()
+
+def test_rnbo_ezdac2():
+    p = Patcher('outputs/test_rnbo_ezdac2.maxpat')
+    rnbo = p.add_rnbo(numinlets=2, numoutlets=2)
+
+    sp = rnbo.subpatcher
+
+    in1 = sp.add_textbox('in~ 1')
+    in2 = sp.add_textbox('in~ 2')
+
+    out1 = sp.add_textbox('out~ 1')
+    out2 = sp.add_textbox('out~ 2')
+
+    codebox = sp.add_textbox('codebox~', code=CODE)
+
+    sp.add_line(in1, codebox)
+    sp.add_line(in2, codebox, inlet=1)
+
+    sp.add_line(codebox, out1)
+    sp.add_line(codebox, out2, outlet=1)
+    
+    osc = p.add_textbox('cycle~ 440')
+    dac = p.add_textbox('ezdac~')
+
+    p.add_line(osc, rnbo)
+    p.add_line(osc, rnbo, inlet=1)
+    p.add_line(rnbo, dac)
+    p.add_line(rnbo, dac, outlet=1, inlet=1)
+    p.save()
+
 if __name__ == '__main__':
     test_rnb()
     test_rnb_codebox()
     test_rnb_codebox_tilde()
     test_rnbo_textbox()
     test_rnbo_textbox_tilde()
+    test_rnbo_ezdac()
+    test_rnbo_ezdac2()
+
 

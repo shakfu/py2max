@@ -28,8 +28,6 @@ def compare(maxpat1, maxpat2, options=None):
     d1 = from_json(p1)
     d2 = from_json(p2)
     delta = dict(DeepDiff(d1, d2))
-    # from IPython import embed; embed()
-    # print(type(delta))
     if options:
         if options.yml:
             yml_diff = p1.parent / f'{p1.stem}-{p2.stem}-delta.yml'

@@ -1,6 +1,6 @@
 # py2max
 
-A pure python library without dependencies intended to facilitate the offline generation of Max patcher (`.maxpat`) files.
+A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher (`.maxpat`) files.
 
 It was created to automate the creation of help (`.maxhelp`) files for the [sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough that it should have its own repo.
 
