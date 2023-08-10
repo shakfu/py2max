@@ -114,11 +114,11 @@ python3 -m pytest tests.test_basic
 
 - For the few objects which have their own methods, the current implementation differentiates tilde objects from non-tilde objects by providing a different method with a `_tilde` suffix:
 
-	```python
-	gen = p.add_gen()
+    ```python
+    gen = p.add_gen()
 
-	gen_tilde = p.add_gen_tilde()
-	```
+    gen_tilde = p.add_gen_tilde()
+    ```
 
 ## Design Notes
 
@@ -156,27 +156,22 @@ Generally, it is recommended to start using `py2max`'s via these `add_<type>` me
 
 ## Scripts
 
-The project has a couple of scripts to help with analyzing .maxpat patterns:
+The project has a few of scripts which may be useful:
 
 - `convert.py`: convert maxpat to yaml for ease of reading during dev
-- `compary.py`: compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html)
-
+- `compare.py`: compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html)
+- `coverage.sh`: run pytest coverage and generate html coverage report
 
 ## Credits and Licensing
 
 All rights reserved to the original respective authors:
 
-> Steve Kieffer, Tim Dwyer, Kim Marriott, and Michael Wybrow. HOLA: Human-like Orthogonal Network Layout. In Visualization and Computer Graphics, IEEE Transactions on, Volume 22, Issue 1, pages 349 - 358. IEEE, 2016. DOI
+- Steve Kieffer, Tim Dwyer, Kim Marriott, and Michael Wybrow. HOLA: Human-like Orthogonal Network Layout. In Visualization and Computer Graphics, IEEE Transactions on, Volume 22, Issue 1, pages 349 - 358. IEEE, 2016. DOI
 
-> Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart, “Exploring network structure, dynamics, and function using NetworkX”, in Proceedings of the 7th Python in Science Conference (SciPy2008), Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds), (Pasadena, CA USA), pp. 11–15, Aug 2008
+- Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart, “Exploring network structure, dynamics, and function using NetworkX”, in Proceedings of the 7th Python in Science Conference (SciPy2008), Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds), (Pasadena, CA USA), pp. 11–15, Aug 2008
 
-> A Technique for Drawing Directed Graphs
-Emden R. Gansner, Eleftherios Koutsofios, Stephen C. North, Kiem-phong Vo • IEEE TRANSACTIONS ON SOFTWARE ENGINEERING • Published 1993
+- A Technique for Drawing Directed Graphs Emden R. Gansner, Eleftherios Koutsofios, Stephen C. North, Kiem-phong Vo • IEEE TRANSACTIONS ON SOFTWARE ENGINEERING • Published 1993
 
-> Gansner, E.R., Koren, Y., North, S. (2005). Graph Drawing by Stress Majorization. In: Pach, J. (eds) Graph Drawing. GD 2004. Lecture Notes in Computer Science, vol 3383. Springer, Berlin, Heidelberg. https://doi.org/10.1007/978-3-540-31843-9_25
+- Gansner, E.R., Koren, Y., North, S. (2005). Graph Drawing by Stress Majorization. In: Pach, J. (eds) Graph Drawing. GD 2004. Lecture Notes in Computer Science, vol 3383. Springer, Berlin, Heidelberg. <https://doi.org/10.1007/978-3-540-31843-9_25>
 
-> An open graph visualization system and its applications to software engineering
-Emden R. Gansner, Stephen C. North • SOFTWARE - PRACTICE AND EXPERIENCE • Published 2000
-
-The py2max code is placed in the public domain by its author.
-
+- An open graph visualization system and its applications to software engineering Emden R. Gansner, Stephen C. North • SOFTWARE - PRACTICE AND EXPERIENCE • Published 2000
