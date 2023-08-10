@@ -1,49 +1,52 @@
 """maxclassdb.py: meant to capture defaults related to a maxclass
 """
 
-MAXCLASS_DEFAULTS = {
+from .common import Rect
+from typing import Any
+
+MAXCLASS_DEFAULTS: dict[str, dict[str, Any]] = {
     "button": {
         "maxclass": "button",
         "numinlets": 1,
         "numoutlets": 1,
         "outlettype": ["bang"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 24.0, 24.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=24.0, h=24.0),
     },
     "codebox": {
         "maxclass": "codebox",
         "numinlets": 1,
         "numoutlets": 1,
         "outlettype": [""],
-        "patching_rect": [191.0, 118.0, 200.0, 200.0],
-    },    
+        "patching_rect": Rect(x=191.0, y=118.0, w=200.0, h=200.0),
+    },
     "codebox~": {
         "maxclass": "codebox~",
         "numinlets": 1,
         "numoutlets": 1,
         "outlettype": [""],
-        "patching_rect": [191.0, 118.0, 200.0, 200.0],
-    },    
+        "patching_rect": Rect(x=191.0, y=118.0, w=200.0, h=200.0),
+    },
     "dial": {
         "maxclass": "dial",
         "numinlets": 1,
         "numoutlets": 1,
         "outlettype": ["float"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 40.0, 40.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=40.0, h=40.0),
     },
     "ezadc~": {
         "maxclass": "ezadc~",
         "numinlets": 1,
         "numoutlets": 2,
         "outlettype": ["signal", "signal"],
-        "patching_rect": [0.0, 0.0, 45.0, 45.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=45.0, h=45.0),
     },
     "ezdac~": {
         "maxclass": "ezdac~",
         "numinlets": 2,
         "numoutlets": 0,
-        "patching_rect": [0.1, 1.0, 45.0, 45.0],
+        "patching_rect": Rect(x=0.1, y=1.0, w=45.0, h=45.0),
     },
     "filtergraph~": {
         "fontface": 0,
@@ -55,7 +58,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 7,
         "outlettype": ["list", "float", "float", "float", "float", "list", "int"],
         "parameter_enable": 0,
-        "patching_rect": [1.0, 1.0, 256.0, 128.0],
+        "patching_rect": Rect(x=1.0, y=1.0, w=256.0, h=128.0),
         "setfilter": [0, 5, 1, 0, 0, 40.0, 1.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     },
     "function": {
@@ -64,7 +67,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 4,
         "outlettype": ["float", "", "", "bang"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 200.0, 100.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=200.0, h=100.0),
     },
     "gain~": {
         "maxclass": "gain~",
@@ -73,7 +76,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 2,
         "outlettype": ["signal", ""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 22.0, 140.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=22.0, h=140.0),
     },
     "gswitch": {
         "maxclass": "gswitch",
@@ -81,7 +84,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 1,
         "outlettype": [""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 41.0, 32.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=41.0, h=32.0),
     },
     "gswitch2": {
         "maxclass": "gswitch2",
@@ -89,7 +92,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 2,
         "outlettype": ["", ""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 39.0, 32.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=39.0, h=32.0),
     },
     "incdec": {
         "maxclass": "incdec",
@@ -97,7 +100,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 1,
         "outlettype": ["float"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 20.0, 24.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=20.0, h=24.0),
     },
     "kslider": {
         "maxclass": "kslider",
@@ -105,7 +108,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 2,
         "outlettype": ["int", "int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 336.0, 53.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=336.0, h=53.0),
     },
     "led": {
         "maxclass": "led",
@@ -113,7 +116,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 1,
         "outlettype": ["int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 24.0, 24.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=24.0, h=24.0),
     },
     "levelmeter~": {
         "markers": [-60, -48, -36, -24, -12, -6, 0, 6],
@@ -122,7 +125,7 @@ MAXCLASS_DEFAULTS = {
         "numinlets": 1,
         "numoutlets": 1,
         "outlettype": [""],
-        "patching_rect": [0.0, 0.0, 128.0, 64.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=128.0, h=64.0),
     },
     "matrixctrl": {
         "maxclass": "matrixctrl",
@@ -130,14 +133,14 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 2,
         "outlettype": ["list", "list"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 130.0, 66.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=130.0, h=66.0),
     },
     "meter~": {
         "maxclass": "meter~",
         "numinlets": 1,
         "numoutlets": 1,
         "outlettype": ["float"],
-        "patching_rect": [0.0, 0.0, 80.0, 13.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=80.0, h=13.0),
     },
     "multislider": {
         "maxclass": "multislider",
@@ -146,7 +149,7 @@ MAXCLASS_DEFAULTS = {
         "orientation": 1,
         "outlettype": ["", ""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 20.0, 140.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=20.0, h=140.0),
         "setstyle": 0,
         "size": 4,
     },
@@ -158,7 +161,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 3,
         "outlettype": ["", "", ""],
         "parameter_enable": 0,
-        "patching_rect": [231.0, 478.0, 100.0, 100.0],
+        "patching_rect": Rect(x=231.0, y=478.0, w=100.0, h=100.0),
         "xplace": [0.083333333333333],
         "yplace": [0.083333333333333],
     },
@@ -168,7 +171,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 2,
         "outlettype": ["int", "int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 75.0, 198.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=75.0, h=198.0),
     },
     "number~": {
         "fontface": 0,
@@ -179,7 +182,7 @@ MAXCLASS_DEFAULTS = {
         "numinlets": 2,
         "numoutlets": 2,
         "outlettype": ["signal", "float"],
-        "patching_rect": [0.0, 0.0, 56.0, 22.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=56.0, h=22.0),
         "sig": 0.0,
     },
     "pictctrl": {
@@ -188,7 +191,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 1,
         "outlettype": ["int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 20.0, 20.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=20.0, h=20.0),
     },
     "pictslider": {
         "maxclass": "pictslider",
@@ -196,14 +199,14 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 2,
         "outlettype": ["int", "int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 100.0, 100.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=100.0, h=100.0),
     },
     "playbar": {
         "maxclass": "playbar",
         "numinlets": 1,
         "numoutlets": 2,
         "outlettype": ["", "int"],
-        "patching_rect": [0.0, 0.0, 320.0, 16.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=320.0, h=16.0),
     },
     "playlist~": {
         "basictuning": 0,
@@ -218,7 +221,7 @@ MAXCLASS_DEFAULTS = {
         "originaltempo": 0,
         "outlettype": ["signal", "signal", "signal", "", "dictionary"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 150.0, 92.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=150.0, h=92.0),
         "pitchcorrection": 0,
         "quality": 0,
         "timestretch": [0],
@@ -231,7 +234,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 1,
         "outlettype": [""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 18.0, 34.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=18.0, h=34.0),
         "size": 2,
         "value": 0,
     },
@@ -241,13 +244,13 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 2,
         "outlettype": ["", ""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 20.0, 140.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=20.0, h=140.0),
     },
     "scope~": {
         "maxclass": "scope~",
         "numinlets": 2,
         "numoutlets": 0,
-        "patching_rect": [0.0, 0.0, 130.0, 130.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=130.0, h=130.0),
     },
     "slider": {
         "maxclass": "slider",
@@ -255,14 +258,14 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 1,
         "outlettype": [""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 20.0, 140.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=20.0, h=140.0),
     },
     "spectroscope~": {
         "maxclass": "spectroscope~",
         "numinlets": 2,
         "numoutlets": 1,
         "outlettype": [""],
-        "patching_rect": [0.0, 0.0, 300.0, 100.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=300.0, h=100.0),
     },
     "tab": {
         "maxclass": "tab",
@@ -270,7 +273,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 3,
         "outlettype": ["int", "", ""],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 200.0, 24.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=200.0, h=24.0),
     },
     "textbutton": {
         "maxclass": "textbutton",
@@ -278,7 +281,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 3,
         "outlettype": ["", "", "int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 100.0, 20.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=100.0, h=20.0),
     },
     "toggle": {
         "maxclass": "toggle",
@@ -286,7 +289,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 1,
         "outlettype": ["int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 24.0, 24.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=24.0, h=24.0),
     },
     "ubutton": {
         "handoff": "",
@@ -295,7 +298,7 @@ MAXCLASS_DEFAULTS = {
         "numoutlets": 4,
         "outlettype": ["bang", "bang", "", "int"],
         "parameter_enable": 0,
-        "patching_rect": [0.0, 0.0, 33.0, 42.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=33.0, h=42.0),
     },
     "waveform~": {
         "buffername": "",
@@ -303,13 +306,13 @@ MAXCLASS_DEFAULTS = {
         "numinlets": 5,
         "numoutlets": 6,
         "outlettype": ["float", "float", "float", "float", "list", ""],
-        "patching_rect": [0.0, 0.0, 256.0, 64.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=256.0, h=64.0),
     },
     "zplane~": {
         "maxclass": "zplane~",
         "numinlets": 5,
         "numoutlets": 4,
         "outlettype": ["list", "list", "list", "list"],
-        "patching_rect": [0.0, 0.0, 256.0, 256.0],
+        "patching_rect": Rect(x=0.0, y=0.0, w=256.0, h=256.0),
     },
 }

@@ -11,7 +11,7 @@ class Case:
 
     def setup(self):
         self.p = Patcher(self.output_file)
-        self.sbox = self.p.add_rnbo()
+        self.sbox = self.p.add_rnbo(numinlets=2, numoutlets=2)
         self.sp = self.sbox.subpatcher
 
         self.in1 = self.sp.add_textbox('inport left_in')
@@ -34,7 +34,7 @@ class CaseTilde(Case):
 
     def setup(self):
         self.p = Patcher(self.output_file)
-        self.sbox = self.p.add_rnbo()
+        self.sbox = self.p.add_rnbo(numinlets=2, numoutlets=2)
         self.sp = self.sbox.subpatcher
 
         self.in1 = self.sp.add_textbox('in~ 1')

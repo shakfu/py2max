@@ -1,7 +1,8 @@
 # Changelog
 
-
 ## 0.1.1
+
+- Added gradual types to `py2max/core`, no errors with `mypy`
 
 - Added number_tilde test
 
@@ -20,7 +21,6 @@
 - Added boolean `tilde` parameter for objects which have a tilde sibling.
 
 - Added preliminary support for `rnbo~` include rnbo codebox
-
 
 ## 0.1
 
