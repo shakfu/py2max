@@ -6,7 +6,7 @@ from pathlib import Path
 
 #sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from py2max import Patcher
-from py2max.registry import objects
+from tests.registry import objects
 
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -17,7 +17,7 @@ def chunks(lst, n):
 def dump_registry(to_folder, size=20):
     os.makedirs(to_folder, exist_ok=True)
     xs = list(objects.keys())
-    
+
     for i, ys in enumerate(chunks(xs, size)):
         p = Patcher(f'{to_folder}/{i}.maxpat')
         for j in ys:

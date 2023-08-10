@@ -2,6 +2,12 @@
 
 ## 0.1.1
 
+- Coverage: 88%
+
+- Added coverage script and reporting: `./scripts/coverage.sh`
+
+- Moved `tests` folder from `py2max/py2max/tests` to `py2max/tests`
+
 - Added gradual types to `py2max/core`, no errors with `mypy`
 
 - Added number_tilde test

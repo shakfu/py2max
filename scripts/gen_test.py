@@ -2,7 +2,7 @@
 import sys
 
 template = """
-from .. import Patcher
+from py2max import Patcher
 
 
 def test_{name}():
