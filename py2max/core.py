@@ -266,7 +266,7 @@ class Patcher:
         self.assistshowspatchername = 0
         self.boxes: list[dict] = []
         self.lines: list[dict] = []
-        self.parameters: dict = {}
+        # self.parameters: dict = {}
         self.dependency_cache: list = []
         self.autosave = 0
 
@@ -1224,7 +1224,6 @@ class Box:
 
         self._kwds = self._remove_none_entries(kwds)
         self._patcher = self._kwds.pop("patcher", None)
-        # self._parse(self.text)
 
     def _remove_none_entries(self, kwds):
         """removes items in the dict which have None values.

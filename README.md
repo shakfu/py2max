@@ -2,9 +2,7 @@
 
 A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher (`.maxpat`) files.
 
-It was created to automate the creation of help (`.maxhelp`) files for the [sndpipe project](https://github.com/shakfu/sndpipe) but it seems useful enough that it should have its own repo.
-
-For the use of python3 in a live Max patcher, check out a bunch of python3 externals at the [py-js](https://github.com/shakfu/py-js) project.
+If you are looking for python3 Max externals check out a bunch of the python3 externals in the [py-js](https://github.com/shakfu/py-js) project.
 
 ## Features
 
