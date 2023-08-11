@@ -20,6 +20,7 @@ except ImportError:
     HAS_PYHOLA = False
 
 from py2max import Patcher
+from py2max.common import Rect
 
 
 def dump(g, prefix):
@@ -75,7 +76,7 @@ class HolaPatcher(Patcher):
         for box, xy in zip(self._boxes, repos):
             x, y, h, w = box.patching_rect
             newx, newy = xy
-            box.patching_rect = newx, newy, h, w
+            box.patching_rect = Rect(newx, newy, h, w)
             _boxes.append(box)
         self.boxes = _boxes
 

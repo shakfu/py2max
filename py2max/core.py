@@ -14,7 +14,7 @@ basic usage:
 import json
 import os
 from pathlib import Path
-from typing import Type, Optional, Any
+from typing import Type, Optional
 
 from .maxclassdb import MAXCLASS_DEFAULTS
 from .common import Rect
@@ -31,6 +31,7 @@ MAX_VER_REVISION = 5
 
 # ---------------------------------------------------------------------------
 # Primary Classes
+
 
 class LayoutManager:
     """Utility class to help with object layout.
@@ -81,8 +82,6 @@ class LayoutManager:
         else:
             x1 = x + pad
 
-        # print("x1", x1)
-
         y1 = y - (h + pad)
         y = y1 - (y1 - self.parent.height) if y1 > self.parent.height else y1
 
@@ -107,26 +106,6 @@ class LayoutManager:
 
         return Rect(x, y, w, h)
 
-    def get_relative_pos_v(self, rect: Rect) -> Rect:
-        """returns a relative vertical position for the object"""
-        x, y, w, h = rect
-
-        pad = self.pad  # 32.0
-
-        x_shift = 3 * pad * self.x_layout_counter
-        y_shift = 1.5 * pad * self.y_layout_counter
-        y = pad + y_shift
-
-        self.y_layout_counter += 1
-        if y + h + 2 * pad > self.parent.height:
-            # if y + h + 2 * pad > 300:
-            self.x_layout_counter += 1
-            self.y_layout_counter = 0
-
-        x = pad + x_shift
-
-        return Rect(x, y, w, h)
-
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """helper func providing very rough auto-layout of objects"""
         x = 0
@@ -138,9 +117,9 @@ class LayoutManager:
             mclass_rect = self.get_rect_from_maxclass(maxclass)
             if mclass_rect and (mclass_rect.x or mclass_rect.y):
                 if mclass_rect.x:
-                    x = int(mclass_rect.x * self.parent.width)
+                    x = float(mclass_rect.x * self.parent.width)
                 if mclass_rect.y:
-                    y = int(mclass_rect.y * self.parent.height)
+                    y = float(mclass_rect.y * self.parent.height)
 
                 _rect = Rect(x, y, mclass_rect.w, mclass_rect.h)
                 return self.get_absolute_pos(_rect)
@@ -194,7 +173,6 @@ class VerticalLayoutManager(LayoutManager):
 
         self.y_layout_counter += 1
         if y + h + 2 * pad > self.parent.height:
-            # if y + h + 2 * pad > 300:
             self.x_layout_counter += 1
             self.y_layout_counter = 0
 
@@ -211,7 +189,7 @@ class Patcher:
 
     def __init__(
         self,
-        path: Optional[str] = None,
+        path: Optional[str | Path] = None,
         parent: Optional["Patcher"] = None,
         classnamespace: Optional[str] = None,
         reset_on_render: bool = True,
@@ -222,11 +200,12 @@ class Patcher:
         self._path = path
         self._parent = parent
         self._node_ids: list[str] = []  # ids by order of creation
-        # self._objects = {}  # dict of objects by id
         self._objects: dict[str, Box] = {}  # dict of objects by id
         self._boxes: list[Box] = []  # store child objects (boxes, etc.)
         self._lines: list[Patchline] = []  # store patchline objects
-        self._edge_ids: list[tuple[str, str]] = []  # store edge-ids by order of creation
+        self._edge_ids: list[
+            tuple[str, str]
+        ] = []  # store edge-ids by order of creation
         self._id_counter = 0
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
@@ -300,20 +279,23 @@ class Patcher:
             yield from iter(box)
 
     @property
-    def width(self):
+    def width(self) -> float:
         """width of patcher window."""
-        return self.rect[2]
+        return self.rect.w
 
     @property
-    def height(self):
+    def height(self) -> float:
         """height of patcher windows."""
-        return self.rect[3]
+        return self.rect.h
 
     @classmethod
-    def from_dict(cls, patcher_dict: dict):
+    def from_dict(cls, patcher_dict: dict, save_to: Optional[str] = None) -> "Patcher":
         """create a patcher instance from a dict"""
 
-        patcher = cls()
+        if save_to:
+            patcher = cls(save_to)
+        else:
+            patcher = cls()
         patcher.__dict__.update(patcher_dict)
 
         for box_dict in patcher.boxes:
@@ -330,14 +312,14 @@ class Patcher:
         return patcher
 
     @classmethod
-    def from_file(cls, path: str | Path, save_to: Optional[str] = None):
+    def from_file(cls, path: str | Path, save_to: Optional[str] = None) -> "Patcher":
         """create a patcher instance from a .maxpat json file"""
 
         with open(path) as f:
             maxpat = json.load(f)
-        return Patcher.from_dict(maxpat["patcher"])
+        return Patcher.from_dict(maxpat["patcher"], save_to)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """create dict from object with extra kwds included"""
         d = vars(self).copy()
         to_del = [k for k in d if k.startswith("_")]
@@ -348,12 +330,12 @@ class Patcher:
         else:
             return d
 
-    def to_json(self):
+    def to_json(self) -> str:
         """cascade convert to json"""
         self.render()
         return json.dumps(self.to_dict(), indent=4)
 
-    def render(self, reset=False):
+    def render(self, reset: bool = False):
         """cascade convert py2max objects to dicts."""
         if reset or self._reset_on_render:
             self.boxes = []
@@ -363,18 +345,19 @@ class Patcher:
             self.boxes.append(box.to_dict())
         self.lines = [line.to_dict() for line in self._lines]
 
-    def saveas(self, path):
+    def saveas(self, path: str | Path):
         """save as .maxpat json file"""
-        parent_dir = os.path.dirname(path)
-        if parent_dir:
-            os.makedirs(parent_dir, exist_ok=True)
+        path = Path(path)
+        if path.parent:
+            path.parent.mkdir(exist_ok=True)
         self.render()
         with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=4)
 
     def save(self):
         """save as json .maxpat file"""
-        self.saveas(self._path)
+        if self._path:
+            self.saveas(self._path)
 
     def get_id(self) -> str:
         """helper func to increment object ids"""
@@ -387,7 +370,12 @@ class Patcher:
         else:
             return self._layout_mgr.get_pos()
 
-    def add_box(self, box: 'Box', comment: Optional[str] = None, comment_pos: Optional[str] = None):
+    def add_box(
+        self,
+        box: "Box",
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+    ) -> "Box":
         """registers the box and adds it to the patcher"""
 
         assert box.id, f"object {box} must have an id"
@@ -431,15 +419,17 @@ class Patcher:
 
     def add_patchline_by_index(
         self, src_id: str, dst_id: str, dst_inlet: int = 0, src_outlet: int = 0
-    ):
+    ) -> "Patchline":
         """Patchline creation between two objects using stored indexes"""
 
         src = self._objects[src_id]
         dst = self._objects[dst_id]
         assert src.id and dst.id, f"object {src} and {dst} require ids"
-        self.add_patchline(src.id, src_outlet, dst.id, dst_inlet)
+        return self.add_patchline(src.id, src_outlet, dst.id, dst_inlet)
 
-    def add_patchline(self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int):
+    def add_patchline(
+        self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int
+    ) -> "Patchline":
         """primary patchline creation method"""
 
         # get order of lines between same pair of objects
@@ -456,7 +446,9 @@ class Patcher:
         self._edge_ids.append((src_id, dst_id))
         return patchline
 
-    def add_line(self, src_obj: 'Box', dst_obj: 'Box', inlet: int = 0, outlet: int = 0):
+    def add_line(
+        self, src_obj: "Box", dst_obj: "Box", inlet: int = 0, outlet: int = 0
+    ) -> "Patchline":
         """convenience line adding taking objects with default outlet to inlet"""
         assert src_obj.id and dst_obj.id, f"objects {src_obj} and {dst_obj} require ids"
         return self.add_patchline(src_obj.id, outlet, dst_obj.id, inlet)
@@ -476,7 +468,7 @@ class Patcher:
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add a generic textbox object to the patcher.
 
         Looks up default attributes from a dictionary.
@@ -518,7 +510,7 @@ class Patcher:
                     )
         return kwds
 
-    def _add_float(self, value, *args, **kwds):
+    def _add_float(self, value, *args, **kwds) -> "Box":
         """type-handler for float values in `add`"""
 
         assert isinstance(value, float)
@@ -537,7 +529,7 @@ class Patcher:
                 "should be: .add(<float>, '<name>') OR .add(<float>, name='<name>')"
             )
 
-    def _add_int(self, value, *args, **kwds):
+    def _add_int(self, value, *args, **kwds) -> "Box":
         """type-handler for int values in `add`"""
 
         assert isinstance(value, int)
@@ -556,18 +548,18 @@ class Patcher:
                 "should be: .add(<int>, '<name>') OR .add(<int>, name='<name>')"
             )
 
-    def _add_str(self, value, *args, **kwds):
+    def _add_str(self, value, *args, **kwds) -> "Box":
         """type-handler for str values in `add`"""
 
         assert isinstance(value, str)
 
         maxclass, *text = value.split()
-        text = " ".join(text)
+        txt = " ".join(text)
 
         # first check _maxclass_methods
         # these methods don't need the maxclass, just the `text` tail of value
         if maxclass in self._maxclass_methods:
-            return self._maxclass_methods[maxclass](text, **kwds)
+            return self._maxclass_methods[maxclass](txt, **kwds)  # type: ignore
         # next two require value as a whole
         elif maxclass == "p":
             return self.add_subpatcher(value, **kwds)
@@ -578,7 +570,7 @@ class Patcher:
         else:
             return self.add_textbox(text=value, **kwds)
 
-    def add(self, value, *args, **kwds):
+    def add(self, value, *args, **kwds) -> "Box":
         """generic adder: value can be a number or a list or text for an object."""
 
         if isinstance(value, float):
@@ -602,24 +594,25 @@ class Patcher:
         comment_pos: Optional[str] = None,
         tilde=False,
         **kwds,
-    ):
+    ) -> "Box":
         """Add a codebox."""
 
         _maxclass = "codebox~" if tilde else "codebox"
-        _code = code.replace("\n", "\r\n")
+        if "\r" not in code:
+            code = code.replace("\n", "\r\n")
 
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = _maxclass
             if "rnbo_extra_attributes" not in kwds:
                 kwds["rnbo_extra_attributes"] = dict(
-                    code=_code,
+                    code=code,
                     hot=0,
                 )
 
         return self.add_box(
             Box(
                 id=id or self.get_id(),
-                code=_code,
+                code=code,
                 maxclass=_maxclass,
                 outlettype=[""],
                 patching_rect=patching_rect or self.get_pos(),
@@ -637,7 +630,7 @@ class Patcher:
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add a codebox_tilde"""
         return self.add_codebox(
             code, patching_rect, id, comment, comment_pos, tilde=True, **kwds
@@ -651,7 +644,7 @@ class Patcher:
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add a max message."""
 
         return self.add_box(
@@ -676,7 +669,7 @@ class Patcher:
         id: Optional[str] = None,
         justify: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add a basic comment object."""
         if justify:
             kwds["textjustification"] = {"left": 0, "center": 1, "right": 2}[justify]
@@ -697,7 +690,7 @@ class Patcher:
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add an int box object."""
 
         return self.add_box(
@@ -724,7 +717,7 @@ class Patcher:
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add an float box object."""
 
         return self.add_box(
@@ -757,7 +750,7 @@ class Patcher:
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add a float parameter object."""
 
         return self.add_box(
@@ -801,7 +794,7 @@ class Patcher:
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add an int parameter object."""
 
         return self.add_box(
@@ -845,7 +838,7 @@ class Patcher:
         autovar=True,
         show_label=False,
         **kwds,
-    ):
+    ) -> "Box":
         """create a param-linke attrui entry"""
         if autovar:
             kwds["varname"] = name
@@ -885,7 +878,7 @@ class Patcher:
         id: Optional[str] = None,
         patcher: Optional["Patcher"] = None,
         **kwds,
-    ):
+    ) -> "Box":
         """Add a subpatcher object."""
 
         return self.add_box(
@@ -951,9 +944,9 @@ class Patcher:
         """Add a coll object with option to pre-populate from a py dictionary."""
         extra = {"saved_object_attributes": {"embed": embed, "precision": 6}}
         if dictionary:
-            extra["coll_data"] = { # type: ignore
+            extra["coll_data"] = {  # type: ignore
                 "count": len(dictionary.keys()),
-                "data": [{"key": k, "value": v} for k, v in dictionary.items()], # type: ignore
+                "data": [{"key": k, "value": v} for k, v in dictionary.items()],  # type: ignore
             }
         kwds.update(extra)
         return self.add_box(
@@ -1208,7 +1201,6 @@ class Patcher:
 
         _varname = name if ".maxpat" not in name else name.rstrip(".maxpat")
         return self.add_bpatcher(name=name, varname=_varname, extract=1, **kwds)
-
 
 
 class Box:
