@@ -11,8 +11,8 @@ basic usage:
     >>> p.save()
 
 """
+import abc
 import json
-import os
 from pathlib import Path
 from typing import Type, Optional
 
@@ -30,10 +30,9 @@ MAX_VER_REVISION = 5
 # Utility Classes and functions
 
 # ---------------------------------------------------------------------------
-# Primary Classes
+# Layout Classes
 
-
-class LayoutManager:
+class LayoutManager(abc.ABC):
     """Utility class to help with object layout.
 
     This is a basic horizontal layout manager.
@@ -87,29 +86,14 @@ class LayoutManager:
 
         return Rect(x, y, w, h)
 
+    @abc.abstractmethod
     def get_relative_pos(self, rect: Rect) -> Rect:
-        """returns a relative horizontal position for the object"""
-        x, y, w, h = rect
-
-        pad = self.pad  # 32.0
-
-        x_shift = 3 * pad * self.x_layout_counter
-        y_shift = 1.5 * pad * self.y_layout_counter
-        x = pad + x_shift
-
-        self.x_layout_counter += 1
-        if x + w + 2 * pad > self.parent.width:
-            self.x_layout_counter = 0
-            self.y_layout_counter += 1
-
-        y = pad + y_shift
-
-        return Rect(x, y, w, h)
+        """returns a relative position for the object"""
 
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """helper func providing very rough auto-layout of objects"""
-        x = 0
-        y = 0
+        x = 0.0
+        y = 0.0
         w = self.box_width  # 66.0
         h = self.box_height  # 22.0
 
@@ -152,11 +136,37 @@ class LayoutManager:
         x, y, w, h = rect
         return Rect(x + (w + self.comment_pad), y, w, h)
 
+class HorizontalLayoutManager(LayoutManager):
+    """Utility class to help with object layout.
+
+    This is a basic horizontal layout manager.
+    i.e. objects fill from left to right of the
+    grid and and wrap horizontally.
+    """
+
+    def get_relative_pos(self, rect: Rect) -> Rect:
+        """returns a relative horizontal position for the object"""
+        x, y, w, h = rect
+
+        pad = self.pad  # 32.0
+
+        x_shift = 3 * pad * self.x_layout_counter
+        y_shift = 1.5 * pad * self.y_layout_counter
+        x = pad + x_shift
+
+        self.x_layout_counter += 1
+        if x + w + 2 * pad > self.parent.width:
+            self.x_layout_counter = 0
+            self.y_layout_counter += 1
+
+        y = pad + y_shift
+
+        return Rect(x, y, w, h)
 
 class VerticalLayoutManager(LayoutManager):
     """Utility class to help with obadject layout.
 
-    This is a basic horizontal layout manager.
+    This is a basic vertical layout manager.
     i.e. objects fill from top to bottom of the
     grid and and wrap vertically.
     """
@@ -180,6 +190,9 @@ class VerticalLayoutManager(LayoutManager):
 
         return Rect(x, y, w, h)
 
+# ---------------------------------------------------------------------------
+# Primary Classes
+
 
 class Patcher:
     """Core Patcher class describing a Max patchers from the ground up.
@@ -193,7 +206,7 @@ class Patcher:
         parent: Optional["Patcher"] = None,
         classnamespace: Optional[str] = None,
         reset_on_render: bool = True,
-        layout_mgr_class: Optional[Type[LayoutManager]] = None,
+        layout: str = "horizontal",
         auto_hints: bool = False,
         openinpresentation: int = 0,
     ):
@@ -210,9 +223,10 @@ class Patcher:
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
         self._reset_on_render = reset_on_render
-        self._layout_mgr = (
-            layout_mgr_class(self) if layout_mgr_class else LayoutManager(self)
-        )
+        self._layout_mgr: LayoutManager = {
+            "horizontal": HorizontalLayoutManager,
+            "vertical": VerticalLayoutManager,
+        }[layout](self)
         self._auto_hints = auto_hints
         self._maxclass_methods = {
             # specialized methods
@@ -225,7 +239,7 @@ class Patcher:
             "umenu": self.add_umenu,
             "bpatcher": self.add_bpatcher,
         }
-
+        # --------------------------------------------------------------------
         # begin max attributes
         self.fileversion: int = 1
         self.appversion = {

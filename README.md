@@ -2,17 +2,17 @@
 
 A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher (`.maxpat`) files.
 
-If you are looking for python3 Max externals check out a bunch of the python3 externals in the [py-js](https://github.com/shakfu/py-js) project.
+If you are looking for python3 externals for Max/MSP check out a bunch of the python3 externals in the [py-js](https://github.com/shakfu/py-js) project.
 
 ## Features
 
-- Offline scripted generation of max patcher files using Python objects corresponding, on a one-to-one basis, with MAX objects stored in the `.maxpat` JSON format.
+- Scripted offline generation of Max patcher files using Python objects corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
 
 - Round-trip conversion between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
 
 - Can handle potentially any Max object or maxclass.
 
-- Lots of unit tests.
+- Lots of unit tests, >90% coverage.
 
 - Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (in the context of graph-drawing algorithms).
 
@@ -34,16 +34,16 @@ If you are looking for python3 Max externals check out a bunch of the python3 ex
 
 - Help to save time creating many objects with slightly different arguments
 
-- Use graph drawing algorithms on generated patches
+- Use graph drawing / layout algorithms on generated patches
 
-- Generative patch generation (-;
+- Generative patch generation `(-;`
 
 - etc..
 
 ## Usage examples
 
 ```python
-p = Patcher('out.maxpat')
+p = Patcher('my-patch.maxpat')
 osc1 = p.add_textbox('cycle~ 440')
 gain = p.add_textbox('gain~')
 dac = p.add_textbox('ezdac~')
@@ -53,12 +53,23 @@ gain_dac1 = p.add_line(gain, outlet=0, dac, inlet=1)
 p.save()
 ```
 
-By default objects are returned (including patchlines). While returned objects are useful for linking, the returned patchlines are not.
-
-With builtin aliases (for `.add_textbox` and `.add_line`), and knowing that the default outgoing outlet number and incoming inlet number is automatically set to 0, the above example can be written in a more abbreviated form:
+By default, objects are returned (including patchlines), and patchline outlets and inlets are set to 0. While returned objects are useful for linking, the returned patchlines are not. Therefore, the above can be written more concisely as:
 
 ```python
-p = Patcher('out.maxpat')
+p = Patcher('my-patch.maxpat')
+osc1 = p.add_textbox('cycle~ 440')
+gain = p.add_textbox('gain~')
+dac = p.add_textbox('ezdac~')
+p.add_line(osc1, gain)
+p.add_line(gain, dac)
+p.add_line(gain, dac, inlet=1)
+p.save()
+```
+
+With builtin aliases (`.add` for `.add_textbox` and `.link` for `.add_line`), the above example can be written in a even more abbreviated form (and with a vertical layout) as:
+
+```python
+p = Patcher('out_vertical.maxpat', layout='vertical')
 osc = p.add('cycle~ 440')
 gain = p.add('gain~')
 dac = p.add('ezdac~')
@@ -68,9 +79,9 @@ p.link(gain, dac, 1)
 p.save()
 ```
 
-You can parse existing `.maxpat` files, change them and then save the changes:
+In addition, you can parse existing `.maxpat` files, change them and then save the changes:
 
-```python3
+```python
 p = Patcher.from_file('example1.maxpat')
 # ... make some change
 p.saveas('example1_mod.maxpat)
@@ -96,7 +107,15 @@ p.save()
 
 Note that Python classes are basically just simple wrappers around the JSON structures in a .maxpat file, and almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_textbox` or the generic `.add` methods. There are also specialized methods in the form `.add_<type>` for numbers, numeric parameters, subpatchers, and container-type objects (see the design notes below for more details).
 
-Further tests are in the `py2max/tests` folder and can be output to an `outputs` folder all at once by running `pytest` in the project root, or individually, by doing something like the following:
+Further tests are in the `py2max/tests` folder. One can run all tests as follows:
+
+```bash
+pytest
+```
+
+This will output the results of all tests into `outputs` folder.
+
+To run an individual test do something like the following:
 
 ```bash
 python3 -m pytest tests.test_basic

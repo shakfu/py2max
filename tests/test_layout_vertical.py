@@ -1,8 +1,7 @@
-from py2max.core import Patcher, VerticalLayoutManager
+from py2max import Patcher
 
 def test_layout_vertical():
-    p = Patcher('outputs/test_layout_vertical.maxpat',
-                layout_mgr_class=VerticalLayoutManager)
+    p = Patcher('outputs/test_layout_vertical.maxpat', layout="vertical")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -42,10 +41,6 @@ def test_layout_vertical():
     link(scp1, scop)
     link(scp2, scop, inlet=1)
     p.save()
-
-
-if __name__ == '__main__':
-    test_graph()
 
 
 if __name__ == '__main__':
