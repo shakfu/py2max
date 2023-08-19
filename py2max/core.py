@@ -359,7 +359,7 @@ class Patcher:
             self.boxes.append(box.to_dict())
         self.lines = [line.to_dict() for line in self._lines]
 
-    def saveas(self, path: str | Path):
+    def save_as(self, path: str | Path):
         """save as .maxpat json file"""
         path = Path(path)
         if path.parent:
@@ -371,7 +371,7 @@ class Patcher:
     def save(self):
         """save as json .maxpat file"""
         if self._path:
-            self.saveas(self._path)
+            self.save_as(self._path)
 
     def get_id(self) -> str:
         """helper func to increment object ids"""

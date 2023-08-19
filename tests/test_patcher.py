@@ -22,7 +22,7 @@ def test_patcher_from_file():
     assert len(list(p)) == 60
     assert p.to_json()
     p.save()
-
+    p.save_as('outputs/test_complex2.maxpat')
 
 def test_patcher_from_file_comparison_complex():
     pd = Patcher.from_file('tests/data/complex.maxpat').to_dict()

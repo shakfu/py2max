@@ -2,7 +2,7 @@
 
 A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
 
-If you are looking for python3 externals for Max/MSP check out a bunch of the python3 externals in the [py-js](https://github.com/shakfu/py-js) project.
+If you are looking for python3 externals for Max/MSP check out the [py-js](https://github.com/shakfu/py-js) project.
 
 ## Features
 
@@ -12,21 +12,25 @@ If you are looking for python3 externals for Max/MSP check out a bunch of the py
 
 - Can handle potentially any Max object or maxclass.
 
-- Lots of unit tests, >90% coverage.
+- Lots of unit tests, ~99% coverage.
 
 - Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (in the context of graph-drawing algorithms).
 
 - Allows precise layout and configuration of Max objects.
 
-- Patcher objects have generic methods such as `add_textbox` and can also have specialized methods such as `add_coll`. In the latter case, for example, the `add_coll` method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
+- Patcher objects have generic methods such as `add_textbox` and can also have specialized methods such as `add_coll`. For example, the `add_coll` method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
 
 - Has a `maxclassdb` feature which recalls default configuration of Max Objects.
 
 ## Possible use cases
 
+- Script patcher file creation.
+
+- Batch modification of existing .maxpat files.
+
 - Create parametrizable objects with configuration from offline sources. For example, one-of-a-kind wavetable oscillators configured from random wavetable files.
 
-- Generation of test cases during external development
+- Generation of test cases and `.maxhelp` files during external development
 
 - Takes the pain out of creating objects with lots of parameters
 
@@ -84,7 +88,7 @@ In addition, you can parse existing `.maxpat` files, change them and then save t
 ```python
 p = Patcher.from_file('example1.maxpat')
 # ... make some change
-p.saveas('example1_mod.maxpat)
+p.save_as('example1_mod.maxpat')
 ```
 
 Another example with subpatchers:

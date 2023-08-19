@@ -1,20 +1,33 @@
-
+import pytest
 from py2max import Patcher
 
 
 def test_add():
     p = Patcher('outputs/test_add.maxpat')
+
+    # should fail
+    with pytest.raises(NotImplementedError):
+        p.add(p)
+
     # float param
     p.add(10.2, "param1")
     p.add(0.56, name="param2")
     # floatbox
     p.add(1.2)
 
+    # should fail
+    with pytest.raises(ValueError):
+        p.add(0.41, name=p)
+
     # int param
     p.add(10, "param3")
     p.add(56, name="param4")
     # intbox
     p.add(2)
+
+    # should fail
+    with pytest.raises(ValueError):
+        p.add(2, name=p)
 
     # message
     p.add('m hello')

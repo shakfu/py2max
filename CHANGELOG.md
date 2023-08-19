@@ -2,7 +2,7 @@
 
 ## 0.1.1
 
-- Coverage: 98%
+- Improved Coverage: 99%
 
 - Added clean script: `./scripts/clean.sh`
 
