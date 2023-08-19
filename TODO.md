@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] add combos (pre-combined elements).
+
 - [ ] add midi inlet / outlets in `add_rnbo`
 
 - [ ] restructure `.add`

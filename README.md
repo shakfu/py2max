@@ -1,12 +1,12 @@
 # py2max
 
-A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher (`.maxpat`) files.
+A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
 
 If you are looking for python3 externals for Max/MSP check out a bunch of the python3 externals in the [py-js](https://github.com/shakfu/py-js) project.
 
 ## Features
 
-- Scripted offline generation of Max patcher files using Python objects corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
+- Scripted *offline* generation of Max patcher files using Python objects corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
 
 - Round-trip conversion between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
 
@@ -178,6 +178,10 @@ The project has a few of scripts which may be useful:
 - `convert.py`: convert maxpat to yaml for ease of reading during dev
 - `compare.py`: compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html)
 - `coverage.sh`: run pytest coverage and generate html coverage report
+
+## Examples of Use
+
+- [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
 
 ## Credits and Licensing
 
