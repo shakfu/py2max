@@ -349,6 +349,18 @@ class Patcher:
         self.render()
         return json.dumps(self.to_dict(), indent=4)
 
+    def find_box(self, text: str) -> Optional[tuple[int, 'Box']]:
+        """find box object by maxclass or type
+
+        returns (index, box) if found
+        """
+        for i, b in enumerate(self._boxes):
+            if b.maxclass == text:
+                return (i, b)
+            if hasattr(b, 'text'):
+                if b.text.startswith(text):
+                    return (i, b)
+
     def render(self, reset: bool = False):
         """cascade convert py2max objects to dicts."""
         if reset or self._reset_on_render:
