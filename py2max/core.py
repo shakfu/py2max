@@ -315,6 +315,7 @@ class Patcher:
         for box_dict in patcher.boxes:
             box = box_dict["box"]
             b = Box.from_dict(box)
+            patcher._objects[b.id] = b
             # b = patcher.box_from_dict(box)
             patcher._boxes.append(b)
 
@@ -349,7 +350,19 @@ class Patcher:
         self.render()
         return json.dumps(self.to_dict(), indent=4)
 
-    def find_box(self, text: str) -> Optional[tuple[int, 'Box']]:
+    def find_box(self, text: str) -> Optional['Box']:
+        """find box object by maxclass or type
+
+        returns box if found else None
+        """
+        for _id, box in self._objects.items():
+            if box.maxclass == text:
+                return box
+            if hasattr(box, 'text'):
+                if box.text.startswith(text):
+                    return box
+
+    def find_box_with_index(self, text: str) -> Optional[tuple[int, 'Box']]:
         """find box object by maxclass or type
 
         returns (index, box) if found

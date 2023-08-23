@@ -8,27 +8,27 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - Scripted *offline* generation of Max patcher files using Python objects corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
 
-- Round-trip conversion between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
+- *Round-trip conversion* between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
 
-- Can handle potentially any Max object or maxclass.
+- Can potentially handle any Max object or maxclass.
 
 - Lots of unit tests, ~99% coverage.
 
-- Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (in the context of graph-drawing algorithms).
+- Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (using graph-drawing algorithms).
 
-- Allows precise layout and configuration of Max objects.
+- Allows precise layout and configuration of Max objects using manual methods or via layout managers.
 
-- Patcher objects have generic methods such as `add_textbox` and can also have specialized methods such as `add_coll`. For example, the `add_coll` method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
+- `Patcher` objects have generic methods such as `add_textbox` and can also have specialized methods such as `add_coll`. As an example, this method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
 
-- Has a `maxclassdb` feature which recalls default configuration of Max Objects.
+- Has a `maxclassdb` feature which recalls default configurations of Max Objects.
 
 ## Possible use cases
 
-- Script patcher file creation.
+- Scripted patcher file creation.
 
 - Batch modification of existing .maxpat files.
 
-- Create parametrizable objects with configuration from offline sources. For example, one-of-a-kind wavetable oscillators configured from random wavetable files.
+- Use the rich python standard library and ecosystem to help create parametrizable objects with configuration from offline sources. For example, one-of-a-kind wavetable oscillators configured from random wavetable files.
 
 - Generation of test cases and `.maxhelp` files during external development
 
@@ -38,7 +38,7 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - Help to save time creating many objects with slightly different arguments
 
-- Use graph drawing / layout algorithms on generated patches
+- Use [graph drawing / layout algorithms](docs/auto-layouts.md) on generated patches.
 
 - Generative patch generation `(-;`
 
