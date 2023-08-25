@@ -111,7 +111,35 @@ p.save()
 
 Note that Python classes are basically just simple wrappers around the JSON structures in a .maxpat file, and almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_textbox` or the generic `.add` methods. There are also specialized methods in the form `.add_<type>` for numbers, numeric parameters, subpatchers, and container-type objects (see the design notes below for more details).
 
-Further tests are in the `py2max/tests` folder. One can run all tests as follows:
+## Installation
+
+Simplest way:
+
+```bash
+git https://github.com/shakfu/py2max.git
+cd py2max
+pip install . # optional
+```
+
+Note that py2max does not need to be installed to be used, so you can skip the `pip install .` part if you prefer.
+
+In this case, you can just to play around and test it by runing `pytest` (see 'Testing' section) or just open up a terminal or ipython and type some of the examples from above.
+
+If you want to build it as a wheel, and
+
+```bash
+pip install build
+cd py2max
+python3 -m build .
+```
+
+The wheel then should be in the `dist` directory.
+
+## Testing
+
+`py2max` has an extensive test suite with tests are in the `py2max/tests` folder.
+
+One can run all tests as follows:
 
 ```bash
 pytest
@@ -119,11 +147,48 @@ pytest
 
 This will output the results of all tests into `outputs` folder.
 
-To run an individual test do something like the following:
+Note that some tests may be skipped if a required package for the test cannot be imported.
+
+You can check which test is skipped by the following:
+
+```bash
+pytest -v
+```
+
+To check test coverage:
+
+```bash
+./scripts/coverage.sh
+```
+
+or
+
+```bash
+mkdir -p outputs
+pytest --cov-report html:outputs/_covhtml --cov=py2max tests
+```
+
+To run an individual test:
 
 ```bash
 python3 -m pytest tests.test_basic
 ```
+
+Note that because `py2max` primarily deals with `json` generation and manipulation, most tests have no dependencies since `json` is already built into the stdlib.
+
+However, a bunch of tests explore the application of orthogonal graph layout algorithms and for this, a whole bunch of packages have been used, which range from the well-known to the esoteric.
+
+As mentioned above, pytest will skip a test if required packages are not installed, so these are entirely optional tests.
+
+If you insist on diving into the rabbit hole, and want to run all tests you will need the following packages (and their dependencies):
+
+- [networkx](https://networkx.org): `pip install networkx`
+- [matplotlib](<https://matplotlib.org>): `pip install matplotlib`
+- [pygraphviz](https://github.com/pygraphviz/pygraphviz): Pygraphviz requires installing the development library of graphviz: <https://www.graphviz.org/> (On macOS this can be done via `brew install graphviz`) -- then you can `pip install pygraphviz`
+- [adaptagrams](https://github.com/mjwybrow/adaptagrams): First build the adaptagrams c++ libs and then build the swig-based python wrapper.
+- [pyhola](https://github.com/shakfu): a pybind11 wrapper of adaptagrams. Follow build instructions in the README and install from the git repo.
+- [tsmpy](https://github.com/uknfire/tsmpy): install from git repo
+- [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing): install from git repo
 
 ## Caveats
 
@@ -179,7 +244,7 @@ Generally, it is recommended to start using `py2max`'s via these `add_<type>` me
 
 The project has a few of scripts which may be useful:
 
-- `convert.py`: convert maxpat to yaml for ease of reading during dev
+- `convert.py`: convert `maxpat` to `yaml` for ease of reading during dev
 - `compare.py`: compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html)
 - `coverage.sh`: run pytest coverage and generate html coverage report
 

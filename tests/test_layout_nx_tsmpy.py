@@ -1,70 +1,72 @@
-import networkx as nx
-import matplotlib.pyplot as plt
-
+import pytest
 try:
+    import networkx as nx
+    import matplotlib.pyplot as plt
     from tsmpy import TSM
-    HAS_TSMPY = True
+    HAS_REQS = True
 except ImportError:
-    HAS_TSMPY = False
+    HAS_REQS = False
 
 
 from py2max import Patcher
 
 
-class OrthogonalPatcher(Patcher):
-
-    def reposition(self):
-
-        G = nx.Graph()
-
-        # add nodes
-        nodes = {}
-        for i, box in enumerate(self._boxes):
-            # if box.maxclass == 'comment':
-            #     continue
-            nodes[box.id] = i
-            G.add_node(i)
-
-        # edd edges
-        for line in self._lines:
-            G.add_edge(nodes[line.src], nodes[line.dst])
-
-        # layout
-        if HAS_TSMPY:
-            scale = self.rect[2]/8
-        else:
-            scale = self.rect[2]/35
-        # pos = nx.circular_layout(G, scale=scale)
-        # pos = nx.kamada_kawai_layout(G, scale=scale)
-        # pos = nx.planar_layout(G, scale=scale)
-        # pos = nx.shell_layout(G, scale=scale)
-        # pos = nx.spectral_layout(G, scale=scale)
-        pos = nx.spring_layout(G, scale=scale)
-
-        if HAS_TSMPY:
-            tsm = TSM(G, pos, uselp=True)
-            tsm.display()
-            plt.savefig('outputs/test_layout_nx_tsmpy.svg')
-            plt.close()
-            pos = tsm.pos
-
-        repos = []
-        for p in pos.items():
-            _, coord = p
-            x, y = coord
-            repos.append((x*scale, y*scale))
-            # repos.append((x+scale, y+scale))
-
-        _boxes = []
-        for box, xy in zip(self._boxes, repos):
-            x, y, h, w = box.patching_rect
-            newx, newy = xy
-            box.patching_rect = newx, newy, h, w
-            _boxes.append(box)
-        self.boxes = _boxes
-
-
+@pytest.mark.skipif(not HAS_REQS, reason="requires tsmpy, networkx, matplotlib")
 def test_graph():
+
+    class OrthogonalPatcher(Patcher):
+
+        def reposition(self):
+
+            G = nx.Graph()
+
+            # add nodes
+            nodes = {}
+            for i, box in enumerate(self._boxes):
+                # if box.maxclass == 'comment':
+                #     continue
+                nodes[box.id] = i
+                G.add_node(i)
+
+            # edd edges
+            for line in self._lines:
+                G.add_edge(nodes[line.src], nodes[line.dst])
+
+            # layout
+            if HAS_REQS:
+                scale = self.rect[2]/8
+            else:
+                scale = self.rect[2]/35
+            # pos = nx.circular_layout(G, scale=scale)
+            # pos = nx.kamada_kawai_layout(G, scale=scale)
+            # pos = nx.planar_layout(G, scale=scale)
+            # pos = nx.shell_layout(G, scale=scale)
+            # pos = nx.spectral_layout(G, scale=scale)
+            pos = nx.spring_layout(G, scale=scale)
+
+            if HAS_REQS:
+                tsm = TSM(G, pos, uselp=True)
+                tsm.display()
+                plt.savefig('outputs/test_layout_nx_tsmpy.svg')
+                plt.close()
+                pos = tsm.pos
+
+            repos = []
+            for p in pos.items():
+                _, coord = p
+                x, y = coord
+                repos.append((x*scale, y*scale))
+                # repos.append((x+scale, y+scale))
+
+            _boxes = []
+            for box, xy in zip(self._boxes, repos):
+                x, y, h, w = box.patching_rect
+                newx, newy = xy
+                box.patching_rect = newx, newy, h, w
+                _boxes.append(box)
+            self.boxes = _boxes
+
+
     p = OrthogonalPatcher('outputs/test_layout_nx_tsmpy.maxpat')
 
     fbox = p.add_floatbox
@@ -108,6 +110,3 @@ def test_graph():
     # p.graph()
     p.save()
 
-
-if __name__ == '__main__':
-    test_graph()

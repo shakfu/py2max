@@ -1,51 +1,57 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+import pytest
+try:
+    import networkx as nx
+    import matplotlib.pyplot as plt
+    HAS_REQS = True
+except ImportError:
+    HAS_REQS = False
+
 
 from py2max import Patcher
 
-
-class OrthogonalPatcher(Patcher):
-
-    def reposition(self):
-
-        G = nx.Graph()
-
-        # add nodes
-        nodes = {}
-        for i, box in enumerate(self._boxes):
-            nodes[box.id] = i
-            G.add_node(i)
-
-        # edd edges
-        for line in self._lines:
-            G.add_edge(nodes[line.src], nodes[line.dst])
-
-        # layout
-        scale = self.rect[2]/35
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='neato')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='fdp')
-        # pos = nx.nx_agraph.graphviz_layout(G, prog='sfdp')
-        pos = nx.nx_agraph.graphviz_layout(G, prog='twopi')
-
-        repos = []
-        for p in pos.items():
-            _, coord = p
-            x, y = coord
-            # repos.append((x*scale, y*scale))
-            repos.append((x, y))
-            # repos.append((x+scale, y+scale))
-
-        _boxes = []
-        for box, xy in zip(self._boxes, repos):
-            x, y, h, w = box.patching_rect
-            newx, newy = xy
-            box.patching_rect = newx, newy, h, w
-            _boxes.append(box)
-        self.boxes = _boxes
-
-
+@pytest.mark.skipif(not HAS_REQS, reason="requires networkx, matplotlib")
 def test_graph():
+
+    class OrthogonalPatcher(Patcher):
+
+        def reposition(self):
+
+            G = nx.Graph()
+
+            # add nodes
+            nodes = {}
+            for i, box in enumerate(self._boxes):
+                nodes[box.id] = i
+                G.add_node(i)
+
+            # edd edges
+            for line in self._lines:
+                G.add_edge(nodes[line.src], nodes[line.dst])
+
+            # layout
+            scale = self.rect[2]/35
+            # pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
+            # pos = nx.nx_agraph.graphviz_layout(G, prog='neato')
+            # pos = nx.nx_agraph.graphviz_layout(G, prog='fdp')
+            # pos = nx.nx_agraph.graphviz_layout(G, prog='sfdp')
+            pos = nx.nx_agraph.graphviz_layout(G, prog='twopi')
+
+            repos = []
+            for p in pos.items():
+                _, coord = p
+                x, y = coord
+                # repos.append((x*scale, y*scale))
+                repos.append((x, y))
+                # repos.append((x+scale, y+scale))
+
+            _boxes = []
+            for box, xy in zip(self._boxes, repos):
+                x, y, h, w = box.patching_rect
+                newx, newy = xy
+                box.patching_rect = newx, newy, h, w
+                _boxes.append(box)
+            self.boxes = _boxes
+
     p = OrthogonalPatcher('outputs/test_layout_networkx2.maxpat')
 
     fbox = p.add_floatbox

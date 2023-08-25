@@ -355,7 +355,7 @@ class Patcher:
 
         returns box if found else None
         """
-        for _id, box in self._objects.items():
+        for box in self._objects.values():
             if box.maxclass == text:
                 return box
             if hasattr(box, 'text'):
@@ -367,12 +367,12 @@ class Patcher:
 
         returns (index, box) if found
         """
-        for i, b in enumerate(self._boxes):
-            if b.maxclass == text:
-                return (i, b)
-            if hasattr(b, 'text'):
-                if b.text.startswith(text):
-                    return (i, b)
+        for i, box in enumerate(self._boxes):
+            if box.maxclass == text:
+                return (i, box)
+            if hasattr(box, 'text'):
+                if box.text.startswith(text):
+                    return (i, box)
 
     def render(self, reset: bool = False):
         """cascade convert py2max objects to dicts."""

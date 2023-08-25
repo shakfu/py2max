@@ -1,87 +1,94 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+import pytest
+try:
+    import networkx as nx
+    import matplotlib.pyplot as plt
+    HAS_REQS = True
+except ImportError:
+    HAS_REQS = False
+
 
 from py2max import Patcher
 
-
-class GraphPatcher(Patcher):
-
-    def reposition(self):
-
-        G = nx.DiGraph()
-
-        # add nodes
-        for box in self._boxes:
-            if box.maxclass == 'comment':
-                continue
-            G.add_node(box.id)
-
-        # edd edges
-        for line in self._lines:
-            G.add_edge(line.src, line.dst)
-
-        # layout
-        scale = self.rect[2]
-        # pos = nx.circular_layout(G, scale=scale)
-        # pos = nx.kamada_kawai_layout(G, scale=scale)
-        # pos = nx.planar_layout(G, scale=scale)
-        # pos = nx.shell_layout(G, scale=scale)
-        # pos = nx.spectral_layout(G, scale=scale)
-        # pos = nx.spiral_layout(G. scale=scale)
-        pos = nx.spring_layout(G, scale=scale)
-
-        repos = []
-        for p in pos.items():
-            _, coord = p
-            x, y = coord
-            repos.append((x+scale, y+scale))
-
-        _boxes = []
-        for box, xy in zip(self._boxes, repos):
-            x, y, h, w = box.patching_rect
-            newx, newy = xy
-            box.patching_rect = newx, newy, h, w
-            _boxes.append(box)
-        self.boxes = _boxes
-
-
-
-    def graph(self):
-
-        G = nx.DiGraph()
-
-        # make labels
-        # labels = {b.id: b.label for b in self._boxes}
-
-        # add nodes
-        for box in self._boxes:
-            if box.maxclass == 'comment':
-                continue
-            G.add_node(box.id)
-
-        # edd edges
-        for line in self._lines:
-            G.add_edge(line.src, line.dst)
-
-        # layout
-        pos = nx.spring_layout(G)
-        # pos = nx.circular_layout(G)
-        # pos = nx.kamada_kawai_layout(G)
-        # pos = nx.planar_layout(G)
-        # pos = nx.shell_layout(G)
-        # pos = nx.spectral_layout(G)
-        # pos = nx.spiral_layout(G)
-        # pos = nx.kamada_kawai_layout(G)
-
-        # G = nx.convert_node_labels_to_integers(G)
-        # G = nx.relabel_nodes(G, labels)
-        # nx.draw(G, with_labels=True)
-        nx.draw(G, pos=pos, with_labels=True)
-        # nx.draw(G, pos=pos, with_labels=False)
-        plt.show()
-
-
+@pytest.mark.skipif(not HAS_REQS, reason="requires networkx, matplotlib")
 def test_graph():
+
+    class GraphPatcher(Patcher):
+
+        def reposition(self):
+
+            G = nx.DiGraph()
+
+            # add nodes
+            for box in self._boxes:
+                if box.maxclass == 'comment':
+                    continue
+                G.add_node(box.id)
+
+            # edd edges
+            for line in self._lines:
+                G.add_edge(line.src, line.dst)
+
+            # layout
+            scale = self.rect[2]
+            # pos = nx.circular_layout(G, scale=scale)
+            # pos = nx.kamada_kawai_layout(G, scale=scale)
+            # pos = nx.planar_layout(G, scale=scale)
+            # pos = nx.shell_layout(G, scale=scale)
+            # pos = nx.spectral_layout(G, scale=scale)
+            # pos = nx.spiral_layout(G. scale=scale)
+            pos = nx.spring_layout(G, scale=scale)
+
+            repos = []
+            for p in pos.items():
+                _, coord = p
+                x, y = coord
+                repos.append((x+scale, y+scale))
+
+            _boxes = []
+            for box, xy in zip(self._boxes, repos):
+                x, y, h, w = box.patching_rect
+                newx, newy = xy
+                box.patching_rect = newx, newy, h, w
+                _boxes.append(box)
+            self.boxes = _boxes
+
+
+
+        def graph(self):
+
+            G = nx.DiGraph()
+
+            # make labels
+            # labels = {b.id: b.label for b in self._boxes}
+
+            # add nodes
+            for box in self._boxes:
+                if box.maxclass == 'comment':
+                    continue
+                G.add_node(box.id)
+
+            # edd edges
+            for line in self._lines:
+                G.add_edge(line.src, line.dst)
+
+            # layout
+            pos = nx.spring_layout(G)
+            # pos = nx.circular_layout(G)
+            # pos = nx.kamada_kawai_layout(G)
+            # pos = nx.planar_layout(G)
+            # pos = nx.shell_layout(G)
+            # pos = nx.spectral_layout(G)
+            # pos = nx.spiral_layout(G)
+            # pos = nx.kamada_kawai_layout(G)
+
+            # G = nx.convert_node_labels_to_integers(G)
+            # G = nx.relabel_nodes(G, labels)
+            # nx.draw(G, with_labels=True)
+            nx.draw(G, pos=pos, with_labels=True)
+            # nx.draw(G, pos=pos, with_labels=False)
+            plt.show()
+
+
     p = GraphPatcher('outputs/test_layout_networkx1.maxpat')
 
     fparam = p.add_floatparam
