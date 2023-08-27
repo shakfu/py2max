@@ -1,19 +1,45 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "py2max"
 authors = [
     {name = "Shakeeb Alireza", email = "me@org.me"},
 ]
-version = "0.1.0"
+version = "0.1.1"
 description = "A library for offline generation of Max/MSP patcher (.maxpat) files."
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["Max", "maxpat", "offline"]
-license = {text = "MIT"}
+license = {file = "LICENSE"}
 classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
 ]
 dependencies = []
+
+[project.optional-dependencies]
+dev = ["check-manifest", "black"]
+test = ["pytest", "pytest-cov"]
+
+
+[project.urls]
+"Homepage" = "https://github.com/shakfu/py2max"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.pylint]
+max-line-length = 88
+disable = [
+    "C0103", # (invalid-name)
+    "C0302", # (too-many-lines)
+    "R0902", # (too-many-instance-attributes)
+    "R0904", # (too-many-public-methods)
+    "R0913", # (too-many-arguments)
+    "R1735", # (use-dict-literal)
+    "W0622", # (redefined-builtin)
+]

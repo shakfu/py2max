@@ -14,7 +14,7 @@ basic usage:
 import abc
 import json
 from pathlib import Path
-from typing import Type, Optional
+from typing import Optional
 
 from .maxclassdb import MAXCLASS_DEFAULTS
 from .common import Rect
@@ -31,6 +31,7 @@ MAX_VER_REVISION = 5
 
 # ---------------------------------------------------------------------------
 # Layout Classes
+
 
 class LayoutManager(abc.ABC):
     """Utility class to help with object layout.
@@ -136,6 +137,7 @@ class LayoutManager(abc.ABC):
         x, y, w, h = rect
         return Rect(x + (w + self.comment_pad), y, w, h)
 
+
 class HorizontalLayoutManager(LayoutManager):
     """Utility class to help with object layout.
 
@@ -163,6 +165,7 @@ class HorizontalLayoutManager(LayoutManager):
 
         return Rect(x, y, w, h)
 
+
 class VerticalLayoutManager(LayoutManager):
     """Utility class to help with obadject layout.
 
@@ -189,6 +192,7 @@ class VerticalLayoutManager(LayoutManager):
         x = pad + x_shift
 
         return Rect(x, y, w, h)
+
 
 # ---------------------------------------------------------------------------
 # Primary Classes
@@ -315,6 +319,7 @@ class Patcher:
         for box_dict in patcher.boxes:
             box = box_dict["box"]
             b = Box.from_dict(box)
+            assert b.id, "box must have id"
             patcher._objects[b.id] = b
             # b = patcher.box_from_dict(box)
             patcher._boxes.append(b)
@@ -330,7 +335,7 @@ class Patcher:
     def from_file(cls, path: str | Path, save_to: Optional[str] = None) -> "Patcher":
         """create a patcher instance from a .maxpat json file"""
 
-        with open(path) as f:
+        with open(path, encoding="utf8") as f:
             maxpat = json.load(f)
         return Patcher.from_dict(maxpat["patcher"], save_to)
 
@@ -342,15 +347,14 @@ class Patcher:
             del d[k]
         if not self._parent:
             return dict(patcher=d)
-        else:
-            return d
+        return d
 
     def to_json(self) -> str:
         """cascade convert to json"""
         self.render()
         return json.dumps(self.to_dict(), indent=4)
 
-    def find_box(self, text: str) -> Optional['Box']:
+    def find_box(self, text: str) -> Optional["Box"]:
         """find box object by maxclass or type
 
         returns box if found else None
@@ -358,11 +362,12 @@ class Patcher:
         for box in self._objects.values():
             if box.maxclass == text:
                 return box
-            if hasattr(box, 'text'):
-                if box.text.startswith(text):
+            if "text" in box._kwds:
+                if box._kwds["text"] and box._kwds["text"].startswith(text):
                     return box
+        return None
 
-    def find_box_with_index(self, text: str) -> Optional[tuple[int, 'Box']]:
+    def find_box_with_index(self, text: str) -> Optional[tuple[int, "Box"]]:
         """find box object by maxclass or type
 
         returns (index, box) if found
@@ -370,9 +375,10 @@ class Patcher:
         for i, box in enumerate(self._boxes):
             if box.maxclass == text:
                 return (i, box)
-            if hasattr(box, 'text'):
-                if box.text.startswith(text):
+            if "text" in box._kwds:
+                if box._kwds["text"] and box._kwds["text"].startswith(text):
                     return (i, box)
+        return None
 
     def render(self, reset: bool = False):
         """cascade convert py2max objects to dicts."""
@@ -390,7 +396,7 @@ class Patcher:
         if path.parent:
             path.parent.mkdir(exist_ok=True)
         self.render()
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf8") as f:
             json.dump(self.to_dict(), f, indent=4)
 
     def save(self):
@@ -406,8 +412,7 @@ class Patcher:
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         if maxclass:
             return self._layout_mgr.get_pos(maxclass)
-        else:
-            return self._layout_mgr.get_pos()
+        return self._layout_mgr.get_pos()
 
     def add_box(
         self,
@@ -563,10 +568,9 @@ class Patcher:
 
         if isinstance(name, str):
             return self.add_floatparam(longname=name, initial=value, **kwds)
-        else:
-            raise ValueError(
-                "should be: .add(<float>, '<name>') OR .add(<float>, name='<name>')"
-            )
+        raise ValueError(
+            "should be: .add(<float>, '<name>') OR .add(<float>, name='<name>')"
+        )
 
     def _add_int(self, value, *args, **kwds) -> "Box":
         """type-handler for int values in `add`"""
@@ -582,10 +586,9 @@ class Patcher:
 
         if isinstance(name, str):
             return self.add_intparam(longname=name, initial=value, **kwds)
-        else:
-            raise ValueError(
-                "should be: .add(<int>, '<name>') OR .add(<int>, name='<name>')"
-            )
+        raise ValueError(
+            "should be: .add(<int>, '<name>') OR .add(<int>, name='<name>')"
+        )
 
     def _add_str(self, value, *args, **kwds) -> "Box":
         """type-handler for str values in `add`"""
@@ -600,14 +603,13 @@ class Patcher:
         if maxclass in self._maxclass_methods:
             return self._maxclass_methods[maxclass](txt, **kwds)  # type: ignore
         # next two require value as a whole
-        elif maxclass == "p":
+        if maxclass == "p":
             return self.add_subpatcher(value, **kwds)
-        elif maxclass == "gen~":
+        if maxclass == "gen~":
             return self.add_gen_tilde(**kwds)
-        elif maxclass == "rnbo~":
+        if maxclass == "rnbo~":
             return self.add_rnbo(value, **kwds)
-        else:
-            return self.add_textbox(text=value, **kwds)
+        return self.add_textbox(text=value, **kwds)
 
     def add(self, value, *args, **kwds) -> "Box":
         """generic adder: value can be a number or a list or text for an object."""
@@ -615,14 +617,13 @@ class Patcher:
         if isinstance(value, float):
             return self._add_float(value, *args, **kwds)
 
-        elif isinstance(value, int):
+        if isinstance(value, int):
             return self._add_int(value, *args, **kwds)
 
-        elif isinstance(value, str):
+        if isinstance(value, str):
             return self._add_str(value, *args, **kwds)
 
-        else:
-            raise NotImplementedError
+        raise NotImplementedError
 
     def add_codebox(
         self,
@@ -899,7 +900,7 @@ class Patcher:
                     )
                 ),
                 patching_rect=rect or self.get_pos(),
-                hint=name if self._auto_hints else "",
+                hint=name if self._auto_hints else hint or "",
                 **kwds,
             ),
             comment or name,  # units can also be added here
@@ -1242,8 +1243,6 @@ class Patcher:
         return self.add_bpatcher(name=name, varname=_varname, extract=1, **kwds)
 
 
-
-
 class Box:
     """Max Box object"""
 
@@ -1299,6 +1298,7 @@ class Box:
 
     @classmethod
     def from_dict(cls, obj_dict):
+        """create instance from dict"""
         box = cls()
         box.__dict__.update(obj_dict)
         if hasattr(box, "patcher"):
@@ -1307,12 +1307,14 @@ class Box:
 
     @property
     def oid(self) -> Optional[int]:
+        """numerical part of object id as int"""
         if self.id:
             return int(self.id[4:])
         return None
 
     @property
     def subpatcher(self):
+        """synonym for parent patcher object"""
         return self._patcher
 
 
@@ -1331,10 +1333,12 @@ class Patchline:
 
     @property
     def src(self):
+        """first object from source list"""
         return self.source[0]
 
     @property
     def dst(self):
+        """first object from destination list"""
         return self.destination[0]
 
     def to_tuple(self) -> tuple[str, str, str, str, str | int]:
@@ -1358,6 +1362,7 @@ class Patchline:
 
     @classmethod
     def from_dict(cls, obj_dict: dict):
+        """convert to`Patchline` object from dict"""
         patchline = cls()
         patchline.__dict__.update(obj_dict)
         return patchline

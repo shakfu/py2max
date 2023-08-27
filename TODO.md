@@ -20,7 +20,7 @@
 
   - `ezadc~` to top left
 
-  -`ezdac~` to bottom left
+  - `ezdac~` to bottom left
 
   - visualization object (scope, etc.) to bottom right, etc.
 

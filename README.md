@@ -6,7 +6,7 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 ## Features
 
-- Scripted *offline* generation of Max patcher files using Python objects corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
+- Scripted *offline* generation of Max patcher files using Python objects, corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
 
 - *Round-trip conversion* between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
 
@@ -16,11 +16,11 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (using graph-drawing algorithms).
 
-- Allows precise layout and configuration of Max objects using manual methods or via layout managers.
+- Allows precise layout and configuration of Max objects.
 
 - `Patcher` objects have generic methods such as `add_textbox` and can also have specialized methods such as `add_coll`. As an example, this method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
 
-- Has a `maxclassdb` feature which recalls default configurations of Max Objects.
+- Provides a `maxclassdb` feature which recalls default configurations of Max Objects.
 
 ## Possible use cases
 
@@ -121,19 +121,19 @@ cd py2max
 pip install . # optional
 ```
 
-Note that py2max does not need to be installed to be used, so you can skip the `pip install .` part if you prefer.
-
-In this case, you can just to play around and test it by runing `pytest` (see 'Testing' section) or just open up a terminal or ipython and type some of the examples from above.
-
-If you want to build it as a wheel, and
+Note that py2max does not need to be installed to be used, so you can skip the `pip install .` part if you prefer and just `cd` into the cloned directory and start using it:
 
 ```bash
-pip install build
-cd py2max
-python3 -m build .
-```
+$ cd py2max
+$ ipython
 
-The wheel then should be in the `dist` directory.
+In [1]: from py2max import Patcher
+
+In [2]: p = Patcher.from_file("tests/data/simple.maxpat")
+
+In [3]: p._boxes
+Out[3]: [Box(id='obj-2', maxclass='ezdac~'), Box(id='obj-1', maxclass='newobj')]
+```
 
 ## Testing
 
@@ -247,6 +247,16 @@ The project has a few of scripts which may be useful:
 - `convert.py`: convert `maxpat` to `yaml` for ease of reading during dev
 - `compare.py`: compare using [deepdiff](https://zepworks.com/deepdiff/current/diff.html)
 - `coverage.sh`: run pytest coverage and generate html coverage report
+
+Note that if you want to build py2max as a wheel:
+
+```bash
+pip install build
+cd py2max
+python3 -m build .
+```
+
+The wheel then should be in the `dist` directory.
 
 ## Examples of Use
 

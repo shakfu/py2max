@@ -56,7 +56,8 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "signal" ],
 					"patching_rect" : [ 279.0, 149.0, 66.0, 22.0 ],
-					"text" : "cycle~ 440"
+					"text" : "cycle~ 440",
+					"varname" : "osc1"
 				}
 
 			}

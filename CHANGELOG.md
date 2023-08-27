@@ -2,7 +2,7 @@
 
 ## 0.1.1
 
-- Improved Coverage: 99%
+- Improved core Coverage: 99%
 
 - Added clean script: `./scripts/clean.sh`
 
@@ -12,15 +12,15 @@
 
 - Added gradual types to `py2max/core`, no errors with `mypy`
 
-- Added number_tilde test
+- Added `number_tilde` test
 
-- Fixed comment positioning
+- Fixed `comment` positioning
 
-- Added pyhola layout.
+- Added `pyhola` layout.
 
-- Added graphviz layouts.
+- Added `graphviz` layouts.
 
-- Fixed Adaptragrams layout.
+- Fixed `Adaptagrams` layout.
 
 - Added graph layout comparison and additional layouts.
 

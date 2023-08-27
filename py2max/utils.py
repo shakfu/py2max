@@ -1,6 +1,6 @@
 """py2max.utils
 
-A module for simple helper functions and classes
+A module for simple helper functions and classes for py2max
 
 """
 
