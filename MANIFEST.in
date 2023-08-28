@@ -1,0 +1,8 @@
+include *.md
+recursive-include docs *.md
+recursive-include docs *.png
+recursive-include scripts *.py
+recursive-include scripts *.sh
+recursive-include tests *.maxpat
+recursive-include tests *.py
+recursive-include tests *.tglf
