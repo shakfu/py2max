@@ -362,8 +362,8 @@ class Patcher:
         for box in self._objects.values():
             if box.maxclass == text:
                 return box
-            if "text" in box._kwds:
-                if box._kwds["text"] and box._kwds["text"].startswith(text):
+            if hasattr(box, "text"):
+                if box.text and box.text.startswith(text):
                     return box
         return None
 
@@ -375,8 +375,8 @@ class Patcher:
         for i, box in enumerate(self._boxes):
             if box.maxclass == text:
                 return (i, box)
-            if "text" in box._kwds:
-                if box._kwds["text"] and box._kwds["text"].startswith(text):
+            if hasattr(box, "text"):
+                if box.text and box.text.startswith(text):
                     return (i, box)
         return None
 
@@ -1284,7 +1284,6 @@ class Box:
         """convert self and children to dictionary."""
         if self._patcher:
             self._patcher.render()
-
             self.patcher = self._patcher.to_dict()
 
     def to_dict(self):
