@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] ensure `box._patcher` is set
+
 - [ ] add combos (pre-combined elements).
 
 - [ ] add midi inlet / outlets in `add_rnbo`

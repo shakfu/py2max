@@ -354,6 +354,21 @@ class Patcher:
         self.render()
         return json.dumps(self.to_dict(), indent=4)
 
+    def find(self, text: str) -> Optional["Box"]:
+        """find (recursively) box object by maxclass or type
+
+        returns box if found else None
+        """
+        for obj in self:
+            if not isinstance(obj, Patcher):
+                if obj.maxclass == text:
+                    return obj
+                if hasattr(obj, "text"):
+                    if obj.text and obj.text.startswith(text):
+                        return obj
+        return None
+
+
     def find_box(self, text: str) -> Optional["Box"]:
         """find box object by maxclass or type
 
@@ -410,6 +425,7 @@ class Patcher:
         return f"obj-{self._id_counter}"
 
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
+        """get box rect (position) via maxclass or layout_manager"""
         if maxclass:
             return self._layout_mgr.get_pos(maxclass)
         return self._layout_mgr.get_pos()
