@@ -2,7 +2,9 @@
 
 ## General
 
-- [ ] ensure `box._patcher` is set
+- [ ] add optional mode where id==varname if id is set
+
+- [ ] ensure leaf `box._patcher` is set
 
 - [ ] add combos (pre-combined elements).
 

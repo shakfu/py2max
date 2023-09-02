@@ -207,6 +207,7 @@ class Patcher:
     def __init__(
         self,
         path: Optional[str | Path] = None,
+        title: Optional[str] = None,
         parent: Optional["Patcher"] = None,
         classnamespace: Optional[str] = None,
         reset_on_render: bool = True,
@@ -245,6 +246,8 @@ class Patcher:
         }
         # --------------------------------------------------------------------
         # begin max attributes
+        if title: # not a default attribute
+            self.title = title
         self.fileversion: int = 1
         self.appversion = {
             "major": MAX_VER_MAJOR,

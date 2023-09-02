@@ -2,7 +2,7 @@ from py2max import Patcher
 import json
 
 def test_patcher_basics():
-    p = Patcher('outputs/test_patcher_basics.maxpat')
+    p = Patcher('outputs/test_patcher_basics.maxpat', title="top notch patcher")
     assert repr(p) == "Patcher(path='outputs/test_patcher_basics.maxpat')"
     assert p._layout_mgr.parent.rect == p.rect
     osc1 = p.add_textbox('cycle~')
