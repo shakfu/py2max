@@ -2,6 +2,8 @@
 
 ## 0.1.1
 
+- Improved compatibility with Python 3.7
+
 - Improved core Coverage: 99%
 
 - Added clean script: `./scripts/clean.sh`

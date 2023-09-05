@@ -70,6 +70,7 @@ def test_tree():
 
     xs = list(p)
     assert xs[-1].name == 'extra'
+    p.check_parenthood()
     p.print_tree()
 
 

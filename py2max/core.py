@@ -14,7 +14,7 @@ basic usage:
 import abc
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, Tuple, List
 
 from .maxclassdb import MAXCLASS_DEFAULTS
 from .common import Rect
@@ -206,7 +206,7 @@ class Patcher:
 
     def __init__(
         self,
-        path: Optional[str | Path] = None,
+        path: Optional[Union[str, Path]] = None,
         title: Optional[str] = None,
         parent: Optional["Patcher"] = None,
         classnamespace: Optional[str] = None,
@@ -246,7 +246,7 @@ class Patcher:
         }
         # --------------------------------------------------------------------
         # begin max attributes
-        if title: # not a default attribute
+        if title:  # not a default attribute
             self.title = title
         self.fileversion: int = 1
         self.appversion = {
@@ -335,7 +335,9 @@ class Patcher:
         return patcher
 
     @classmethod
-    def from_file(cls, path: str | Path, save_to: Optional[str] = None) -> "Patcher":
+    def from_file(
+        cls, path: Union[str, Path], save_to: Optional[str] = None
+    ) -> "Patcher":
         """create a patcher instance from a .maxpat json file"""
 
         with open(path, encoding="utf8") as f:
@@ -371,7 +373,6 @@ class Patcher:
                         return obj
         return None
 
-
     def find_box(self, text: str) -> Optional["Box"]:
         """find box object by maxclass or type
 
@@ -385,7 +386,7 @@ class Patcher:
                     return box
         return None
 
-    def find_box_with_index(self, text: str) -> Optional[tuple[int, "Box"]]:
+    def find_box_with_index(self, text: str) -> Optional[Tuple[int, "Box"]]:
         """find box object by maxclass or type
 
         returns (index, box) if found
@@ -408,7 +409,7 @@ class Patcher:
             self.boxes.append(box.to_dict())
         self.lines = [line.to_dict() for line in self._lines]
 
-    def save_as(self, path: str | Path):
+    def save_as(self, path: Union[str, Path]):
         """save as .maxpat json file"""
         path = Path(path)
         if path.parent:
@@ -525,7 +526,7 @@ class Patcher:
         maxclass: Optional[str] = None,
         numinlets: Optional[int] = None,
         numoutlets: Optional[int] = None,
-        outlettype: Optional[list[str]] = None,
+        outlettype: Optional[List[str]] = None,
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         comment: Optional[str] = None,
@@ -932,7 +933,7 @@ class Patcher:
         maxclass: Optional[str] = None,
         numinlets: Optional[int] = None,
         numoutlets: Optional[int] = None,
-        outlettype: Optional[list[str]] = None,
+        outlettype: Optional[List[str]] = None,
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         patcher: Optional["Patcher"] = None,
@@ -1067,7 +1068,7 @@ class Patcher:
     def add_table(
         self,
         name: Optional[str] = None,
-        array: Optional[list[int | float]] = None,
+        array: Optional[List[Union[int, float]]] = None,
         embed: int = 1,
         patching_rect: Optional[Rect] = None,
         text: Optional[str] = None,
@@ -1116,7 +1117,7 @@ class Patcher:
     def add_table_tilde(
         self,
         name: Optional[str] = None,
-        array: Optional[list[int | float]] = None,
+        array: Optional[List[Union[int, float]]] = None,
         embed: int = 1,
         patching_rect: Optional[Rect] = None,
         text: Optional[str] = None,
@@ -1143,7 +1144,7 @@ class Patcher:
     def add_itable(
         self,
         name: Optional[str] = None,
-        array: Optional[list[int | float]] = None,
+        array: Optional[List[Union[int, float]]] = None,
         patching_rect: Optional[Rect] = None,
         text: Optional[str] = None,
         id: Optional[str] = None,
@@ -1178,7 +1179,7 @@ class Patcher:
         self,
         prefix: Optional[str] = None,
         autopopulate: int = 1,
-        items: Optional[list[str]] = None,
+        items: Optional[List[str]] = None,
         patching_rect: Optional[Rect] = None,
         depth: Optional[int] = None,
         id: Optional[str] = None,
@@ -1215,14 +1216,14 @@ class Patcher:
         name: str,
         numinlets: int = 1,
         numoutlets: int = 1,
-        outlettype: Optional[list[str]] = None,
+        outlettype: Optional[List[str]] = None,
         bgmode: int = 0,
         border: int = 0,
         clickthrough: int = 0,
         enablehscroll: int = 0,
         enablevscroll: int = 0,
         lockeddragscroll: int = 0,
-        offset: Optional[list[float]] = None,
+        offset: Optional[List[float]] = None,
         viewvisibility: int = 1,
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
@@ -1359,7 +1360,7 @@ class Patchline:
         """first object from destination list"""
         return self.destination[0]
 
-    def to_tuple(self) -> tuple[str, str, str, str, str | int]:
+    def to_tuple(self) -> Tuple[str, str, str, str, Union[str, int]]:
         """Return a tuple describing the patchline."""
         return (
             self.source[0],

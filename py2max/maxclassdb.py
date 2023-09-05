@@ -2,9 +2,9 @@
 """
 
 from .common import Rect
-from typing import Any
+from typing import Any, Dict
 
-MAXCLASS_DEFAULTS: dict[str, dict[str, Any]] = {
+MAXCLASS_DEFAULTS: Dict[str, Dict[str, Any]] = {
     "button": {
         "maxclass": "button",
         "numinlets": 1,

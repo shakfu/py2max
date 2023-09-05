@@ -14,6 +14,7 @@ def test_patcher_basics():
     assert line1
     assert repr(line1)
     assert len(line1.to_tuple()) == 5
+    p.save()
 
 
 def test_patcher_from_file():

@@ -70,7 +70,7 @@ p.add_line(gain, dac, inlet=1)
 p.save()
 ```
 
-With builtin aliases (`.add` for `.add_textbox` and `.link` for `.add_line`), the above example can be written in a even more abbreviated form (and with a vertical layout) as:
+With builtin aliases (`.add` for `.add_*`  type methods and `.link` for `.add_line`), the above example can be written in an even more abbreviated form (and with a vertical layout) as:
 
 ```python
 p = Patcher('out_vertical.maxpat', layout='vertical')
@@ -161,7 +161,7 @@ To check test coverage:
 ./scripts/coverage.sh
 ```
 
-or
+which essentially does the following
 
 ```bash
 mkdir -p outputs
