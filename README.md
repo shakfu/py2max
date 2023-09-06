@@ -51,9 +51,9 @@ p = Patcher('my-patch.maxpat')
 osc1 = p.add_textbox('cycle~ 440')
 gain = p.add_textbox('gain~')
 dac = p.add_textbox('ezdac~')
-osc1_gain = p.add_line(osc1, gain)
-gain_dac0 = p.add_line(gain, outlet=0, dac, inlet=0)
-gain_dac1 = p.add_line(gain, outlet=0, dac, inlet=1)
+osc1_gain = p.add_line(osc1, gain) # osc1 outlet 0 -> gain inlet 0
+gain_dac0 = p.add_line(gain, dac, outlet=0, inlet=0)
+gain_dac1 = p.add_line(gain, dac, outlet=0, inlet=1)
 p.save()
 ```
 
