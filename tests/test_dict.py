@@ -7,6 +7,3 @@ def test_dict():
     d = p.add_dict('bob', dictionary=dict(a=1, b=list(range(20)), c=3))
     p.save()
 
-
-if __name__ == '__main__':
-    test_dict()

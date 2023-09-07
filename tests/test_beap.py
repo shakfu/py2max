@@ -9,6 +9,3 @@ def test_beap():
     #       "signal", "signal", "signal", "signal", "signal"], varname="bp.LFO")
     p.save()
 
-
-if __name__ == '__main__':
-    test_beap()

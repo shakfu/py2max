@@ -17,5 +17,3 @@ def test_subpatch():
     p.save()
 
 
-if __name__ == '__main__':
-    test_subpatch()

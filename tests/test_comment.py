@@ -7,6 +7,3 @@ def test_comment():
     fparam = p.add_floatparam('Frequency', 10.2, 0.0, 20.0)
     p.save()
 
-
-if __name__ == '__main__':
-    test_comment()

@@ -21,6 +21,3 @@ def test_bpatcher():
     p.link(osc, bp2)
     p.save()
 
-
-if __name__ == '__main__':
-    test_bpatcher()

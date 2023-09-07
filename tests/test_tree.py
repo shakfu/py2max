@@ -74,8 +74,3 @@ def test_tree():
     p.print_tree()
 
 
-if __name__ == '__main__':
-    test_tree()
-
-
-

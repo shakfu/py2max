@@ -54,5 +54,4 @@ def test_js():
     p.link(js, msg, 1) # to second inlet 1
     p.save()
 
-if __name__ == '__main__':
-    test_js()
+

@@ -99,7 +99,3 @@ def test_graph():
     # p.graph()
     p.save()
 
-
-if __name__ == '__main__':
-    test_graph()
-

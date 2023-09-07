@@ -63,7 +63,3 @@ def test_add():
     p.add('bpatcher bp.LFO.maxpat', extract=1)
 
     p.save()
-
-
-if __name__ == '__main__':
-    test_add()

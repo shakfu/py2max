@@ -65,14 +65,3 @@ def test_table_wavetable2():
     p.save_as("outputs/test_table_wavetable2.maxpat")
 
 
-
-
-
-
-
-
-
-
-if __name__ == '__main__':
-    test_table()
-    test_table_tilde()

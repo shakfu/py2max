@@ -11,6 +11,3 @@ def test_zl_group():
     p.link(zlg, out)
     p.save()
 
-
-if __name__ == '__main__':
-    test_zl_group()

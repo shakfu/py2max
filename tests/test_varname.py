@@ -10,6 +10,3 @@ def test_varname():
     p.add_line(gain, dac)
     p.save()
 
-
-if __name__ == '__main__':
-    test_varname()

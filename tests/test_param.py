@@ -7,6 +7,3 @@ def test_param():
     size = p.add_intparam('size', 341, 0, 1000)
     p.save()
 
-
-if __name__ == '__main__':
-    test_param()

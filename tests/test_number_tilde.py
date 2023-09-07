@@ -30,8 +30,3 @@ def test_number_tilde_resized():
         mode=2, comment=f"mode2-left", comment_pos="left")
     p.save()
 
-
-
-if __name__ == '__main__':
-    test_number_tilde()
-    test_number_tilde_resized()

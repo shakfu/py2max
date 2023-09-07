@@ -8,6 +8,3 @@ def test_colors():
         p.add_textbox('cycle~ 400', bgcolor=[1.0-m, 0.32, 0.0+m, 0.5])
     p.save()
 
-
-if __name__ == '__main__':
-    test_colors()

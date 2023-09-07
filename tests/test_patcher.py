@@ -38,6 +38,3 @@ def test_patcher_from_file_comparison_simple():
         d = json.load(f)
     assert pd == d
 
-
-if __name__ == '__main__':
-    test_patcher_from_file()

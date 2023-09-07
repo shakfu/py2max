@@ -7,6 +7,3 @@ def test_message():
     p.add_message('a b c d')
     p.save()
 
-
-if __name__ == '__main__':
-    test_message()

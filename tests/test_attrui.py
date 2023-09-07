@@ -52,8 +52,3 @@ def test_attr():
     p.add_line(phase, osc)
     p.save()
 
-
-if __name__ == '__main__':
-    test_attrui()
-    test_attr()
-

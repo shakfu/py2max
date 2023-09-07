@@ -10,6 +10,3 @@ def test_defaults():
     p.add_textbox('ezdac~')
     p.save()
 
-
-if __name__ == '__main__':
-    test_defaults()

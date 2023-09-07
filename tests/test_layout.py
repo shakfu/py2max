@@ -14,6 +14,3 @@ def test_layout():
         r = p._layout_mgr.get_pos(maxclass=mc)
         assert isinstance(r, Rect)
 
-
-if __name__ == '__main__':
-    test_layout()

@@ -13,6 +13,3 @@ def test_coll():
     })
     p.save()
 
-
-if __name__ == '__main__':
-    test_coll()

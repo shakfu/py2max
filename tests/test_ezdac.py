@@ -10,6 +10,3 @@ def test_ezdac():
     p.add_line(osc, dac, inlet=1)
     p.save()
 
-
-if __name__ == '__main__':
-    test_ezdac()

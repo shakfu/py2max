@@ -42,7 +42,3 @@ def test_layout_vertical():
     link(scp2, scop, inlet=1)
     p.save()
 
-
-if __name__ == '__main__':
-    test_layout_vertical()
-
