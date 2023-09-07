@@ -228,10 +228,7 @@ class Patcher:
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
         self._reset_on_render = reset_on_render
-        self._layout_mgr: LayoutManager = {
-            "horizontal": HorizontalLayoutManager,
-            "vertical": VerticalLayoutManager,
-        }[layout](self)
+        self._layout_mgr: LayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._maxclass_methods = {
             # specialized methods
@@ -428,6 +425,13 @@ class Patcher:
         self._id_counter += 1
         return f"obj-{self._id_counter}"
 
+    def set_layout_mgr(self, name: str) -> LayoutManager:
+        """takes a name and returns an instance of a layout manager"""
+        return {
+            "horizontal": HorizontalLayoutManager,
+            "vertical": VerticalLayoutManager,
+        }[name](self)
+
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
         if maxclass:
@@ -551,9 +555,8 @@ class Patcher:
                 numinlets=numinlets or 1,
                 numoutlets=numoutlets or 0,
                 outlettype=outlettype or [""],
-                patching_rect=patching_rect or self.get_pos(maxclass)
-                if maxclass
-                else self.get_pos(),
+                patching_rect=patching_rect
+                or (self.get_pos(maxclass) if maxclass else self.get_pos()),
                 **kwds,
             ),
             comment,
