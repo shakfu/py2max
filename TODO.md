@@ -8,6 +8,8 @@
 
 - [ ] add combos (pre-combined elements).
 
+- [ ] add groups (grouped elements).
+
 - [ ] add midi inlet / outlets in `add_rnbo`
 
 - [ ] restructure `.add`
