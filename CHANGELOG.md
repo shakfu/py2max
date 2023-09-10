@@ -2,6 +2,8 @@
 
 ## 0.1.1
 
+- Cleaned
+
 - Improved compatibility with Python 3.7
 
 - Improved core Coverage: 99%
