@@ -19,8 +19,24 @@ class Rect(NamedTuple):
 
 
 class Box:
-    def __init__(self, **kwds):
-        self._model = {}
+    """Max Box object"""
+
+    def __init__(
+        self,
+        maxclass: Optional[str] = None,
+        numinlets: Optional[int] = None,
+        numoutlets: Optional[int] = None,
+        id: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        **kwds,
+    ):
+        self._model = {
+            "id" : id,
+            "maxclass" : maxclass or "newobj",
+            "numinlets" : numinlets or 0,
+            "numoutlets" : numoutlets or 1,
+            "patching_rect" : patching_rect or Rect(0, 0, 62, 22)
+        }
         self._kwds = kwds
         self.patcher = None
 
@@ -117,11 +133,68 @@ class Patchline:
 
 
 class Patcher:
-    def __init__(self, path: str | Path = None, parent: Optional[Box] = None):
+    """Core Patcher class describing a Max patchers from the ground up.
+
+    Any Patcher can be converted to a .maxpat file.
+    """
+
+    def __init__(
+        self,
+        path: Optional[Union[str, Path]] = None,
+        title: Optional[str] = None,
+        parent: Optional[Box] = None,
+        classnamespace: Optional[str] = None,
+        reset_on_render: bool = True,
+        layout: str = "horizontal",
+        auto_hints: bool = False,
+        openinpresentation: int = 0,
+    ):
+
         self._path = path
         self._parent = parent
         self._reset_on_render = True
-        self._model = {}
+        self._model = {
+            "fileversion" : 1,
+            "appversion" :      {
+                "major" : 8,
+                "minor" : 5,
+                "revision" : 5,
+                "architecture" : "x64",
+                "modernui" : 1
+            }
+            ,
+            "classnamespace" : classnamespace or "box",
+            "rect" : [ 85.0, 104.0, 640.0, 480.0 ],
+            "bglocked" : 0,
+            "openinpresentation" : openinpresentation,
+            "default_fontsize" : 12.0,
+            "default_fontface" : 0,
+            "default_fontname" : "Arial",
+            "gridonopen" : 1,
+            "gridsize" : [ 15.0, 15.0 ],
+            "gridsnaponopen" : 1,
+            "objectsnaponopen" : 1,
+            "statusbarvisible" : 2,
+            "toolbarvisible" : 1,
+            "lefttoolbarpinned" : 0,
+            "toptoolbarpinned" : 0,
+            "righttoolbarpinned" : 0,
+            "bottomtoolbarpinned" : 0,
+            "toolbars_unpinned_last_save" : 0,
+            "tallnewobj" : 0,
+            "boxanimatetime" : 200,
+            "enablehscroll" : 1,
+            "enablevscroll" : 1,
+            "devicewidth" : 0.0,
+            "description" : "",
+            "digest" : "",
+            "tags" : "",
+            "style" : "",
+            "subpatcher_template" : "",
+            "assistshowspatchername" : 0,
+            "dependency_cache" : [  ],
+            "autosave" : 0
+        }
         self.boxes = []
         self.lines = []
 
