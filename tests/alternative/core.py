@@ -26,8 +26,9 @@ class Box:
         maxclass: Optional[str] = None,
         numinlets: Optional[int] = None,
         numoutlets: Optional[int] = None,
-        id: Optional[str] = None,
+        outlettype: Optional[list[str]] = None,
         patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
         **kwds,
     ):
         self._model = {
@@ -35,6 +36,7 @@ class Box:
             "maxclass" : maxclass or "newobj",
             "numinlets" : numinlets or 0,
             "numoutlets" : numoutlets or 1,
+            "outlettype" : outlettype or [""],
             "patching_rect" : patching_rect or Rect(0, 0, 62, 22)
         }
         self._kwds = kwds
@@ -96,8 +98,32 @@ class Box:
     def numoutlets(self, value: int):
         self._model["numoutlets"] = value
 
+    @property
+    def outlettype(self):
+        return self._model["outlettype"]
+
+    @outlettype.setter
+    def outlettype(self, value: list[str]):
+        self._model["outlettype"] = value
+
+
+
 
 class TextBox(Box):
+    def __init__(
+        self,
+        text: str = "",
+        maxclass: Optional[str] = None,
+        numinlets: Optional[int] = None,
+        numoutlets: Optional[int] = None,
+        outlettype: Optional[list[str]] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        **kwds,
+    ):
+        super().__init__(maxclass, numinlets, numoutlets, outlettype, patching_rect, id, **kwds)
+        self.text = text
+
     @property
     def text(self):
         assert "text" in self._model, "`text` field must be in `model`"
@@ -108,10 +134,22 @@ class TextBox(Box):
         self._model["text"] = value
 
 
+class Message(TextBox):
+    def __init__(
+        self,
+        text: str = "",
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        **kwds,
+    ):
+        super().__init__(text, "message", 2, 1, None, patching_rect, id, **kwds)
+        self.text = text
+
+
 class Patchline:
     def __init__(self, src_id: str, dst_id: str, src_outlet: int = 0, dst_inlet: int = 0, order: int = 0):
         self._model = {
-            "source": [src_id, src_inlet],
+            "source": [src_id, src_outlet],
             "destination": [dst_id, dst_inlet],
             "order": order,
         }
@@ -153,6 +191,7 @@ class Patcher:
         self._path = path
         self._parent = parent
         self._reset_on_render = True
+        self._id_counter = 0
         self._model = {
             "fileversion" : 1,
             "appversion" :      {
@@ -200,6 +239,11 @@ class Patcher:
 
     def __repr__(self):
         return f"{self.__class__.__name__}(path='{self._path}')"
+
+    def _get_id(self) -> str:
+        """helper func to increment object ids"""
+        self._id_counter += 1
+        return f"obj-{self._id_counter}"
 
     @classmethod
     def from_dict(cls, patcher_dict: dict, save_to: Optional[str] = None) -> "Patcher":
@@ -267,6 +311,45 @@ class Patcher:
         """save as json .maxpat file"""
         if self._path:
             self.save_as(self._path)
+
+    def add_textbox(
+        self,
+        text: str,
+        maxclass: Optional[str] = None,
+        numinlets: Optional[int] = None,
+        numoutlets: Optional[int] = None,
+        outlettype: Optional[list[str]] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        **kwds,
+    ) -> TextBox:
+        """Add a generic textbox object to the patcher.
+
+        Looks up default attributes from a dictionary.
+        """
+
+        tbox = TextBox(
+            id=id or self._get_id(),
+            text=text,
+            maxclass=maxclass or "newobj",
+            numinlets=numinlets or 1,
+            numoutlets=numoutlets or 0,
+            patching_rect=patching_rect,
+            outlettype=outlettype or [""],
+            **kwds
+        )
+        self.boxes.append(tbox)
+        return tbox
+
+    @property
+    def title(self) -> Optional[str]:
+        if "title" in self._model:
+            return self._model["title"]
+        return None
+
+    @title.setter
+    def title(self, value: str):
+        self._model["title"] = value
 
     @property
     def fileversion(self):
