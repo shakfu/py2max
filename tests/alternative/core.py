@@ -32,12 +32,12 @@ class Box:
         **kwds,
     ):
         self._model = {
-            "id" : id,
-            "maxclass" : maxclass or "newobj",
-            "numinlets" : numinlets or 0,
-            "numoutlets" : numoutlets or 1,
-            "outlettype" : outlettype or [""],
-            "patching_rect" : patching_rect or Rect(0, 0, 62, 22)
+            "id": id,
+            "maxclass": maxclass or "newobj",
+            "numinlets": numinlets or 0,
+            "numoutlets": numoutlets or 1,
+            "outlettype": outlettype or [""],
+            "patching_rect": patching_rect or Rect(0, 0, 62, 22),
         }
         self._kwds = kwds
         self.patcher = None
@@ -107,8 +107,6 @@ class Box:
         self._model["outlettype"] = value
 
 
-
-
 class TextBox(Box):
     def __init__(
         self,
@@ -121,7 +119,9 @@ class TextBox(Box):
         id: Optional[str] = None,
         **kwds,
     ):
-        super().__init__(maxclass, numinlets, numoutlets, outlettype, patching_rect, id, **kwds)
+        super().__init__(
+            maxclass, numinlets, numoutlets, outlettype, patching_rect, id, **kwds
+        )
         self.text = text
 
     @property
@@ -146,8 +146,142 @@ class Message(TextBox):
         self.text = text
 
 
+class IntBox(Box):
+    def __init__(
+        self,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        **kwds,
+    ):
+        super().__init__("number", 1, 2, ["", "bang"], patching_rect, id, **kwds)
+
+class IntParam(IntBox):
+    def __init__(
+        self,
+        longname: str,
+        initial: Optional[int] = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        shortname: Optional[str] = None,
+        id: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        hint: Optional[str] = None,
+        **kwds,
+    ):
+        """int parameter object."""
+        super().__init__(patching_rect, id, **kwds)
+        self._model["parameter_enable"] = 1
+        self._model["saved_attribute_attributes"] = dict(
+            valueof=dict(
+                parameter_initial=[initial or 1],
+                parameter_initial_enable=1,
+                parameter_longname=longname,
+                parameter_mmax=maximum,
+                parameter_mmin=minimum,
+                parameter_shortname=shortname or "",
+                parameter_type=1,
+            )
+        )
+        self._param = self._model["saved_attribute_attributes"]["valueof"]
+        self._model["maximum"] = maximum
+        self._model["minimum"] = minimum
+        self._model["hint"] = hint or longname
+
+    @property
+    def longname(self):
+        return self._param["parameter_longname"]
+
+    @longname.setter
+    def longname(self, value: str):
+        self._param["parameter_longname"] = value
+
+    @property
+    def shortname(self):
+        return self._param["parameter_shortname"]
+
+    @shortname.setter
+    def shortname(self, value: str):
+        self._param["parameter_shortname"] = value
+
+    @property
+    def enable(self):
+        return self._model["parameter_enable"]
+
+    @enable.setter
+    def enable(self, value: bool):
+        self._model["parameter_enable"] = value
+
+    @property
+    def initial(self):
+        return self._param["parameter_initial"]
+
+    @initial.setter
+    def initial(self, value: int):
+        self._param["parameter_initial"] = value
+
+    @property
+    def initial_enable(self):
+        return self._param["parameter_initial_enable"]
+
+    @initial_enable.setter
+    def initial_enable(self, value: bool):
+        self._param["parameter_initial_enable"] = value
+
+    @property
+    def maximum(self):
+        return self._model["maximum"]
+
+    @maximum.setter
+    def maximum(self, value: int):
+        self._model["maximum"] = value
+        self._param["parameter_mmax"] = value
+
+    @property
+    def minimum(self):
+        return self._model["minimum"]
+
+    @minimum.setter
+    def minimum(self, value: int):
+        self._model["minimum"] = value
+        self._param["parameter_mmin"] = value
+
+    @property
+    def type(self):
+        return self._param["parameter_type"]
+
+    @type.setter
+    def type(self, value: int):
+        # FIXME: better to have an enum here
+        assert 2 >= value >= 1
+        self._param["parameter_type"] = value
+
+    @property
+    def hint(self):
+        return self._model["hint"]
+
+    @hint.setter
+    def hint(self, value: str):
+        self._model["hint"] = value
+
+class FloatBox(Box):
+    def __init__(
+        self,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        **kwds,
+    ):
+        super().__init__("flonum", 1, 2, ["", "bang"], patching_rect, id, **kwds)
+
+
 class Patchline:
-    def __init__(self, src_id: str, dst_id: str, src_outlet: int = 0, dst_inlet: int = 0, order: int = 0):
+    def __init__(
+        self,
+        src_id: str,
+        dst_id: str,
+        src_outlet: int = 0,
+        dst_inlet: int = 0,
+        order: int = 0,
+    ):
         self._model = {
             "source": [src_id, src_outlet],
             "destination": [dst_id, dst_inlet],
@@ -182,60 +316,59 @@ class Patcher:
         title: Optional[str] = None,
         parent: Optional[Box] = None,
         classnamespace: Optional[str] = None,
-        reset_on_render: bool = True,
-        layout: str = "horizontal",
-        auto_hints: bool = False,
+        # reset_on_render: bool = True,
+        # layout: str = "horizontal",
+        # auto_hints: bool = False,
         openinpresentation: int = 0,
     ):
-
         self._path = path
         self._parent = parent
         self._reset_on_render = True
         self._id_counter = 0
         self._model = {
-            "fileversion" : 1,
-            "appversion" :      {
-                "major" : 8,
-                "minor" : 5,
-                "revision" : 5,
-                "architecture" : "x64",
-                "modernui" : 1
-            }
-            ,
-            "classnamespace" : classnamespace or "box",
-            "rect" : [ 85.0, 104.0, 640.0, 480.0 ],
-            "bglocked" : 0,
-            "openinpresentation" : openinpresentation,
-            "default_fontsize" : 12.0,
-            "default_fontface" : 0,
-            "default_fontname" : "Arial",
-            "gridonopen" : 1,
-            "gridsize" : [ 15.0, 15.0 ],
-            "gridsnaponopen" : 1,
-            "objectsnaponopen" : 1,
-            "statusbarvisible" : 2,
-            "toolbarvisible" : 1,
-            "lefttoolbarpinned" : 0,
-            "toptoolbarpinned" : 0,
-            "righttoolbarpinned" : 0,
-            "bottomtoolbarpinned" : 0,
-            "toolbars_unpinned_last_save" : 0,
-            "tallnewobj" : 0,
-            "boxanimatetime" : 200,
-            "enablehscroll" : 1,
-            "enablevscroll" : 1,
-            "devicewidth" : 0.0,
-            "description" : "",
-            "digest" : "",
-            "tags" : "",
-            "style" : "",
-            "subpatcher_template" : "",
-            "assistshowspatchername" : 0,
-            "dependency_cache" : [  ],
-            "autosave" : 0
+            "fileversion": 1,
+            "appversion": {
+                "major": 8,
+                "minor": 5,
+                "revision": 5,
+                "architecture": "x64",
+                "modernui": 1,
+            },
+            "classnamespace": classnamespace or "box",
+            "rect": [85.0, 104.0, 640.0, 480.0],
+            "bglocked": 0,
+            "openinpresentation": openinpresentation,
+            "default_fontsize": 12.0,
+            "default_fontface": 0,
+            "default_fontname": "Arial",
+            "gridonopen": 1,
+            "gridsize": [15.0, 15.0],
+            "gridsnaponopen": 1,
+            "objectsnaponopen": 1,
+            "statusbarvisible": 2,
+            "toolbarvisible": 1,
+            "lefttoolbarpinned": 0,
+            "toptoolbarpinned": 0,
+            "righttoolbarpinned": 0,
+            "bottomtoolbarpinned": 0,
+            "toolbars_unpinned_last_save": 0,
+            "tallnewobj": 0,
+            "boxanimatetime": 200,
+            "enablehscroll": 1,
+            "enablevscroll": 1,
+            "devicewidth": 0.0,
+            "description": "",
+            "digest": "",
+            "tags": "",
+            "style": "",
+            "subpatcher_template": "",
+            "assistshowspatchername": 0,
+            "dependency_cache": [],
+            "autosave": 0,
         }
         self.boxes = []
         self.lines = []
+        self.title = title
 
     def __repr__(self):
         return f"{self.__class__.__name__}(path='{self._path}')"
@@ -256,10 +389,10 @@ class Patcher:
         patcher._model.update(patcher_dict)
 
         for box_dict in patcher._model["boxes"]:
-            if "text" in box_dict['box']:
-                box = TextBox.from_dict(box_dict['box'])
+            if "text" in box_dict["box"]:
+                box = TextBox.from_dict(box_dict["box"])
             else:
-                box = Box.from_dict(box_dict['box'])
+                box = Box.from_dict(box_dict["box"])
             patcher.boxes.append(box)
 
         for line_dict in patcher._model["lines"]:
@@ -269,7 +402,9 @@ class Patcher:
         return patcher
 
     @classmethod
-    def from_file(cls, path: Union[str, Path], save_to: Optional[str] = None) -> "Patcher":
+    def from_file(
+        cls, path: Union[str, Path], save_to: Optional[str] = None
+    ) -> "Patcher":
         """create a patcher instance from a .maxpat json file"""
 
         with open(path, encoding="utf8") as f:
@@ -336,7 +471,7 @@ class Patcher:
             numoutlets=numoutlets or 0,
             patching_rect=patching_rect,
             outlettype=outlettype or [""],
-            **kwds
+            **kwds,
         )
         self.boxes.append(tbox)
         return tbox
@@ -348,8 +483,9 @@ class Patcher:
         return None
 
     @title.setter
-    def title(self, value: str):
-        self._model["title"] = value
+    def title(self, value: Optional[str]):
+        if value:
+            self._model["title"] = value
 
     @property
     def fileversion(self):
