@@ -155,6 +155,7 @@ class IntBox(Box):
     ):
         super().__init__("number", 1, 2, ["", "bang"], patching_rect, id, **kwds)
 
+
 class IntParam(IntBox):
     def __init__(
         self,
@@ -263,6 +264,7 @@ class IntParam(IntBox):
     def hint(self, value: str):
         self._model["hint"] = value
 
+
 class FloatBox(Box):
     def __init__(
         self,
@@ -273,23 +275,127 @@ class FloatBox(Box):
         super().__init__("flonum", 1, 2, ["", "bang"], patching_rect, id, **kwds)
 
 
-class Patchline:
+class FloatParam(FloatBox):
     def __init__(
         self,
-        src_id: str,
-        dst_id: str,
-        src_outlet: int = 0,
-        dst_inlet: int = 0,
-        order: int = 0,
+        longname: str,
+        initial: Optional[float] = None,
+        minimum: Optional[float] = None,
+        maximum: Optional[float] = None,
+        shortname: Optional[str] = None,
+        id: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        hint: Optional[str] = None,
+        **kwds,
     ):
+        """int parameter object."""
+        super().__init__(patching_rect, id, **kwds)
+        self._model["parameter_enable"] = 1
+        self._model["saved_attribute_attributes"] = dict(
+            valueof=dict(
+                parameter_initial=[initial or 1],
+                parameter_initial_enable=1,
+                parameter_longname=longname,
+                parameter_mmax=maximum,
+                parameter_mmin=minimum,
+                parameter_shortname=shortname or "",
+                parameter_type=1,
+            )
+        )
+        self._param = self._model["saved_attribute_attributes"]["valueof"]
+        self._model["maximum"] = maximum
+        self._model["minimum"] = minimum
+        self._model["hint"] = hint or longname
+
+    @property
+    def longname(self):
+        return self._param["parameter_longname"]
+
+    @longname.setter
+    def longname(self, value: str):
+        self._param["parameter_longname"] = value
+
+    @property
+    def shortname(self):
+        return self._param["parameter_shortname"]
+
+    @shortname.setter
+    def shortname(self, value: str):
+        self._param["parameter_shortname"] = value
+
+    @property
+    def enable(self):
+        return self._model["parameter_enable"]
+
+    @enable.setter
+    def enable(self, value: bool):
+        self._model["parameter_enable"] = value
+
+    @property
+    def initial(self):
+        return self._param["parameter_initial"]
+
+    @initial.setter
+    def initial(self, value: int):
+        self._param["parameter_initial"] = value
+
+    @property
+    def initial_enable(self):
+        return self._param["parameter_initial_enable"]
+
+    @initial_enable.setter
+    def initial_enable(self, value: bool):
+        self._param["parameter_initial_enable"] = value
+
+    @property
+    def maximum(self) -> float:
+        return self._model["maximum"]
+
+    @maximum.setter
+    def maximum(self, value: float):
+        self._model["maximum"] = value
+        self._param["parameter_mmax"] = value
+
+    @property
+    def minimum(self) -> float:
+        return self._model["minimum"]
+
+    @minimum.setter
+    def minimum(self, value: float):
+        self._model["minimum"] = value
+        self._param["parameter_mmin"] = value
+
+    @property
+    def type(self):
+        return self._param["parameter_type"]
+
+    @type.setter
+    def type(self, value: int):
+        # FIXME: better to have an enum here
+        assert 2 >= value >= 1
+        self._param["parameter_type"] = value
+
+    @property
+    def hint(self):
+        return self._model["hint"]
+
+    @hint.setter
+    def hint(self, value: str):
+        self._model["hint"] = value
+
+
+class Patchline:
+    def __init__(self, source: tuple[str, int], destination: tuple[str, int], order: int):
+        src_id, src_outlet = source
+        dst_id, dst_inlet = destination
         self._model = {
-            "source": [src_id, src_outlet],
-            "destination": [dst_id, dst_inlet],
+            "source": (src_id, src_outlet),
+            "destination": (dst_id, dst_inlet),
             "order": order,
         }
 
     def __repr__(self):
-        return f"Patchline({self.src_id} -> {self.dst_id})"
+        return f"Patchline({self.source} -> {self.destination})"
 
     @classmethod
     def from_dict(cls, obj_dict: dict):
@@ -302,6 +408,40 @@ class Patchline:
         """create dict from object with extra kwds included"""
         d = self._model.copy()
         return dict(patchline=d)
+
+    @property
+    def src(self):
+        """first object from source list"""
+        return self.source[0]
+
+    @property
+    def dst(self):
+        """first object from destination list"""
+        return self.destination[0]
+
+    @property
+    def source(self) -> tuple[str, int]:
+        return self._model["source"]
+
+    @source.setter
+    def source(self, value: tuple[str, int]):
+        self._model["source"] = value
+
+    @property
+    def destination(self) -> tuple[str, int]:
+        return self._model["destination"]
+
+    @destination.setter
+    def destination(self, value: tuple[str, int]):
+        self._model["destination"] = value
+
+    @property
+    def order(self):
+        return self._model["order"]
+
+    @order.setter
+    def order(self, value: int):
+        self._model["order"] = value    
 
 
 class Patcher:
@@ -316,15 +456,24 @@ class Patcher:
         title: Optional[str] = None,
         parent: Optional[Box] = None,
         classnamespace: Optional[str] = None,
-        # reset_on_render: bool = True,
+        reset_on_render: bool = True,
         # layout: str = "horizontal",
-        # auto_hints: bool = False,
+        auto_hints: bool = False,
         openinpresentation: int = 0,
     ):
         self._path = path
         self._parent = parent
-        self._reset_on_render = True
         self._id_counter = 0
+        self._link_counter = 0
+        self._last_link: Optional[tuple[str, str]] = None
+        self._node_ids: list[str] = []  # ids by order of creation
+        self._objects: dict[str, Box] = {}  # dict of objects by id
+        self._edge_ids: list[
+            tuple[str, str]
+        ] = []  # store edge-ids by order of creation
+        self._reset_on_render = reset_on_render
+        # self._layout_mgr: LayoutManager = self.set_layout_mgr(layout)
+        self._auto_hints = auto_hints
         self._model = {
             "fileversion": 1,
             "appversion": {
@@ -446,6 +595,43 @@ class Patcher:
         """save as json .maxpat file"""
         if self._path:
             self.save_as(self._path)
+
+
+    def add_patchline_by_index(
+        self, src_id: str, dst_id: str, dst_inlet: int = 0, src_outlet: int = 0
+    ) -> Patchline:
+        """Patchline creation between two objects using stored indexes"""
+
+        src = self._objects[src_id]
+        dst = self._objects[dst_id]
+        assert src.id and dst.id, f"object {src} and {dst} require ids"
+        return self.add_patchline(src.id, src_outlet, dst.id, dst_inlet)
+
+    def add_patchline(
+        self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int
+    ) -> Patchline:
+        """primary patchline creation method"""
+
+        # get order of lines between same pair of objects
+        if (src_id, dst_id) == self._last_link:
+            self._link_counter += 1
+        else:
+            self._link_counter = 0
+            self._last_link = (src_id, dst_id)
+
+        order = self._link_counter
+        src, dst = [src_id, src_outlet], [dst_id, dst_inlet]
+        patchline = Patchline(source=src, destination=dst, order=order)
+        self.lines.append(patchline)
+        self._edge_ids.append((src_id, dst_id))
+        return patchline
+
+    def add_line(
+        self, src_obj: Box, dst_obj: Box, inlet: int = 0, outlet: int = 0
+    ) -> Patchline:
+        """convenience line adding taking objects with default outlet to inlet"""
+        assert src_obj.id and dst_obj.id, f"objects {src_obj} and {dst_obj} require ids"
+        return self.add_patchline(src_obj.id, outlet, dst_obj.id, inlet)
 
     def add_textbox(
         self,
@@ -753,5 +939,11 @@ class Patcher:
 
 
 if __name__ == "__main__":
-    p = Patcher.from_file("../data/nested.maxpat", save_to="out.maxpat")
+    # p = Patcher.from_file("../data/nested.maxpat", save_to="out.maxpat")
+    # p.save()
+
+    p = Patcher("out.maxpat")
+    osc = p.add_textbox("cycle~ 440")
+    dac = p.add_textbox("ezdac~")
+    p.add_line(osc, dac)
     p.save()
