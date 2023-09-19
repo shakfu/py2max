@@ -221,8 +221,8 @@ class Patcher:
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
         self._node_ids: list[str] = []  # ids by order of creation
-        self._boxes: list['Box'] = []  # store child objects (boxes, etc.)
-        self._lines: list['Patchline'] = []  # store patchline objects
+        self.boxes: list['Box'] = []  # store child objects (boxes, etc.)
+        self.lines: list['Patchline'] = []  # store patchline objects
         self._objects: dict[str, 'Box'] = {}  # dict of objects by id
         self._edge_ids: list[
             tuple[str, str]
@@ -288,16 +288,8 @@ class Patcher:
 
     def __iter__(self):
         yield self
-        for box in self._boxes:
+        for box in self.boxes:
             yield from iter(box)
-
-    @property
-    def lines(self):
-        return self._lines
-
-    @property
-    def boxes(self):
-        return self._boxes
 
     @property
     def title(self) -> Optional[str]:
@@ -599,11 +591,11 @@ class Patcher:
 
         for box_dict in patcher._model["boxes"]:
             box = Box.from_dict(box_dict["box"])
-            patcher._boxes.append(box)
+            patcher.boxes.append(box)
 
         for line_dict in patcher._model["lines"]:
             line = Patchline.from_dict(line_dict)
-            patcher._lines.append(line)
+            patcher.lines.append(line)
 
         return patcher
 
@@ -634,10 +626,10 @@ class Patcher:
         if reset or self._reset_on_render:
             self._model["boxes"] = []
             self._model["lines"] = []
-        for box in self._boxes:
+        for box in self.boxes:
             box.render()
             self._model["boxes"].append(box.to_dict())
-        self._model["lines"] = [line.to_dict() for line in self._lines]
+        self._model["lines"] = [line.to_dict() for line in self.lines]
 
 
     def save_as(self, path: Union[str, Path]):
@@ -705,7 +697,7 @@ class Patcher:
 
         returns (index, box) if found
         """
-        for i, box in enumerate(self._boxes):
+        for i, box in enumerate(self.boxes):
             if box.maxclass == text:
                 return (i, box)
             if hasattr(box, "text"):
@@ -724,7 +716,7 @@ class Patcher:
         assert box.id, f"object {box} must have an id"
         self._node_ids.append(box.id)
         self._objects[box.id] = box
-        self._boxes.append(box)
+        self.boxes.append(box)
         if comment:
             self.add_associated_comment(box, comment, comment_pos)
         return box
@@ -785,7 +777,7 @@ class Patcher:
         order = self._link_counter
         src, dst = [src_id, src_outlet], [dst_id, dst_inlet]
         patchline = Patchline(source=src, destination=dst, order=order)
-        self._lines.append(patchline)
+        self.lines.append(patchline)
         self._edge_ids.append((src_id, dst_id))
         return patchline
 

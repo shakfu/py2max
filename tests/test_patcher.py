@@ -19,7 +19,7 @@ def test_patcher_basics():
 
 def test_patcher_from_file():
     p = Patcher.from_file('tests/data/complex.maxpat', save_to='outputs/test_complex.maxpat')
-    assert len(p._boxes) == len(p.boxes) == 53
+    assert len(p.boxes) == 53
     assert len(list(p)) == 60
     assert p.to_json()
     p.save()
