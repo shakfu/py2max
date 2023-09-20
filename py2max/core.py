@@ -303,7 +303,7 @@ class Patcher:
             self._model["title"] = value
 
     @property
-    def fileversion(self):
+    def fileversion(self) -> int:
         return self._model["fileversion"]
 
     @fileversion.setter
@@ -311,7 +311,7 @@ class Patcher:
         self._model["fileversion"] = value
 
     @property
-    def appversion(self):
+    def appversion(self) -> dict:
         return self._model["appversion"]
 
     @appversion.setter
@@ -319,7 +319,7 @@ class Patcher:
         self._model["appversion"] = value
 
     @property
-    def classnamespace(self):
+    def classnamespace(self) -> str:
         return self._model["classnamespace"]
 
     @classnamespace.setter
@@ -327,7 +327,8 @@ class Patcher:
         self._model["classnamespace"] = value
 
     @property
-    def rect(self):
+    def rect(self) -> Rect:
+        """Initial window position: horizontal offset, vertical offset, width, height"""
         return self._model["rect"]
 
     @rect.setter
@@ -335,7 +336,7 @@ class Patcher:
         self._model["rect"] = value
 
     @property
-    def bglocked(self):
+    def bglocked(self) -> int:
         return self._model["bglocked"]
 
     @bglocked.setter
@@ -343,15 +344,16 @@ class Patcher:
         self._model["bglocked"] = value
 
     @property
-    def openinpresentation(self):
+    def openinpresentation(self) -> bool:
+        """If enabled, open the patcher in presentation mode"""
         return self._model["openinpresentation"]
 
     @openinpresentation.setter
-    def openinpresentation(self, value: int):
+    def openinpresentation(self, value: bool):
         self._model["openinpresentation"] = value
 
     @property
-    def default_fontsize(self):
+    def default_fontsize(self) -> float:
         return self._model["default_fontsize"]
 
     @default_fontsize.setter
@@ -359,7 +361,7 @@ class Patcher:
         self._model["default_fontsize"] = value
 
     @property
-    def default_fontface(self):
+    def default_fontface(self) -> int:
         return self._model["default_fontface"]
 
     @default_fontface.setter
@@ -367,7 +369,7 @@ class Patcher:
         self._model["default_fontface"] = value
 
     @property
-    def default_fontname(self):
+    def default_fontname(self) -> str:
         return self._model["default_fontname"]
 
     @default_fontname.setter
@@ -375,7 +377,7 @@ class Patcher:
         self._model["default_fontname"] = value
 
     @property
-    def gridonopen(self):
+    def gridonopen(self) -> int:
         return self._model["gridonopen"]
 
     @gridonopen.setter
@@ -383,7 +385,7 @@ class Patcher:
         self._model["gridonopen"] = value
 
     @property
-    def gridsize(self):
+    def gridsize(self) -> list:
         return self._model["gridsize"]
 
     @gridsize.setter
@@ -391,7 +393,7 @@ class Patcher:
         self._model["gridsize"] = value
 
     @property
-    def gridsnaponopen(self):
+    def gridsnaponopen(self) -> int:
         return self._model["gridsnaponopen"]
 
     @gridsnaponopen.setter
@@ -399,7 +401,7 @@ class Patcher:
         self._model["gridsnaponopen"] = value
 
     @property
-    def objectsnaponopen(self):
+    def objectsnaponopen(self) -> int:
         return self._model["objectsnaponopen"]
 
     @objectsnaponopen.setter
@@ -407,7 +409,7 @@ class Patcher:
         self._model["objectsnaponopen"] = value
 
     @property
-    def statusbarvisible(self):
+    def statusbarvisible(self) -> int:
         return self._model["statusbarvisible"]
 
     @statusbarvisible.setter
@@ -415,7 +417,7 @@ class Patcher:
         self._model["statusbarvisible"] = value
 
     @property
-    def toolbarvisible(self):
+    def toolbarvisible(self) -> int:
         return self._model["toolbarvisible"]
 
     @toolbarvisible.setter
@@ -423,7 +425,7 @@ class Patcher:
         self._model["toolbarvisible"] = value
 
     @property
-    def lefttoolbarpinned(self):
+    def lefttoolbarpinned(self) -> int:
         return self._model["lefttoolbarpinned"]
 
     @lefttoolbarpinned.setter
@@ -431,7 +433,7 @@ class Patcher:
         self._model["lefttoolbarpinned"] = value
 
     @property
-    def toptoolbarpinned(self):
+    def toptoolbarpinned(self) -> int:
         return self._model["toptoolbarpinned"]
 
     @toptoolbarpinned.setter
@@ -439,7 +441,7 @@ class Patcher:
         self._model["toptoolbarpinned"] = value
 
     @property
-    def righttoolbarpinned(self):
+    def righttoolbarpinned(self) -> int:
         return self._model["righttoolbarpinned"]
 
     @righttoolbarpinned.setter
@@ -447,7 +449,7 @@ class Patcher:
         self._model["righttoolbarpinned"] = value
 
     @property
-    def bottomtoolbarpinned(self):
+    def bottomtoolbarpinned(self) -> int:
         return self._model["bottomtoolbarpinned"]
 
     @bottomtoolbarpinned.setter
@@ -455,7 +457,7 @@ class Patcher:
         self._model["bottomtoolbarpinned"] = value
 
     @property
-    def toolbars_unpinned_last_save(self):
+    def toolbars_unpinned_last_save(self) -> int:
         return self._model["toolbars_unpinned_last_save"]
 
     @toolbars_unpinned_last_save.setter
@@ -463,7 +465,7 @@ class Patcher:
         self._model["toolbars_unpinned_last_save"] = value
 
     @property
-    def tallnewobj(self):
+    def tallnewobj(self) -> int:
         return self._model["tallnewobj"]
 
     @tallnewobj.setter
@@ -471,7 +473,7 @@ class Patcher:
         self._model["tallnewobj"] = value
 
     @property
-    def boxanimatetime(self):
+    def boxanimatetime(self) -> int:
         return self._model["boxanimatetime"]
 
     @boxanimatetime.setter
@@ -479,7 +481,7 @@ class Patcher:
         self._model["boxanimatetime"] = value
 
     @property
-    def enablehscroll(self):
+    def enablehscroll(self) -> int:
         return self._model["enablehscroll"]
 
     @enablehscroll.setter
@@ -487,7 +489,7 @@ class Patcher:
         self._model["enablehscroll"] = value
 
     @property
-    def enablevscroll(self):
+    def enablevscroll(self) -> int:
         return self._model["enablevscroll"]
 
     @enablevscroll.setter
@@ -495,7 +497,7 @@ class Patcher:
         self._model["enablevscroll"] = value
 
     @property
-    def devicewidth(self):
+    def devicewidth(self) -> float:
         return self._model["devicewidth"]
 
     @devicewidth.setter
@@ -503,7 +505,7 @@ class Patcher:
         self._model["devicewidth"] = value
 
     @property
-    def description(self):
+    def description(self) -> str:
         return self._model["description"]
 
     @description.setter
@@ -511,7 +513,7 @@ class Patcher:
         self._model["description"] = value
 
     @property
-    def digest(self):
+    def digest(self) -> str:
         return self._model["digest"]
 
     @digest.setter
@@ -519,7 +521,7 @@ class Patcher:
         self._model["digest"] = value
 
     @property
-    def tags(self):
+    def tags(self) -> str:
         return self._model["tags"]
 
     @tags.setter
@@ -527,7 +529,7 @@ class Patcher:
         self._model["tags"] = value
 
     @property
-    def style(self):
+    def style(self) -> str:
         return self._model["style"]
 
     @style.setter
@@ -535,7 +537,7 @@ class Patcher:
         self._model["style"] = value
 
     @property
-    def subpatcher_template(self):
+    def subpatcher_template(self) -> str:
         return self._model["subpatcher_template"]
 
     @subpatcher_template.setter
@@ -543,7 +545,7 @@ class Patcher:
         self._model["subpatcher_template"] = value
 
     @property
-    def assistshowspatchername(self):
+    def assistshowspatchername(self) -> int:
         return self._model["assistshowspatchername"]
 
     @assistshowspatchername.setter
@@ -551,7 +553,7 @@ class Patcher:
         self._model["assistshowspatchername"] = value
 
     @property
-    def dependency_cache(self):
+    def dependency_cache(self) -> list:
         return self._model["dependency_cache"]
 
     @dependency_cache.setter
@@ -559,7 +561,7 @@ class Patcher:
         self._model["dependency_cache"] = value
 
     @property
-    def autosave(self):
+    def autosave(self) -> int:
         return self._model["autosave"]
 
     @autosave.setter
@@ -1668,7 +1670,7 @@ class Box:
             self._model["patcher"] = self._patcher.to_dict()
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self._model["id"]
 
     @id.setter
@@ -1676,7 +1678,7 @@ class Box:
         self._model["id"] = value
 
     @property
-    def maxclass(self):
+    def maxclass(self) -> str:
         return self._model["maxclass"]
 
     @maxclass.setter
@@ -1684,7 +1686,7 @@ class Box:
         self._model["maxclass"] = value
 
     @property
-    def numinlets(self):
+    def numinlets(self) -> int:
         return self._model["numinlets"]
 
     @numinlets.setter
@@ -1692,7 +1694,7 @@ class Box:
         self._model["numinlets"] = value
 
     @property
-    def numoutlets(self):
+    def numoutlets(self) -> int:
         return self._model["numoutlets"]
 
     @numoutlets.setter
@@ -1700,7 +1702,7 @@ class Box:
         self._model["numoutlets"] = value
 
     @property
-    def outlettype(self):
+    def outlettype(self) -> list[str]:
         return self._model["outlettype"]
 
     @outlettype.setter
@@ -1708,7 +1710,7 @@ class Box:
         self._model["outlettype"] = value
 
     @property
-    def patching_rect(self):
+    def patching_rect(self) -> Rect:
         return self._model["patching_rect"]
 
     @patching_rect.setter
@@ -1723,17 +1725,17 @@ class Box:
         return None
 
     @property
-    def subpatcher(self):
+    def subpatcher(self) -> Optional[Patcher]:
         """synonym for parent patcher object"""
         return self._patcher
 
     @property
-    def text(self):
+    def text(self) -> Optional[str]:
         if "text" in self._model:
             return self._model["text"]
 
     @text.setter
-    def text(self, value: str):
+    def text(self, value: Optional[str]):
         self._model["text"] = value
 
 
@@ -1759,12 +1761,12 @@ class Patchline:
         return f"Patchline({self.source} -> {self.destination})"
 
     @classmethod
-    def from_dict(cls, obj_dict: dict):
+    def from_dict(cls, obj_dict: dict) -> 'Patchline':
         """convert to `Patchline` object from dict"""
         patchline = cls(**obj_dict["patchline"])
         return patchline
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """create dict from object with extra kwds included"""
         d = self._model.copy()
         d.update(self._kwds)
@@ -1781,12 +1783,12 @@ class Patchline:
         )
 
     @property
-    def src(self):
+    def src(self) -> str:
         """first object from source list"""
         return self.source[0]
 
     @property
-    def dst(self):
+    def dst(self) -> str:
         """first object from destination list"""
         return self.destination[0]
 
@@ -1807,11 +1809,11 @@ class Patchline:
         self._model["destination"] = value
 
     @property
-    def order(self):
+    def order(self) -> Optional[int]:
         if "order" in self._model:
             return self._model["order"]
 
     @order.setter
-    def order(self, value: int):
+    def order(self, value: Optional[int]):
         self._model["order"] = value
 
