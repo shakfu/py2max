@@ -1,5 +1,6 @@
 # project specific
 outputs/
+py2max/core2.py
 
 # general detritus
 .DS_Store

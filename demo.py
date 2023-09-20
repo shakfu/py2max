@@ -8,6 +8,8 @@ p.link(osc, dac, inlet=1)
 p.save()
 
 p1 = Patcher.model_validate(p.model_dump(), strict=True)
-
 p2 = Patcher.from_file('tests/data/simple.maxpat')
+p3 = Patcher.from_file('tests/data/complex.maxpat')
+p3.save_as("outputs/test_pydant_complex.maxpat")
+
 
