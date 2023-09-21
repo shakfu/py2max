@@ -311,6 +311,7 @@ class Patcher(BaseModel):
     path: Optional[str | Path] = Field(default=None, exclude=True)
     layout: str = Field(default="horizontal", exclude=True)
     parent: Optional[Box] = Field(default=None, exclude=True)
+    is_subpatcher: bool = Field(default=False, exclude=True)
 
     # private (not exported)
     _auto_hints: bool = False
@@ -401,7 +402,7 @@ class Patcher(BaseModel):
         return patcher
 
     @model_serializer
-    def serialize_box(self):
+    def serialize_patcher(self):
         exclude = ["path"]
         patcher = {}
         for f in self.model_fields:
@@ -411,7 +412,10 @@ class Patcher(BaseModel):
             if val is not None:
                 patcher[f] = val
         patcher.update(self.__pydantic_extra__)
-        return dict(patcher=patcher)
+        if self.is_subpatcher:
+            return dict(patcher)
+        else:
+            return dict(patcher=patcher)
 
     @model_validator(mode="before")
     def validate_patcher(cls, data: dict) -> dict:
@@ -420,6 +424,20 @@ class Patcher(BaseModel):
             return dict(result["patcher"])
         else:
             return dict(data)
+
+    @property
+    def _maxclass_methods(self) -> dict:
+        return {
+            # specialized methods
+            "m": self.add_message,  # custom -- like keyboard shortcut
+            "c": self.add_comment,  # custom -- like keyboard shortcut
+            "coll": self.add_coll,
+            "dict": self.add_dict,
+            "table": self.add_table,
+            "itable": self.add_itable,
+            "umenu": self.add_umenu,
+            "bpatcher": self.add_bpatcher,
+        }
 
     @property
     def width(self) -> float:
@@ -465,20 +483,61 @@ class Patcher(BaseModel):
             return self._layout_mgr.get_pos(maxclass)
         return self._layout_mgr.get_pos()
 
-    def find(self, text: str) -> list[Box]:
-        """finds (recursively) box objects by maxclass or text
+    # def find(self, text: str) -> list[Box]:
+    #     """finds (recursively) box objects by maxclass or text
 
-        returns list of matching boxes if found else an empty list
+    #     returns list of matching boxes if found else an empty list
+    #     """
+    #     results = []
+    #     for obj in self:
+    #         if isinstance(obj, Box):
+    #             if text in obj.maxclass:
+    #                 results.append(obj)
+    #             if hasattr(obj, "text"):
+    #                 if text in obj.text:
+    #                     results.append(obj)
+    #     return results
+
+
+    def find(self, text: str) -> Optional[Box]:
+        """find (recursively) box object by maxclass or type
+
+        returns box if found else None
         """
-        results = []
         for obj in self:
             if isinstance(obj, Box):
                 if text in obj.maxclass:
-                    results.append(obj)
+                    return obj
                 if hasattr(obj, "text"):
-                    if text in obj.text:
-                        results.append(obj)
-        return results
+                    if obj.text and obj.text.startswith(text):
+                        return obj
+        return None
+
+    def find_box(self, text: str) -> Optional["Box"]:
+        """find box object by maxclass or type
+
+        returns box if found else None
+        """
+        for box in self._objects.values():
+            if box.maxclass == text:
+                return box
+            if hasattr(box, "text"):
+                if box.text and box.text.startswith(text):
+                    return box
+        return None
+
+    def find_box_with_index(self, text: str) -> Optional[Tuple[int, "Box"]]:
+        """find box object by maxclass or type
+
+        returns (index, box) if found
+        """
+        for i, box in enumerate(self.boxes):
+            if box.maxclass == text:
+                return (i, box)
+            if hasattr(box, "text"):
+                if box.text and box.text.startswith(text):
+                    return (i, box)
+        return None
 
     def add_box(
         self,
@@ -588,7 +647,7 @@ class Patcher(BaseModel):
         )
 
     # alias
-    add = add_textbox
+    # add = add_textbox
 
     def add_line(self, src: Box, dst: Box, outlet=0, inlet=0):
         self._link_counter += 1
@@ -601,6 +660,79 @@ class Patcher(BaseModel):
 
     # alias
     link = add_line
+
+
+
+    def _add_float(self, value, *args, **kwds) -> "Box":
+        """type-handler for float values in `add`"""
+
+        assert isinstance(value, float)
+        name = None
+        if args:
+            name = args[0]
+        elif "name" in kwds:
+            name = kwds.get("name")
+        else:
+            return self.add_floatparam(longname="", initial=value, **kwds)
+
+        if isinstance(name, str):
+            return self.add_floatparam(longname=name, initial=value, **kwds)
+        raise ValueError(
+            "should be: .add(<float>, '<name>') OR .add(<float>, name='<name>')"
+        )
+
+    def _add_int(self, value, *args, **kwds) -> "Box":
+        """type-handler for int values in `add`"""
+
+        assert isinstance(value, int)
+        name = None
+        if args:
+            name = args[0]
+        elif "name" in kwds:
+            name = kwds.get("name")
+        else:
+            return self.add_intparam(longname="", initial=value, **kwds)
+
+        if isinstance(name, str):
+            return self.add_intparam(longname=name, initial=value, **kwds)
+        raise ValueError(
+            "should be: .add(<int>, '<name>') OR .add(<int>, name='<name>')"
+        )
+
+    def _add_str(self, value, *args, **kwds) -> "Box":
+        """type-handler for str values in `add`"""
+
+        assert isinstance(value, str)
+
+        maxclass, *text = value.split()
+        txt = " ".join(text)
+
+        # first check _maxclass_methods
+        # these methods don't need the maxclass, just the `text` tail of value
+        if maxclass in self._maxclass_methods:
+            return self._maxclass_methods[maxclass](txt, **kwds)  # type: ignore
+        # next two require value as a whole
+        if maxclass == "p":
+            return self.add_subpatcher(value, **kwds)
+        if maxclass == "gen~":
+            return self.add_gen_tilde(**kwds)
+        if maxclass == "rnbo~":
+            return self.add_rnbo(value, **kwds)
+        return self.add_textbox(text=value, **kwds)
+
+    def add(self, value, *args, **kwds) -> "Box":
+        """generic adder: value can be a number or a list or text for an object."""
+
+        if isinstance(value, float):
+            return self._add_float(value, *args, **kwds)
+
+        if isinstance(value, int):
+            return self._add_int(value, *args, **kwds)
+
+        if isinstance(value, str):
+            return self._add_str(value, *args, **kwds)
+
+        raise NotImplementedError
 
 
     def add_codebox(
@@ -899,26 +1031,28 @@ class Patcher(BaseModel):
     ) -> Box:
         """Add a subpatcher object."""
 
-        return self.add_box(
-            Box(
-                id=id or self.get_id(),
-                text=text,
-                maxclass=maxclass or "newobj",
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 0,
-                outlettype=outlettype or [""],
-                patching_rect=patching_rect or self.get_pos(),
-                patcher=patcher or Patcher(parent=self),
-                **kwds,
-            )
+        if patcher:
+            patcher.add_subpatcher = True
+        else:
+            patcher = Patcher(is_subpatcher=True)
+        box = Box(
+            id=id or self.get_id(),
+            text=text,
+            maxclass=maxclass or "newobj",
+            numinlets=numinlets or 1,
+            numoutlets=numoutlets or 0,
+            outlettype=outlettype or [""],
+            patching_rect=patching_rect or self.get_pos(),
+            patcher=patcher,
+            **kwds,
         )
+        return self.add_box(box)
 
     def add_gen(self, tilde=False, **kwds):
         """Add a gen object."""
         text = "gen~" if tilde else "gen"
-        return self.add_subpatcher(
-            text, patcher=Patcher(parent=self, classnamespace="dsp.gen"), **kwds
-        )
+        return self.add_subpatcher(text, 
+            patcher=Patcher(add_subpatcher = True, classnamespace="dsp.gen"), **kwds)
 
     def add_gen_tilde(self, **kwds):
         """Add a gen~ object."""
