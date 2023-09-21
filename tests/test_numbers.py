@@ -3,7 +3,7 @@ from py2max import Patcher
 
 
 def test_add_floatbox():
-    p = Patcher('outputs/test_floatbox.maxpat')
+    p = Patcher(path='outputs/test_floatbox.maxpat')
 
     d = {}
     for i in range(4):
@@ -17,7 +17,7 @@ def test_add_floatbox():
 
 
 def test_add_intbox():
-    p = Patcher('outputs/test_intbox.maxpat')
+    p = Patcher(path='outputs/test_intbox.maxpat')
 
     d = {}
     for i in range(4):

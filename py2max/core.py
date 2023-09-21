@@ -1,3 +1,22 @@
+"""py2max.core
+
+A library to generate .maxpat patcher files.
+
+This variant uses pydantic (v2) as its validation and transformation
+engine to drive the round-trip conversion between 
+.maxpat (JSON) <-> python objects
+
+basic usage:
+
+    >>> p = Patcher('out.maxpat')
+    >>> osc1 = p.add_textbox('cycle~ 440')
+    >>> gain = p.add_textbox('gain~')
+    >>> dac = p.add_textbox('ezdac~')
+    >>> p.add_line(osc1, gain)
+    >>> p.add_line(gain, dac)
+    >>> p.save()
+
+"""
 import abc
 from pathlib import Path
 from collections import defaultdict
@@ -246,6 +265,13 @@ class Box(BaseModel):
             return dict(data)
 
     @property
+    def oid(self) -> Optional[int]:
+        """numerical part of object id as int"""
+        if self.id:
+            return int(self.id[4:])
+        return None
+
+    @property
     def subpatcher(self):
         """synonym for parent patcher object"""
         return self.patcher
@@ -287,6 +313,7 @@ class Patcher(BaseModel):
     parent: Optional[Box] = Field(default=None, exclude=True)
 
     # private (not exported)
+    _auto_hints: bool = False
     _layout: str = "horizontal"
     _layout_mgr: LayoutManager
     _id_counter: int = 0
@@ -574,3 +601,621 @@ class Patcher(BaseModel):
 
     # alias
     link = add_line
+
+
+    def add_codebox(
+        self,
+        code: str,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        tilde=False,
+        **kwds,
+    ) -> Box:
+        """Add a codebox."""
+
+        _maxclass = "codebox~" if tilde else "codebox"
+        if "\r" not in code:
+            code = code.replace("\n", "\r\n")
+
+        if self.classnamespace == "rnbo":
+            kwds["rnbo_classname"] = _maxclass
+            if "rnbo_extra_attributes" not in kwds:
+                kwds["rnbo_extra_attributes"] = dict(
+                    code=code,
+                    hot=0,
+                )
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                code=code,
+                maxclass=_maxclass,
+                outlettype=[""],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_codebox_tilde(
+        self,
+        code: str,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ) -> Box:
+        """Add a codebox_tilde"""
+        return self.add_codebox(
+            code, patching_rect, id, comment, comment_pos, tilde=True, **kwds
+        )
+
+    def add_message(
+        self,
+        text: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ) -> Box:
+        """Add a max message."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text or "",
+                maxclass="message",
+                numinlets=2,
+                numoutlets=1,
+                outlettype=[""],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_comment(
+        self,
+        text: str,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        justify: Optional[str] = None,
+        **kwds,
+    ) -> Box:
+        """Add a basic comment object."""
+        if justify:
+            kwds["textjustification"] = {"left": 0, "center": 1, "right": 2}[justify]
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text,
+                maxclass="comment",
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            )
+        )
+
+    def add_intbox(
+        self,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        **kwds,
+    ) -> Box:
+        """Add an int box object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass="number",
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    # alias
+    add_int = add_intbox
+
+    def add_floatbox(
+        self,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        **kwds,
+    ) -> Box:
+        """Add an float box object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass="flonum",
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    # alias
+    add_float = add_floatbox
+
+    def add_floatparam(
+        self,
+        longname: str,
+        initial: Optional[float] = None,
+        minimum: Optional[float] = None,
+        maximum: Optional[float] = None,
+        shortname: Optional[str] = None,
+        id: Optional[str] = None,
+        rect: Optional[Rect] = None,
+        hint: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ) -> Box:
+        """Add a float parameter object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass="flonum",
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                parameter_enable=1,
+                saved_attribute_attributes=dict(
+                    valueof=dict(
+                        parameter_initial=[initial or 0.5],
+                        parameter_initial_enable=1,
+                        parameter_longname=longname,
+                        # parameter_mmax=maximum,
+                        parameter_shortname=shortname or "",
+                        parameter_type=0,
+                    )
+                ),
+                maximum=maximum,
+                minimum=minimum,
+                patching_rect=rect or self.get_pos(),
+                hint=hint or (longname if self._auto_hints else ""),
+                **kwds,
+            ),
+            comment or longname,  # units can also be added here
+            comment_pos,
+        )
+
+    def add_intparam(
+        self,
+        longname: str,
+        initial: Optional[int] = None,
+        minimum: Optional[int] = None,
+        maximum: Optional[int] = None,
+        shortname: Optional[str] = None,
+        id: Optional[str] = None,
+        rect: Optional[Rect] = None,
+        hint: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ) -> Box:
+        """Add an int parameter object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass="number",
+                numinlets=1,
+                numoutlets=2,
+                outlettype=["", "bang"],
+                parameter_enable=1,
+                saved_attribute_attributes=dict(
+                    valueof=dict(
+                        parameter_initial=[initial or 1],
+                        parameter_initial_enable=1,
+                        parameter_longname=longname,
+                        parameter_mmax=maximum,
+                        parameter_shortname=shortname or "",
+                        parameter_type=1,
+                    )
+                ),
+                maximum=maximum,
+                minimum=minimum,
+                patching_rect=rect or self.get_pos(),
+                hint=hint or (longname if self._auto_hints else ""),
+                **kwds,
+            ),
+            comment or longname,  # units can also be added here
+            comment_pos,
+        )
+
+    def add_attr(
+        self,
+        name: str,
+        value: float,
+        shortname: Optional[str] = None,
+        id: Optional[str] = None,
+        rect: Optional[Rect] = None,
+        hint: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        autovar=True,
+        show_label=False,
+        **kwds,
+    ) -> Box:
+        """create a param-linke attrui entry"""
+        if autovar:
+            kwds["varname"] = name
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text="attrui",
+                maxclass="attrui",
+                attr=name,
+                parameter_enable=1,
+                attr_display=show_label,
+                saved_attribute_attributes=dict(
+                    valueof=dict(
+                        parameter_initial=[name, value],
+                        parameter_initial_enable=1,
+                        parameter_longname=name,
+                        parameter_shortname=shortname or "",
+                    )
+                ),
+                patching_rect=rect or self.get_pos(),
+                hint=name if self._auto_hints else hint or "",
+                **kwds,
+            ),
+            comment or name,  # units can also be added here
+            comment_pos,
+        )
+
+    def add_subpatcher(
+        self,
+        text: str,
+        maxclass: Optional[str] = None,
+        numinlets: Optional[int] = None,
+        numoutlets: Optional[int] = None,
+        outlettype: Optional[List[str]] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        patcher: Optional["Patcher"] = None,
+        **kwds,
+    ) -> Box:
+        """Add a subpatcher object."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text,
+                maxclass=maxclass or "newobj",
+                numinlets=numinlets or 1,
+                numoutlets=numoutlets or 0,
+                outlettype=outlettype or [""],
+                patching_rect=patching_rect or self.get_pos(),
+                patcher=patcher or Patcher(parent=self),
+                **kwds,
+            )
+        )
+
+    def add_gen(self, tilde=False, **kwds):
+        """Add a gen object."""
+        text = "gen~" if tilde else "gen"
+        return self.add_subpatcher(
+            text, patcher=Patcher(parent=self, classnamespace="dsp.gen"), **kwds
+        )
+
+    def add_gen_tilde(self, **kwds):
+        """Add a gen~ object."""
+        return self.add_gen(tilde=True, **kwds)
+
+    def add_rnbo(self, text: str = "rnbo~", **kwds):
+        """Add an rnbo~ object."""
+        if "inletInfo" not in kwds:
+            if "numinlets" in kwds:
+                inletInfo: dict[str, list] = {"IOInfo": []}
+                for i in range(kwds["numinlets"]):
+                    inletInfo["IOInfo"].append(
+                        dict(comment="", index=i + 1, tag=f"in{i+1}", type="signal")
+                    )
+                kwds["inletInfo"] = inletInfo
+        if "outletInfo" not in kwds:
+            if "numoutlets" in kwds:
+                outletInfo: dict[str, list] = {"IOInfo": []}
+                for i in range(kwds["numoutlets"]):
+                    outletInfo["IOInfo"].append(
+                        dict(comment="", index=i + 1, tag=f"out{i+1}", type="signal")
+                    )
+                kwds["outletInfo"] = outletInfo
+
+        return self.add_subpatcher(
+            text, patcher=Patcher(parent=self, classnamespace="rnbo"), **kwds
+        )
+
+    def add_coll(
+        self,
+        name: Optional[str] = None,
+        dictionary: Optional[dict] = None,
+        embed: int = 1,
+        patching_rect: Optional[Rect] = None,
+        text: Optional[str] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ):
+        """Add a coll object with option to pre-populate from a py dictionary."""
+        extra = {"saved_object_attributes": {"embed": embed, "precision": 6}}
+        if dictionary:
+            extra["coll_data"] = {  # type: ignore
+                "count": len(dictionary.keys()),
+                "data": [{"key": k, "value": v} for k, v in dictionary.items()],  # type: ignore
+            }
+        kwds.update(extra)
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text or f"coll {name} @embed {embed}"
+                if name
+                else f"coll @embed {embed}",
+                maxclass="newobj",
+                numinlets=1,
+                numoutlets=4,
+                outlettype=["", "", "", ""],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_dict(
+        self,
+        name: Optional[str] = None,
+        dictionary: Optional[dict] = None,
+        embed: int = 1,
+        patching_rect: Optional[Rect] = None,
+        text: Optional[str] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ):
+        """Add a dict object with option to pre-populate from a py dictionary."""
+        extra = {
+            "saved_object_attributes": {
+                "embed": embed,
+                "parameter_enable": kwds.get("parameter_enable", 0),
+                "parameter_mappable": kwds.get("parameter_mappable", 0),
+            },
+            "data": dictionary or {},
+        }
+        kwds.update(extra)
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text or f"dict {name} @embed {embed}"
+                if name
+                else f"dict @embed {embed}",
+                maxclass="newobj",
+                numinlets=2,
+                numoutlets=4,
+                outlettype=["dictionary", "", "", ""],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_table(
+        self,
+        name: Optional[str] = None,
+        array: Optional[List[Union[int, float]]] = None,
+        embed: int = 1,
+        patching_rect: Optional[Rect] = None,
+        text: Optional[str] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        tilde=False,
+        **kwds,
+    ):
+        """Add a table object with option to pre-populate from a py list."""
+
+        extra = {
+            "embed": embed,
+            "saved_object_attributes": {
+                "name": name,
+                "parameter_enable": kwds.get("parameter_enable", 0),
+                "parameter_mappable": kwds.get("parameter_mappable", 0),
+                "range": kwds.get("range", 128),
+                "showeditor": 0,
+                "size": len(array) if array else 128,
+            },
+            # "showeditor": 0,
+            # 'size': kwds.get('size', 128),
+            "table_data": array or [],
+            "editor_rect": [100.0, 100.0, 300.0, 300.0],
+        }
+        kwds.update(extra)
+        table_type = "table~" if tilde else "table"
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text or f"{table_type} {name} @embed {embed}"
+                if name
+                else f"{table_type} @embed {embed}",
+                maxclass="newobj",
+                numinlets=2,
+                numoutlets=2,
+                outlettype=["int", "bang"],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_table_tilde(
+        self,
+        name: Optional[str] = None,
+        array: Optional[List[Union[int, float]]] = None,
+        embed: int = 1,
+        patching_rect: Optional[Rect] = None,
+        text: Optional[str] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ):
+        """Add a table~ object with option to pre-populate from a py list."""
+
+        return self.add_table(
+            name,
+            array,
+            embed,
+            patching_rect,
+            text,
+            id,
+            comment,
+            comment_pos,
+            tilde=True,
+            **kwds,
+        )
+
+    def add_itable(
+        self,
+        name: Optional[str] = None,
+        array: Optional[List[Union[int, float]]] = None,
+        patching_rect: Optional[Rect] = None,
+        text: Optional[str] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ):
+        """Add a itable object with option to pre-populate from a py list."""
+
+        extra = {
+            "range": kwds.get("range", 128),
+            "size": len(array) if array else 128,
+            "table_data": array or [],
+        }
+        kwds.update(extra)
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                text=text or f"itable {name}",
+                maxclass="itable",
+                numinlets=2,
+                numoutlets=2,
+                outlettype=["int", "bang"],
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_umenu(
+        self,
+        prefix: Optional[str] = None,
+        autopopulate: int = 1,
+        items: Optional[List[str]] = None,
+        patching_rect: Optional[Rect] = None,
+        depth: Optional[int] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ):
+        """Add a umenu object with option to pre-populate items from a py list."""
+
+        # interleave commas in a list
+        def _commas(xs):
+            return [i for pair in zip(xs, [","] * len(xs)) for i in pair]
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                maxclass="umenu",
+                numinlets=1,
+                numoutlets=3,
+                outlettype=["int", "", ""],
+                autopopulate=autopopulate or 1,
+                depth=depth or 1,
+                items=_commas(items) or [],
+                prefix=prefix or "",
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_bpatcher(
+        self,
+        name: str,
+        numinlets: int = 1,
+        numoutlets: int = 1,
+        outlettype: Optional[List[str]] = None,
+        bgmode: int = 0,
+        border: int = 0,
+        clickthrough: int = 0,
+        enablehscroll: int = 0,
+        enablevscroll: int = 0,
+        lockeddragscroll: int = 0,
+        offset: Optional[List[float]] = None,
+        viewvisibility: int = 1,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds,
+    ):
+        """Add a bpatcher object -- name or patch of bpatcher .maxpat is required."""
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id(),
+                name=name,
+                maxclass="bpatcher",
+                numinlets=numinlets,
+                numoutlets=numoutlets,
+                bgmode=bgmode,
+                border=border,
+                clickthrough=clickthrough,
+                enablehscroll=enablehscroll,
+                enablevscroll=enablevscroll,
+                lockeddragscroll=lockeddragscroll,
+                viewvisibility=viewvisibility,
+                outlettype=outlettype or ["float", "", ""],
+                patching_rect=patching_rect or self.get_pos(),
+                offset=offset or [0.0, 0.0],
+                **kwds,
+            ),
+            comment,
+            comment_pos,
+        )
+
+    def add_beap(self, name: str, **kwds):
+        """Add a beap bpatcher object."""
+
+        _varname = name if ".maxpat" not in name else name.rstrip(".maxpat")
+        return self.add_bpatcher(name=name, varname=_varname, extract=1, **kwds)

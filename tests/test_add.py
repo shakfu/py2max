@@ -3,7 +3,7 @@ from py2max import Patcher
 
 
 def test_add():
-    p = Patcher('outputs/test_add.maxpat')
+    p = Patcher(path='outputs/test_add.maxpat')
 
     # should fail
     with pytest.raises(NotImplementedError):

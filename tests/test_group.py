@@ -18,7 +18,7 @@ class group(list):
 
 
 def test_group():
-    p = Patcher('outputs/test_group.maxpat')
+    p = Patcher(path='outputs/test_group.maxpat')
 
     osc1 = p.add_textbox('cycle~ 440', patching_rect=Rect(100, 148, 62, 22))
     gain = p.add_textbox('gain~', patching_rect=Rect(100, 204, 175, 21))

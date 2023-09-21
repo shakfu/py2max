@@ -5,7 +5,7 @@ from py2max import Patcher
 
 
 def test_attrui():
-    p = Patcher('outputs/test_attrui.maxpat')
+    p = Patcher(path='outputs/test_attrui.maxpat')
     osc = p.add_textbox('cycle~')
     freq = p.add_textbox('attrui',
         maxclass="attrui",
@@ -44,7 +44,7 @@ def test_attrui():
 
 # short-way
 def test_attr():
-    p = Patcher('outputs/test_attr.maxpat')
+    p = Patcher(path='outputs/test_attr.maxpat')
     osc = p.add_textbox('cycle~')
     freq = p.add_attr("frequency", 440.)
     phase = p.add_attr("phase", 0.6, show_label=True)

@@ -8,7 +8,7 @@ def pitched_osc(p, pitch):
 
 
 def test_combo_osc():
-    p = Patcher("outputs/test_combo_osc.maxpat", layout="vertical")
+    p = Patcher(path="outputs/test_combo_osc.maxpat", layout="vertical")
     osc = pitched_osc(p, "C3")
     dac = p.add_textbox("ezdac~")
     p.link(osc, dac)

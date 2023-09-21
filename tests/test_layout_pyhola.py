@@ -83,7 +83,7 @@ class HolaPatcher(Patcher):
 
 @pytest.mark.skipif(not HAS_PYHOLA, reason="requires pyhola")
 def test_graph():
-    p = HolaPatcher('outputs/test_layout_pyhola.maxpat')
+    p = HolaPatcher(path='outputs/test_layout_pyhola.maxpat')
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

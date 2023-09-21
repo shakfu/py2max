@@ -3,7 +3,7 @@ from py2max import Patcher
 
 
 def test_coll():
-    p = Patcher('outputs/test_coll.maxpat')
+    p = Patcher(path='outputs/test_coll.maxpat')
     p.add_coll('store', dictionary={
         1: [1, 1.5, "sam"],
         2: [1.5, 2, "ok"],

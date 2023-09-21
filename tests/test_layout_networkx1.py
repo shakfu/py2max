@@ -89,7 +89,7 @@ def test_graph():
             plt.show()
 
 
-    p = GraphPatcher('outputs/test_layout_networkx1.maxpat')
+    p = GraphPatcher(path='outputs/test_layout_networkx1.maxpat')
 
     fparam = p.add_floatparam
     iparam = p.add_intparam

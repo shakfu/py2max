@@ -2,7 +2,7 @@ from py2max import Patcher
 
 
 def test_varname():
-    p = Patcher('outputs/test_varname.maxpat')
+    p = Patcher(path='outputs/test_varname.maxpat')
     osc1 = p.add_textbox('cycle~ 440', varname='osc')
     gain = p.add_textbox('gain~', varname="volume")
     dac = p.add_textbox('ezdac~')

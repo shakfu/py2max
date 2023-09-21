@@ -6,7 +6,7 @@ POSITIONS = ["above", "right", "below", "left"]
 
 
 def test_number_tilde():
-    p = Patcher('outputs/test_number_tilde.maxpat')
+    p = Patcher(path='outputs/test_number_tilde.maxpat')
     for pos in POSITIONS:
         p.add_textbox("number~", mode=1, comment=f"mode1-{pos}", comment_pos=pos)
     for pos in POSITIONS:
@@ -19,7 +19,7 @@ def test_number_tilde_resized():
     rw2 = random.randint(30, 200)
     rw3 = random.randint(30, 200)
     rw4 = random.randint(30, 200)
-    p = Patcher('outputs/test_number_tilde_resized.maxpat')
+    p = Patcher(path='outputs/test_number_tilde_resized.maxpat')
     p.add_textbox("number~", patching_rect = [150.0, 60.0, rw1, 50.0],
         mode=1, comment=f"mode1-above", comment_pos="above")
     p.add_textbox("number~", patching_rect = [200.0, 120.0, rw2, 50.0],

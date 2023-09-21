@@ -4,7 +4,7 @@ from py2max import Patcher
 
 def test_abstraction():
     # create abstraction
-    c = Patcher('outputs/half.maxpat')
+    c = Patcher(path='outputs/half.maxpat')
     in1 = c.add_textbox('inlet')
     out1 = c.add_textbox('outlet')
     mul = c.add_textbox('*~ 0.5')
@@ -13,7 +13,7 @@ def test_abstraction():
     c.save()
 
     # create parent
-    p = Patcher('outputs/test_abstraction.maxpat')
+    p = Patcher(path='outputs/test_abstraction.maxpat')
     p.add_textbox('half')
     p.save()
 

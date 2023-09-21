@@ -6,7 +6,7 @@ from py2max import Patcher
 
 
 def test_{name}():
-    p = Patcher('outputs/test_{name}.maxpat')
+    p = Patcher(path='outputs/test_{name}.maxpat')
     obj = p.add_textbox('{obj}')
     p.save()
 

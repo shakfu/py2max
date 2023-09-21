@@ -16,13 +16,13 @@ except ImportError:
 
 
 def test_table():
-    p = Patcher('outputs/test_table.maxpat')
+    p = Patcher(path='outputs/test_table.maxpat')
     p.add_table('bob', array=list(range(128)))
     p.save()
 
 
 def test_table_tilde():
-    p = Patcher('outputs/test_table_tilde.maxpat')
+    p = Patcher(path='outputs/test_table_tilde.maxpat')
     p.add_table_tilde('bob', array=list(range(128)))
     p.save()
 

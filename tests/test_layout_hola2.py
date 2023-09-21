@@ -56,7 +56,7 @@ class HolaPatcher(Patcher):
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_graph():
-    p = HolaPatcher('outputs/test_layout_hola_2.maxpat')
+    p = HolaPatcher(path='outputs/test_layout_hola_2.maxpat')
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

@@ -2,7 +2,7 @@ from py2max import Patcher
 
 
 def test_linking1():
-    p = Patcher("outputs/test_linking1.maxpat", layout="vertical")
+    p = Patcher(path="outputs/test_linking1.maxpat", layout="vertical")
     osc = p.add_textbox('cycle~ 440')
     gain = p.add_textbox('live.gain~')
     dac = p.add_textbox('ezdac~')
@@ -22,7 +22,7 @@ def test_linking1():
 
 
 def test_linking2():
-    p = Patcher("outputs/test_linking2.maxpat", layout="vertical")
+    p = Patcher(path="outputs/test_linking2.maxpat", layout="vertical")
     osc = p.add('cycle~ 440')
     gain = p.add('live.gain~')
     dac = p.add('ezdac~')

@@ -2,7 +2,7 @@ from py2max import Patcher
 
 
 def test_subpatch():
-    p = Patcher('outputs/test_subpatch.maxpat')
+    p = Patcher(path='outputs/test_subpatch.maxpat')
     sbox = p.add_subpatcher('p mysub')
     sp = sbox.subpatcher
     i = sp.add_textbox('inlet')

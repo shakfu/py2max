@@ -1,7 +1,7 @@
 from py2max import Patcher
 
 def test_layout_vertical():
-    p = Patcher('outputs/test_layout_vertical.maxpat', layout="vertical")
+    p = Patcher(path='outputs/test_layout_vertical.maxpat', layout="vertical")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

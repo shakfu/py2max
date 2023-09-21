@@ -55,7 +55,7 @@ def test_graph():
                 _boxes.append(box)
             self.boxes = _boxes
 
-    p = OrthogonalPatcher('outputs/test_nx_graphviz.maxpat')
+    p = OrthogonalPatcher(path='outputs/test_nx_graphviz.maxpat')
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

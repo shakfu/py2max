@@ -2,7 +2,7 @@ from py2max import Patcher
 
 
 def test_gen():
-    p = Patcher('outputs/test_gen.maxpat')
+    p = Patcher(path='outputs/test_gen.maxpat')
     sbox = p.add_gen()
     sp = sbox.subpatcher
     i3 = sp.add_textbox('in 3')
@@ -14,7 +14,7 @@ def test_gen():
 
 
 def test_gen_tilde():
-    p = Patcher('outputs/test_gen_tilde.maxpat')
+    p = Patcher(path='outputs/test_gen_tilde.maxpat')
     sbox = p.add_gen_tilde() # also p.add_gen(tilde=True)
     sp = sbox.subpatcher
     i1 = sp.add_textbox('in 1')
