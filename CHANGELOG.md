@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- Added pydantic 2.3 variant
+
+
 ## 0.1.1
 
 - Cleaned

@@ -10,6 +10,8 @@ def test_pydantic_basic():
 
     roundtrip = Patcher.model_validate(p.model_dump(), strict=True)
     roundtrip.save_as("outputs/test_pydant_roundtrip.maxpat")
+
+def test_pydantic_from_file():
     simple = Patcher.from_file('tests/data/simple.maxpat')
     simple.save_as("outputs/test_pydant_simple.maxpat")
     complex = Patcher.from_file('tests/data/complex.maxpat')

@@ -6,6 +6,11 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 ## Features
 
+- pydantic-based version with stronger typing and the following features:
+    - keyword only arguments (not positional arguments)
+    - class constructor parameter type validation
+    - instance attribute type validation
+
 - Scripted *offline* generation of Max patcher files using Python objects, corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
 
 - *Round-trip conversion* between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.

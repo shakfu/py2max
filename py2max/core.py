@@ -299,13 +299,13 @@ class Patchline(BaseModel):
 class Patcher(BaseModel):
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
-    # internal (not exported)
+    # private parameters / attributes (not exported)
     path: Optional[str | Path] = Field(default=None, exclude=True)
     layout: str = Field(default="horizontal", exclude=True)
     parent: Optional[Box] = Field(default=None, exclude=True)
     is_subpatcher: bool = Field(default=False, exclude=True)
 
-    # private (not exported)
+    # private non-param attributes (not exported)
     _auto_hints: bool = False
     _layout: str = "horizontal"
     _layout_mgr: LayoutManager
@@ -316,7 +316,7 @@ class Patcher(BaseModel):
     _objects: dict[str, Box] = {}  # dict of objects by id
     _edge_ids: list[tuple[str, str]] = []  # store edge-ids by order of creation
 
-    # api
+    # public api
     title: str = ""
     fileversion: int = 1
     appversion: dict = {
