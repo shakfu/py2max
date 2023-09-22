@@ -37,11 +37,11 @@ def test_table_wavetable1():
     
     table_index, table = p.find_box_with_index('table~')
     table.table_data = list(arr)
-    p._boxes[table_index] = table
+    p.boxes[table_index] = table
 
     itable_index, itable = p.find_box_with_index("itable")
     itable.table_data = list(arr)
-    p._boxes[itable_index] = itable
+    p.boxes[itable_index] = itable
 
     p.save_as("outputs/test_table_wavetable1.maxpat")
 

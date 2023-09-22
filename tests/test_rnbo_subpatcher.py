@@ -8,7 +8,7 @@ def test_rnbo_subpatcher():
     rsp.add_line(osc, out1)
     rsp.save()
 
-    p = Patcher("outputs/test_rnbo_subpatcher_parent.maxpat")
+    p = Patcher(path="outputs/test_rnbo_subpatcher_parent.maxpat")
     rnbo = p.add_rnbo(numoutlets=1)
 
     sp = rnbo.subpatcher

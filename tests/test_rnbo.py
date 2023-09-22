@@ -1,4 +1,5 @@
 from py2max import Patcher
+from py2max.common import Rect
 
 CODE = """\
 out1 = in1
@@ -10,7 +11,7 @@ class Case:
         self.output_file = output_file
 
     def setup(self):
-        self.p = Patcher(self.output_file)
+        self.p = Patcher(path=self.output_file)
         self.sbox = self.p.add_rnbo(numinlets=2, numoutlets=2)
         self.sp = self.sbox.subpatcher
 
@@ -33,7 +34,7 @@ class Case:
 class CaseTilde(Case):
 
     def setup(self):
-        self.p = Patcher(self.output_file)
+        self.p = Patcher(path=self.output_file)
         self.sbox = self.p.add_rnbo(numinlets=2, numoutlets=2)
         self.sp = self.sbox.subpatcher
 
@@ -55,7 +56,7 @@ def test_rnb_codebox():
     sp = case.setup()
     codebox = sp.add_codebox(
         code=CODE,                                 # required
-        patching_rect=[200.0, 120.0, 200.0, 200.0] # optional
+        patching_rect=Rect(200.0, 120.0, 200.0, 200.0) # optional
     )
     case.save(codebox)
 

@@ -30,7 +30,7 @@ from pydantic import (
     ValidationError,
     model_serializer,
     model_validator,
-    validator,
+    field_validator,
 )
 
 from .common import Rect
@@ -211,14 +211,6 @@ class VerticalLayoutManager(LayoutManager):
 # ---------------------------------------------------------------------------
 # Primary Classes
 
-
-class Rect(NamedTuple):
-    x: float
-    y: float
-    w: float
-    h: float
-
-
 class Box(BaseModel):
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
@@ -239,7 +231,7 @@ class Box(BaseModel):
         if self.patcher:
             yield from iter(self.patcher)
 
-    @validator("text")
+    @field_validator("text")
     def text_is_valid(cls, value: str):
         """Will not include text field in export if it is None"""
         if value is None:
@@ -628,7 +620,7 @@ class Patcher(BaseModel):
         if _maxclass in MAXCLASS_DEFAULTS and not maxclass:
             maxclass = _maxclass
 
-        # kwds = self._textbox_helper(_maxclass, kwds)
+        kwds = self._textbox_helper(_maxclass, kwds)
 
         return self.add_box(
             Box(
@@ -649,14 +641,64 @@ class Patcher(BaseModel):
     # alias
     # add = add_textbox
 
-    def add_line(self, src: Box, dst: Box, outlet=0, inlet=0):
-        self._link_counter += 1
-        line = Patchline(
-            source=(src.id, outlet),
-            destination=(dst.id, inlet),
-            order=self._link_counter,
-        )
-        self.lines.append(line)
+    def _textbox_helper(self, maxclass, kwds: dict) -> dict:
+        """adds special case support for textbox"""
+        if self.classnamespace == "rnbo":
+            kwds["rnbo_classname"] = maxclass
+            if maxclass in ["codebox", "codebox~"]:
+                if "code" in kwds and "rnbo_extra_attributes" not in kwds:
+                    if "\r" not in kwds["code"]:
+                        kwds["code"] = kwds["code"].replace("\n", "\r\n")
+                    kwds["rnbo_extra_attributes"] = dict(
+                        code=kwds["code"],
+                        hot=0,
+                    )
+        return kwds
+
+    def add_patchline_by_index(
+        self, src_id: str, dst_id: str, dst_inlet: int = 0, src_outlet: int = 0
+    ) -> Patchline:
+        """Patchline creation between two objects using stored indexes"""
+
+        src = self._objects[src_id]
+        dst = self._objects[dst_id]
+        assert src.id and dst.id, f"object {src} and {dst} require ids"
+        return self.add_patchline(src.id, src_outlet, dst.id, dst_inlet)
+
+    def add_patchline(
+        self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int
+    ) -> Patchline:
+        """primary patchline creation method"""
+
+        # get order of lines between same pair of objects
+        if (src_id, dst_id) == self._last_link:
+            self._link_counter += 1
+        else:
+            self._link_counter = 0
+            self._last_link = (src_id, dst_id)
+
+        order = self._link_counter
+        src, dst = (src_id, src_outlet), (dst_id, dst_inlet)
+        patchline = Patchline(source=src, destination=dst, order=order)
+        self.lines.append(patchline)
+        self._edge_ids.append((src_id, dst_id))
+        return patchline
+
+    def add_line(
+        self, src: Box, dst: "Box", inlet: int = 0, outlet: int = 0
+    ) -> "Patchline":
+        """convenience line adding taking objects with default outlet to inlet"""
+        assert src.id and dst.id, f"objects {src} and {dst} require ids"
+        return self.add_patchline(src.id, outlet, dst.id, inlet)
+
+    # def add_line(self, src: Box, dst: Box, outlet=0, inlet=0):
+    #     self._link_counter += 1
+    #     line = Patchline(
+    #         source=(src.id, outlet),
+    #         destination=(dst.id, inlet),
+    #         order=self._link_counter,
+    #     )
+    #     self.lines.append(line)
 
     # alias
     link = add_line
@@ -1078,7 +1120,7 @@ class Patcher(BaseModel):
                 kwds["outletInfo"] = outletInfo
 
         return self.add_subpatcher(
-            text, patcher=Patcher(parent=self, classnamespace="rnbo"), **kwds
+            text, patcher=Patcher(classnamespace="rnbo"), **kwds
         )
 
     def add_coll(
