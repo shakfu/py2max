@@ -20,7 +20,7 @@ basic usage:
 import abc
 from pathlib import Path
 from collections import defaultdict
-from functools import cached_property
+# from functools import cached_property
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 from pydantic import (
@@ -212,6 +212,10 @@ class VerticalLayoutManager(LayoutManager):
 # Primary Classes
 
 class Box(BaseModel):
+    """General Box class to specify Max 'box' objects
+
+    subclass of pydantic.BaseModel
+    """
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
     id: str
@@ -233,13 +237,14 @@ class Box(BaseModel):
 
     @field_validator("text")
     def text_is_valid(cls, value: str):
-        """Will not include text field in export if it is None"""
+        """Exclude 'text' field in export if it is None"""
         if value is None:
             raise ValidationError("Cannot set text to None")
         return str(value)
 
     @model_serializer
     def serialize_box(self):
+        """Custom serialization of Box object"""
         box = {}
         for f in self.model_fields:
             val = getattr(self, f)
@@ -250,6 +255,7 @@ class Box(BaseModel):
 
     @model_validator(mode="before")
     def validate_box(cls, data: dict) -> dict:
+        """Customize export from 'dict_result -> dict(box=dict_result)'"""
         result = defaultdict(dict, data)
         if "box" in result:
             return dict(result["box"])
@@ -270,6 +276,10 @@ class Box(BaseModel):
 
 
 class Patchline(BaseModel):
+    """General Patchline class to specify Max 'patchline' objects
+
+    subclass of pydantic.BaseModel
+    """
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
     source: tuple[str, int]
@@ -281,6 +291,7 @@ class Patchline(BaseModel):
 
     @model_serializer
     def serialize_patchline(self):
+        """Custom serialization of Patchline object"""
         line = {}
         for f in self.model_fields:
             line[f] = getattr(self, f)
@@ -289,6 +300,7 @@ class Patchline(BaseModel):
 
     @model_validator(mode="before")
     def validate_patchline(cls, data: dict) -> dict:
+        """Customize export from 'dict_result -> dict(patchline=dict_result)'"""
         result = defaultdict(dict, data)
         if "patchline" in result:
             return dict(result["patchline"])
@@ -297,6 +309,10 @@ class Patchline(BaseModel):
 
 
 class Patcher(BaseModel):
+    """General Patcher class to specify Max patcher objects
+
+    subclass of pydantic.BaseModel
+    """
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
     # private parameters / attributes (not exported)
@@ -308,7 +324,7 @@ class Patcher(BaseModel):
     # private non-param attributes (not exported)
     _auto_hints: bool = False
     _layout: str = "horizontal"
-    _layout_mgr: LayoutManager
+    _layout_mgr: LayoutManager 
     _id_counter: int = 0
     _link_counter: int = 0
     _last_link: Optional[tuple[str, str]] = None
@@ -395,6 +411,7 @@ class Patcher(BaseModel):
 
     @model_serializer
     def serialize_patcher(self):
+        """Customize serialization of Patcher objects"""
         exclude = ["path"]
         patcher = {}
         for f in self.model_fields:
@@ -411,6 +428,7 @@ class Patcher(BaseModel):
 
     @model_validator(mode="before")
     def validate_patcher(cls, data: dict) -> dict:
+        """Customize export from 'dict_result -> dict(patcher=dict_result)'"""
         result = defaultdict(dict, data)
         if "patcher" in result:
             return dict(result["patcher"])
@@ -419,6 +437,7 @@ class Patcher(BaseModel):
 
     @property
     def _maxclass_methods(self) -> dict:
+        """returns a dict mapping shortnames to custom add_* methods"""
         return {
             # specialized methods
             "m": self.add_message,  # custom -- like keyboard shortcut
@@ -459,7 +478,7 @@ class Patcher(BaseModel):
         self._id_counter += 1
         return f"obj-{self._id_counter}"
 
-    def set_layout_mgr(self, name: str) -> LayoutManager:
+    def set_layout_mgr(self, name: str):
         """sets the patcher layout manager"""
         mgrs = {
             "horizontal": HorizontalLayoutManager,
@@ -489,7 +508,6 @@ class Patcher(BaseModel):
     #                 if text in obj.text:
     #                     results.append(obj)
     #     return results
-
 
     def find(self, text: str) -> Optional[Box]:
         """find (recursively) box object by maxclass or type
@@ -854,27 +872,6 @@ class Patcher(BaseModel):
             comment_pos,
         )
 
-    def add_comment(
-        self,
-        text: str,
-        patching_rect: Optional[Rect] = None,
-        id: Optional[str] = None,
-        justify: Optional[str] = None,
-        **kwds,
-    ) -> Box:
-        """Add a basic comment object."""
-        if justify:
-            kwds["textjustification"] = {"left": 0, "center": 1, "right": 2}[justify]
-        return self.add_box(
-            Box(
-                id=id or self.get_id(),
-                text=text,
-                maxclass="comment",
-                patching_rect=patching_rect or self.get_pos(),
-                **kwds,
-            )
-        )
-
     def add_intbox(
         self,
         comment: Optional[str] = None,
@@ -1074,7 +1071,7 @@ class Patcher(BaseModel):
         """Add a subpatcher object."""
 
         if patcher:
-            patcher.add_subpatcher = True
+            patcher.is_subpatcher = True
         else:
             patcher = Patcher(is_subpatcher=True)
         box = Box(
