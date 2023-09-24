@@ -5,8 +5,8 @@ def test_patcher_basics():
     p = Patcher(path='outputs/test_patcher_basics.maxpat', title="top notch patcher")
     #assert repr(p) == "Patcher(path='outputs/test_patcher_basics.maxpat')"
     assert p._layout_mgr.parent.rect == p.rect
-    osc1 = p.add_textbox('cycle~')
-    osc2 = p.add_textbox('cycle~ 440')
+    osc1 = p.add_box('cycle~')
+    osc2 = p.add_box('cycle~ 440')
     assert osc1.id and osc2.id
     # assert repr(osc1) == f"Box(id='{osc1.id}', maxclass='newobj')"
     assert osc1.oid == 1

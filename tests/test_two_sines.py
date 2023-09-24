@@ -6,7 +6,7 @@ def test_mix_two_sinusoids():
 
     fparam = p.add_floatparam
     iparam = p.add_intparam
-    tbox = p.add_textbox
+    tbox = p.add_box
     link = p.add_line
 
     # objects

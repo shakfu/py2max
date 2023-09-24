@@ -84,7 +84,7 @@ def test_graph():
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
-    tbox = p.add_textbox
+    tbox = p.add_box
     link = p.add_line
 
     # objects

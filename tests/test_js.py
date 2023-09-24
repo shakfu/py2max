@@ -47,8 +47,8 @@ def test_js():
     with open('outputs/my.js', 'w') as f:
         f.write(js_file)
     p = Patcher(path='outputs/test_js.maxpat')
-    bang = p.add_textbox('button')
-    js = p.add_textbox('js my.js hello')
+    bang = p.add_box('button')
+    js = p.add_box('js my.js hello')
     msg = p.add_message()
     p.link(bang, js)
     p.link(js, msg, 1) # to second inlet 1

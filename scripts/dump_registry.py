@@ -21,7 +21,7 @@ def dump_registry(to_folder, size=20):
     for i, ys in enumerate(chunks(xs, size)):
         p = Patcher(f'{to_folder}/{i}.maxpat')
         for j in ys:
-            p.add_textbox(j)
+            p.add_box(j)
         p.save()
 
 

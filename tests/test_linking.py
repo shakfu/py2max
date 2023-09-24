@@ -3,10 +3,10 @@ from py2max import Patcher
 
 def test_linking1():
     p = Patcher(path="outputs/test_linking1.maxpat", layout="vertical")
-    osc = p.add_textbox('cycle~ 440')
-    gain = p.add_textbox('live.gain~')
-    dac = p.add_textbox('ezdac~')
-    limi = p.add_textbox('limi~ 2 @threshold -1.')
+    osc = p.add_box('cycle~ 440')
+    gain = p.add_box('live.gain~')
+    dac = p.add_box('ezdac~')
+    limi = p.add_box('limi~ 2 @threshold -1.')
 
     p.add_line(osc, gain)           # osc outlet 0 -> gain inlet 0
     p.add_line(osc, gain, inlet=1)  # osc outlet 0 -> gain inlet 1

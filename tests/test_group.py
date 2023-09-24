@@ -20,9 +20,9 @@ class group(list):
 def test_group():
     p = Patcher(path='outputs/test_group.maxpat')
 
-    osc1 = p.add_textbox('cycle~ 440', patching_rect=Rect(100, 148, 62, 22))
-    gain = p.add_textbox('gain~', patching_rect=Rect(100, 204, 175, 21))
-    dac = p.add_textbox('ezdac~', patching_rect=Rect(100, 402, 45, 45))
+    osc1 = p.add_box('cycle~ 440', patching_rect=Rect(100, 148, 62, 22))
+    gain = p.add_box('gain~', patching_rect=Rect(100, 204, 175, 21))
+    dac = p.add_box('ezdac~', patching_rect=Rect(100, 402, 45, 45))
 
     p.add_line(osc1, gain)
     p.add_line(gain, dac)

@@ -9,9 +9,9 @@ engine to drive the round-trip conversion between
 basic usage:
 
     >>> p = Patcher('out.maxpat')
-    >>> osc1 = p.add_textbox('cycle~ 440')
-    >>> gain = p.add_textbox('gain~')
-    >>> dac = p.add_textbox('ezdac~')
+    >>> osc1 = p.add_box('cycle~ 440')
+    >>> gain = p.add_box('gain~')
+    >>> dac = p.add_box('ezdac~')
     >>> p.add_line(osc1, gain)
     >>> p.add_line(gain, dac)
     >>> p.save()
@@ -19,7 +19,6 @@ basic usage:
 """
 from pathlib import Path
 from collections import defaultdict
-# from functools import cached_property
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 from pydantic import (
@@ -108,9 +107,6 @@ class Box(BaseModel):
     def subpatcher(self):
         """synonym for parent patcher object"""
         return self.patcher
-
-class Message(Box):
-    maxclass: str = "message"
 
 
 class Patchline(BaseModel):
@@ -387,12 +383,12 @@ class Patcher(BaseModel):
                     return (i, box)
         return None
 
-    def add_box(
+    def _add_box(
         self,
         box: Box,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-    ) -> "Box":
+    ) -> Box:
         """registers the box and adds it to the patcher"""
 
         assert box.id, f"object {box} must have an id"
@@ -410,15 +406,14 @@ class Patcher(BaseModel):
         id: Optional[str] = None,
         justify: Optional[str] = None,
         **kwds,
-    ) -> "Box":
+    ) -> Comment:
         """Add a basic comment object."""
         if justify:
             kwds["textjustification"] = {"left": 0, "center": 1, "right": 2}[justify]
-        return self.add_box(
-            Box(
+        return self._add_box(
+            Comment(
                 id=id or self.get_id(),
                 text=text,
-                maxclass="comment",
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds,
             )
@@ -455,7 +450,7 @@ class Patcher(BaseModel):
         else:
             self.add_comment(comment, patching_rect)
 
-    def add_textbox(
+    def add_box(
         self,
         text: str,
         maxclass: Optional[str] = None,
@@ -476,9 +471,9 @@ class Patcher(BaseModel):
         if _maxclass in MAXCLASS_DEFAULTS and not maxclass:
             maxclass = _maxclass
 
-        kwds = self._textbox_helper(_maxclass, kwds)
+        kwds = self._box_helper(_maxclass, kwds)
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 text=text,
@@ -495,9 +490,9 @@ class Patcher(BaseModel):
         )
 
     # alias
-    # add = add_textbox
+    # add = add_box
 
-    def _textbox_helper(self, maxclass, kwds: dict) -> dict:
+    def _box_helper(self, maxclass, kwds: dict) -> dict:
         """adds special case support for textbox"""
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = maxclass
@@ -542,7 +537,7 @@ class Patcher(BaseModel):
 
     def add_line(
         self, src: Box, dst: "Box", inlet: int = 0, outlet: int = 0
-    ) -> "Patchline":
+    ) -> Patchline:
         """convenience line adding taking objects with default outlet to inlet"""
         assert src.id and dst.id, f"objects {src} and {dst} require ids"
         return self.add_patchline(src.id, outlet, dst.id, inlet)
@@ -558,8 +553,6 @@ class Patcher(BaseModel):
 
     # alias
     link = add_line
-
-
 
     def _add_float(self, value, *args, **kwds) -> "Box":
         """type-handler for float values in `add`"""
@@ -616,7 +609,7 @@ class Patcher(BaseModel):
             return self.add_gen_tilde(**kwds)
         if maxclass == "rnbo~":
             return self.add_rnbo(value, **kwds)
-        return self.add_textbox(text=value, **kwds)
+        return self.add_box(text=value, **kwds)
 
     def add(self, value, *args, **kwds) -> "Box":
         """generic adder: value can be a number or a list or text for an object."""
@@ -631,7 +624,6 @@ class Patcher(BaseModel):
             return self._add_str(value, *args, **kwds)
 
         raise NotImplementedError
-
 
     def add_codebox(
         self,
@@ -657,7 +649,7 @@ class Patcher(BaseModel):
                     hot=0,
                 )
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 code=code,
@@ -695,7 +687,7 @@ class Patcher(BaseModel):
     ) -> Box:
         """Add a max message."""
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 text=text or "",
@@ -720,7 +712,7 @@ class Patcher(BaseModel):
     ) -> Box:
         """Add an int box object."""
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 maxclass="number",
@@ -747,7 +739,7 @@ class Patcher(BaseModel):
     ) -> Box:
         """Add an float box object."""
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 maxclass="flonum",
@@ -780,7 +772,7 @@ class Patcher(BaseModel):
     ) -> Box:
         """Add a float parameter object."""
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 maxclass="flonum",
@@ -824,7 +816,7 @@ class Patcher(BaseModel):
     ) -> Box:
         """Add an int parameter object."""
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 maxclass="number",
@@ -870,7 +862,7 @@ class Patcher(BaseModel):
         if autovar:
             kwds["varname"] = name
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 text="attrui",
@@ -923,7 +915,7 @@ class Patcher(BaseModel):
             patcher=patcher,
             **kwds,
         )
-        return self.add_box(box)
+        return self._add_box(box)
 
     def add_gen(self, tilde=False, **kwds):
         """Add a gen object."""
@@ -978,7 +970,7 @@ class Patcher(BaseModel):
                 "data": [{"key": k, "value": v} for k, v in dictionary.items()],  # type: ignore
             }
         kwds.update(extra)
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 text=text or f"coll {name} @embed {embed}"
@@ -1017,7 +1009,7 @@ class Patcher(BaseModel):
             "data": dictionary or {},
         }
         kwds.update(extra)
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 text=text or f"dict {name} @embed {embed}"
@@ -1066,7 +1058,7 @@ class Patcher(BaseModel):
         }
         kwds.update(extra)
         table_type = "table~" if tilde else "table"
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 text=text or f"{table_type} {name} @embed {embed}"
@@ -1129,7 +1121,7 @@ class Patcher(BaseModel):
             "table_data": array or [],
         }
         kwds.update(extra)
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 text=text or f"itable {name}",
@@ -1162,7 +1154,7 @@ class Patcher(BaseModel):
         def _commas(xs):
             return [i for pair in zip(xs, [","] * len(xs)) for i in pair]
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 maxclass="umenu",
@@ -1202,7 +1194,7 @@ class Patcher(BaseModel):
     ):
         """Add a bpatcher object -- name or patch of bpatcher .maxpat is required."""
 
-        return self.add_box(
+        return self._add_box(
             Box(
                 id=id or self.get_id(),
                 name=name,

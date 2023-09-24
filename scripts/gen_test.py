@@ -7,7 +7,7 @@ from py2max import Patcher
 
 def test_{name}():
     p = Patcher(path='outputs/test_{name}.maxpat')
-    obj = p.add_textbox('{obj}')
+    obj = p.add_box('{obj}')
     p.save()
 
 

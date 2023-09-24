@@ -15,11 +15,11 @@ class Case:
         self.sbox = self.p.add_rnbo(numinlets=2, numoutlets=2)
         self.sp = self.sbox.subpatcher
 
-        self.in1 = self.sp.add_textbox('inport left_in')
-        self.in2 = self.sp.add_textbox('inport right_in')
+        self.in1 = self.sp.add_box('inport left_in')
+        self.in2 = self.sp.add_box('inport right_in')
 
-        self.out1 = self.sp.add_textbox('outport left_out')
-        self.out2 = self.sp.add_textbox('outport right_out')
+        self.out1 = self.sp.add_box('outport left_out')
+        self.out2 = self.sp.add_box('outport right_out')
         return self.sp
 
     def save(self, codebox):
@@ -38,11 +38,11 @@ class CaseTilde(Case):
         self.sbox = self.p.add_rnbo(numinlets=2, numoutlets=2)
         self.sp = self.sbox.subpatcher
 
-        self.in1 = self.sp.add_textbox('in~ 1')
-        self.in2 = self.sp.add_textbox('in~ 2')
+        self.in1 = self.sp.add_box('in~ 1')
+        self.in2 = self.sp.add_box('in~ 2')
 
-        self.out1 = self.sp.add_textbox('out~ 1')
-        self.out2 = self.sp.add_textbox('out~ 2')
+        self.out1 = self.sp.add_box('out~ 1')
+        self.out2 = self.sp.add_box('out~ 2')
         return self.sp
 
 def test_rnb_optimization():
@@ -72,26 +72,26 @@ def test_rnb_codebox_tilde():
 def test_rnbo_textbox():
     case = Case('outputs/test_rnbo_textbox.maxpat')
     sp = case.setup()
-    codebox = sp.add_textbox('codebox', code=CODE)
+    codebox = sp.add_box('codebox', code=CODE)
     case.save(codebox)
 
 def test_rnbo_textbox_tilde():
     case = CaseTilde('outputs/test_rnbo_textbox_tilde.maxpat')
     sp = case.setup()
-    codebox = sp.add_textbox('codebox~', code=CODE)
+    codebox = sp.add_box('codebox~', code=CODE)
     case.save(codebox)
 
 
 def populate_rnbo_patch(p, rnbo):
     sp = rnbo.subpatcher
 
-    in1 = sp.add_textbox('in~ 1')
-    in2 = sp.add_textbox('in~ 2')
+    in1 = sp.add_box('in~ 1')
+    in2 = sp.add_box('in~ 2')
 
-    out1 = sp.add_textbox('out~ 1')
-    out2 = sp.add_textbox('out~ 2')
+    out1 = sp.add_box('out~ 1')
+    out2 = sp.add_box('out~ 2')
 
-    codebox = sp.add_textbox('codebox~', code=CODE)
+    codebox = sp.add_box('codebox~', code=CODE)
 
     sp.add_line(in1, codebox)
     sp.add_line(in2, codebox, inlet=1)
@@ -99,8 +99,8 @@ def populate_rnbo_patch(p, rnbo):
     sp.add_line(codebox, out1)
     sp.add_line(codebox, out2, outlet=1)
 
-    osc = p.add_textbox('cycle~ 440')
-    dac = p.add_textbox('ezdac~')
+    osc = p.add_box('cycle~ 440')
+    dac = p.add_box('ezdac~')
 
     p.add_line(osc, rnbo)
     p.add_line(osc, rnbo, inlet=1)
