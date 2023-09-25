@@ -22,14 +22,14 @@ def test_graph():
 
             # add nodes
             nodes = {}
-            for i, box in enumerate(self._boxes):
+            for i, box in enumerate(self.boxes):
                 # if box.maxclass == 'comment':
                 #     continue
                 nodes[box.id] = i
                 G.add_node(i)
 
             # edd edges
-            for line in self._lines:
+            for line in self.lines:
                 G.add_edge(nodes[line.src], nodes[line.dst])
 
             # layout
@@ -59,7 +59,7 @@ def test_graph():
                 # repos.append((x+scale, y+scale))
 
             _boxes = []
-            for box, xy in zip(self._boxes, repos):
+            for box, xy in zip(self.boxes, repos):
                 x, y, h, w = box.patching_rect
                 newx, newy = xy
                 box.patching_rect = newx, newy, h, w

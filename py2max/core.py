@@ -123,6 +123,14 @@ class Patchline(BaseModel):
     # def __repr__(self):
     #     return f"Patchline(source={self.source}, destination={self.destination})"
 
+    @property
+    def src(self):
+        return self.source[0]
+
+    @property
+    def dst(self):
+        return self.destination[0]
+
     @model_serializer
     def serialize_patchline(self):
         """Custom serialization of Patchline object"""
@@ -406,12 +414,12 @@ class Patcher(BaseModel):
         id: Optional[str] = None,
         justify: Optional[str] = None,
         **kwds,
-    ) -> Comment:
+    ) -> Box:
         """Add a basic comment object."""
         if justify:
             kwds["textjustification"] = {"left": 0, "center": 1, "right": 2}[justify]
         return self._add_box(
-            Comment(
+            Box(
                 id=id or self.get_id(),
                 text=text,
                 patching_rect=patching_rect or self.get_pos(),

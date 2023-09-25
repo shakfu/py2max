@@ -19,13 +19,13 @@ def test_graph():
             G = nx.DiGraph()
 
             # add nodes
-            for box in self._boxes:
+            for box in self.boxes:
                 if box.maxclass == 'comment':
                     continue
                 G.add_node(box.id)
 
             # edd edges
-            for line in self._lines:
+            for line in self.lines:
                 G.add_edge(line.src, line.dst)
 
             # layout
@@ -45,7 +45,7 @@ def test_graph():
                 repos.append((x+scale, y+scale))
 
             _boxes = []
-            for box, xy in zip(self._boxes, repos):
+            for box, xy in zip(self.boxes, repos):
                 x, y, h, w = box.patching_rect
                 newx, newy = xy
                 box.patching_rect = newx, newy, h, w
@@ -59,16 +59,16 @@ def test_graph():
             G = nx.DiGraph()
 
             # make labels
-            # labels = {b.id: b.label for b in self._boxes}
+            # labels = {b.id: b.label for b in self.boxes}
 
             # add nodes
-            for box in self._boxes:
+            for box in self.boxes:
                 if box.maxclass == 'comment':
                     continue
                 G.add_node(box.id)
 
             # edd edges
-            for line in self._lines:
+            for line in self.lines:
                 G.add_edge(line.src, line.dst)
 
             # layout

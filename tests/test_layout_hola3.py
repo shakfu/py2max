@@ -40,14 +40,14 @@ class HolaPatcher(Patcher):
 
         # add nodes
         nodes = {}
-        for i, box in enumerate(self._boxes):
+        for i, box in enumerate(self.boxes):
             x, y, h, w = box.patching_rect
             node = DialectNode.allocate(x, y, h, w)
             nodes[box.id] = node
             g.addNode(node)
             # assert i == node.id
 
-        for line in self._lines:
+        for line in self.lines:
             g.addEdge(nodes[line.src], nodes[line.dst])
 
         dump(g, './outputs/test_layout_hola_3_before')
@@ -70,7 +70,7 @@ class HolaPatcher(Patcher):
             repos.append((p.x*scale, p.y*scale))
 
         _boxes = []
-        for box, xy in zip(self._boxes, repos):
+        for box, xy in zip(self.boxes, repos):
             x, y, h, w = box.patching_rect
             newx, newy = xy
             box.patching_rect = newx, newy, h, w
