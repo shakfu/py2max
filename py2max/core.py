@@ -165,7 +165,6 @@ class Patcher(BaseModel):
 
     # private non-param attributes (not exported)
     _auto_hints: bool = False
-    _layout: str = "horizontal"
     _layout_mgr: LayoutManager 
     _id_counter: int = 0
     _link_counter: int = 0

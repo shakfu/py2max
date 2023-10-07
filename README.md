@@ -1,13 +1,13 @@
 # py2max
 
-A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
+A python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
 
 If you are looking for python3 externals for Max/MSP check out the [py-js](https://github.com/shakfu/py-js) project.
 
 ## Features
 
-- pydantic-based version with stronger typing and the following features:
-    - keyword only arguments (not positional arguments)
+- User of pydantic2 for type-validation, serialization/deserialization and the following features:
+    - keyword only arguments (no positional arguments)
     - class constructor parameter type validation
     - instance attribute type validation
 
