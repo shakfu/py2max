@@ -3,7 +3,7 @@ from py2max import Patcher
 
 def test_gen():
     p = Patcher('outputs/test_gen.maxpat')
-    sbox = p.add_gen()
+    sbox = p.add_gen("@title windowSync")
     sp = sbox.subpatcher
     i3 = sp.add_textbox('in 3')
     i4 = sp.add_textbox('in 4')
@@ -15,7 +15,7 @@ def test_gen():
 
 def test_gen_tilde():
     p = Patcher('outputs/test_gen_tilde.maxpat')
-    sbox = p.add_gen_tilde() # also p.add_gen(tilde=True)
+    sbox = p.add_gen_tilde("@nocache 0") # also p.add_gen(tilde=True)
     sp = sbox.subpatcher
     i1 = sp.add_textbox('in 1')
     i2 = sp.add_textbox('in 2')
