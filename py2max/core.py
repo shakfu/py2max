@@ -958,16 +958,17 @@ class Patcher:
             )
         )
 
-    def add_gen(self, tilde=False, **kwds):
+    def add_gen(self, text: str = None, tilde=False, **kwds):
         """Add a gen object."""
-        text = "gen~" if tilde else "gen"
+        prefix = "gen~" if tilde else "gen"
+        _text = f"{prefix} {text}" if text else prefix
         return self.add_subpatcher(
-            text, patcher=Patcher(parent=self, classnamespace="dsp.gen"), **kwds
+            _text, patcher=Patcher(parent=self, classnamespace="dsp.gen"), **kwds
         )
 
-    def add_gen_tilde(self, **kwds):
+    def add_gen_tilde(self, text: str = None, **kwds):
         """Add a gen~ object."""
-        return self.add_gen(tilde=True, **kwds)
+        return self.add_gen(text=text, tilde=True, **kwds)
 
     def add_rnbo(self, text: str = "rnbo~", **kwds):
         """Add an rnbo~ object."""
