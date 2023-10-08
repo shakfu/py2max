@@ -1,15 +1,11 @@
 # py2max
 
-A python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
+A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
 
 If you are looking for python3 externals for Max/MSP check out the [py-js](https://github.com/shakfu/py-js) project.
 
-## Features
 
-- User of pydantic2 for type-validation, serialization/deserialization and the following features:
-    - keyword only arguments (no positional arguments)
-    - class constructor parameter type validation
-    - instance attribute type validation
+## Features
 
 - Scripted *offline* generation of Max patcher files using Python objects, corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
 
@@ -23,7 +19,7 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - Allows precise layout and configuration of Max objects.
 
-- `Patcher` objects have generic methods such as `add_box` and can also have specialized methods such as `add_coll`. As an example, this method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
+- `Patcher` objects have generic methods such as `add_textbox` and can also have specialized methods such as `add_coll`. As an example, this method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
 
 - Provides a `maxclassdb` feature which recalls default configurations of Max Objects.
 
@@ -53,9 +49,9 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 ```python
 p = Patcher('my-patch.maxpat')
-osc1 = p.add_box('cycle~ 440')
-gain = p.add_box('gain~')
-dac = p.add_box('ezdac~')
+osc1 = p.add_textbox('cycle~ 440')
+gain = p.add_textbox('gain~')
+dac = p.add_textbox('ezdac~')
 osc1_gain = p.add_line(osc1, gain) # osc1 outlet 0 -> gain inlet 0
 gain_dac0 = p.add_line(gain, dac, outlet=0, inlet=0)
 gain_dac1 = p.add_line(gain, dac, outlet=0, inlet=1)
@@ -66,9 +62,9 @@ By default, objects are returned (including patchlines), and patchline outlets a
 
 ```python
 p = Patcher('my-patch.maxpat')
-osc1 = p.add_box('cycle~ 440')
-gain = p.add_box('gain~')
-dac = p.add_box('ezdac~')
+osc1 = p.add_textbox('cycle~ 440')
+gain = p.add_textbox('gain~')
+dac = p.add_textbox('ezdac~')
 p.add_line(osc1, gain)
 p.add_line(gain, dac)
 p.add_line(gain, dac, inlet=1)
@@ -114,7 +110,7 @@ p.link(sbox, dac)
 p.save()
 ```
 
-Note that Python classes are basically just simple wrappers around the JSON structures in a .maxpat file, and almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_box` or the generic `.add` methods. There are also specialized methods in the form `.add_<type>` for numbers, numeric parameters, subpatchers, and container-type objects (see the design notes below for more details).
+Note that Python classes are basically just simple wrappers around the JSON structures in a .maxpat file, and almost all Max/MSP and Jitter objects can be added to the patcher file with the `.add_textbox` or the generic `.add` methods. There are also specialized methods in the form `.add_<type>` for numbers, numeric parameters, subpatchers, and container-type objects (see the design notes below for more details).
 
 ## Installation
 
@@ -238,10 +234,10 @@ A growing list of patcher methods have been implemented to specialize and facili
 - `.add_rnbo`
 - `.add_subpatcher`
 - `.add_table`
-- `.add_box`
+- `.add_textbox`
 - `.add_umenu`
 
-This is a short list, but the `add_box` method alone can handle almost all case. The others are really just there for convenience and to save typing.
+This is a short list, but the `add_textbox` method alone can handle almost all case. The others are really just there for convenience and to save typing.
 
 Generally, it is recommended to start using `py2max`'s via these `add_<type>` methods, since they have most of the required parameters built into the methods and you can get IDE completion support.  Once you are comfortable with the parameters, then use the generic abbreviated form: `add`, which is less typing but tbe tradeoff is you lose the IDE parameter completion support.
 
@@ -266,6 +262,47 @@ The wheel then should be in the `dist` directory.
 ## Examples of Use
 
 - [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
+
+
+## Alternative Branches
+
+### pydantic2 branch
+
+There is an experimental [branch](https://github.com/shakfu/py2max/tree/pydantic2) of this project which is based on the [pydantic2](https://github.com/pydantic/pydantic) project.
+
+This variant has the benefit of the following:
+
+- Tracks the main branch
+- 100% tests pass
+- More pythonic api
+- Improved serialization / deserialization
+- Widespread use of type validation based on type-hints.
+
+
+```python
+
+In [1]: from py2max import Patcher
+
+In [2]: p = Patcher(path='outputs/demo.maxpat')
+
+In [3]: msg = p.add_message('set')
+
+In [4]: p.boxes
+Out[4]: [Box(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
+```
+
+Another promising direction of this variant is to create specialized classes for objects which have their own unique `maxclass`. So in this case the above would read:
+
+```python
+In [4]: p.boxes
+Out[4]: [Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
+```
+
+
+### properties branch
+
+There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branch and will not be developed further.
+
 
 ## Credits and Licensing
 
