@@ -54,11 +54,11 @@ def test_table_wavetable2():
     # arr = np.sin(t * 5) * length
     p = Patcher.from_file("tests/data/tabular.maxpat")
     
-    table = p.find_box('table~')
+    table = p.find('table~')
     table.table_data = list(arr)
     # p._objects[table.id] = table
 
-    itable = p.find_box("itable")
+    itable = p.find("itable")
     itable.table_data = list(arr)
     # p._objects[itable.id] = itable
 
