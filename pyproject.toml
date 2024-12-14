@@ -19,7 +19,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["check-manifest", "black"]
+dev = ["check-manifest", "ruff"]
 test = ["pytest", "pytest-cov"]
 
 

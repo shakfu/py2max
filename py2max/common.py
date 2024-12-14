@@ -1,5 +1,6 @@
 from typing import NamedTuple
 
+
 class Rect(NamedTuple):
     x: float
     y: float

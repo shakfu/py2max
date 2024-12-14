@@ -4,7 +4,6 @@ A pure python3 library without dependencies intended to facilitate the offline g
 
 If you are looking for python3 externals for Max/MSP check out the [py-js](https://github.com/shakfu/py-js) project.
 
-
 ## Features
 
 - Scripted *offline* generation of Max patcher files using Python objects, corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
@@ -263,7 +262,6 @@ The wheel then should be in the `dist` directory.
 
 - [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
 
-
 ## Alternative Branches
 
 ### pydantic2 branch
@@ -277,7 +275,6 @@ This variant has the benefit of the following:
 - More pythonic api
 - Improved serialization / deserialization
 - Widespread use of type validation based on type-hints.
-
 
 ```python
 
@@ -298,11 +295,9 @@ In [4]: p.boxes
 Out[4]: [Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
 ```
 
-
 ### properties branch
 
 There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branch and will not be developed further.
-
 
 ## Credits and Licensing
 

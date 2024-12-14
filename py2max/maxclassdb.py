@@ -1,5 +1,4 @@
-"""maxclassdb.py: meant to capture defaults related to a maxclass
-"""
+"""maxclassdb.py: meant to capture defaults related to a maxclass"""
 
 from .common import Rect
 from typing import Any, Dict
