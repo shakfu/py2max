@@ -16,7 +16,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
 ]
-dependencies = []
+dependencies = [
+    "pydantic==2.5.3",
+    "pytest>=7.4.4",
+]
 
 [project.optional-dependencies]
 dev = ["check-manifest", "black"]
