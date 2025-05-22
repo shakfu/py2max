@@ -5,7 +5,9 @@
 
 ## 0.1.1
 
-- Cleaned
+- Added `Makefile` frontend
+
+- Changed package manager to `uv`
 
 - Improved compatibility with Python 3.7
 

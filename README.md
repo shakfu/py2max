@@ -4,6 +4,7 @@ A pure python3 library without dependencies intended to facilitate the offline g
 
 If you are looking for python3 externals for Max/MSP check out the [py-js](https://github.com/shakfu/py-js) project.
 
+
 ## Features
 
 - Scripted *offline* generation of Max patcher files using Python objects, corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
@@ -113,26 +114,54 @@ Note that Python classes are basically just simple wrappers around the JSON stru
 
 ## Installation
 
-Simplest way:
+Simplest way is to use [uv](https://github.com/astral-sh/uv):
 
 ```bash
-git https://github.com/shakfu/py2max.git
+git clone https://github.com/shakfu/py2max.git
 cd py2max
-pip install . # optional
+uv sync
+source .venv/bin/activate
 ```
 
-Note that py2max does not need to be installed to be used, so you can skip the `pip install .` part if you prefer and just `cd` into the cloned directory and start using it:
+Note that py2max does not need to be installed to be used, so you can skip the `pip install .` part if you prefer and just `cd` into the cloned directory and start using it interactively:
 
 ```bash
-$ cd py2max
-$ ipython
+cd py2max
+uv run python
+```
 
-In [1]: from py2max import Patcher
 
-In [2]: p = Patcher.from_file("tests/data/simple.maxpat")
+```python
+>>> from py2max import Patcher
+>>> p = Patcher.from_file("tests/data/simple.maxpat")
+>>> p.boxes
+[Box(id='obj-2', text=None, maxclass='ezdac~', numinlets=2, numoutlets=0, outlettype=[''], patching_rect=Rect(x=284.0, y=272.0, w=45.0, h=45.0), patcher=None), Box(id='obj-1', text='cycle~ 440', maxclass='newobj', numinlets=2, numoutlets=1, outlettype=['signal'], patching_rect=Rect(x=279.0, y=149.0, w=66.0, h=22.0), patcher=None, varname='osc1')]
+```
 
-In [3]: p._boxes
-Out[3]: [Box(id='obj-2', maxclass='ezdac~'), Box(id='obj-1', maxclass='newobj')]
+## Quickstart
+
+py2max has a minimal `Makefile` frontend to provide easy access to common commands:
+
+```make
+.PHONY: all build test coverage clean reset
+
+all: build
+
+build:
+    @uv build
+
+test:
+    @uv run pytest
+
+coverage:
+    @mkdir -p outputs
+    @uv run pytest --cov-report html:outputs/_covhtml --cov=py2max tests
+
+clean:
+    @rm -rf outputs .*_cache
+
+reset: clean
+    @rm -rf .venv
 ```
 
 ## Testing
@@ -142,7 +171,7 @@ Out[3]: [Box(id='obj-2', maxclass='ezdac~'), Box(id='obj-1', maxclass='newobj')]
 One can run all tests as follows:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 This will output the results of all tests into `outputs` folder.
@@ -152,26 +181,26 @@ Note that some tests may be skipped if a required package for the test cannot be
 You can check which test is skipped by the following:
 
 ```bash
-pytest -v
+uv run pytest -v
 ```
 
 To check test coverage:
 
 ```bash
-./scripts/coverage.sh
+make test
 ```
 
 which essentially does the following
 
 ```bash
 mkdir -p outputs
-pytest --cov-report html:outputs/_covhtml --cov=py2max tests
+uv run pytest --cov-report html:outputs/_covhtml --cov=py2max tests
 ```
 
 To run an individual test:
 
 ```bash
-python3 -m pytest tests.test_basic
+uv run pytest tests.test_basic
 ```
 
 Note that because `py2max` primarily deals with `json` generation and manipulation, most tests have no dependencies since `json` is already built into the stdlib.
@@ -251,9 +280,7 @@ The project has a few of scripts which may be useful:
 Note that if you want to build py2max as a wheel:
 
 ```bash
-pip install build
-cd py2max
-python3 -m build .
+uv build
 ```
 
 The wheel then should be in the `dist` directory.
@@ -261,6 +288,7 @@ The wheel then should be in the `dist` directory.
 ## Examples of Use
 
 - [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
+
 
 ## Alternative Branches
 
@@ -275,6 +303,7 @@ This variant has the benefit of the following:
 - More pythonic api
 - Improved serialization / deserialization
 - Widespread use of type validation based on type-hints.
+
 
 ```python
 
@@ -295,9 +324,11 @@ In [4]: p.boxes
 Out[4]: [Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
 ```
 
+
 ### properties branch
 
 There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branch and will not be developed further.
+
 
 ## Credits and Licensing
 

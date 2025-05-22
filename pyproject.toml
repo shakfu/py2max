@@ -18,28 +18,21 @@ classifiers = [
 ]
 dependencies = []
 
-[project.optional-dependencies]
-dev = ["check-manifest", "ruff"]
-test = ["pytest", "pytest-cov"]
 
+[dependency-groups]
+dev = [
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.11.10",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/shakfu/py2max"
 
+[project.scripts]
+py2max = "py2max:__main__"
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-
-[tool.pylint]
-max-line-length = 88
-disable = [
-    "C0103", # (invalid-name)
-    "C0302", # (too-many-lines)
-    "R0902", # (too-many-instance-attributes)
-    "R0904", # (too-many-public-methods)
-    "R0913", # (too-many-arguments)
-    "R1735", # (use-dict-literal)
-    "W0622", # (redefined-builtin)
-]
