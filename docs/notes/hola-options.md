@@ -1,6 +1,4 @@
-hola-options.mc
-
-
+# hola-options.mc
 
 ```cpp
 struct HolaOpts {

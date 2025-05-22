@@ -8,6 +8,7 @@ try:
 except ImportError:
     HAS_PYDANTIC = False
 
+
 @pytest.mark.skipif(not HAS_PYDANTIC, reason="requires pydantic")
 def test_pydantic():
     class Rect(NamedTuple):

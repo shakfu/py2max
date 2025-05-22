@@ -21,7 +21,6 @@ Paul Klose](https://rtsys.informatik.uni-kiel.de/~biblio/downloads/theses/pkl-mt
 
 - A fork of tsmpy - [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing)
 
-
 ## Python Packages
 
 - [NetworkX](https://networkx.org) -- mature Python package for the creation, manipulation, and study of the structure, dynamics, and functions of complex networks.
@@ -40,8 +39,7 @@ Paul Klose](https://rtsys.informatik.uni-kiel.de/~biblio/downloads/theses/pkl-mt
 
 - [netgraph](https://github.com/paulbrodersen/netgraph) -- Python module to make publication quality plots of weighted, directed graphs of medium size (10-100 nodes).see also [here](https://stackoverflow.com/questions/39801880/how-to-use-the-pos-argument-in-networkx-to-create-a-flowchart-style-graph/39863493)
 
-- [tulip-python](https://tulip.labri.fr/site/) -- 
-
+- [tulip-python](https://tulip.labri.fr/site/) --
 
 ## Non-Python
 
@@ -65,7 +63,9 @@ Paul Klose](https://rtsys.informatik.uni-kiel.de/~biblio/downloads/theses/pkl-mt
 
 - <https://stackoverflow.com/questions/13938770/how-to-get-the-coordinates-from-layout-from-graphviz>
 
-- <https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-gr
+- <https://stackoverflow.com/questions/53120739/lots-of-edges-on-a-gr>
+
+```python
 In [6]: g.add_edges(zip(range(10), range(1,9)))
 
 In [7]: summary(g)

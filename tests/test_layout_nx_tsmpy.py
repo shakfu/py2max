@@ -1,8 +1,10 @@
 import pytest
+
 try:
     import networkx as nx
     import matplotlib.pyplot as plt
     from tsmpy import TSM
+
     HAS_REQS = True
 except ImportError:
     HAS_REQS = False
@@ -13,11 +15,8 @@ from py2max import Patcher
 
 @pytest.mark.skipif(not HAS_REQS, reason="requires tsmpy, networkx, matplotlib")
 def test_graph():
-
     class OrthogonalPatcher(Patcher):
-
         def reposition(self):
-
             G = nx.Graph()
 
             # add nodes
@@ -34,9 +33,9 @@ def test_graph():
 
             # layout
             if HAS_REQS:
-                scale = self.rect[2]/8
+                scale = self.rect[2] / 8
             else:
-                scale = self.rect[2]/35
+                scale = self.rect[2] / 35
             # pos = nx.circular_layout(G, scale=scale)
             # pos = nx.kamada_kawai_layout(G, scale=scale)
             # pos = nx.planar_layout(G, scale=scale)
@@ -47,7 +46,7 @@ def test_graph():
             if HAS_REQS:
                 tsm = TSM(G, pos, uselp=True)
                 tsm.display()
-                plt.savefig('outputs/test_layout_nx_tsmpy.svg')
+                plt.savefig("outputs/test_layout_nx_tsmpy.svg")
                 plt.close()
                 pos = tsm.pos
 
@@ -55,7 +54,7 @@ def test_graph():
             for p in pos.items():
                 _, coord = p
                 x, y = coord
-                repos.append((x*scale, y*scale))
+                repos.append((x * scale, y * scale))
                 # repos.append((x+scale, y+scale))
 
             _boxes = []
@@ -66,8 +65,7 @@ def test_graph():
                 _boxes.append(box)
             self.boxes = _boxes
 
-
-    p = OrthogonalPatcher('outputs/test_layout_nx_tsmpy.maxpat')
+    p = OrthogonalPatcher("outputs/test_layout_nx_tsmpy.maxpat")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -78,18 +76,17 @@ def test_graph():
     freq1 = fbox()
     freq2 = fbox()
     phase = fbox()
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
     amp1 = fbox()
     amp2 = fbox()
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
     scp1 = ibox()
     scp2 = ibox()
-
 
     # lines
     link(freq1, osc1)
@@ -109,4 +106,3 @@ def test_graph():
     p.reposition()
     # p.graph()
     p.save()
-

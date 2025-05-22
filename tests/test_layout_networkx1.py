@@ -1,7 +1,9 @@
 import pytest
+
 try:
     import networkx as nx
     import matplotlib.pyplot as plt
+
     HAS_REQS = True
 except ImportError:
     HAS_REQS = False
@@ -9,18 +11,16 @@ except ImportError:
 
 from py2max import Patcher
 
+
 @pytest.mark.skipif(not HAS_REQS, reason="requires networkx, matplotlib")
 def test_graph():
-
     class GraphPatcher(Patcher):
-
         def reposition(self):
-
             G = nx.DiGraph()
 
             # add nodes
             for box in self._boxes:
-                if box.maxclass == 'comment':
+                if box.maxclass == "comment":
                     continue
                 G.add_node(box.id)
 
@@ -42,7 +42,7 @@ def test_graph():
             for p in pos.items():
                 _, coord = p
                 x, y = coord
-                repos.append((x+scale, y+scale))
+                repos.append((x + scale, y + scale))
 
             _boxes = []
             for box, xy in zip(self._boxes, repos):
@@ -52,10 +52,7 @@ def test_graph():
                 _boxes.append(box)
             self.boxes = _boxes
 
-
-
         def graph(self):
-
             G = nx.DiGraph()
 
             # make labels
@@ -63,7 +60,7 @@ def test_graph():
 
             # add nodes
             for box in self._boxes:
-                if box.maxclass == 'comment':
+                if box.maxclass == "comment":
                     continue
                 G.add_node(box.id)
 
@@ -88,8 +85,7 @@ def test_graph():
             # nx.draw(G, pos=pos, with_labels=False)
             plt.show()
 
-
-    p = GraphPatcher('outputs/test_layout_networkx1.maxpat')
+    p = GraphPatcher("outputs/test_layout_networkx1.maxpat")
 
     fparam = p.add_floatparam
     iparam = p.add_intparam
@@ -97,20 +93,20 @@ def test_graph():
     link = p.add_line
 
     # objects
-    freq1 = fparam('frequency1', 230, 0, 1000)
-    freq2 = fparam('frequency2', 341, 0, 1000)
-    phase = fparam('phase_offset', 0.39)
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
-    amp1 = fparam('amp1', 0.51)
-    amp2 = fparam('amp2', 0.46)
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
-    scp1 = iparam('buffer_pixel', 40)
-    scp2 = iparam('samples_buffer', 8)
+    freq1 = fparam("frequency1", 230, 0, 1000)
+    freq2 = fparam("frequency2", 341, 0, 1000)
+    phase = fparam("phase_offset", 0.39)
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
+    amp1 = fparam("amp1", 0.51)
+    amp2 = fparam("amp2", 0.46)
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
+    scp1 = iparam("buffer_pixel", 40)
+    scp2 = iparam("samples_buffer", 8)
 
     # lines
     link(freq1, osc1)
@@ -130,4 +126,3 @@ def test_graph():
     p.reposition()
     # p.graph()
     p.save()
-

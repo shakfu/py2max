@@ -10,10 +10,11 @@ a python extension of the API.
 
 """
 
-
 import pytest
+
 try:
     from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
+
     HAS_ADAPTAGRAMS = True
 except ImportError:
     HAS_ADAPTAGRAMS = False
@@ -22,15 +23,14 @@ from py2max import Patcher
 
 
 def dump(g, prefix):
-    with open(f'{prefix}.tglf', 'w') as f:
+    with open(f"{prefix}.tglf", "w") as f:
         f.write(g.writeTglf())
-    with open(f'{prefix}.svg', 'w') as f:
+    with open(f"{prefix}.svg", "w") as f:
         f.write(g.writeSvg())
 
+
 class HolaPatcher(Patcher):
-
     def reposition(self):
-
         g = Graph()
 
         # add nodes
@@ -45,18 +45,19 @@ class HolaPatcher(Patcher):
         for line in self._lines:
             g.addEdge(nodes[line.src], nodes[line.dst])
 
-        dump(g, './outputs/test_layout_hola_2_before')
+        dump(g, "./outputs/test_layout_hola_2_before")
 
         opts = HolaOpts()
 
         # orthogonal layout
         doHOLA(g, opts)
 
-        dump(g, './outputs/test_layout_hola_2_after')
+        dump(g, "./outputs/test_layout_hola_2_after")
+
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_graph():
-    p = HolaPatcher('outputs/test_layout_hola_2.maxpat')
+    p = HolaPatcher("outputs/test_layout_hola_2.maxpat")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -67,18 +68,17 @@ def test_graph():
     freq1 = fbox()
     freq2 = fbox()
     phase = fbox()
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
     amp1 = fbox()
     amp2 = fbox()
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
     scp1 = ibox()
     scp2 = ibox()
-
 
     # lines
     link(freq1, osc1)
@@ -98,4 +98,3 @@ def test_graph():
     p.reposition()
     # p.graph()
     p.save()
-

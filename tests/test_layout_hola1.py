@@ -9,19 +9,24 @@ The algorithm is implemented in c++ and wrapped by SWIG to produce
 a python extension of the API.
 
 """
+
 import pytest
+
 try:
     from adaptagrams import Graph, DialectNode
     from adaptagrams import buildGraphFromTglfFile, HolaOpts, doHOLA
+
     HAS_ADAPTAGRAMS = True
 except ImportError:
     HAS_ADAPTAGRAMS = False
 
+
 def dump(g, prefix):
-    with open(f'{prefix}.tglf', 'w') as f:
+    with open(f"{prefix}.tglf", "w") as f:
         f.write(g.writeTglf())
-    with open(f'{prefix}.svg', 'w') as f:
+    with open(f"{prefix}.svg", "w") as f:
         f.write(g.writeSvg())
+
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_build_graph():
@@ -30,7 +35,7 @@ def test_build_graph():
     # dimenstions
     # n = DialectNode.allocate(10, 2)
 
-    #r = Rectangle(9.0, 10.0, 9.0, 10.0)
+    # r = Rectangle(9.0, 10.0, 9.0, 10.0)
 
     # coordinates and dimensions
     # Node (double cx, double cy, double w, double h)
@@ -49,7 +54,8 @@ def test_build_graph():
 
     assert g.getNumEdges() == 1
 
-    dump(g, './outputs/test_layout_hola_1_before')
+    dump(g, "./outputs/test_layout_hola_1_before")
+
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_hola_from_random_graph():
@@ -59,7 +65,7 @@ def test_hola_from_random_graph():
 
     # get one node (2) from original graph
     n = g.getNode(2)
-    p = n.getCentre() # get coordinates
+    p = n.getCentre()  # get coordinates
     assert p.x == 44.0
     assert p.y == 258.0
 
@@ -72,7 +78,7 @@ def test_hola_from_random_graph():
     assert b.Y == 273.0
     assert b.Y - b.y == 30.0
 
-    dump(g, './outputs/test_layout_hola_random_1_before')
+    dump(g, "./outputs/test_layout_hola_random_1_before")
 
     # configure and execute Hola transform
     opts = HolaOpts()
@@ -105,4 +111,4 @@ def test_hola_from_random_graph():
     # assert b.Y == 262.50000000000006
     # assert b.Y - b.y == 30.0
 
-    dump(g, './outputs/test_layout_hola_random_1_after')
+    dump(g, "./outputs/test_layout_hola_random_1_after")

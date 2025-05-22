@@ -2,7 +2,6 @@
 
 ## 0.1.x
 
-
 ## 0.1.1
 
 - Added `Makefile` frontend
@@ -41,7 +40,7 @@
 
 ## 0.1
 
-- added a generic `.add` method to `Patcher` objects which inlcude some logic to to figure out to which specialized method to dispatch to. See: `tests/test_add.py` for examples of this.
+- Added a generic `.add` method to `Patcher` objects which include some logic to to figure out to which specialized method to dispatch to. See: `tests/test_add.py` for examples of this.
 
 - Major refactoring after `test_tree_builder` design experiment, so we have now only one simple extendable Box class, and there is round trip conversion between .maxpat files and patchers.
 

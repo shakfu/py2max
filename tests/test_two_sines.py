@@ -2,7 +2,7 @@ from py2max import Patcher
 
 
 def test_mix_two_sinusoids():
-    p = Patcher('outputs/test_two_sines.maxpat')
+    p = Patcher("outputs/test_two_sines.maxpat")
 
     fparam = p.add_floatparam
     iparam = p.add_intparam
@@ -10,20 +10,20 @@ def test_mix_two_sinusoids():
     link = p.add_line
 
     # objects
-    freq1 = fparam('frequency1', 230, 0, 1000)
-    freq2 = fparam('frequency2', 341, 0, 1000)
-    phase = fparam('phase_offset', 0.39)
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
-    amp1 = fparam('amp1', 0.51)
-    amp2 = fparam('amp2', 0.46)
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
-    scp1 = iparam('buffer_pixel', 40)
-    scp2 = iparam('samples_buffer', 8)
+    freq1 = fparam("frequency1", 230, 0, 1000)
+    freq2 = fparam("frequency2", 341, 0, 1000)
+    phase = fparam("phase_offset", 0.39)
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
+    amp1 = fparam("amp1", 0.51)
+    amp2 = fparam("amp2", 0.46)
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
+    scp1 = iparam("buffer_pixel", 40)
+    scp2 = iparam("samples_buffer", 8)
 
     # lines
     link(freq1, osc1)
@@ -43,5 +43,5 @@ def test_mix_two_sinusoids():
     p.save()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_mix_two_sinusoids()

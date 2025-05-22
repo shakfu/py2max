@@ -30,7 +30,7 @@ dev = [
 "Homepage" = "https://github.com/shakfu/py2max"
 
 [project.scripts]
-py2max = "py2max:__main__"
+py2max = "py2max:__main__" # not yet implemented
 
 [build-system]
 requires = ["hatchling"]

@@ -3,7 +3,7 @@ from py2max import Patcher
 
 
 def test_add():
-    p = Patcher('outputs/test_add.maxpat')
+    p = Patcher("outputs/test_add.maxpat")
 
     # should fail
     with pytest.raises(NotImplementedError):
@@ -30,36 +30,36 @@ def test_add():
         p.add(2, name=p)
 
     # message
-    p.add('m hello')
+    p.add("m hello")
 
     # comment
-    p.add('c my comment')
+    p.add("c my comment")
 
     # textbox
-    p.add('cycle~ 440')
+    p.add("cycle~ 440")
 
     # subpatcher
-    box = p.add('p mysub')
+    box = p.add("p mysub")
     assert box.subpatcher
 
     # gen~
-    gen = p.add('gen~')
+    gen = p.add("gen~")
     assert gen.subpatcher
 
     # coll
-    p.add('coll', dictionary=dict(a=1, b=2))
+    p.add("coll", dictionary=dict(a=1, b=2))
 
     # dict
-    p.add('dict', dictionary=dict(a=1, b=2))
+    p.add("dict", dictionary=dict(a=1, b=2))
 
     # table & itable
-    p.add('table', array=list(range(128)))
-    p.add('itable', array=list(range(128)))
+    p.add("table", array=list(range(128)))
+    p.add("itable", array=list(range(128)))
 
     # umenu
-    p.add('umenu', items=['a','b', 'c'])
+    p.add("umenu", items=["a", "b", "c"])
 
     # bpatcher
-    p.add('bpatcher bp.LFO.maxpat', extract=1)
+    p.add("bpatcher bp.LFO.maxpat", extract=1)
 
     p.save()
