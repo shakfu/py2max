@@ -3,7 +3,7 @@ import abc
 from .common import Rect
 from .maxclassdb import MAXCLASS_DEFAULTS
 
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Optional
 
 
 class LayoutManager(abc.ABC):
@@ -20,7 +20,7 @@ class LayoutManager(abc.ABC):
 
     def __init__(
         self,
-        parent: "Patcher", # type: ignore
+        parent: "Patcher", # noqa: F821
         pad: Optional[int] = None,
         box_width: Optional[int] = None,
         box_height: Optional[int] = None,

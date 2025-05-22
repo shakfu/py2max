@@ -2,7 +2,7 @@
 
 ## General
 
-- [ ] add optional mode where id==varname if id is set
+- [ ] add optional mode where `id==varname` if id is set
 
 - [ ] ensure leaf `box._patcher` is set
 

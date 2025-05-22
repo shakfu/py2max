@@ -19,7 +19,7 @@ basic usage:
 """
 from pathlib import Path
 from collections import defaultdict
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from pydantic import (
     BaseModel,
