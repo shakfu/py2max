@@ -80,7 +80,7 @@ class Box(BaseModel):
     def serialize_box(self):
         """Custom serialization of Box object"""
         box = {}
-        for f in self.model_fields:
+        for f in self.__class__.model_fields:
             val = getattr(self, f)
             if val is not None:
                 box[f] = val
@@ -135,7 +135,7 @@ class Patchline(BaseModel):
     def serialize_patchline(self):
         """Custom serialization of Patchline object"""
         line = {}
-        for f in self.model_fields:
+        for f in self.__class__.model_fields:
             line[f] = getattr(self, f)
         line.update(self.__pydantic_extra__)
         return dict(patchline=line)
@@ -255,7 +255,7 @@ class Patcher(BaseModel):
         """Customize serialization of Patcher objects"""
         exclude = ["path"]
         patcher = {}
-        for f in self.model_fields:
+        for f in self.__class__.model_fields:
             if f in exclude:
                 continue
             val = getattr(self, f)

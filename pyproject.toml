@@ -6,7 +6,7 @@ authors = [
 version = "0.1.1"
 description = "A library for offline generation of Max/MSP patcher (.maxpat) files."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 keywords = ["Max", "maxpat", "offline"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -17,13 +17,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    "pydantic==2.5.3",
+    "pydantic==2.11.5",
 ]
 
 
 [dependency-groups]
 dev = [
-    "pylint>=2.13.9",
     "pytest>=7.4.4",
     "pytest-cov>=4.1.0",
     "ruff>=0.11.10",
@@ -38,17 +37,3 @@ py2max = "py2max:__main__"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-
-[tool.pylint]
-max-line-length = 88
-disable = [
-    "C0103", # (invalid-name)
-    "C0302", # (too-many-lines)
-    "R0902", # (too-many-instance-attributes)
-    "R0904", # (too-many-public-methods)
-    "R0913", # (too-many-arguments)
-    "R1735", # (use-dict-literal)
-    "W0622", # (redefined-builtin)
-]
-
