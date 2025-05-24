@@ -3,7 +3,8 @@ pytest.skip(allow_module_level=True)
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Any, List, Optional, Tuple, Union, Literal, TypeAlias
+from typing import (TYPE_CHECKING, 
+    Annotated, Any, List, Optional, Tuple, Union, Literal, TypeAlias)
 
 from pydantic import (
     BaseModel,
@@ -58,18 +59,19 @@ class Box(BaseModel):
         if self.patcher:
             yield from iter(self.patcher)
 
-    @field_validator("text")
-    def text_is_valid(cls, value: str):
-        """Exclude 'text' field in export if it is None"""
-        if value is None:
-            raise ValidationError("Cannot set text to None")
-        return str(value)
+    # @field_validator("text")
+    # def text_is_valid(cls, value: str):
+    #     """Exclude 'text' field in export if it is None"""
+    #     if value is None:
+    #         raise ValidationError("Cannot set text to None")
+    #     return str(value)
 
+    # see: https://docs.pydantic.dev/latest/concepts/serialization/#overriding-the-return-type-when-dumping-a-model
     @model_serializer
     def serialize_box(self):
         """Custom serialization of Box object"""
         box = {}
-        for f in self.model_fields:
+        for f in self.__class__.model_fields:
             val = getattr(self, f)
             if val is not None:
                 box[f] = val
@@ -99,9 +101,7 @@ class Box(BaseModel):
 
 
 class Message(Box):
-    # type: Literal['message'] = 'message'
     maxclass: Literal['message'] = 'message'
-    # maxclass: str = "message"
     numinlets: int = 2
     numoutlets: int = 1
 
@@ -110,16 +110,16 @@ class Float(Box):
     maxclass: Literal["flonum"] = "flonum"
     numinlets: int = 1
     numoutlets: int = 2
-    outlettype: list[str] = ["", "bang"]
-    parameter_enable: int = 0
+    # outlettype: list[str] = ["", "bang"]
+    # parameter_enable: int = 0
 
 
 class Int(Box):
     maxclass: Literal["number"] = "number"
     numinlets: int = 1
     numoutlets: int = 2
-    outlettype: list[str] = ["", "bang"]
-    parameter_enable: int = 0
+    # outlettype: list[str] = ["", "bang"]
+    # parameter_enable: int = 0
 
 
 MaxClass: TypeAlias = Union[
@@ -156,7 +156,7 @@ class Patchline(BaseModel):
     def serialize_patchline(self):
         """Custom serialization of Patchline object"""
         line = {}
-        for f in self.model_fields:
+        for f in self.__class__.model_fields:
             line[f] = getattr(self, f)
         line.update(self.__pydantic_extra__)
         return dict(patchline=line)
@@ -183,6 +183,7 @@ class Patcher(BaseModel):
     layout: str = Field(default="horizontal", exclude=True)
     parent: Optional[Box] = Field(default=None, exclude=True)
     is_subpatcher: bool = Field(default=False, exclude=True)
+    boxes: list[MaxClass] = Field(default=[], exclude=True)
 
     # private non-param attributes (not exported)
     _auto_hints: bool = False
@@ -236,7 +237,8 @@ class Patcher(BaseModel):
     dependency_cache: list = []
     autosave: int = 0
     # boxes: list[Union[Box, Message]] = Field(default=[], discriminator='type')
-    boxes: list[MaxClass] = Field(default=[], discriminator='maxclass')
+    # boxes: list[MaxClass] = Field(default=[], discriminator='maxclass')
+    boxes: list[Annotated[ MaxClass, Field(discriminator="maxclass")]]
     lines: list[Patchline] = []
 
     # def __repr__(self):
@@ -277,7 +279,7 @@ class Patcher(BaseModel):
         """Customize serialization of Patcher objects"""
         exclude = ["path"]
         patcher = {}
-        for f in self.model_fields:
+        for f in self.__class__.model_fields:
             if f in exclude:
                 continue
             val = getattr(self, f)

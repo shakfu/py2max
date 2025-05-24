@@ -1,5 +1,4 @@
 import pytest
-pytest.skip(allow_module_level=True)
 
 from typing import NamedTuple, Optional, Dict
 
@@ -33,7 +32,7 @@ def test_pydantic():
         @model_serializer
         def serialize_box(self):
             box = {}
-            for f in self.model_fields:
+            for f in self.__class__.model_fields:
                 val = getattr(self, f)
                 if val is not None:
                     box[f] = val
@@ -50,7 +49,7 @@ def test_pydantic():
         @model_serializer
         def serialize_box(self):
             line = {}
-            for f in self.model_fields:
+            for f in self.__class__.model_fields:
                 line[f] = getattr(self, f)
             line.update(self.__pydantic_extra__)
             return dict(patchline=line)
@@ -107,7 +106,7 @@ def test_pydantic():
         @model_serializer
         def serialize_box(self):
             patcher = {}
-            for f in self.model_fields:
+            for f in self.__class__.model_fields:
                 val = getattr(self, f)
                 if val is not None:
                     patcher[f] = val
@@ -148,6 +147,8 @@ def test_pydantic():
                 order=self._link_count,
             )
             self.lines.append(line)
+
+    Box.model_rebuild() # added to fix breaking in 2.11.5
 
     p = Patcher(title="top")
     osc = p.add("cycle~ 440")
