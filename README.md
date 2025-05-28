@@ -212,11 +212,17 @@ As mentioned above, pytest will skip a test if required packages are not install
 If you insist on diving into the rabbit hole, and want to run all tests you will need the following packages (and their dependencies):
 
 - [networkx](https://networkx.org): `pip install networkx`
+
 - [matplotlib](<https://matplotlib.org>): `pip install matplotlib`
+
 - [pygraphviz](https://github.com/pygraphviz/pygraphviz): Pygraphviz requires installing the development library of graphviz: <https://www.graphviz.org/> (On macOS this can be done via `brew install graphviz`) -- then you can `pip install pygraphviz`
+
 - [adaptagrams](https://github.com/mjwybrow/adaptagrams): First build the adaptagrams c++ libs and then build the swig-based python wrapper.
+
 - [pyhola](https://github.com/shakfu): a pybind11 wrapper of adaptagrams. Follow build instructions in the README and install from the git repo.
+
 - [tsmpy](https://github.com/uknfire/tsmpy): install from git repo
+
 - [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing): install from git repo
 
 ## Caveats
@@ -290,15 +296,21 @@ The wheel then should be in the `dist` directory.
 - [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
 
 
-## Alternative Branches
+## Experimental Branches
 
-### pydantic2 branch
+There are three branches which include experiments with alternative implementations of py2max:
 
-There is an experimental [branch](https://github.com/shakfu/py2max/tree/pydantic2) of this project which is based on the [pydantic2](https://github.com/pydantic/pydantic) project.
+### properties branch
 
-This variant has the benefit of the following:
+There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branches which have additional benefits of type-checking and will not be developed further.
 
-- Tracks the main branch
+### pydantic-2.5.3 branch
+
+This branch contains a py2max implementation is based on v2.5.3 of the [pydantic2](https://github.com/pydantic/pydantic) project.
+
+Using pydantic2 as the backend to py2max has the following benefits:
+
+- Tracks the features of the `main` branch of py2max
 - 100% tests pass
 - More pythonic api
 - Improved serialization / deserialization
@@ -306,29 +318,25 @@ This variant has the benefit of the following:
 
 
 ```python
-
-In [1]: from py2max import Patcher
-
-In [2]: p = Patcher(path='outputs/demo.maxpat')
-
-In [3]: msg = p.add_message('set')
-
-In [4]: p.boxes
-Out[4]: [Box(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
+>>> from py2max import Patcher
+>>> p = Patcher(path='outputs/demo.maxpat')
+>>> msg = p.add_message('set')
+>>> p.boxes
+[Box(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
 ```
 
-Another promising direction of this variant is to create specialized classes for objects which have their own unique `maxclass`. So in this case the above would read:
+The caveat with this branch was the implementation depended on the v2.5.3 api and as this changed thereafter, another pydantic2 implementation was created.
+
+### pydantic-2.11.5 branch
+
+This branch updates the implementation to run with the latest version of pydantic2, and includes some experimental tests which open up a promising direction of this variant: to create specialized classes for objects which have their own unique `maxclass`. So in this case the above would read:
 
 ```python
-In [4]: p.boxes
-Out[4]: [Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
+>>> p.boxes
+[Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
 ```
 
-
-### properties branch
-
-There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branch and will not be developed further.
-
+The illustrative test is called `test_pydantic_outer` and was [discussed on the pydantic repo](https://github.com/pydantic/pydantic/discussions/11910).
 
 ## Credits and Licensing
 
