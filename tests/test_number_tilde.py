@@ -6,12 +6,13 @@ POSITIONS = ["above", "right", "below", "left"]
 
 
 def test_number_tilde():
-    p = Patcher(path='outputs/test_number_tilde.maxpat')
+    p = Patcher(path="outputs/test_number_tilde.maxpat")
     for pos in POSITIONS:
         p.add_box("number~", mode=1, comment=f"mode1-{pos}", comment_pos=pos)
     for pos in POSITIONS:
         p.add_box("number~", mode=2, comment=f"mode2-{pos}", comment_pos=pos)
     p.save()
+
 
 def test_number_tilde_resized():
     choices = list(range(len(POSITIONS)))
@@ -19,14 +20,33 @@ def test_number_tilde_resized():
     rw2 = random.randint(30, 200)
     rw3 = random.randint(30, 200)
     rw4 = random.randint(30, 200)
-    p = Patcher(path='outputs/test_number_tilde_resized.maxpat')
-    p.add_box("number~", patching_rect = [150.0, 60.0, rw1, 50.0],
-        mode=1, comment=f"mode1-above", comment_pos="above")
-    p.add_box("number~", patching_rect = [200.0, 120.0, rw2, 50.0],
-        mode=2, comment=f"mode2-right", comment_pos="right")
-    p.add_box("number~", patching_rect = [250.0, 180.0, rw3, 50.0],
-        mode=2, comment=f"mode2-below", comment_pos="below")
-    p.add_box("number~", patching_rect = [300.0, 260.0, rw4, 50.0],
-        mode=2, comment=f"mode2-left", comment_pos="left")
+    p = Patcher(path="outputs/test_number_tilde_resized.maxpat")
+    p.add_box(
+        "number~",
+        patching_rect=[150.0, 60.0, rw1, 50.0],
+        mode=1,
+        comment="mode1-above",
+        comment_pos="above",
+    )
+    p.add_box(
+        "number~",
+        patching_rect=[200.0, 120.0, rw2, 50.0],
+        mode=2,
+        comment="mode2-right",
+        comment_pos="right",
+    )
+    p.add_box(
+        "number~",
+        patching_rect=[250.0, 180.0, rw3, 50.0],
+        mode=2,
+        comment="mode2-below",
+        comment_pos="below",
+    )
+    p.add_box(
+        "number~",
+        patching_rect=[300.0, 260.0, rw4, 50.0],
+        mode=2,
+        comment="mode2-left",
+        comment_pos="left",
+    )
     p.save()
-

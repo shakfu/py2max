@@ -1,4 +1,3 @@
-
 from py2max import Patcher
 
 js_file = """
@@ -43,15 +42,14 @@ function anything()
 }
 """
 
+
 def test_js():
-    with open('outputs/my.js', 'w') as f:
+    with open("outputs/my.js", "w") as f:
         f.write(js_file)
-    p = Patcher(path='outputs/test_js.maxpat')
-    bang = p.add_box('button')
-    js = p.add_box('js my.js hello')
+    p = Patcher(path="outputs/test_js.maxpat")
+    bang = p.add_box("button")
+    js = p.add_box("js my.js hello")
     msg = p.add_message()
     p.link(bang, js)
-    p.link(js, msg, 1) # to second inlet 1
+    p.link(js, msg, 1)  # to second inlet 1
     p.save()
-
-

@@ -1,6 +1,6 @@
 import pytest
 
-from typing import NamedTuple, Optional, Dict
+from typing import NamedTuple, Optional
 
 try:
     from pydantic import BaseModel, ConfigDict, model_serializer
@@ -8,6 +8,7 @@ try:
     HAS_PYDANTIC = True
 except ImportError:
     HAS_PYDANTIC = False
+
 
 @pytest.mark.skipif(not HAS_PYDANTIC, reason="requires pydantic")
 def test_pydantic():
@@ -148,7 +149,7 @@ def test_pydantic():
             )
             self.lines.append(line)
 
-    Box.model_rebuild() # added to fix breaking in 2.11.5
+    Box.model_rebuild()  # added to fix breaking in 2.11.5
 
     p = Patcher(title="top")
     osc = p.add("cycle~ 440")
@@ -158,5 +159,3 @@ def test_pydantic():
 
     with open("outputs/test_pydantic_concept.maxpat", "w") as f:
         f.write(p.model_dump_json(indent=4))
-
-

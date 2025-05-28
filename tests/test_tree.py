@@ -47,7 +47,7 @@ class Patcher:
             for b in self.boxes:
                 print(indent + repr(b))
                 if b.patcher:
-                    b.patcher.print_tree(level=level+1)
+                    b.patcher.print_tree(level=level + 1)
 
     def check_parenthood(self, level=0):
         if self.boxes:
@@ -55,22 +55,20 @@ class Patcher:
                 assert b.parent == self
                 if b.patcher:
                     assert b.patcher.parent == b
-                    b.patcher.print_tree(level=level+1)
+                    b.patcher.print_tree(level=level + 1)
 
 
 def test_tree():
-    p = Patcher('root')
-    p.add('phasor~')
-    p.add('cycle~')
-    sp1 = p.add_subpatcher('p hello')
+    p = Patcher("root")
+    p.add("phasor~")
+    p.add("cycle~")
+    sp1 = p.add_subpatcher("p hello")
     sp1.patcher.add("bye")
-    sp2 = sp1.patcher.add_subpatcher('p inner')
+    sp2 = sp1.patcher.add_subpatcher("p inner")
     sp2.patcher.add("bye2")
-    p.add('extra')
+    p.add("extra")
 
     xs = list(p)
-    assert xs[-1].name == 'extra'
+    assert xs[-1].name == "extra"
     p.check_parenthood()
     p.print_tree()
-
-

@@ -1,28 +1,39 @@
 from pathlib import Path
 from collections import defaultdict
-from typing import Literal, NamedTuple, Optional, Dict, Annotated, TypeAlias, Union
+from typing import (
+    Literal,
+    Optional,
+    Annotated,
+    TypeAlias,
+    Union,
+)
 
 import pytest
 
 try:
-    from pydantic import BaseModel, ConfigDict, Field, model_serializer, field_validator, model_validator, ValidationError
+    from pydantic import (
+        BaseModel,
+        ConfigDict,
+        Field,
+        model_serializer,
+        field_validator,
+        model_validator,
+        ValidationError,
+    )
+
     HAS_PYDANTIC = True
 except ImportError:
     HAS_PYDANTIC = False
 
+
 @pytest.mark.skipif(not HAS_PYDANTIC, reason="requires pydantic")
 def test_pydantic():
-
     class Box(BaseModel):
-        """General Box class to specify Max 'box' objects
-
-        subclass of pydantic.BaseModel
-        """
         model_config = ConfigDict(extra="allow", validate_assignment=True)
 
         id: int
         text: Optional[str] = None
-        maxclass: Literal['newobj'] = 'newobj'
+        maxclass: Literal["newobj"] = "newobj"
         numinlets: int = 0
         numoutlets: int = 1
         patcher: Optional["Patcher"] = None
@@ -55,10 +66,9 @@ def test_pydantic():
                 return dict(data)
 
     class Message(Box):
-        maxclass: Literal['message'] = 'message'
+        maxclass: Literal["message"] = "message"
         numinlets: int = 2
         numoutlets: int = 1
-
 
     class Float(Box):
         maxclass: Literal["flonum"] = "flonum"
@@ -70,7 +80,6 @@ def test_pydantic():
         numinlets: int = 1
         numoutlets: int = 2
 
-
     MaxClass: TypeAlias = Union[
         Box,
         Message,
@@ -79,10 +88,12 @@ def test_pydantic():
     ]
 
     class Patcher(BaseModel):
-        boxes: list[Annotated[ MaxClass, Field(discriminator="maxclass")]] 
+        boxes: list[Annotated[MaxClass, Field(discriminator="maxclass")]]
 
         @classmethod
-        def from_file(cls, path: str | Path, save_to: Optional[str | Path] = None) -> "Patcher":
+        def from_file(
+            cls, path: str | Path, save_to: Optional[str | Path] = None
+        ) -> "Patcher":
             with open(path, encoding="utf8") as f:
                 patcher = cls.model_validate_json(f.read())
             if save_to:
@@ -96,7 +107,6 @@ def test_pydantic():
                 path.parent.mkdir(exist_ok=True)
             with open(path, "w", encoding="utf8") as f:
                 f.write(self.model_dump_json(indent=4))
-
 
     b1 = Box(id=1, name="b1")
     tb1 = Message(id=2, name="tb1", text="nice one")

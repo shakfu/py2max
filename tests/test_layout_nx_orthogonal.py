@@ -17,7 +17,6 @@ try:
     HAS_REQS = True
 
 except ImportError:
-
     HAS_REQS = False
 
     def generate(G, pos=None):
@@ -29,11 +28,8 @@ from py2max import Patcher
 
 @pytest.mark.skipif(not HAS_REQS, reason="requires networksx,matplotlib,orthogonal")
 def test_graph():
-
     class OrthogonalPatcher(Patcher):
-
         def reposition(self):
-
             G = nx.Graph()
 
             # add nodes
@@ -50,10 +46,10 @@ def test_graph():
 
             # layout
             if HAS_REQS:
-                scale = self.rect[2]/4 # specifically has_orthogonal
+                scale = self.rect[2] / 4  # specifically has_orthogonal
                 # scale = self.rect[2]/8
             else:
-                scale = self.rect[2]/35
+                scale = self.rect[2] / 35
 
             # pos = nx.circular_layout(G, scale=scale)
             # pos = nx.kamada_kawai_layout(G, scale=scale)
@@ -72,7 +68,7 @@ def test_graph():
             for p in pos.items():
                 _, coord = p
                 x, y = coord
-                repos.append((x*scale, y*scale))
+                repos.append((x * scale, y * scale))
 
             _boxes = []
             for box, xy in zip(self.boxes, repos):
@@ -82,8 +78,7 @@ def test_graph():
                 _boxes.append(box)
             self.boxes = _boxes
 
-
-    p = OrthogonalPatcher(path='outputs/test_layout_nx_orthogonal.maxpat')
+    p = OrthogonalPatcher(path="outputs/test_layout_nx_orthogonal.maxpat")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -94,18 +89,17 @@ def test_graph():
     freq1 = fbox()
     freq2 = fbox()
     phase = fbox()
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
     amp1 = fbox()
     amp2 = fbox()
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
     scp1 = ibox()
     scp2 = ibox()
-
 
     # lines
     link(freq1, osc1)
@@ -124,5 +118,3 @@ def test_graph():
     link(scp2, scop, inlet=1)
     p.reposition()
     p.save()
-
-

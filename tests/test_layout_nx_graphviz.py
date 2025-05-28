@@ -1,8 +1,10 @@
 import pytest
+
 try:
     import networkx as nx
     import matplotlib.pyplot as plt
     import pygraphviz
+
     HAS_REQS = True
 except ImportError:
     HAS_REQS = False
@@ -11,14 +13,10 @@ except ImportError:
 from py2max import Patcher
 
 
-
 @pytest.mark.skipif(not HAS_REQS, reason="requires pygraphviz, networkx, matplotlib")
 def test_graph():
-
     class OrthogonalPatcher(Patcher):
-
         def reposition(self):
-
             G = nx.Graph()
 
             # add nodes
@@ -32,12 +30,12 @@ def test_graph():
                 G.add_edge(nodes[line.src], nodes[line.dst])
 
             # layout
-            scale = self.rect[2]/35
+            scale = self.rect[2] / 35
             # pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
             # pos = nx.nx_agraph.graphviz_layout(G, prog='neato')
             # pos = nx.nx_agraph.graphviz_layout(G, prog='fdp')
             # pos = nx.nx_agraph.graphviz_layout(G, prog='sfdp')
-            pos = nx.nx_agraph.graphviz_layout(G, prog='twopi')
+            pos = nx.nx_agraph.graphviz_layout(G, prog="twopi")
 
             repos = []
             for p in pos.items():
@@ -55,7 +53,7 @@ def test_graph():
                 _boxes.append(box)
             self.boxes = _boxes
 
-    p = OrthogonalPatcher(path='outputs/test_nx_graphviz.maxpat')
+    p = OrthogonalPatcher(path="outputs/test_nx_graphviz.maxpat")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -66,18 +64,17 @@ def test_graph():
     freq1 = fbox()
     freq2 = fbox()
     phase = fbox()
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
     amp1 = fbox()
     amp2 = fbox()
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
     scp1 = ibox()
     scp2 = ibox()
-
 
     # lines
     link(freq1, osc1)
@@ -97,4 +94,3 @@ def test_graph():
     p.reposition()
     # p.graph()
     p.save()
-

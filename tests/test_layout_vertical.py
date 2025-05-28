@@ -1,7 +1,8 @@
 from py2max import Patcher
 
+
 def test_layout_vertical():
-    p = Patcher(path='outputs/test_layout_vertical.maxpat', layout="vertical")
+    p = Patcher(path="outputs/test_layout_vertical.maxpat", layout="vertical")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -12,18 +13,17 @@ def test_layout_vertical():
     freq1 = fbox()
     freq2 = fbox()
     phase = fbox()
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
     amp1 = fbox()
     amp2 = fbox()
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
     scp1 = ibox()
     scp2 = ibox()
-
 
     # lines
     link(freq1, osc1)
@@ -41,4 +41,3 @@ def test_layout_vertical():
     link(scp1, scop)
     link(scp2, scop, inlet=1)
     p.save()
-

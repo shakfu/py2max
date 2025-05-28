@@ -11,8 +11,10 @@ a python extension of the API.
 """
 
 import pytest
+
 try:
     from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
+
     HAS_ADAPTAGRAMS = True
 except ImportError:
     HAS_ADAPTAGRAMS = False
@@ -21,9 +23,9 @@ from py2max import Patcher
 
 
 def dump(g, prefix):
-    with open(f'{prefix}.tglf', 'w') as f:
+    with open(f"{prefix}.tglf", "w") as f:
         f.write(g.writeTglf())
-    with open(f'{prefix}.svg', 'w') as f:
+    with open(f"{prefix}.svg", "w") as f:
         f.write(g.writeSvg())
 
 
@@ -33,9 +35,7 @@ def set_hola_opts(opts):
 
 
 class HolaPatcher(Patcher):
-
     def reposition(self):
-
         g = Graph()
 
         # add nodes
@@ -50,7 +50,7 @@ class HolaPatcher(Patcher):
         for line in self.lines:
             g.addEdge(nodes[line.src], nodes[line.dst])
 
-        dump(g, './outputs/test_layout_hola_3_before')
+        dump(g, "./outputs/test_layout_hola_3_before")
 
         opts = HolaOpts()
 
@@ -60,14 +60,14 @@ class HolaPatcher(Patcher):
         # orthogonal layout
         doHOLA(g, opts)
 
-        dump(g, './outputs/test_layout_hola_3_after')
+        dump(g, "./outputs/test_layout_hola_3_after")
 
         # scale = self.rect[2]
         scale = 1
         repos = []
         for key, node in nodes.items():
             p = node.getCentre()
-            repos.append((p.x*scale, p.y*scale))
+            repos.append((p.x * scale, p.y * scale))
 
         _boxes = []
         for box, xy in zip(self.boxes, repos):
@@ -80,7 +80,7 @@ class HolaPatcher(Patcher):
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_graph():
-    p = HolaPatcher(path='outputs/test_layout_hola_3.maxpat')
+    p = HolaPatcher(path="outputs/test_layout_hola_3.maxpat")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox
@@ -91,18 +91,17 @@ def test_graph():
     freq1 = fbox()
     freq2 = fbox()
     phase = fbox()
-    osc1 = tbox('cycle~')
-    osc2 = tbox('cycle~')
+    osc1 = tbox("cycle~")
+    osc2 = tbox("cycle~")
     amp1 = fbox()
     amp2 = fbox()
-    mul1 = tbox('*~')
-    mul2 = tbox('*~')
-    add1 = tbox('+~')
-    dac = tbox('ezdac~')
-    scop = tbox('scope~')
+    mul1 = tbox("*~")
+    mul2 = tbox("*~")
+    add1 = tbox("+~")
+    dac = tbox("ezdac~")
+    scop = tbox("scope~")
     scp1 = ibox()
     scp2 = ibox()
-
 
     # lines
     link(freq1, osc1)
@@ -122,4 +121,3 @@ def test_graph():
     p.reposition()
     # p.graph()
     p.save()
-

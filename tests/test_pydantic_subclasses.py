@@ -1,25 +1,31 @@
 import pytest
+
 pytest.skip(allow_module_level=True)
 
 from pathlib import Path
 from collections import defaultdict
-from typing import (TYPE_CHECKING, 
-    Annotated, Any, List, Optional, Tuple, Union, Literal, TypeAlias)
+from typing import (
+    Annotated,
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    Literal,
+    TypeAlias,
+)
 
 from pydantic import (
     BaseModel,
     Field,
     ConfigDict,
-    ValidationError,
     model_serializer,
     model_validator,
-    field_validator,
 )
 
 from py2max.common import Rect
 from py2max.maxclassdb import MAXCLASS_DEFAULTS
 from py2max.layout import LayoutManager, HorizontalLayoutManager, VerticalLayoutManager
-
 
 
 # ---------------------------------------------------------------------------
@@ -38,13 +44,14 @@ class Box(BaseModel):
 
     subclass of pydantic.BaseModel
     """
+
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
     id: str
     # type: Literal['box'] = 'box'
     text: Optional[str] = None
     # maxclass: str = "newobj"
-    maxclass: Literal['newobj'] = 'newobj'
+    maxclass: Literal["newobj"] = "newobj"
     numinlets: int = 0
     numoutlets: int = 1
     outlettype: list[str] = [""]
@@ -101,7 +108,7 @@ class Box(BaseModel):
 
 
 class Message(Box):
-    maxclass: Literal['message'] = 'message'
+    maxclass: Literal["message"] = "message"
     numinlets: int = 2
     numoutlets: int = 1
 
@@ -135,6 +142,7 @@ class Patchline(BaseModel):
 
     subclass of pydantic.BaseModel
     """
+
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
     source: tuple[str, int]
@@ -176,6 +184,7 @@ class Patcher(BaseModel):
 
     subclass of pydantic.BaseModel
     """
+
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
     # private parameters / attributes (not exported)
@@ -187,7 +196,7 @@ class Patcher(BaseModel):
 
     # private non-param attributes (not exported)
     _auto_hints: bool = False
-    _layout_mgr: LayoutManager 
+    _layout_mgr: LayoutManager
     _id_counter: int = 0
     _link_counter: int = 0
     _last_link: Optional[tuple[str, str]] = None
@@ -238,7 +247,7 @@ class Patcher(BaseModel):
     autosave: int = 0
     # boxes: list[Union[Box, Message]] = Field(default=[], discriminator='type')
     # boxes: list[MaxClass] = Field(default=[], discriminator='maxclass')
-    boxes: list[Annotated[ MaxClass, Field(discriminator="maxclass")]]
+    boxes: list[Annotated[MaxClass, Field(discriminator="maxclass")]]
     lines: list[Patchline] = []
 
     # def __repr__(self):
@@ -785,15 +794,17 @@ class Patcher(BaseModel):
     # alias
     add_float = add_floatbox
 
+
 def test_subclasses_to_file():
     p = Patcher(path="outputs/test_pydantic_subclasses.maxpat")
-    msg = p.add_message('msg 1')
+    msg = p.add_message("msg 1")
     floatbox = p.add_float()
     intbox = p.add_int()
     p.save()
 
+
 def test_subclasses_from_file():
     p = Patcher.from_file("outputs/test_pydantic_subclasses.maxpat")
-    assert p.find('message').__class__.__name__ == 'Message'
-    assert p.find('flonum').__class__.__name__ == 'Float'
-    assert p.find('number').__class__.__name__ == 'Int'
+    assert p.find("message").__class__.__name__ == "Message"
+    assert p.find("flonum").__class__.__name__ == "Float"
+    assert p.find("number").__class__.__name__ == "Int"

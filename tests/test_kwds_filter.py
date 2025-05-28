@@ -12,8 +12,15 @@ can improve documentation or be quite confusing.
 class BaseBox:
     """Base Max Box object"""
 
-    def __init__(self, id: str, maxclass: str, numinlets: int, numoutlets: int,
-                 patching_rect: list[float], **kwds):
+    def __init__(
+        self,
+        id: str,
+        maxclass: str,
+        numinlets: int,
+        numoutlets: int,
+        patching_rect: list[float],
+        **kwds,
+    ):
         self.id = id
         self.maxclass = maxclass
         self.numinlets = numinlets
@@ -25,9 +32,16 @@ class BaseBox:
 class Box(BaseBox):
     """Generic Max Box object"""
 
-    def __init__(self, id: str, maxclass: str,
-                 numinlets: int, numoutlets: int, outlettype: list[str],
-                 patching_rect: list[float], **kwds):
+    def __init__(
+        self,
+        id: str,
+        maxclass: str,
+        numinlets: int,
+        numoutlets: int,
+        outlettype: list[str],
+        patching_rect: list[float],
+        **kwds,
+    ):
         super().__init__(id, maxclass, numinlets, numoutlets, patching_rect, **kwds)
         self.outlettype = outlettype
 
@@ -42,11 +56,27 @@ def kwds_filter(kwds, **elems):
 class TextBox(Box):
     """Box with text"""
 
-    def __init__(self, id: str, maxclass: str, text: str,
-                 numinlets: int, numoutlets: int, outlettype: list[str],
-                 patching_rect: list[float], varname: str = None, **kwds):
-        super().__init__(id, maxclass, numinlets, numoutlets, outlettype,
-                         patching_rect, **kwds_filter(kwds, varname=varname))
+    def __init__(
+        self,
+        id: str,
+        maxclass: str,
+        text: str,
+        numinlets: int,
+        numoutlets: int,
+        outlettype: list[str],
+        patching_rect: list[float],
+        varname: str = None,
+        **kwds,
+    ):
+        super().__init__(
+            id,
+            maxclass,
+            numinlets,
+            numoutlets,
+            outlettype,
+            patching_rect,
+            **kwds_filter(kwds, varname=varname),
+        )
         self.text = text
         self._kwds = kwds
 
@@ -54,32 +84,33 @@ class TextBox(Box):
 def f(x, y=None, **kwds):
     return (x, y, kwds)
 
+
 def g(x, y=None, z=None, **kwds):
     if z:
-        kwds['z'] = z
+        kwds["z"] = z
     return f(x, y, **kwds)
 
 
 def eg_kwds_filter(x, y=None, z=None, **kwds):
     kwds = kwds_filter(kwds, z=z)
     return f(x, y, **kwds)
-    
+
 
 def test_t1_kwds_filter():
-    assert eg_kwds_filter('a', 1) == ('a', 1, {})
+    assert eg_kwds_filter("a", 1) == ("a", 1, {})
 
 
 def test_t2_kwds_filter():
-    assert eg_kwds_filter('a', 1, z=10) == ('a', 1, {'z': 10})
+    assert eg_kwds_filter("a", 1, z=10) == ("a", 1, {"z": 10})
 
 
 def test_t3_kwds_filter():
-    assert eg_kwds_filter('a', 1, z=None) == ('a', 1, {})
+    assert eg_kwds_filter("a", 1, z=None) == ("a", 1, {})
 
 
 def test_t4_kwds_filter():
-    assert eg_kwds_filter('a', 1, z=None, h=20) == ('a', 1, {'h': 20})
+    assert eg_kwds_filter("a", 1, z=None, h=20) == ("a", 1, {"h": 20})
 
 
 def test_t5_kwds_filter():
-    assert eg_kwds_filter('a', 1, z=1, h=20) == ('a', 1, {'h': 20, 'z': 1})
+    assert eg_kwds_filter("a", 1, z=1, h=20) == ("a", 1, {"h": 20, "z": 1})
