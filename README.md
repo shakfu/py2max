@@ -1,9 +1,8 @@
-# py2max - pydantic2 variant
+# py2max
 
 A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
 
 If you are looking for python3 externals for Max/MSP check out the [py-js](https://github.com/shakfu/py-js) project.
-
 
 ## Features
 
@@ -13,7 +12,7 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - Can potentially handle any Max object or maxclass.
 
-- Lots of unit tests, ~99% coverage.
+- Lots of unit tests, `~99%` coverage.
 
 - Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (using graph-drawing algorithms).
 
@@ -27,7 +26,7 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - Scripted patcher file creation.
 
-- Batch modification of existing .maxpat files.
+- Batch modification of existing `.maxpat` files.
 
 - Use the rich python standard library and ecosystem to help create parametrizable objects with configuration from offline sources. For example, one-of-a-kind wavetable oscillators configured from random wavetable files.
 
@@ -116,20 +115,21 @@ Note that Python classes are basically just simple wrappers around the JSON stru
 
 Simplest way is to use [uv](https://github.com/astral-sh/uv):
 
-```bash
-git clone -b pydantic2 https://github.com/shakfu/py2max.git
+```sh
+git clone https://github.com/shakfu/py2max.git
 cd py2max
 uv sync
 source .venv/bin/activate
 ```
 
-Note that py2max does not need to be installed to be used, so you can skip the `pip install .` part if you prefer and just `cd` into the cloned directory and start using it interactively:
+Note that py2max does not need to be installed to be used, so you can skip the `pip install` part if you prefer and just `cd` into the cloned directory and start using it interactively:
 
-```bash
+```sh
 cd py2max
 uv run python
 ```
 
+For example
 
 ```python
 >>> from py2max import Patcher
@@ -166,11 +166,11 @@ reset: clean
 
 ## Testing
 
-`py2max` has an extensive test suite with tests are in the `py2max/tests` folder.
+`py2max` has an extensive test suite with tests in the `py2max/tests` folder.
 
 One can run all tests as follows:
 
-```bash
+```sh
 uv run pytest
 ```
 
@@ -180,26 +180,26 @@ Note that some tests may be skipped if a required package for the test cannot be
 
 You can check which test is skipped by the following:
 
-```bash
+```sh
 uv run pytest -v
 ```
 
 To check test coverage:
 
-```bash
-./scripts/coverage.sh
+```sh
+make test
 ```
 
 which essentially does the following
 
-```bash
+```sh
 mkdir -p outputs
 uv run pytest --cov-report html:outputs/_covhtml --cov=py2max tests
 ```
 
 To run an individual test:
 
-```bash
+```sh
 uv run pytest tests.test_basic
 ```
 
@@ -212,11 +212,17 @@ As mentioned above, pytest will skip a test if required packages are not install
 If you insist on diving into the rabbit hole, and want to run all tests you will need the following packages (and their dependencies):
 
 - [networkx](https://networkx.org): `pip install networkx`
+
 - [matplotlib](<https://matplotlib.org>): `pip install matplotlib`
+
 - [pygraphviz](https://github.com/pygraphviz/pygraphviz): Pygraphviz requires installing the development library of graphviz: <https://www.graphviz.org/> (On macOS this can be done via `brew install graphviz`) -- then you can `pip install pygraphviz`
+
 - [adaptagrams](https://github.com/mjwybrow/adaptagrams): First build the adaptagrams c++ libs and then build the swig-based python wrapper.
+
 - [pyhola](https://github.com/shakfu): a pybind11 wrapper of adaptagrams. Follow build instructions in the README and install from the git repo.
+
 - [tsmpy](https://github.com/uknfire/tsmpy): install from git repo
+
 - [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing): install from git repo
 
 ## Caveats
@@ -289,7 +295,6 @@ The wheel then should be in the `dist` directory.
 
 - [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
 
-
 ## Alternative Branches
 
 ### pydantic2 branch
@@ -304,31 +309,24 @@ This variant has the benefit of the following:
 - Improved serialization / deserialization
 - Widespread use of type validation based on type-hints.
 
-
 ```python
-
-In [1]: from py2max import Patcher
-
-In [2]: p = Patcher(path='outputs/demo.maxpat')
-
-In [3]: msg = p.add_message('set')
-
-In [4]: p.boxes
-Out[4]: [Box(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
+>>> from py2max import Patcher
+>>> p = Patcher(path='outputs/demo.maxpat')
+>>> msg = p.add_message('set')
+>>> p.boxes
+[Box(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
 ```
 
 Another promising direction of this variant is to create specialized classes for objects which have their own unique `maxclass`. So in this case the above would read:
 
 ```python
-In [4]: p.boxes
-Out[4]: [Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
+p.boxes
+[Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
 ```
-
 
 ### properties branch
 
 There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branch and will not be developed further.
-
 
 ## Credits and Licensing
 
