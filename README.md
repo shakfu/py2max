@@ -18,11 +18,9 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - Allows precise layout and configuration of Max objects.
 
-- `Patcher` objects have generic methods such as `add_textbox` and can also have specialized methods such as `add_coll`. As an example, this method has a `dictionary` argument to make it easy to prepopulate the `coll` object (see `py2max/tests/test_coll.py`).
+- Provide an object model which mirrors Max's patch organization: `Patcher` objects house `Box` objects and `PatchLine` objects that link them together, with support for nested `Patcher` objects as subpatches.
 
-- Provides a `maxclassdb` feature which recalls default configurations of Max Objects.
-
-## Possible use cases
+## Possible Use Cases
 
 - Scripted patcher file creation.
 
@@ -142,7 +140,7 @@ For example
 
 py2max has a minimal `Makefile` frontend to provide easy access to common commands:
 
-```make
+```Makefile
 .PHONY: all build test coverage clean reset
 
 all: build
@@ -297,17 +295,19 @@ The wheel then should be in the `dist` directory.
 
 ## Alternative Branches
 
-### pydantic2 branch
+### pydantic2 branches
 
-There is an experimental [branch](https://github.com/shakfu/py2max/tree/pydantic2) of this project which is based on the [pydantic2](https://github.com/pydantic/pydantic) project.
+There are two experimental branches which use [pydantic2](https://github.com/pydantic/pydantic) as the underlying object backend:
 
-This variant has the benefit of the following:
+1. [pydantic-2.5.3](https://github.com/shakfu/py2max/tree/pydantic-2.5.3) - based on version `2.5.3` of pydantic2. This was the initial proof-of-concept which achieved the following:
 
-- Tracks the main branch
-- 100% tests pass
-- More pythonic api
-- Improved serialization / deserialization
-- Widespread use of type validation based on type-hints.
+    - Tracks the main branch
+    - 100% tests pass
+    - More pythonic api
+    - Improved serialization / deserialization
+    - Widespread use of type validation based on type-hints.
+
+2. [pydantic-2.11.5](https://github.com/shakfu/py2max/tree/pydantic-2.11.5) - This branch uses pydantic2 version `2.11.5`, the latest release available. We created this branch after API changes in newer pydantic2 versions required updates from our initial implementation. Like its predecessor, this branch leverages pydantic2's features while serving as a foundation for developing specialized object classes beyond basic boxes.
 
 ```python
 >>> from py2max import Patcher
