@@ -1,13 +1,12 @@
 # Changelog
 
-## 0.2.0
+## 0.2.x
 
 - Added `Makefile` as frontend api
 
 - Changed to `uv` package manager
 
 - Added pydantic 2.3 variant
-
 
 ## 0.1.1
 

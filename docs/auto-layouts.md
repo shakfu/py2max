@@ -1,6 +1,6 @@
 # Experimenting with Auto-layout Algorithms
 
-This section provides a visual comparison of the results of different layout algorithm applied to the same set of objects. 
+This section provides a visual comparison of the results of different layout algorithm applied to the same set of objects.
 
 The default is a very basic grid layout algo that's implemented in the current `LayoutManager`. Other algorithms are provided by the following projects and have been tested in `py2max/tests`:
 
@@ -16,7 +16,6 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 6. [OrthogonalDrawing](https://github.com/hasii2011/OrthogonalDrawing) -- a fork of tsmpy using a variant of Topology-Shaped-Metric (TSM)
 
-
 ## Default Layouts
 
 ### Default Horizontal Layout
@@ -26,7 +25,6 @@ The default is a very basic grid layout algo that's implemented in the current `
 ### Default Vertical Layout
 
 ![default_vertical](assets/imgs/default_v.png)
-
 
 ## Adaptagrams Layouts
 
@@ -38,18 +36,15 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ![pyhola](assets/imgs/pyhola.png)
 
-
 ## Networkx Layouts
 
 ### networkx-spring Layout
 
 ![spring-layout](assets/imgs/spring-layout.png)
 
-
 ### networkx-hamada-kawai Layout
 
 ![kamada_kawai_layout](assets/imgs/kamada_kawai_layout.png)
-
 
 ### networkx-planar Layout
 
@@ -63,19 +58,15 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ![spectral](assets/imgs/spectral.png)
 
-
 ### networkx-circular Layout
 
 ![circular](assets/imgs/circular.png)
-
-
 
 ## Graphviz Layouts
 
 ### graphviz-dot Layout
 
 ![dot](assets/imgs/dot.png)
-
 
 ### graphviz-neato Layout
 
@@ -85,17 +76,13 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ![fdp](assets/imgs/fdp.png)
 
-
 ### graphviz-sfdp Layout
 
 ![sfdp](assets/imgs/sfdp.png)
 
-
 ### graphviz-twopi Layout
 
 ![twopi](assets/imgs/twopi.png)
-
-
 
 ## TSMP Layouts
 
@@ -111,9 +98,6 @@ The default is a very basic grid layout algo that's implemented in the current `
 
 ![tsmpy1](assets/imgs/tsmp1.png)
 
-
 ### OrthogonalDrawing Layout
 
 ![orthogonal](assets/imgs/orthogonal.png)
-
-
