@@ -488,6 +488,7 @@ dependencies = [
     { name = "jsonschema-rs" },
     { name = "pydantic" },
     { name = "pyyaml" },
+    { name = "xmltodict" },
 ]
 
 [package.dev-dependencies]
@@ -507,6 +508,7 @@ requires-dist = [
     { name = "jsonschema-rs", specifier = ">=0.30.0" },
     { name = "pydantic", specifier = "==2.11.5" },
     { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "xmltodict", specifier = ">=0.14.2" },
 ]
 
 [package.metadata.requires-dev]

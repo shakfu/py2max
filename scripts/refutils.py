@@ -262,7 +262,36 @@ class MaxRefObject:
     def parse(self):
         self.check_exists()
         self.load()
+
+    def as_objdict(self) -> dict:
+        return {
+            'name': self.name,
+            'module': self.module,
+            'category': self.category,
+            'classname': self.classname,
+            'superclass': self.superclass,
+            'digest': self.digest,
+            'description': self.description,
+            'discussion': self.discussion,
+            'attributes': self.attributes,
+            'inlets': self.inlets,
+            'outlets': self.outlets,
+            'args': self.args,
+            'methods': self.methods,
+            'seelso': self.seelso,
+        }
     
+    def as_objdict_json(self) -> str:
+        return json.dumps(self.as_objdict(), indent=2)
+    
+    def as_objdict_yaml(self, indent: int = 2, to_file: Optional[str] = None):
+        _yml = yaml.dump(self.as_objdict(), Dumper=yaml_Dumper, indent=indent)
+        if to_file:
+            with open(to_file, 'w') as f:
+                print(_yml, file=f)
+        else:
+            print(_yml)
+
     def as_json_schema(self):
         return {
             '$id': 'https://example.com/person.schema.json',
@@ -333,6 +362,7 @@ class MaxRefObject:
         else:
             params = ", ".join(_args)
             return f'self.call("{method_name}", {params})'
+
 
 
 db = MaxRefDB()
