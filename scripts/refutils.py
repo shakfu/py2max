@@ -90,6 +90,12 @@ class MaxRefObject:
         return self.d['c74object']['@name']
 
     @property
+    def identifier(self) -> str:
+        if self.name.endswith('~'):
+            return self.name[:-1] + '_tilde'
+        return self.name
+
+    @property
     def module(self) -> str:
         return self.d['c74object']['@module']
 
@@ -99,7 +105,7 @@ class MaxRefObject:
 
     @property
     def classname(self) -> str:
-        return to_pascal_case(self.name)
+        return to_pascal_case(self.identifier)
 
     @property
     def superclass(self) -> str:
@@ -188,6 +194,8 @@ class MaxRefObject:
                 'optional': bool(int(arg['@optional'])),
                 'type': arg['@type'],
                 }
+            if '@units' in arg:
+                _arg['units'] = arg['@units']
             if 'description' in arg and arg['description'] and arg['description'] != 'TEXT_HERE':
                 _arg['description'] = arg['description']
             if 'digest' in arg and arg['digest'] and arg['digest'] != 'TEXT_HERE':
@@ -302,6 +310,62 @@ class MaxRefObject:
             'properties': self.properties,
         }
 
+    def as_class(self):
+        tq = self.TRIPLE_QUOTE
+        spacer = ' '*4
+        print(f'class {self.classname}({self.superclass}):')
+        print(f"{spacer}{tq}{self.digest}")
+        print()
+        description =fill(self.description, subsequent_indent=spacer)
+        print(f"{spacer}{description}")
+        print(f"{spacer}{tq}")
+        print()
+        for m in self.methods:
+            name = m['name']
+            if '(' in name and ')' in name:
+                continue
+            if name == 'signal':
+                m['args'] = [{'name': 'value', 'type': 'float'}]
+            sig = None
+            if 'args' in m:
+                args = []
+                for arg in m['args']:
+                    if 'optional' in arg:
+                        args.append('{type} {name}?'.format(**arg))
+                    else:
+                        args.append('{type} {name}'.format(**arg))
+
+                method_args = self.__get_method_args(args)
+                sig = "{name}({self}{args}):".format(
+                    name=self.__check_iskeyword(name),
+                    self='self, ' if args else 'self',
+                    args=", ".join(method_args))
+                sig_selfless = "{name}({args})".format(
+                    name=name,
+                    args=", ".join(args))
+            else:
+                sig = "{name}(self):".format(name=self.__check_iskeyword(name))
+            print(f'{spacer}def {sig}')
+
+            if 'digest' in m:
+                print('{spacer}{tq}{digest}'.format(
+                    spacer=spacer*2,
+                    tq=tq,
+                    digest=m['digest']))
+            if args:
+                print()
+                print("{spacer}{sig}".format(spacer=spacer*2, sig=sig_selfless))
+            if 'description' in m:
+                if m['description'] and 'TEXT_HERE' not in m['description']:
+                    print()
+                    print('{spacer}{desc}'.format(
+                        spacer=spacer*2,
+                        desc=fill(m['description'], subsequent_indent=spacer*2)))
+            print('{spacer}{tq}'.format(spacer=spacer*2, tq=tq))
+            print('{spacer}{call}'.format(
+                spacer=spacer*2, call=self.__get_call(name, method_args)))
+            print()
+
     def dump_json_schema(self):
         pprint(self.as_json_schema())
 
@@ -366,7 +430,7 @@ class MaxRefObject:
 
 
 db = MaxRefDB()
-p = db.parse('cycle~')
+p = db.parse('filepath')
 
 
 
