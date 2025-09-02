@@ -2,6 +2,8 @@
 
 ## 0.2.x
 
+- Updated to pydantic2 `2.11.7`
+
 - Added `Makefile` as frontend api
 
 - Changed to `uv` package manager
