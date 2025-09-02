@@ -23,6 +23,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.2.7",
+    "isort>=5.11.5",
+    "mccabe>=0.7.0",
     "pylint>=2.13.9",
     "pytest>=7.4.4",
     "pytest-cov>=4.1.0",
