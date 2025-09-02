@@ -307,7 +307,7 @@ There are two experimental branches which use [pydantic2](https://github.com/pyd
     - Improved serialization / deserialization
     - Widespread use of type validation based on type-hints.
 
-2. [pydantic-2.11.5](https://github.com/shakfu/py2max/tree/pydantic-2.11.5) - This branch uses pydantic2 version `2.11.5`, the latest release available. We created this branch after API changes in newer pydantic2 versions required updates from our initial implementation. Like its predecessor, this branch leverages pydantic2's features while serving as a foundation for developing specialized object classes beyond basic boxes.
+2. [pydantic-2.11.7](https://github.com/shakfu/py2max/tree/pydantic-2.11.7) - This branch uses pydantic2 version `2.11.7`, the latest release available. We created this branch after API changes in newer pydantic2 versions required updates from our initial implementation. Like its predecessor, this branch leverages pydantic2's features while serving as a foundation for developing specialized object classes beyond basic boxes.
 
 ```python
 >>> from py2max import Patcher
