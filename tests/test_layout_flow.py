@@ -45,7 +45,7 @@ def test_layout_flow():
 
 def test_layout_flow2():
     """Test the new FlowLayoutManager with a complex signal chain."""
-    p = Patcher("outputs/test_layout_flow2.maxpat", layout="flow")
+    p = Patcher("outputs/test_layout_flow2.maxpat", layout="flow", validate_connections=False)
 
     # Create a signal processing chain to test flow layout
     # Input section
@@ -79,10 +79,10 @@ def test_layout_flow2():
     # Control connections
     p.add_line(freq_control, osc1)
     p.add_line(phase_control, osc2, inlet=1)  # phase inlet
-    p.add_line(amp_control1, gain1, inlet=1)
-    p.add_line(amp_control2, gain2, inlet=1)
+    p.add_line(amp_control1, gain1)
+    p.add_line(amp_control2, gain2)
     p.add_line(cutoff_control, filter_obj, inlet=1)
-    p.add_line(master_vol, output_gain, inlet=1)
+    p.add_line(master_vol, output_gain)
     
     # Signal flow
     p.add_line(osc1, gain1)

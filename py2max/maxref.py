@@ -1,12 +1,10 @@
 """maxref.py - Dynamic Max object information using .maxref.xml files"""
 
 import platform
-import sys
 from pathlib import Path
 from textwrap import fill
 from xml.etree import ElementTree
-from typing import Dict, Any, Optional, List, Union
-from functools import lru_cache
+from typing import Dict, Any, Optional, List
 
 from .common import Rect
 
@@ -351,11 +349,11 @@ def get_object_help(name: str) -> str:
         lines.append(f"Digest: {data['digest']}")
 
     if "description" in data:
-        lines.append(f"\nDescription:")
+        lines.append("\nDescription:")
         lines.append(fill(data["description"], width=70, subsequent_indent="  "))
 
     if data.get("inlets"):
-        lines.append(f"\nInlets:")
+        lines.append("\nInlets:")
         for i, inlet in enumerate(data["inlets"]):
             inlet_info = f"  {inlet.get('id', i)}: {inlet.get('type', 'unknown')}"
             if "digest" in inlet:
@@ -363,7 +361,7 @@ def get_object_help(name: str) -> str:
             lines.append(inlet_info)
 
     if data.get("outlets"):
-        lines.append(f"\nOutlets:")
+        lines.append("\nOutlets:")
         for i, outlet in enumerate(data["outlets"]):
             outlet_info = f"  {outlet.get('id', i)}: {outlet.get('type', 'unknown')}"
             if "digest" in outlet:
@@ -432,6 +430,112 @@ def get_legacy_defaults(name: str) -> Dict[str, Any]:
     defaults["patching_rect"] = Rect(x=0.0, y=0.0, w=60.0, h=22.0)
 
     return defaults
+
+
+def validate_connection(src_maxclass: str, src_outlet: int, dst_maxclass: str, dst_inlet: int) -> tuple[bool, str]:
+    """Validate a connection between two Max objects using maxref data.
+    
+    Args:
+        src_maxclass: Source object's maxclass
+        src_outlet: Source outlet index (0-based)
+        dst_maxclass: Destination object's maxclass  
+        dst_inlet: Destination inlet index (0-based)
+        
+    Returns:
+        Tuple of (is_valid: bool, error_message: str)
+    """
+    # Get object information
+    src_info = get_object_info(src_maxclass)
+    dst_info = get_object_info(dst_maxclass)
+    
+    # If we don't have maxref data, allow connection (backwards compatibility)
+    if not src_info or not dst_info:
+        return True, ""
+    
+    # Check source outlet exists
+    src_outlets = src_info.get("outlets", [])
+    if src_outlets and src_outlet >= len(src_outlets):
+        return False, f"Object '{src_maxclass}' only has {len(src_outlets)} outlet(s), cannot connect from outlet {src_outlet}"
+    
+    # Check destination inlet exists  
+    dst_inlets = dst_info.get("inlets", [])
+    if dst_inlets and dst_inlet >= len(dst_inlets):
+        return False, f"Object '{dst_maxclass}' only has {len(dst_inlets)} inlet(s), cannot connect to inlet {dst_inlet}"
+    
+    # Type checking (optional - could be enhanced)
+    if src_outlets and dst_inlets and src_outlet < len(src_outlets) and dst_inlet < len(dst_inlets):
+        src_outlet_type = src_outlets[src_outlet].get("type", "")
+        dst_inlet_type = dst_inlets[dst_inlet].get("type", "")
+        
+        # Basic type compatibility checking
+        if src_outlet_type and dst_inlet_type:
+            # Signal connections
+            if "signal" in src_outlet_type and "signal" not in dst_inlet_type:
+                return False, f"Cannot connect signal outlet from '{src_maxclass}' to non-signal inlet of '{dst_maxclass}'"
+            
+            # Could add more sophisticated type checking here
+    
+    return True, ""
+
+
+def get_inlet_count(maxclass: str) -> Optional[int]:
+    """Get the number of inlets for a Max object.
+    
+    Args:
+        maxclass: The Max object class name
+        
+    Returns:
+        Number of inlets or None if unknown
+    """
+    info = get_object_info(maxclass)
+    if info and "inlets" in info:
+        return len(info["inlets"])
+    return None
+
+
+def get_outlet_count(maxclass: str) -> Optional[int]:
+    """Get the number of outlets for a Max object.
+    
+    Args:
+        maxclass: The Max object class name
+        
+    Returns:
+        Number of outlets or None if unknown
+    """
+    info = get_object_info(maxclass)
+    if info and "outlets" in info:
+        return len(info["outlets"])
+    return None
+
+
+def get_inlet_types(maxclass: str) -> List[str]:
+    """Get the inlet types for a Max object.
+    
+    Args:
+        maxclass: The Max object class name
+        
+    Returns:
+        List of inlet type strings
+    """
+    info = get_object_info(maxclass)
+    if info and "inlets" in info:
+        return [inlet.get("type", "") for inlet in info["inlets"]]
+    return []
+
+
+def get_outlet_types(maxclass: str) -> List[str]:
+    """Get the outlet types for a Max object.
+    
+    Args:
+        maxclass: The Max object class name
+        
+    Returns:
+        List of outlet type strings
+    """
+    info = get_object_info(maxclass)
+    if info and "outlets" in info:
+        return [outlet.get("type", "") for outlet in info["outlets"]]
+    return []
 
 
 # Build a compatibility layer for the old MAXCLASS_DEFAULTS

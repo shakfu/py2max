@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from typing import Optional, Union, Tuple, List
 
-from .maxref import MAXCLASS_DEFAULTS, get_object_help, get_object_info
+from .maxref import MAXCLASS_DEFAULTS, get_object_help, get_object_info, validate_connection
 from .common import Rect
 
 # ---------------------------------------------------------------------------
@@ -26,6 +26,13 @@ from .common import Rect
 MAX_VER_MAJOR = 8
 MAX_VER_MINOR = 5
 MAX_VER_REVISION = 5
+
+# ---------------------------------------------------------------------------
+# Exceptions
+
+class InvalidConnectionError(Exception):
+    """Raised when attempting to create an invalid patchline connection"""
+    pass
 
 # ---------------------------------------------------------------------------
 # Utility Classes and functions
@@ -413,6 +420,7 @@ class Patcher:
         layout: str = "horizontal",
         auto_hints: bool = False,
         openinpresentation: int = 0,
+        validate_connections: bool = False,
     ):
         self._path = path
         self._parent = parent
@@ -429,6 +437,7 @@ class Patcher:
         self._reset_on_render = reset_on_render
         self._layout_mgr: LayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
+        self._validate_connections = validate_connections
         self._maxclass_methods = {
             # specialized methods
             "m": self.add_message,  # custom -- like keyboard shortcut
@@ -647,6 +656,20 @@ class Patcher:
         if hasattr(self._layout_mgr, 'optimize_layout'):
             self._layout_mgr.optimize_layout()
 
+    def _get_object_name(self, obj: "Box") -> str:
+        """Get the actual object name for validation purposes.
+        
+        For 'newobj' maxclass objects, extract the first word from the text field.
+        For other objects, use the maxclass directly.
+        """
+        if obj.maxclass == "newobj":
+            # Text is stored in _kwds for Box objects
+            text = obj._kwds.get("text", "")
+            if text:
+                # Extract the first word from text (the object name)
+                return text.split()[0] if text.split() else obj.maxclass
+        return obj.maxclass
+
     def add_box(
         self,
         box: "Box",
@@ -708,6 +731,24 @@ class Patcher:
         self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int
     ) -> "Patchline":
         """primary patchline creation method"""
+
+        # Validate connection if validation is enabled
+        if self._validate_connections:
+            src_obj = self._objects.get(src_id)
+            dst_obj = self._objects.get(dst_id)
+            
+            if src_obj and dst_obj:
+                # Get the actual object names for validation
+                src_name = self._get_object_name(src_obj)
+                dst_name = self._get_object_name(dst_obj)
+                
+                is_valid, error_msg = validate_connection(
+                    src_name, src_outlet, dst_name, dst_inlet
+                )
+                if not is_valid:
+                    raise InvalidConnectionError(
+                        f"Invalid connection from {src_name}[{src_outlet}] to {dst_name}[{dst_inlet}]: {error_msg}"
+                    )
 
         # get order of lines between same pair of objects
         if (src_id, dst_id) == self._last_link:
@@ -1566,6 +1607,60 @@ class Box:
             Dictionary with complete object information or None if not found
         """
         return get_object_info(self.maxclass)
+    
+    def get_inlet_count(self) -> Optional[int]:
+        """Get the number of inlets for this object from maxref data
+        
+        Returns:
+            Number of inlets or None if unknown
+        """
+        from .maxref import get_inlet_count
+        object_name = self._get_object_name()
+        return get_inlet_count(object_name)
+    
+    def get_outlet_count(self) -> Optional[int]:
+        """Get the number of outlets for this object from maxref data
+        
+        Returns:
+            Number of outlets or None if unknown
+        """
+        from .maxref import get_outlet_count
+        object_name = self._get_object_name()
+        return get_outlet_count(object_name)
+    
+    def get_inlet_types(self) -> List[str]:
+        """Get the inlet types for this object from maxref data
+        
+        Returns:
+            List of inlet type strings
+        """
+        from .maxref import get_inlet_types
+        object_name = self._get_object_name()
+        return get_inlet_types(object_name)
+    
+    def get_outlet_types(self) -> List[str]:
+        """Get the outlet types for this object from maxref data
+        
+        Returns:
+            List of outlet type strings
+        """
+        from .maxref import get_outlet_types
+        object_name = self._get_object_name()
+        return get_outlet_types(object_name)
+
+    def _get_object_name(self) -> str:
+        """Get the actual object name for this Box.
+        
+        For 'newobj' maxclass objects, extract the first word from the text field.
+        For other objects, use the maxclass directly.
+        """
+        if self.maxclass == "newobj":
+            # Text is stored in _kwds for Box objects
+            text = self._kwds.get("text", "")
+            if text:
+                # Extract the first word from text (the object name)
+                return text.split()[0] if text.split() else self.maxclass
+        return self.maxclass
 
 
 class Patchline:
