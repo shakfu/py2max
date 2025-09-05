@@ -56,3 +56,56 @@ def test_layout_flow_vertical():
     p = Patcher("outputs/test_layout_builtins_flow_vertical.maxpat", layout="flow", flow_direction="vertical")
     example(p)
 
+
+def test_layout_grid_horizontal():
+    """Test new GridLayoutManager with horizontal flow direction."""
+    p = Patcher("outputs/test_layout_builtins_grid_horizontal.maxpat", layout="grid", flow_direction="horizontal")
+    example(p)
+    
+    # Verify layout manager type
+    from py2max.core import GridLayoutManager
+    assert isinstance(p._layout_mgr, GridLayoutManager)
+    assert p._layout_mgr.flow_direction == "horizontal"
+
+
+def test_layout_grid_vertical():
+    """Test new GridLayoutManager with vertical flow direction."""
+    p = Patcher("outputs/test_layout_builtins_grid_vertical.maxpat", layout="grid", flow_direction="vertical")
+    example(p)
+    
+    # Verify layout manager type
+    from py2max.core import GridLayoutManager
+    assert isinstance(p._layout_mgr, GridLayoutManager)
+    assert p._layout_mgr.flow_direction == "vertical"
+
+
+def test_layout_grid_default():
+    """Test new GridLayoutManager with default (horizontal) flow direction."""
+    p = Patcher("outputs/test_layout_builtins_grid_default.maxpat", layout="grid")
+    example(p)
+    
+    # Verify layout manager type and default direction
+    from py2max.core import GridLayoutManager
+    assert isinstance(p._layout_mgr, GridLayoutManager)
+    assert p._layout_mgr.flow_direction == "horizontal"  # Should default to horizontal
+
+
+def test_backward_compatibility_horizontal():
+    """Test that legacy horizontal layout still works (backward compatibility)."""
+    p = Patcher("outputs/test_layout_builtins_backward_horizontal.maxpat", layout="horizontal")
+    example(p)
+    
+    # Verify it still creates a HorizontalLayoutManager (legacy alias)
+    from py2max.core import HorizontalLayoutManager
+    assert isinstance(p._layout_mgr, HorizontalLayoutManager)
+
+
+def test_backward_compatibility_vertical():
+    """Test that legacy vertical layout still works (backward compatibility)."""
+    p = Patcher("outputs/test_layout_builtins_backward_vertical.maxpat", layout="vertical")
+    example(p)
+    
+    # Verify it still creates a VerticalLayoutManager (legacy alias)
+    from py2max.core import VerticalLayoutManager
+    assert isinstance(p._layout_mgr, VerticalLayoutManager)
+

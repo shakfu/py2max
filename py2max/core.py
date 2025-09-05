@@ -146,19 +146,39 @@ class LayoutManager(abc.ABC):
         return Rect(x + (w + self.comment_pad), y, w, h)
 
 
-class HorizontalLayoutManager(LayoutManager):
-    """Utility class to help with object layout.
+class GridLayoutManager(LayoutManager):
+    """Utility class to help with object layout in a grid pattern.
 
-    This is a basic horizontal layout manager.
-    i.e. objects fill from left to right of the
-    grid and and wrap horizontally.
+    This layout manager supports both horizontal and vertical grid layouts:
+    - Horizontal: objects fill from left to right and wrap to next row
+    - Vertical: objects fill from top to bottom and wrap to next column
     """
 
-    def get_relative_pos(self, rect: Rect) -> Rect:
-        """returns a relative horizontal position for the object"""
-        x, y, w, h = rect
+    def __init__(
+        self,
+        parent: "Patcher",
+        pad: Optional[int] = None,
+        box_width: Optional[int] = None,
+        box_height: Optional[int] = None,
+        comment_pad: Optional[int] = None,
+        flow_direction: str = "horizontal",
+    ):
+        super().__init__(parent, pad, box_width, box_height, comment_pad)
+        self.flow_direction = flow_direction  # "horizontal" or "vertical"
 
-        pad = self.pad  # 32.0
+    def get_relative_pos(self, rect: Rect) -> Rect:
+        """Returns a relative position for the object based on flow direction."""
+        if self.flow_direction == "vertical":
+            return self._get_vertical_position(rect)
+        else:
+            return self._get_horizontal_position(rect)
+    
+    def _get_horizontal_position(self, rect: Rect) -> Rect:
+        """Returns a relative horizontal position for the object.
+        Objects fill from left to right and wrap horizontally.
+        """
+        x, y, w, h = rect
+        pad = self.pad
 
         x_shift = 3 * pad * self.x_layout_counter
         y_shift = 1.5 * pad * self.y_layout_counter
@@ -170,23 +190,14 @@ class HorizontalLayoutManager(LayoutManager):
             self.y_layout_counter += 1
 
         y = pad + y_shift
-
         return Rect(x, y, w, h)
-
-
-class VerticalLayoutManager(LayoutManager):
-    """Utility class to help with obadject layout.
-
-    This is a basic vertical layout manager.
-    i.e. objects fill from top to bottom of the
-    grid and and wrap vertically.
-    """
-
-    def get_relative_pos(self, rect: Rect) -> Rect:
-        """returns a relative vertical position for the object"""
+    
+    def _get_vertical_position(self, rect: Rect) -> Rect:
+        """Returns a relative vertical position for the object.
+        Objects fill from top to bottom and wrap vertically.
+        """
         x, y, w, h = rect
-
-        pad = self.pad  # 32.0
+        pad = self.pad
 
         x_shift = 3 * pad * self.x_layout_counter
         y_shift = 1.5 * pad * self.y_layout_counter
@@ -198,8 +209,36 @@ class VerticalLayoutManager(LayoutManager):
             self.y_layout_counter = 0
 
         x = pad + x_shift
-
         return Rect(x, y, w, h)
+
+
+# Legacy aliases for backward compatibility
+class HorizontalLayoutManager(GridLayoutManager):
+    """Legacy horizontal layout manager. Use GridLayoutManager with flow_direction="horizontal" instead."""
+    
+    def __init__(
+        self,
+        parent: "Patcher",
+        pad: Optional[int] = None,
+        box_width: Optional[int] = None,
+        box_height: Optional[int] = None,
+        comment_pad: Optional[int] = None,
+    ):
+        super().__init__(parent, pad, box_width, box_height, comment_pad, flow_direction="horizontal")
+
+
+class VerticalLayoutManager(GridLayoutManager):
+    """Legacy vertical layout manager. Use GridLayoutManager with flow_direction="vertical" instead."""
+    
+    def __init__(
+        self,
+        parent: "Patcher",
+        pad: Optional[int] = None,
+        box_width: Optional[int] = None,
+        box_height: Optional[int] = None,
+        comment_pad: Optional[int] = None,
+    ):
+        super().__init__(parent, pad, box_width, box_height, comment_pad, flow_direction="vertical")
 
 
 class FlowLayoutManager(LayoutManager):
@@ -695,10 +734,13 @@ class Patcher:
         """takes a name and returns an instance of a layout manager"""
         if name == "flow":
             return FlowLayoutManager(self, flow_direction=self._flow_direction)
+        elif name == "grid":
+            return GridLayoutManager(self, flow_direction=self._flow_direction)
         else:
             return {
                 "horizontal": HorizontalLayoutManager,
                 "vertical": VerticalLayoutManager,
+                "grid": GridLayoutManager,
                 "flow": FlowLayoutManager,
             }[name](self)
 
