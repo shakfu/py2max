@@ -9,7 +9,7 @@ def test_patcher_basics():
     osc1 = p.add_textbox("cycle~")
     osc2 = p.add_textbox("cycle~ 440")
     assert osc1.id and osc2.id
-    assert repr(osc1) == f"Box(id='{osc1.id}', maxclass='newobj')"
+    assert repr(osc1) == f"Box(id='{osc1.id}', maxclass='cycle~')"
     assert osc1.oid == 1
     line1 = p.add_patchline_by_index(osc1.id, osc2.id)
     assert line1

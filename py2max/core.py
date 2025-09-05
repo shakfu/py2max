@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from typing import Optional, Union, Tuple, List
 
-from .maxclassdb import MAXCLASS_DEFAULTS
+from .maxref import MAXCLASS_DEFAULTS, get_object_help, get_object_info
 from .common import Rect
 
 # ---------------------------------------------------------------------------
@@ -1340,6 +1340,22 @@ class Box:
     def subpatcher(self):
         """synonym for parent patcher object"""
         return self._patcher
+    
+    def help(self) -> str:
+        """Get formatted help documentation for this Max object
+        
+        Returns:
+            Formatted help string with object documentation from .maxref.xml files
+        """
+        return get_object_help(self.maxclass)
+    
+    def get_info(self) -> Optional[dict]:
+        """Get complete object information from .maxref.xml files
+        
+        Returns:
+            Dictionary with complete object information or None if not found
+        """
+        return get_object_info(self.maxclass)
 
 
 class Patchline:

@@ -64,6 +64,13 @@ class MaxRefParser:
         self.d = {
             'methods': {},
             'attributes': {},
+            'metadata': {},
+            'objargs': [],
+            'palette': {},
+            'parameter': {},
+            'examples': [],
+            'seealso': [],
+            'misc': {},
         }
 
     def check_exists(self):
@@ -101,67 +108,221 @@ class MaxRefParser:
     def parse(self):
         self.check_exists()
         self.load()
-        self.extract_rest()
+        self.extract_basic_info()
+        self.extract_metadata()
+        self.extract_inlets_outlets()
+        self.extract_palette()
+        self.extract_objargs()
+        self.extract_parameter()
         self.extract_methods()
         self.extract_attributes()
+        self.extract_examples()
+        self.extract_seealso()
+        self.extract_misc()
 
-    def extract_rest(self):
+    def extract_basic_info(self):
+        """Extract basic object information"""
         root = self.root
         self.d.update(self.root.attrib)
-        self.d['digest'] =  root.find('digest').text.strip()
-        self.d['description'] =  root.find('description').text.strip()
+        
+        digest_elem = root.find('digest')
+        if digest_elem is not None and digest_elem.text:
+            self.d['digest'] = digest_elem.text.strip()
+        
+        desc_elem = root.find('description')
+        if desc_elem is not None and desc_elem.text:
+            self.d['description'] = desc_elem.text.strip()
+
+    def extract_metadata(self):
+        """Extract metadata information"""
+        metadatalist = self.root.find('metadatalist')
+        if metadatalist is not None:
+            for metadata in metadatalist.findall('metadata'):
+                name = metadata.get('name')
+                if name and metadata.text:
+                    if name in self.d['metadata']:
+                        # Handle multiple entries (like multiple tags)
+                        if not isinstance(self.d['metadata'][name], list):
+                            self.d['metadata'][name] = [self.d['metadata'][name]]
+                        self.d['metadata'][name].append(metadata.text.strip())
+                    else:
+                        self.d['metadata'][name] = metadata.text.strip()
+
+    def extract_inlets_outlets(self):
+        """Extract inlet and outlet information"""
         self.d['inlets'] = []
-        inletlist = root.find('inletlist')
-        for inlet in inletlist.iter():
-            if inlet.attrib:
-                self.d['inlets'].append(inlet.attrib)
+        inletlist = self.root.find('inletlist')
+        if inletlist is not None:
+            for inlet in inletlist.findall('inlet'):
+                inlet_data = dict(inlet.attrib)
+                digest_elem = inlet.find('digest')
+                if digest_elem is not None and digest_elem.text:
+                    inlet_data['digest'] = digest_elem.text.strip()
+                desc_elem = inlet.find('description')
+                if desc_elem is not None and desc_elem.text:
+                    inlet_data['description'] = desc_elem.text.strip()
+                self.d['inlets'].append(inlet_data)
+
         self.d['outlets'] = []
-        outletlist = root.find('outletlist')
-        for outlet in outletlist.iter():
-            if outlet.attrib:
-                self.d['outlets'].append(outlet.attrib)
+        outletlist = self.root.find('outletlist')
+        if outletlist is not None:
+            for outlet in outletlist.findall('outlet'):
+                outlet_data = dict(outlet.attrib)
+                digest_elem = outlet.find('digest')
+                if digest_elem is not None and digest_elem.text:
+                    outlet_data['digest'] = digest_elem.text.strip()
+                desc_elem = outlet.find('description')
+                if desc_elem is not None and desc_elem.text:
+                    outlet_data['description'] = desc_elem.text.strip()
+                self.d['outlets'].append(outlet_data)
+
+    def extract_palette(self):
+        """Extract palette information"""
+        palette = self.root.find('palette')
+        if palette is not None:
+            self.d['palette'] = dict(palette.attrib)
+
+    def extract_objargs(self):
+        """Extract object arguments"""
+        objarglist = self.root.find('objarglist')
+        if objarglist is not None:
+            for objarg in objarglist.findall('objarg'):
+                arg_data = dict(objarg.attrib)
+                digest_elem = objarg.find('digest')
+                if digest_elem is not None and digest_elem.text:
+                    arg_data['digest'] = digest_elem.text.strip()
+                desc_elem = objarg.find('description')
+                if desc_elem is not None and desc_elem.text:
+                    arg_data['description'] = desc_elem.text.strip()
+                self.d['objargs'].append(arg_data)
+
+    def extract_parameter(self):
+        """Extract parameter information"""
+        parameter = self.root.find('parameter')
+        if parameter is not None:
+            self.d['parameter'] = dict(parameter.attrib)
+
+    def extract_examples(self):
+        """Extract example information"""
+        examplelist = self.root.find('examplelist')
+        if examplelist is not None:
+            for example in examplelist.findall('example'):
+                self.d['examples'].append(dict(example.attrib))
+
+    def extract_seealso(self):
+        """Extract see also references"""
+        seealsolist = self.root.find('seealsolist')
+        if seealsolist is not None:
+            for seealso in seealsolist.findall('seealso'):
+                name = seealso.get('name')
+                if name:
+                    self.d['seealso'].append(name)
+
+    def extract_misc(self):
+        """Extract misc information like Output and Connections"""
+        for misc in self.root.findall('misc'):
+            misc_name = misc.get('name')
+            if misc_name:
+                self.d['misc'][misc_name] = {}
+                for entry in misc.findall('entry'):
+                    entry_name = entry.get('name')
+                    if entry_name:
+                        desc_elem = entry.find('description')
+                        if desc_elem is not None and desc_elem.text:
+                            self.d['misc'][misc_name][entry_name] = desc_elem.text.strip()
 
     def extract_attributes(self):
+        """Extract attribute information with full nested structure"""
         self.d['attributes'] = {}
-        methodlist = self.root.find('attributelist')
-        d = self.d['attributes']
-        for a in methodlist.iter():
-            if a.tag == 'attribute':
-                name = a.attrib['name']
-                d[name] = dict(a.attrib)
-                for digest in a.findall('digest'):
-                    if digest.text:
-                        d[name]['digest'] = digest.text.strip()
-                for desc in a.findall('description'):
-                    if desc.text:
-                        d[name]['description'] = desc.text.strip()
+        attributelist = self.root.find('attributelist')
+        if attributelist is not None:
+            for attr in attributelist.findall('attribute'):
+                name = attr.get('name')
+                if name:
+                    attr_data = dict(attr.attrib)
+                    
+                    # Extract digest
+                    digest_elem = attr.find('digest')
+                    if digest_elem is not None and digest_elem.text:
+                        attr_data['digest'] = digest_elem.text.strip()
+                    
+                    # Extract description
+                    desc_elem = attr.find('description')
+                    if desc_elem is not None and desc_elem.text:
+                        attr_data['description'] = desc_elem.text.strip()
+                    
+                    # Extract nested attributelist (meta-attributes)
+                    nested_attrs = attr.find('attributelist')
+                    if nested_attrs is not None:
+                        attr_data['attributes'] = {}
+                        for nested_attr in nested_attrs.findall('attribute'):
+                            nested_name = nested_attr.get('name')
+                            if nested_name:
+                                nested_data = dict(nested_attr.attrib)
+                                attr_data['attributes'][nested_name] = nested_data
+                    
+                    # Extract enumlist if present
+                    enumlist = attr.find('.//enumlist')
+                    if enumlist is not None:
+                        attr_data['enumlist'] = []
+                        for enum in enumlist.findall('enum'):
+                            enum_data = dict(enum.attrib)
+                            digest_elem = enum.find('digest')
+                            if digest_elem is not None and digest_elem.text:
+                                enum_data['digest'] = digest_elem.text.strip()
+                            desc_elem = enum.find('description')
+                            if desc_elem is not None and desc_elem.text:
+                                enum_data['description'] = desc_elem.text.strip()
+                            attr_data['enumlist'].append(enum_data)
+                    
+                    self.d['attributes'][name] = attr_data
 
     def extract_methods(self):
+        """Extract method information with full argument and attribute support"""
         self.d['methods'] = {}
         methodlist = self.root.find('methodlist')
-        d = self.d['methods']
-        for m in methodlist.iter():
-            if m.tag == 'method':
-                name = m.attrib['name']
-                d[name] = {}
-                for arglist in m.findall('arglist'):
-                    d[name]['args'] = []
-                    for entry in arglist:
-                        if entry.tag == 'arg':
-                            d[name]['args'].append(dict(entry.attrib))
-                        if entry.tag == 'arggroup':
-                            for arg in entry.iter():
-                                if arg.tag == 'arg':
-                                    ad = dict(arg.attrib)
-                                    ad.update(entry.attrib)
-                                    d[name]['args'].append(ad)
-
-                for digest in m.findall('digest'):
-                    if digest.text:
-                        d[name]['digest'] = digest.text.strip()
-                for desc in m.findall('description'):
-                    if desc.text:
-                        d[name]['description'] = desc.text.strip()
+        if methodlist is not None:
+            for method in methodlist.findall('method'):
+                name = method.get('name')
+                if name:
+                    method_data = dict(method.attrib)
+                    
+                    # Extract arguments
+                    arglist = method.find('arglist')
+                    if arglist is not None:
+                        method_data['args'] = []
+                        for arg in arglist.findall('arg'):
+                            method_data['args'].append(dict(arg.attrib))
+                        
+                        # Handle argument groups
+                        for arggroup in arglist.findall('arggroup'):
+                            group_attrs = dict(arggroup.attrib)
+                            for arg in arggroup.findall('arg'):
+                                arg_data = dict(arg.attrib)
+                                arg_data.update(group_attrs)  # Add group attributes
+                                method_data['args'].append(arg_data)
+                    
+                    # Extract digest
+                    digest_elem = method.find('digest')
+                    if digest_elem is not None and digest_elem.text:
+                        method_data['digest'] = digest_elem.text.strip()
+                    
+                    # Extract description
+                    desc_elem = method.find('description')
+                    if desc_elem is not None and desc_elem.text:
+                        method_data['description'] = desc_elem.text.strip()
+                    
+                    # Extract nested attributelist (method attributes like 'introduced')
+                    nested_attrs = method.find('attributelist')
+                    if nested_attrs is not None:
+                        method_data['attributes'] = {}
+                        for nested_attr in nested_attrs.findall('attribute'):
+                            nested_name = nested_attr.get('name')
+                            if nested_name:
+                                nested_data = dict(nested_attr.attrib)
+                                method_data['attributes'][nested_name] = nested_data
+                    
+                    self.d['methods'][name] = method_data
 
     def dump_dict(self):
         pprint(self.d)
@@ -321,6 +482,9 @@ if __name__ == '__main__':
     elif args.code:
         p.dump_code()
 
+    elif args.json:
+        p.dump_json()
+    
     elif args.test:
         p.dump_tests()
 
