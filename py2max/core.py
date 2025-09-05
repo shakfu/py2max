@@ -162,13 +162,20 @@ class GridLayoutManager(LayoutManager):
         box_height: Optional[int] = None,
         comment_pad: Optional[int] = None,
         flow_direction: str = "horizontal",
+        cluster_connected: bool = False,
     ):
         super().__init__(parent, pad, box_width, box_height, comment_pad)
         self.flow_direction = flow_direction  # "horizontal" or "vertical"
+        self.cluster_connected = cluster_connected  # Whether to cluster connected objects
+        self._object_clusters = {}  # Cache for object cluster assignments
+        self._cluster_positions = {}  # Track position within each cluster
+        self._current_cluster = 0  # Track current cluster being positioned
 
     def get_relative_pos(self, rect: Rect) -> Rect:
         """Returns a relative position for the object based on flow direction."""
-        if self.flow_direction == "vertical":
+        if self.cluster_connected and len(self.parent._lines) > 0:
+            return self._get_clustered_position(rect)
+        elif self.flow_direction == "vertical":
             return self._get_vertical_position(rect)
         else:
             return self._get_horizontal_position(rect)
@@ -210,6 +217,241 @@ class GridLayoutManager(LayoutManager):
 
         x = pad + x_shift
         return Rect(x, y, w, h)
+    
+    def _analyze_object_connections(self) -> dict:
+        """Analyze connections between objects to understand clustering patterns."""
+        connections = {}  # {obj_id: set(connected_obj_ids)}
+        
+        # Initialize all objects with empty connection sets
+        for obj_id in self.parent._objects:
+            connections[obj_id] = set()
+            
+        # Build bidirectional connection graph
+        for line in self.parent._lines:
+            src_id, dst_id = line.src, line.dst
+            if src_id in connections and dst_id in connections:
+                connections[src_id].add(dst_id)
+                connections[dst_id].add(src_id)
+                
+        return connections
+    
+    def _find_connected_components(self, connections: dict) -> list[set]:
+        """Find clusters of connected objects using depth-first search."""
+        visited = set()
+        clusters = []
+        
+        def dfs(obj_id, current_cluster):
+            if obj_id in visited:
+                return
+            visited.add(obj_id)
+            current_cluster.add(obj_id)
+            
+            # Visit all connected objects
+            for connected_id in connections.get(obj_id, set()):
+                if connected_id not in visited:
+                    dfs(connected_id, current_cluster)
+        
+        # Find all connected components
+        for obj_id in connections:
+            if obj_id not in visited:
+                cluster = set()
+                dfs(obj_id, cluster)
+                if cluster:  # Only add non-empty clusters
+                    clusters.append(cluster)
+        
+        return clusters
+    
+    def _assign_clusters(self) -> dict:
+        """Assign each object to a cluster ID."""
+        if not hasattr(self, '_cached_clusters') or not self._cached_clusters:
+            connections = self._analyze_object_connections()
+            clusters = self._find_connected_components(connections)
+            
+            # Assign cluster IDs to objects
+            object_to_cluster = {}
+            for cluster_id, cluster_objects in enumerate(clusters):
+                for obj_id in cluster_objects:
+                    object_to_cluster[obj_id] = cluster_id
+            
+            self._cached_clusters = object_to_cluster
+            self._cached_cluster_list = clusters
+            
+        return self._cached_clusters
+    
+    def _get_clustered_position(self, rect: Rect) -> Rect:
+        """Get position using clustering algorithm to keep connected objects close."""
+        x, y, w, h = rect
+        
+        # Get current object ID from the most recently added box
+        current_obj_id = None
+        if self.parent._boxes:
+            # The object being positioned is typically the last one added
+            # But we need to find which one we're currently positioning
+            # This is a bit tricky - we'll use the rect size to match
+            for obj_id, obj in self.parent._objects.items():
+                if hasattr(obj, 'patching_rect') and obj.patching_rect and \
+                   obj.patching_rect.w == w and obj.patching_rect.h == h:
+                    # Check if this object doesn't have a position set yet
+                    if obj.patching_rect.x == 0 and obj.patching_rect.y == 0:
+                        current_obj_id = obj_id
+                        break
+        
+        if not current_obj_id:
+            # Fallback to regular positioning if we can't identify the object
+            if self.flow_direction == "vertical":
+                return self._get_vertical_position(rect)
+            else:
+                return self._get_horizontal_position(rect)
+        
+        clusters = self._assign_clusters()
+        cluster_id = clusters.get(current_obj_id, -1)
+        
+        return self._get_clustered_grid_position(rect, cluster_id, current_obj_id)
+    
+    def _get_clustered_grid_position(self, rect: Rect, cluster_id: int, obj_id: str) -> Rect:
+        """Calculate position within a cluster-aware grid layout."""
+        x, y, w, h = rect
+        pad = self.pad
+        
+        # Initialize cluster position tracking if needed
+        if cluster_id not in self._cluster_positions:
+            self._cluster_positions[cluster_id] = {'x_counter': 0, 'y_counter': 0}
+        
+        cluster_pos = self._cluster_positions[cluster_id]
+        
+        if self.flow_direction == "vertical":
+            # Vertical clustering: objects in same cluster fill vertically, then wrap horizontally
+            x_shift = 3 * pad * cluster_pos['x_counter']
+            y_shift = 1.5 * pad * cluster_pos['y_counter']
+            y = pad + y_shift
+            
+            cluster_pos['y_counter'] += 1
+            # Check if we need to wrap to next column within cluster area
+            if y + h + 2 * pad > self.parent.height:
+                cluster_pos['x_counter'] += 1
+                cluster_pos['y_counter'] = 0
+                # Recalculate for new column
+                x_shift = 3 * pad * cluster_pos['x_counter']
+                y = pad
+            
+            # Offset by cluster position to separate clusters
+            cluster_offset_x = (cluster_id % 3) * (self.parent.width // 3)
+            cluster_offset_y = (cluster_id // 3) * (self.parent.height // 3)
+            
+            x = cluster_offset_x + pad + x_shift
+            y = cluster_offset_y + y
+        else:
+            # Horizontal clustering: objects in same cluster fill horizontally, then wrap vertically
+            x_shift = 3 * pad * cluster_pos['x_counter']
+            y_shift = 1.5 * pad * cluster_pos['y_counter']
+            x = pad + x_shift
+            
+            cluster_pos['x_counter'] += 1
+            # Check if we need to wrap to next row within cluster area
+            if x + w + 2 * pad > self.parent.width // 2:  # Use half width for cluster area
+                cluster_pos['x_counter'] = 0
+                cluster_pos['y_counter'] += 1
+                # Recalculate for new row
+                y_shift = 1.5 * pad * cluster_pos['y_counter']
+                x = pad
+            
+            # Offset by cluster position to separate clusters
+            cluster_offset_x = (cluster_id % 2) * (self.parent.width // 2)
+            cluster_offset_y = (cluster_id // 2) * (self.parent.height // 3)
+            
+            x = cluster_offset_x + x
+            y = cluster_offset_y + pad + y_shift
+        
+        # Ensure positions stay within bounds
+        x = min(max(x, pad), self.parent.width - w - pad)
+        y = min(max(y, pad), self.parent.height - h - pad)
+        
+        return Rect(x, y, w, h)
+    
+    def optimize_layout(self):
+        """Optimize the layout to cluster connected objects together."""
+        if not self.cluster_connected or len(self.parent._objects) < 2:
+            return  # Nothing to optimize
+            
+        # Analyze connections and create clusters
+        connections = self._analyze_object_connections()
+        clusters = self._find_connected_components(connections)
+        
+        if len(clusters) <= 1:
+            return  # No clustering benefit
+        
+        # Assign optimized positions to existing objects based on clusters
+        self._apply_clustered_layout(clusters)
+    
+    def _apply_clustered_layout(self, clusters: list[set]):
+        """Apply cluster-based positioning to all objects."""
+        pad = self.pad
+        
+        # Calculate grid dimensions for clusters
+        num_clusters = len(clusters)
+        if self.flow_direction == "vertical":
+            clusters_per_row = max(1, int((self.parent.width // (200 + pad))))  # Estimate space per cluster
+            cluster_rows = (num_clusters + clusters_per_row - 1) // clusters_per_row
+        else:
+            clusters_per_col = max(1, int((self.parent.height // (200 + pad))))  # Estimate space per cluster  
+            cluster_cols = (num_clusters + clusters_per_col - 1) // clusters_per_col
+        
+        # Position each cluster
+        for cluster_idx, cluster_objects in enumerate(clusters):
+            cluster_objects_list = sorted(list(cluster_objects))  # Consistent ordering
+            
+            if self.flow_direction == "vertical":
+                # Arrange clusters in a grid, then objects within each cluster vertically
+                cluster_col = cluster_idx % clusters_per_row
+                cluster_row = cluster_idx // clusters_per_row
+                
+                cluster_x_base = cluster_col * (self.parent.width // max(clusters_per_row, 1))
+                cluster_y_base = cluster_row * (self.parent.height // max(cluster_rows, 1))
+                
+                # Position objects within cluster vertically
+                for obj_idx, obj_id in enumerate(cluster_objects_list):
+                    if obj_id in self.parent._objects:
+                        obj = self.parent._objects[obj_id]
+                        if hasattr(obj, 'patching_rect'):
+                            x = cluster_x_base + pad
+                            y = cluster_y_base + pad + obj_idx * (self.box_height + pad//2)
+                            
+                            # Wrap within cluster if needed
+                            if y + self.box_height > cluster_y_base + (self.parent.height // max(cluster_rows, 1)) - pad:
+                                x += self.box_width + pad//2
+                                y = cluster_y_base + pad
+                            
+                            # Ensure bounds
+                            x = min(max(x, pad), self.parent.width - self.box_width - pad)
+                            y = min(max(y, pad), self.parent.height - self.box_height - pad)
+                            
+                            obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
+            else:
+                # Arrange clusters in a grid, then objects within each cluster horizontally
+                cluster_row = cluster_idx % clusters_per_col
+                cluster_col = cluster_idx // clusters_per_col
+                
+                cluster_x_base = cluster_col * (self.parent.width // max(cluster_cols, 1))
+                cluster_y_base = cluster_row * (self.parent.height // max(clusters_per_col, 1))
+                
+                # Position objects within cluster horizontally
+                for obj_idx, obj_id in enumerate(cluster_objects_list):
+                    if obj_id in self.parent._objects:
+                        obj = self.parent._objects[obj_id]
+                        if hasattr(obj, 'patching_rect'):
+                            x = cluster_x_base + pad + obj_idx * (self.box_width + pad//2)
+                            y = cluster_y_base + pad
+                            
+                            # Wrap within cluster if needed
+                            if x + self.box_width > cluster_x_base + (self.parent.width // max(cluster_cols, 1)) - pad:
+                                y += self.box_height + pad//2
+                                x = cluster_x_base + pad
+                            
+                            # Ensure bounds
+                            x = min(max(x, pad), self.parent.width - self.box_width - pad)
+                            y = min(max(y, pad), self.parent.height - self.box_height - pad)
+                            
+                            obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
 
 
 # Legacy aliases for backward compatibility
@@ -517,6 +759,7 @@ class Patcher:
         openinpresentation: int = 0,
         validate_connections: bool = False,
         flow_direction: str = "horizontal",
+        cluster_connected: bool = True,
     ):
         self._path = path
         self._parent = parent
@@ -532,6 +775,7 @@ class Patcher:
         self._last_link: Optional[tuple[str, str]] = None
         self._reset_on_render = reset_on_render
         self._flow_direction = flow_direction
+        self._cluster_connected = cluster_connected
         self._layout_mgr: LayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
@@ -735,7 +979,7 @@ class Patcher:
         if name == "flow":
             return FlowLayoutManager(self, flow_direction=self._flow_direction)
         elif name == "grid":
-            return GridLayoutManager(self, flow_direction=self._flow_direction)
+            return GridLayoutManager(self, flow_direction=self._flow_direction, cluster_connected=getattr(self, '_cluster_connected', True))
         else:
             return {
                 "horizontal": HorizontalLayoutManager,
@@ -743,7 +987,7 @@ class Patcher:
                 "grid": GridLayoutManager,
                 "flow": FlowLayoutManager,
             }[name](self)
-
+  
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
         if maxclass:
