@@ -32,6 +32,10 @@ dev = [
 [project.scripts]
 py2max = "py2max:__main__" # not yet implemented
 
+
+[tool.uv]
+python-preference = "only-system" # comment this out to use managed python
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

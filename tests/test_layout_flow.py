@@ -168,3 +168,108 @@ def test_layout_flow_fallback():
     assert len(unique_positions) > 1, "Should still layout objects without connections"
     
     p.save()
+
+
+def test_layout_flow_vertical():
+    """Test FlowLayoutManager with vertical (top-to-bottom) flow direction."""
+    p = Patcher("outputs/test_layout_flow_vertical.maxpat", layout="flow", flow_direction="vertical")
+
+    # Simple chain: oscillator -> gain -> dac
+    osc = p.add_textbox("cycle~ 440")
+    gain = p.add_textbox("gain~")
+    dac = p.add_textbox("ezdac~")
+    
+    # Connect them
+    p.add_line(osc, gain)
+    p.add_line(gain, dac)
+    
+    # Optimize layout
+    p.optimize_layout()
+    
+    # Verify positions make sense (top-to-bottom flow)
+    osc_y = osc.patching_rect.y
+    gain_y = gain.patching_rect.y
+    dac_y = dac.patching_rect.y
+    
+    # Should be roughly top-to-bottom ordering
+    assert osc_y < gain_y, "Oscillator should be above gain"
+    assert gain_y < dac_y, "Gain should be above DAC"
+    
+    # Verify layout manager has correct flow direction
+    from py2max.core import FlowLayoutManager
+    assert isinstance(p._layout_mgr, FlowLayoutManager)
+    assert p._layout_mgr.flow_direction == "vertical"
+    
+    p.save()
+
+
+def test_layout_flow_vertical_complex():
+    """Test FlowLayoutManager with vertical flow direction on a complex signal chain."""
+    p = Patcher("outputs/test_layout_flow_vertical_complex.maxpat", layout="flow", flow_direction="vertical")
+
+    # Create a more complex signal processing chain
+    # Input section (should be at top)
+    freq_control = p.add_floatbox()
+    
+    # Oscillator section (next level down)
+    osc1 = p.add_textbox("cycle~ 440")
+    osc2 = p.add_textbox("cycle~ 220")
+    
+    # Processing section (third level)
+    gain1 = p.add_textbox("gain~")
+    gain2 = p.add_textbox("gain~")
+    
+    # Mixing section (fourth level)
+    mixer = p.add_textbox("+~")
+    
+    # Output section (bottom level)
+    dac = p.add_textbox("ezdac~")
+    
+    # Create connections to define signal flow hierarchy
+    p.add_line(freq_control, osc1)  # Control to oscillator 1
+    p.add_line(freq_control, osc2)  # Control to oscillator 2
+    p.add_line(osc1, gain1)         # Osc1 to gain1
+    p.add_line(osc2, gain2)         # Osc2 to gain2
+    p.add_line(gain1, mixer)        # Gain1 to mixer
+    p.add_line(gain2, mixer, inlet=1)  # Gain2 to mixer
+    p.add_line(mixer, dac)          # Mixer to DAC
+    
+    # Optimize layout
+    p.optimize_layout()
+    
+    # Verify vertical flow ordering
+    # Control should be at top
+    control_y = freq_control.patching_rect.y
+    
+    # Oscillators should be below controls
+    osc1_y = osc1.patching_rect.y
+    osc2_y = osc2.patching_rect.y
+    assert osc1_y > control_y, "Oscillators should be below controls"
+    assert osc2_y > control_y, "Oscillators should be below controls"
+    
+    # Gains should be below oscillators
+    gain1_y = gain1.patching_rect.y
+    gain2_y = gain2.patching_rect.y
+    assert gain1_y > osc1_y, "Gains should be below oscillators"
+    assert gain2_y > osc2_y, "Gains should be below oscillators"
+    
+    # Mixer should be below gains
+    mixer_y = mixer.patching_rect.y
+    assert mixer_y > gain1_y, "Mixer should be below gains"
+    assert mixer_y > gain2_y, "Mixer should be below gains"
+    
+    # DAC should be at bottom
+    dac_y = dac.patching_rect.y
+    assert dac_y > mixer_y, "DAC should be below mixer"
+    
+    # Verify objects at same level are arranged horizontally (not overlapping)
+    # Oscillators should have different x positions but similar y positions
+    osc_y_diff = abs(osc1_y - osc2_y)
+    osc_x_diff = abs(osc1.patching_rect.x - osc2.patching_rect.x)
+    assert osc_x_diff > 0, "Oscillators should have different x positions"
+    
+    # Gains should also be arranged horizontally
+    gain_x_diff = abs(gain1.patching_rect.x - gain2.patching_rect.x)
+    assert gain_x_diff > 0, "Gains should have different x positions"
+    
+    p.save()

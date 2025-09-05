@@ -208,16 +208,25 @@ class FlowLayoutManager(LayoutManager):
     This layout manager:
     - Analyzes patchline connections to understand signal flow
     - Groups related objects based on connection patterns  
-    - Uses hierarchical positioning with signal flow generally left-to-right
+    - Uses hierarchical positioning with signal flow left-to-right or top-to-bottom
     - Minimizes line crossings and connection distances
     - Balances layout aesthetically while respecting functional relationships
     """
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+
+    def __init__(
+        self,
+        parent: "Patcher",
+        pad: Optional[int] = None,
+        box_width: Optional[int] = None,
+        box_height: Optional[int] = None,
+        comment_pad: Optional[int] = None,
+        flow_direction: str = "horizontal",
+    ):
+        super().__init__(parent, pad, box_width, box_height, comment_pad)
         self._object_positions = {}  # Cache for calculated positions
         self._flow_levels = {}  # Track hierarchical flow levels
         self._position_cache = {}  # Cache positions to avoid recalculation
+        self.flow_direction = flow_direction  # "horizontal" or "vertical"
         
     def _analyze_connections(self) -> dict:
         """Analyze patchline connections to build a flow graph."""
@@ -297,6 +306,15 @@ class FlowLayoutManager(LayoutManager):
         
         positions = {}
         pad = self.pad
+        
+        if self.flow_direction == "vertical":
+            return self._calculate_vertical_positions(groups, pad)
+        else:
+            return self._calculate_horizontal_positions(groups, pad)
+    
+    def _calculate_horizontal_positions(self, groups: dict, pad: int) -> dict:
+        """Calculate positions for horizontal (left-to-right) flow."""
+        positions = {}
         level_width = self.parent.width / max(len(groups), 1) if groups else self.parent.width
         
         for level, obj_ids in groups.items():
@@ -310,6 +328,31 @@ class FlowLayoutManager(LayoutManager):
             for i, obj_id in enumerate(obj_ids):
                 x = x_base
                 y = max(pad, y_start + i * (self.box_height + pad))
+                
+                # Ensure positions stay within bounds
+                x = min(x, self.parent.width - self.box_width - pad)
+                y = min(y, self.parent.height - self.box_height - pad)
+                
+                positions[obj_id] = Rect(x, y, self.box_width, self.box_height)
+        
+        return positions
+    
+    def _calculate_vertical_positions(self, groups: dict, pad: int) -> dict:
+        """Calculate positions for vertical (top-to-bottom) flow."""
+        positions = {}
+        level_height = self.parent.height / max(len(groups), 1) if groups else self.parent.height
+        
+        for level, obj_ids in groups.items():
+            # Calculate y position based on level (top-to-bottom flow)
+            y_base = pad + (level * level_height * 0.8)  # 0.8 factor for better spacing
+            
+            # Calculate x positions for objects in this level
+            level_width = len(obj_ids) * (self.box_width + pad)
+            x_start = (self.parent.width - level_width) / 2  # Center horizontally
+            
+            for i, obj_id in enumerate(obj_ids):
+                y = y_base
+                x = max(pad, x_start + i * (self.box_width + pad))
                 
                 # Ensure positions stay within bounds
                 x = min(x, self.parent.width - self.box_width - pad)
@@ -362,17 +405,30 @@ class FlowLayoutManager(LayoutManager):
                              if hasattr(obj, 'patching_rect')]
         
         if existing_positions:
-            # Find the rightmost object and place new object to its right
-            max_x = max(pos[0] for pos in existing_positions)
-            avg_y = sum(pos[1] for pos in existing_positions) / len(existing_positions)
-            
-            x = max_x + self.box_width + pad
-            y = avg_y
-            
-            # Wrap if we exceed width
-            if x + w + pad > self.parent.width:
-                x = pad
-                y = max(pos[1] for pos in existing_positions) + self.box_height + pad
+            if self.flow_direction == "vertical":
+                # Find the bottommost object and place new object below it
+                max_y = max(pos[1] for pos in existing_positions)
+                avg_x = sum(pos[0] for pos in existing_positions) / len(existing_positions)
+                
+                y = max_y + self.box_height + pad
+                x = avg_x
+                
+                # Wrap if we exceed height
+                if y + h + pad > self.parent.height:
+                    y = pad
+                    x = max(pos[0] for pos in existing_positions) + self.box_width + pad
+            else:
+                # Find the rightmost object and place new object to its right
+                max_x = max(pos[0] for pos in existing_positions)
+                avg_y = sum(pos[1] for pos in existing_positions) / len(existing_positions)
+                
+                x = max_x + self.box_width + pad
+                y = avg_y
+                
+                # Wrap if we exceed width
+                if x + w + pad > self.parent.width:
+                    x = pad
+                    y = max(pos[1] for pos in existing_positions) + self.box_height + pad
         else:
             # First object - place at standard starting position
             x = pad
@@ -421,6 +477,7 @@ class Patcher:
         auto_hints: bool = False,
         openinpresentation: int = 0,
         validate_connections: bool = False,
+        flow_direction: str = "horizontal",
     ):
         self._path = path
         self._parent = parent
@@ -435,6 +492,7 @@ class Patcher:
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
         self._reset_on_render = reset_on_render
+        self._flow_direction = flow_direction
         self._layout_mgr: LayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
@@ -635,11 +693,14 @@ class Patcher:
 
     def set_layout_mgr(self, name: str) -> LayoutManager:
         """takes a name and returns an instance of a layout manager"""
-        return {
-            "horizontal": HorizontalLayoutManager,
-            "vertical": VerticalLayoutManager,
-            "flow": FlowLayoutManager,
-        }[name](self)
+        if name == "flow":
+            return FlowLayoutManager(self, flow_direction=self._flow_direction)
+        else:
+            return {
+                "horizontal": HorizontalLayoutManager,
+                "vertical": VerticalLayoutManager,
+                "flow": FlowLayoutManager,
+            }[name](self)
 
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
