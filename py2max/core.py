@@ -544,7 +544,9 @@ class Patcher:
         """
         _maxclass, *tail = text.split()
         if _maxclass in MAXCLASS_DEFAULTS and not maxclass:
-            maxclass = _maxclass
+            defaults = MAXCLASS_DEFAULTS[_maxclass]
+            if "maxclass" in defaults:
+                maxclass = _maxclass
 
         kwds = self._textbox_helper(_maxclass, kwds)
 

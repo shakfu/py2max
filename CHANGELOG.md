@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.1.x
+## 0.1.2
+
+- Added `maxref` object description lookups.
 
 ## 0.1.1
 
