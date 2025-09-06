@@ -283,10 +283,18 @@ class GridLayoutManager(LayoutManager):
         # Sort clusters by size (largest first) for better space utilization
         clusters = sorted(clusters, key=len, reverse=True)
         
-        # Use a simple approach: arrange clusters in distinct areas of the patcher
+        # Use flow_direction to determine cluster arrangement
+        if self.flow_direction == "vertical":
+            self._apply_vertical_clustered_layout(clusters)
+        else:
+            self._apply_horizontal_clustered_layout(clusters)
+    
+    def _apply_horizontal_clustered_layout(self, clusters: list[set]):
+        """Apply horizontal cluster-based positioning (clusters arranged left-to-right)."""
+        pad = self.pad
         num_clusters = len(clusters)
         
-        # Calculate cluster layout based on number of clusters
+        # Calculate cluster layout for horizontal arrangement
         if num_clusters <= 2:
             cluster_cols = num_clusters
             cluster_rows = 1
@@ -311,16 +319,72 @@ class GridLayoutManager(LayoutManager):
             cluster_x_base = cluster_col * cluster_width + pad
             cluster_y_base = cluster_row * cluster_height + pad
             
-            # Position objects within this cluster's designated area
+            # Position objects within this cluster's designated area (horizontal priority)
             objects_per_row = max(1, int(cluster_width // (self.box_width + pad//2)))
             
             for obj_idx, obj_id in enumerate(cluster_objects_list):
                 if obj_id in self.parent._objects:
                     obj = self.parent._objects[obj_id]
                     if hasattr(obj, 'patching_rect'):
-                        # Calculate position within cluster
+                        # Calculate position within cluster (horizontal flow)
                         obj_col = obj_idx % objects_per_row
                         obj_row = obj_idx // objects_per_row
+                        
+                        x = cluster_x_base + obj_col * (self.box_width + pad//2)
+                        y = cluster_y_base + obj_row * (self.box_height + pad//2)
+                        
+                        # Ensure bounds (stay within cluster area)
+                        x = min(max(x, cluster_x_base), 
+                               cluster_x_base + cluster_width - self.box_width - pad)
+                        y = min(max(y, cluster_y_base),
+                               cluster_y_base + cluster_height - self.box_height - pad)
+                        
+                        # Ensure overall patcher bounds
+                        x = min(max(x, pad), self.parent.width - self.box_width - pad)
+                        y = min(max(y, pad), self.parent.height - self.box_height - pad)
+                        
+                        obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
+    
+    def _apply_vertical_clustered_layout(self, clusters: list[set]):
+        """Apply vertical cluster-based positioning (clusters arranged top-to-bottom)."""
+        pad = self.pad
+        num_clusters = len(clusters)
+        
+        # Calculate cluster layout for vertical arrangement (prefer vertical stacking)
+        if num_clusters <= 2:
+            cluster_cols = 1
+            cluster_rows = num_clusters
+        elif num_clusters <= 4:
+            cluster_cols = 2
+            cluster_rows = 2  
+        else:
+            cluster_rows = min(3, num_clusters)
+            cluster_cols = (num_clusters + cluster_rows - 1) // cluster_rows
+        
+        cluster_width = (self.parent.width - pad) // cluster_cols
+        cluster_height = (self.parent.height - pad) // cluster_rows
+        
+        # Position each cluster in its designated area
+        for cluster_idx, cluster_objects in enumerate(clusters):
+            cluster_objects_list = sorted(list(cluster_objects))  # Consistent ordering
+            
+            # Calculate cluster's base position (fill vertically first)
+            cluster_row = cluster_idx % cluster_rows
+            cluster_col = cluster_idx // cluster_rows
+            
+            cluster_x_base = cluster_col * cluster_width + pad
+            cluster_y_base = cluster_row * cluster_height + pad
+            
+            # Position objects within this cluster's designated area (vertical priority)
+            objects_per_col = max(1, int(cluster_height // (self.box_height + pad//2)))
+            
+            for obj_idx, obj_id in enumerate(cluster_objects_list):
+                if obj_id in self.parent._objects:
+                    obj = self.parent._objects[obj_id]
+                    if hasattr(obj, 'patching_rect'):
+                        # Calculate position within cluster (vertical flow)
+                        obj_row = obj_idx % objects_per_col
+                        obj_col = obj_idx // objects_per_col
                         
                         x = cluster_x_base + obj_col * (self.box_width + pad//2)
                         y = cluster_y_base + obj_row * (self.box_height + pad//2)
