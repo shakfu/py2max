@@ -69,6 +69,7 @@ def test_layout_grid_horizontal():
     from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "horizontal"
+    # assert p._layout_mgr.cluster_connected == False
 
 def test_layout_grid_horizontal_clustered():
     """Test new GridLayoutManager with horizontal flow direction."""
@@ -79,6 +80,7 @@ def test_layout_grid_horizontal_clustered():
     from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "horizontal"
+    assert p._layout_mgr.cluster_connected == True
 
 def test_layout_grid_vertical():
     """Test new GridLayoutManager with vertical flow direction."""
@@ -89,6 +91,8 @@ def test_layout_grid_vertical():
     from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
+    assert p._layout_mgr.cluster_connected == False
+
 
 def test_layout_grid_vertical_clustered():
     """Test new GridLayoutManager with vertical flow direction."""
@@ -99,6 +103,7 @@ def test_layout_grid_vertical_clustered():
     from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
+    assert p._layout_mgr.cluster_connected == True
 
 
 def test_layout_grid_default():
@@ -150,6 +155,12 @@ def test_grid_clustering_horizontal():
     # Isolated object (no connections)
     dac = p.add_textbox("ezdac~")
     
+    # Store initial positions before clustering
+    initial_positions = {
+        'osc1': (osc1.patching_rect.x, osc1.patching_rect.y),
+        'osc2': (osc2.patching_rect.x, osc2.patching_rect.y)
+    }
+    
     # Create connections for cluster 1
     p.add_line(osc1, gain1)
     p.add_line(gain1, filter1)
@@ -161,8 +172,7 @@ def test_grid_clustering_horizontal():
     # Optimize layout to cluster connected objects
     p.optimize_layout()
     
-    # Verify clustering worked - connected objects should be closer than unconnected ones
-    # Get positions
+    # Get positions after clustering
     osc1_pos = osc1.patching_rect
     gain1_pos = gain1.patching_rect
     filter1_pos = filter1.patching_rect
@@ -171,16 +181,29 @@ def test_grid_clustering_horizontal():
     filter2_pos = filter2.patching_rect
     dac_pos = dac.patching_rect
     
-    # Calculate distances within cluster 1
-    dist_osc1_gain1 = ((osc1_pos.x - gain1_pos.x)**2 + (osc1_pos.y - gain1_pos.y)**2)**0.5
-    dist_gain1_filter1 = ((gain1_pos.x - filter1_pos.x)**2 + (gain1_pos.y - filter1_pos.y)**2)**0.5
+    # Verify that clustering moved objects from their initial positions
+    final_osc1_pos = (osc1_pos.x, osc1_pos.y)
+    final_osc2_pos = (osc2_pos.x, osc2_pos.y)
     
-    # Calculate distances within cluster 2
-    dist_osc2_gain2 = ((osc2_pos.x - gain2_pos.x)**2 + (osc2_pos.y - gain2_pos.y)**2)**0.5
-    dist_gain2_filter2 = ((gain2_pos.x - filter2_pos.x)**2 + (gain2_pos.y - filter2_pos.y)**2)**0.5
+    # At least one object should have moved (clustering should change positions)
+    positions_changed = (initial_positions['osc1'] != final_osc1_pos or 
+                        initial_positions['osc2'] != final_osc2_pos)
+    assert positions_changed, "Clustering should change object positions"
     
-    # Calculate distance between clusters (should be larger)
-    dist_cluster1_cluster2 = ((osc1_pos.x - osc2_pos.x)**2 + (osc1_pos.y - osc2_pos.y)**2)**0.5
+    # Verify objects within the same cluster are relatively close
+    # (within the same cluster area)
+    cluster1_objects = [osc1_pos, gain1_pos, filter1_pos]
+    cluster2_objects = [osc2_pos, gain2_pos, filter2_pos]
+    
+    # Calculate cluster bounding boxes
+    cluster1_min_x = min(pos.x for pos in cluster1_objects)
+    cluster1_max_x = max(pos.x for pos in cluster1_objects)
+    cluster2_min_x = min(pos.x for pos in cluster2_objects)
+    cluster2_max_x = max(pos.x for pos in cluster2_objects)
+    
+    # Clusters should be separated (non-overlapping in x-axis for horizontal layout)
+    clusters_separated = (cluster1_max_x < cluster2_min_x or cluster2_max_x < cluster1_min_x)
+    assert clusters_separated, "Different clusters should be spatially separated"
     
     # Verify objects have been positioned (not all at origin)
     positions = [osc1_pos, gain1_pos, filter1_pos, osc2_pos, gain2_pos, filter2_pos, dac_pos]
@@ -270,4 +293,63 @@ def test_grid_clustering_disabled():
     assert len(unique_positions) > 1, "Objects should still have different positions"
     
     p.save()
+
+
+def test_grid_clustering_comparison():
+    """Direct comparison test showing difference between clustered and unclustered layouts."""
+    
+    def create_test_patch(clustered: bool, suffix: str):
+        """Helper to create identical patches with/without clustering."""
+        p = Patcher(f"outputs/test_grid_clustering_comparison_{suffix}.maxpat", 
+                   layout="grid", cluster_connected=clustered)
+        
+        # Create connected objects in a clear chain
+        osc1 = p.add_textbox("cycle~ 440")
+        gain1 = p.add_textbox("gain~")  
+        filter1 = p.add_textbox("lores~")
+        
+        # Another separate chain
+        osc2 = p.add_textbox("cycle~ 220")
+        gain2 = p.add_textbox("gain~")
+        dac = p.add_textbox("ezdac~")
+        
+        # Connect the chains
+        p.add_line(osc1, gain1)
+        p.add_line(gain1, filter1)
+        p.add_line(osc2, gain2)
+        p.add_line(gain2, dac)
+        
+        # Apply optimization if clustering is enabled
+        if clustered:
+            p.optimize_layout()
+            
+        p.save()
+        
+        # Return positions for comparison
+        return {
+            'osc1': (osc1.patching_rect.x, osc1.patching_rect.y),
+            'gain1': (gain1.patching_rect.x, gain1.patching_rect.y),
+            'filter1': (filter1.patching_rect.x, filter1.patching_rect.y),
+            'osc2': (osc2.patching_rect.x, osc2.patching_rect.y),
+            'gain2': (gain2.patching_rect.x, gain2.patching_rect.y),
+            'dac': (dac.patching_rect.x, dac.patching_rect.y),
+        }
+    
+    # Create both versions
+    unclustered_positions = create_test_patch(clustered=False, suffix="unclustered")
+    clustered_positions = create_test_patch(clustered=True, suffix="clustered")
+    
+    # Verify that positions are different between clustered and unclustered
+    differences_found = 0
+    for obj_name in unclustered_positions:
+        if unclustered_positions[obj_name] != clustered_positions[obj_name]:
+            differences_found += 1
+    
+    # At least half the objects should have different positions
+    assert differences_found >= 3, f"Clustering should significantly change positions (only {differences_found} objects moved)"
+    
+    # Print positions for manual verification (useful for debugging)
+    # print(f"Unclustered: {unclustered_positions}")
+    # print(f"Clustered: {clustered_positions}")
+    # print(f"Objects moved: {differences_found}/6")
 
