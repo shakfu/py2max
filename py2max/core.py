@@ -18,7 +18,6 @@ from typing import Optional, Union, Tuple, List, cast
 
 from . import abstract
 from . import layout
-from .layout import LayoutManager
 from . import maxref
 from .common import Rect
 
@@ -83,7 +82,7 @@ class Patcher(abstract.AbstractPatcher):
         self._reset_on_render = reset_on_render
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
-        self._layout_mgr: LayoutManager = self.set_layout_mgr(layout)
+        self._layout_mgr: layout.LayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
         self._maxclass_methods = {
@@ -1249,6 +1248,15 @@ class Box(abstract.AbstractBox):
     def subpatcher(self):
         """synonym for parent patcher object"""
         return self._patcher
+
+    @property
+    def text(self):
+        """Get the text content of the box."""
+        # Check if text is stored as a direct attribute (from file loading)
+        if 'text' in self.__dict__:
+            return self.__dict__['text']
+        # Otherwise get from _kwds (from programmatic creation)
+        return self._kwds.get("text", "")
 
     def help_text(self) -> str:
         """Get formatted help documentation for this Max object

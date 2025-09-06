@@ -22,22 +22,22 @@ class AbstractLayoutManager(ABC):
     @abstractmethod
     def get_rect_from_maxclass(self, maxclass: str) -> Optional[Rect]:
         """retrieves default patching_rect from defaults dictionary."""
-        pass
+        ...
 
     @abstractmethod
     def get_relative_pos(self, rect: Rect) -> Rect:
         """returns a relative position for the object"""
-        pass
+        ...
 
     @abstractmethod
     def get_absolute_pos(self, rect: Rect) -> Rect:
         """returns an absolute position for the object"""
-        pass
+        ...
 
     @abstractmethod
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
-        pass
+        ...
 
 
 class AbstractBox(ABC):
@@ -57,12 +57,12 @@ class AbstractBox(ABC):
     @abstractmethod
     def render(self) -> None:
         """Render the box object."""
-        pass
+        ...
 
     @abstractmethod
     def to_dict(self) -> dict:
         """Convert the box to a dictionary representation."""
-        pass
+        ...
 
 
 class AbstractPatchline(ABC):
@@ -79,7 +79,7 @@ class AbstractPatchline(ABC):
     @abstractmethod
     def to_dict(self) -> dict:
         """Convert the patchline to a dictionary representation."""
-        pass
+        ...
 
 
 class AbstractPatcher(ABC):
@@ -94,13 +94,13 @@ class AbstractPatcher(ABC):
     @abstractmethod
     def width(self) -> float:
         """Width of patcher window."""
-        pass
+        ...
 
     @property
     @abstractmethod
     def height(self) -> float:
         """Height of patcher window."""
-        pass
+        ...
 
     # rect is an instance attribute, not a property
     rect: Rect
