@@ -1,7 +1,5 @@
 # Layout options
 
-
-
 ```python
     def set_layout_mgr(self, name: str) -> LayoutManager:
         """takes a name and returns an instance of a layout manager"""

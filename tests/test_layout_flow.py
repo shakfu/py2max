@@ -1,4 +1,6 @@
 from py2max import Patcher
+from py2max.layout import FlowLayoutManager
+
 
 def test_layout_flow():
     p = Patcher("outputs/test_layout_flow.maxpat", layout="flow")
@@ -99,7 +101,6 @@ def test_layout_flow2():
     p.optimize_layout()
     
     # Verify layout manager is FlowLayoutManager
-    from py2max.core import FlowLayoutManager
     assert isinstance(p._layout_mgr, FlowLayoutManager)
     
     # Verify objects have reasonable positions
@@ -196,7 +197,6 @@ def test_layout_flow_vertical():
     assert gain_y < dac_y, "Gain should be above DAC"
     
     # Verify layout manager has correct flow direction
-    from py2max.core import FlowLayoutManager
     assert isinstance(p._layout_mgr, FlowLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
     

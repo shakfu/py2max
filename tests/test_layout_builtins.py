@@ -1,4 +1,9 @@
 from py2max import Patcher
+from py2max.layout import GridLayoutManager
+from py2max.layout import HorizontalLayoutManager
+from py2max.layout import VerticalLayoutManager
+
+
 
 def example(p, optimize_layout=False):
     fbox = p.add_floatbox
@@ -66,7 +71,6 @@ def test_layout_grid_horizontal():
     example(p)
     
     # Verify layout manager type
-    from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "horizontal"
     # assert p._layout_mgr.cluster_connected == False
@@ -77,7 +81,6 @@ def test_layout_grid_horizontal_clustered():
     example(p, optimize_layout=True)
     
     # Verify layout manager type
-    from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "horizontal"
     assert p._layout_mgr.cluster_connected == True
@@ -88,7 +91,6 @@ def test_layout_grid_vertical():
     example(p)
     
     # Verify layout manager type
-    from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
     assert p._layout_mgr.cluster_connected == False
@@ -100,7 +102,6 @@ def test_layout_grid_vertical_clustered():
     example(p, optimize_layout=True)
     
     # Verify layout manager type
-    from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
     assert p._layout_mgr.cluster_connected == True
@@ -112,7 +113,6 @@ def test_layout_grid_default():
     example(p)
     
     # Verify layout manager type and default direction
-    from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "horizontal"  # Should default to horizontal
 
@@ -123,7 +123,6 @@ def test_backward_compatibility_horizontal():
     example(p)
     
     # Verify it still creates a HorizontalLayoutManager (legacy alias)
-    from py2max.core import HorizontalLayoutManager
     assert isinstance(p._layout_mgr, HorizontalLayoutManager)
 
 
@@ -133,7 +132,6 @@ def test_backward_compatibility_vertical():
     example(p)
     
     # Verify it still creates a VerticalLayoutManager (legacy alias)
-    from py2max.core import VerticalLayoutManager
     assert isinstance(p._layout_mgr, VerticalLayoutManager)
 
 
@@ -211,7 +209,6 @@ def test_grid_clustering_horizontal():
     assert len(unique_positions) > 1, "Objects should have different positions"
     
     # Verify layout manager has clustering enabled
-    from py2max.core import GridLayoutManager
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.cluster_connected == True
     

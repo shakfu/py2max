@@ -84,7 +84,7 @@ class MaxRefCache:
 
     def _parse_maxref(self, root: ElementTree.Element) -> Dict[str, Any]:
         """Parse a .maxref.xml root element into structured data"""
-        data = {
+        data: dict[str, Any] = {
             "methods": {},
             "attributes": {},
             "metadata": {},
@@ -157,7 +157,7 @@ class MaxRefCache:
             for outlet in outletlist.findall("outlet"):
                 outlet_data = dict(outlet.attrib)
                 digest_elem = outlet.find("digest")
-                if digest_elem is not None and digest_elem.text:
+                if digest_elem is not None and digest_elem.text and outlet.text:
                     outlet_data["digest"] = outlet_data.get(
                         "digest", outlet.text.strip()
                     )
