@@ -279,7 +279,7 @@ class TestBoxHelpMethod:
         box = Box(maxclass="umenu")
         
         # Test that help method returns a string
-        help_text = box.help()
+        help_text = box.help_text()
         assert isinstance(help_text, str)
         
         # If umenu is available in MAXCLASS_DEFAULTS, test specific content
@@ -293,14 +293,14 @@ class TestBoxHelpMethod:
     def test_box_help_newobj(self):
         """Test Box.help() method with newobj (generic object)."""
         box = Box(maxclass="newobj")
-        help_text = box.help()
+        help_text = box.help_text()
         assert isinstance(help_text, str)
         assert "No help available for 'newobj'" in help_text
 
     def test_box_help_none(self):
         """Test Box.help() method with None maxclass."""
         box = Box(maxclass=None)
-        help_text = box.help()
+        help_text = box.help_text()
         assert isinstance(help_text, str)
         # When maxclass is None, it defaults to "newobj"
         assert "No help available for 'newobj'" in help_text
@@ -323,7 +323,7 @@ class TestBoxHelpMethod:
         patcher = Patcher()
         box = patcher.add_textbox("umenu")
         
-        help_text = box.help()
+        help_text = box.help_text()
         assert isinstance(help_text, str)
         
         # Test that the help method works on objects created by patcher
@@ -424,7 +424,7 @@ class TestIntegration:
         box = patcher.add_textbox("umenu")
         
         # Test that we can get help
-        help_text = box.help()
+        help_text = box.help_text()
         assert isinstance(help_text, str)
         
         # Test that we can get info
@@ -444,7 +444,7 @@ class TestIntegration:
         
         # Test help on all objects
         for obj in [umenu, message, comment]:
-            help_text = obj.help()
+            help_text = obj.help_text()
             assert isinstance(help_text, str)
             assert len(help_text) > 0
 
@@ -452,7 +452,7 @@ class TestIntegration:
         """Test that help format is consistent across objects."""
         patcher = Patcher()
         box = patcher.add_textbox("umenu")
-        help_text = box.help()
+        help_text = box.help_text()
         
         # If help is available, it should have consistent format
         if "No help available" not in help_text:

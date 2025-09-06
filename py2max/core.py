@@ -14,10 +14,11 @@ basic usage:
 
 import json
 from pathlib import Path
-from typing import Optional, Union, Tuple, List
+from typing import Optional, Union, Tuple, List, cast
 
 from . import abstract
 from . import layout
+from .layout import LayoutManager
 from . import maxref
 from .common import Rect
 
@@ -68,9 +69,11 @@ class Patcher(abstract.AbstractPatcher):
         self._path = path
         self._parent = parent
         self._node_ids: list[str] = []  # ids by order of creation
-        self._objects: dict[str, Box] = {}  # dict of objects by id
-        self._boxes: list[Box] = []  # store child objects (boxes, etc.)
-        self._lines: list[Patchline] = []  # store patchline objects
+        self._objects: dict[str, abstract.AbstractBox] = {}  # dict of objects by id
+        self._boxes: list[
+            abstract.AbstractBox
+        ] = []  # store child objects (boxes, etc.)
+        self._lines: list[abstract.AbstractPatchline] = []  # store patchline objects
         self._edge_ids: list[
             tuple[str, str]
         ] = []  # store edge-ids by order of creation
@@ -80,7 +83,7 @@ class Patcher(abstract.AbstractPatcher):
         self._reset_on_render = reset_on_render
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
-        self._layout_mgr: layout.LayoutManager = self.set_layout_mgr(layout)
+        self._layout_mgr: LayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
         self._maxclass_methods = {
@@ -230,10 +233,10 @@ class Patcher(abstract.AbstractPatcher):
         """
         for box in self._objects.values():
             if box.maxclass == text:
-                return box
+                return cast("Box", box)
             if hasattr(box, "text"):
                 if box.text and box.text.startswith(text):
-                    return box
+                    return cast("Box", box)
         return None
 
     def find_box_with_index(self, text: str) -> Optional[Tuple[int, "Box"]]:
@@ -243,13 +246,13 @@ class Patcher(abstract.AbstractPatcher):
         """
         for i, box in enumerate(self._boxes):
             if box.maxclass == text:
-                return (i, box)
+                return (i, cast("Box", box))
             if hasattr(box, "text"):
                 if box.text and box.text.startswith(text):
-                    return (i, box)
+                    return (i, cast("Box", box))
         return None
 
-    def render(self, reset: bool = False):
+    def render(self, reset: bool = False) -> None:
         """cascade convert py2max objects to dicts."""
         if reset or self._reset_on_render:
             self.boxes = []
@@ -259,7 +262,7 @@ class Patcher(abstract.AbstractPatcher):
             self.boxes.append(box.to_dict())
         self.lines = [line.to_dict() for line in self._lines]
 
-    def save_as(self, path: Union[str, Path]):
+    def save_as(self, path: Union[str, Path]) -> None:
         """save as .maxpat json file"""
         path = Path(path)
         if path.parent:
@@ -268,7 +271,7 @@ class Patcher(abstract.AbstractPatcher):
         with open(path, "w", encoding="utf8") as f:
             json.dump(self.to_dict(), f, indent=4)
 
-    def save(self):
+    def save(self) -> None:
         """save as json .maxpat file"""
         if self._path:
             self.save_as(self._path)
@@ -311,7 +314,7 @@ class Patcher(abstract.AbstractPatcher):
         if hasattr(self._layout_mgr, "optimize_layout"):
             self._layout_mgr.optimize_layout()
 
-    def _get_object_name(self, obj: "Box") -> str:
+    def _get_object_name(self, obj: abstract.AbstractBox) -> str:
         """Get the actual object name for validation purposes.
 
         For 'newobj' maxclass objects, extract the first word from the text field.
@@ -865,7 +868,7 @@ class Patcher(abstract.AbstractPatcher):
             )
         )
 
-    def add_gen(self, text: str = None, tilde=False, **kwds):
+    def add_gen(self, text: Optional[str] = None, tilde=False, **kwds):
         """Add a gen object."""
         prefix = "gen~" if tilde else "gen"
         _text = f"{prefix} {text}" if text else prefix
@@ -873,7 +876,7 @@ class Patcher(abstract.AbstractPatcher):
             _text, patcher=Patcher(parent=self, classnamespace="dsp.gen"), **kwds
         )
 
-    def add_gen_tilde(self, text: str = None, **kwds):
+    def add_gen_tilde(self, text: Optional[str] = None, **kwds):
         """Add a gen~ object."""
         return self.add_gen(text=text, tilde=True, **kwds)
 
@@ -1247,13 +1250,17 @@ class Box(abstract.AbstractBox):
         """synonym for parent patcher object"""
         return self._patcher
 
-    def help(self) -> str:
+    def help_text(self) -> str:
         """Get formatted help documentation for this Max object
 
         Returns:
             Formatted help string with object documentation from .maxref.xml files
         """
         return maxref.get_object_help(self.maxclass)
+
+    def help(self) -> None:
+        """Print formatted help documentation for this Max object"""
+        print(self.help_text())
 
     def get_info(self) -> Optional[dict]:
         """Get complete object information from .maxref.xml files

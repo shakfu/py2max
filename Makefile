@@ -1,5 +1,5 @@
 
-.PHONY: all build test coverage clean reset
+.PHONY: all build test coverage mypy clean reset
 
 all: build
 
@@ -12,6 +12,13 @@ test:
 coverage:
 	@mkdir -p outputs
 	@uv run pytest --cov-report html:outputs/_covhtml --cov=py2max tests
+
+mypy:
+	@uv run mypy py2max
+
+lint:
+	@uv run ruff check .
+	@uv run ruff format .
 
 clean:
 	@rm -rf outputs

@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Run `mypy --strict py2max` and fix all errors.
+
 - [ ] add optional mode where `id==varname` if id is set
 
 - [ ] ensure leaf `box._patcher` is set

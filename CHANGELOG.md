@@ -1,8 +1,48 @@
 # Changelog
 
+## 0.2.x
+
 ## 0.1.2
 
-- Added `maxref` object description lookups.
+### Improvements in Type Safety
+
+- Added type safety improvements via compliance with `mypy` checks
+
+### Improvements in Layout
+
+- Added `optimize_layout()` method for post-connection layout optimization
+
+- Added `cluster_connected` parameter to `GridLayoutManager` for connection-aware object clustering
+
+- Added `flow_direction` parameter support for both horizontal and vertical layouts in all layout managers
+
+- Added backward compatibility for legacy layout manager APIs
+
+- Enhanced layout performance with connection-aware clustering algorithms
+
+- Improved layout manager consistency with unified `GridLayoutManager` and `FlowLayoutManager` APIs
+
+- Added `FlowLayoutManager` with intelligent signal flow analysis and hierarchical positioning
+
+- Added `GridLayoutManager` with connection-aware clustering and configurable flow direction
+
+### Improvements in Max Object Introspection
+
+- Added optional connection validation system with inlet/outlet validation and `InvalidConnectionError`. This is early stages, and may have some false positives, but planned improvements in handling of excepttions should make this accurate and useful.
+
+- Added object introspection methods: `get_inlet_count()`, `get_outlet_count()`, `get_inlet_types()`, `get_outlet_types()`
+
+- Added `Box.help()`, `Box.help_text()` and `Box.get_info()` methods for rich object documentation.
+
+- Added `maxref` integration system with dynamic help for 1157 Max objects using `.maxref.xml` files
+
+### Bug Fixes
+
+- Fixed `maxclass` assignment bug that was preventing patchlines from connecting properly
+
+### Improvements in Project Management
+
+- Converted to [uv](https://github.com/astral-sh/uv) for project and dependency management.
 
 ## 0.1.1
 

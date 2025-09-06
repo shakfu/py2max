@@ -134,6 +134,9 @@ dmypy.json
 # Pyre type checker
 .pyre
 
+# uv
+uv.lock
+
 # claude
 .claude
 CLAUDE.md

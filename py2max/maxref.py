@@ -84,7 +84,7 @@ class MaxRefCache:
 
     def _parse_maxref(self, root: ElementTree.Element) -> Dict[str, Any]:
         """Parse a .maxref.xml root element into structured data"""
-        data: dict[str, Any] = {
+        data: Dict[str, Any] = {
             "methods": {},
             "attributes": {},
             "metadata": {},
@@ -98,6 +98,26 @@ class MaxRefCache:
 
         # Basic info
         data.update(root.attrib)
+
+        # Ensure complex fields maintain their proper types after update
+        if not isinstance(data.get("methods"), dict):
+            data["methods"] = {}
+        if not isinstance(data.get("attributes"), dict):
+            data["attributes"] = {}
+        if not isinstance(data.get("metadata"), dict):
+            data["metadata"] = {}
+        if not isinstance(data.get("objargs"), list):
+            data["objargs"] = []
+        if not isinstance(data.get("palette"), dict):
+            data["palette"] = {}
+        if not isinstance(data.get("parameter"), dict):
+            data["parameter"] = {}
+        if not isinstance(data.get("examples"), list):
+            data["examples"] = []
+        if not isinstance(data.get("seealso"), list):
+            data["seealso"] = []
+        if not isinstance(data.get("misc"), dict):
+            data["misc"] = {}
 
         digest_elem = root.find("digest")
         if digest_elem is not None and digest_elem.text:
@@ -228,7 +248,8 @@ class MaxRefCache:
             for attr in attributelist.findall("attribute"):
                 name = attr.get("name")
                 if name:
-                    attr_data = dict(attr.attrib)
+                    # Build attr_data properly, avoiding conflicts with nested structures
+                    attr_data: Dict[str, Any] = dict(attr.attrib)
 
                     # Extract digest
                     digest_elem = attr.find("digest")
@@ -243,6 +264,7 @@ class MaxRefCache:
                     # Extract nested attributelist (meta-attributes)
                     nested_attrs = attr.find("attributelist")
                     if nested_attrs is not None:
+                        # Ensure attributes is a dict (in case it was set as a string in XML)
                         attr_data["attributes"] = {}
                         for nested_attr in nested_attrs.findall("attribute"):
                             nested_name = nested_attr.get("name")
@@ -253,6 +275,7 @@ class MaxRefCache:
                     # Extract enumlist if present
                     enumlist = attr.find(".//enumlist")
                     if enumlist is not None:
+                        # Ensure enumlist is a list (in case it was set as a string in XML)
                         attr_data["enumlist"] = []
                         for enum in enumlist.findall("enum"):
                             enum_data = dict(enum.attrib)
@@ -273,11 +296,13 @@ class MaxRefCache:
             for method in methodlist.findall("method"):
                 name = method.get("name")
                 if name:
-                    method_data = dict(method.attrib)
+                    # Build method_data properly, avoiding conflicts with nested structures
+                    method_data: Dict[str, Any] = dict(method.attrib)
 
                     # Extract arguments
                     arglist = method.find("arglist")
                     if arglist is not None:
+                        # Ensure args is a list (in case it was set as a string in XML)
                         method_data["args"] = []
                         for arg in arglist.findall("arg"):
                             method_data["args"].append(dict(arg.attrib))
@@ -303,6 +328,7 @@ class MaxRefCache:
                     # Extract nested attributelist (method attributes like 'introduced')
                     nested_attrs = method.find("attributelist")
                     if nested_attrs is not None:
+                        # Ensure attributes is a dict (in case it was set as a string in XML)
                         method_data["attributes"] = {}
                         for nested_attr in nested_attrs.findall("attribute"):
                             nested_name = nested_attr.get("name")
@@ -403,7 +429,7 @@ def get_legacy_defaults(name: str) -> Dict[str, Any]:
     # use "newobj" as maxclass (handled by fallback in core.py)
     from .maxclassdb import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
-    defaults = {}
+    defaults: Dict[str, Any] = {}
     if name in LEGACY_DEFAULTS:
         defaults["maxclass"] = name
 
@@ -432,58 +458,74 @@ def get_legacy_defaults(name: str) -> Dict[str, Any]:
     return defaults
 
 
-def validate_connection(src_maxclass: str, src_outlet: int, dst_maxclass: str, dst_inlet: int) -> tuple[bool, str]:
+def validate_connection(
+    src_maxclass: str, src_outlet: int, dst_maxclass: str, dst_inlet: int
+) -> tuple[bool, str]:
     """Validate a connection between two Max objects using maxref data.
-    
+
     Args:
         src_maxclass: Source object's maxclass
         src_outlet: Source outlet index (0-based)
-        dst_maxclass: Destination object's maxclass  
+        dst_maxclass: Destination object's maxclass
         dst_inlet: Destination inlet index (0-based)
-        
+
     Returns:
         Tuple of (is_valid: bool, error_message: str)
     """
     # Get object information
     src_info = get_object_info(src_maxclass)
     dst_info = get_object_info(dst_maxclass)
-    
+
     # If we don't have maxref data, allow connection (backwards compatibility)
     if not src_info or not dst_info:
         return True, ""
-    
+
     # Check source outlet exists
     src_outlets = src_info.get("outlets", [])
     if src_outlets and src_outlet >= len(src_outlets):
-        return False, f"Object '{src_maxclass}' only has {len(src_outlets)} outlet(s), cannot connect from outlet {src_outlet}"
-    
-    # Check destination inlet exists  
+        return (
+            False,
+            f"Object '{src_maxclass}' only has {len(src_outlets)} outlet(s), cannot connect from outlet {src_outlet}",
+        )
+
+    # Check destination inlet exists
     dst_inlets = dst_info.get("inlets", [])
     if dst_inlets and dst_inlet >= len(dst_inlets):
-        return False, f"Object '{dst_maxclass}' only has {len(dst_inlets)} inlet(s), cannot connect to inlet {dst_inlet}"
-    
+        return (
+            False,
+            f"Object '{dst_maxclass}' only has {len(dst_inlets)} inlet(s), cannot connect to inlet {dst_inlet}",
+        )
+
     # Type checking (optional - could be enhanced)
-    if src_outlets and dst_inlets and src_outlet < len(src_outlets) and dst_inlet < len(dst_inlets):
+    if (
+        src_outlets
+        and dst_inlets
+        and src_outlet < len(src_outlets)
+        and dst_inlet < len(dst_inlets)
+    ):
         src_outlet_type = src_outlets[src_outlet].get("type", "")
         dst_inlet_type = dst_inlets[dst_inlet].get("type", "")
-        
+
         # Basic type compatibility checking
         if src_outlet_type and dst_inlet_type:
             # Signal connections
             if "signal" in src_outlet_type and "signal" not in dst_inlet_type:
-                return False, f"Cannot connect signal outlet from '{src_maxclass}' to non-signal inlet of '{dst_maxclass}'"
-            
+                return (
+                    False,
+                    f"Cannot connect signal outlet from '{src_maxclass}' to non-signal inlet of '{dst_maxclass}'",
+                )
+
             # Could add more sophisticated type checking here
-    
+
     return True, ""
 
 
 def get_inlet_count(maxclass: str) -> Optional[int]:
     """Get the number of inlets for a Max object.
-    
+
     Args:
         maxclass: The Max object class name
-        
+
     Returns:
         Number of inlets or None if unknown
     """
@@ -495,10 +537,10 @@ def get_inlet_count(maxclass: str) -> Optional[int]:
 
 def get_outlet_count(maxclass: str) -> Optional[int]:
     """Get the number of outlets for a Max object.
-    
+
     Args:
         maxclass: The Max object class name
-        
+
     Returns:
         Number of outlets or None if unknown
     """
@@ -510,10 +552,10 @@ def get_outlet_count(maxclass: str) -> Optional[int]:
 
 def get_inlet_types(maxclass: str) -> List[str]:
     """Get the inlet types for a Max object.
-    
+
     Args:
         maxclass: The Max object class name
-        
+
     Returns:
         List of inlet type strings
     """
@@ -525,10 +567,10 @@ def get_inlet_types(maxclass: str) -> List[str]:
 
 def get_outlet_types(maxclass: str) -> List[str]:
     """Get the outlet types for a Max object.
-    
+
     Args:
         maxclass: The Max object class name
-        
+
     Returns:
         List of outlet type strings
     """
