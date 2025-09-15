@@ -17,17 +17,22 @@ class TestAbstractLayoutManager:
     def test_get_rect_from_maxclass_abstract(self):
         """Test that get_rect_from_maxclass is abstract and raises NotImplementedError."""
         class ConcreteLayoutManager(AbstractLayoutManager):
+            box_height = 22.0
+
             def get_rect_from_maxclass(self, maxclass: str) -> Rect:
                 raise NotImplementedError("Abstract method")
-            
+
             def get_relative_pos(self, rect: Rect) -> Rect:
                 return rect
-            
+
             def get_absolute_pos(self, rect: Rect) -> Rect:
                 return rect
-            
+
             def get_pos(self, maxclass: str = None) -> Rect:
                 return Rect(0, 0, 100, 100)
+
+            def above(self, rect: Rect) -> Rect:
+                return rect
 
         manager = ConcreteLayoutManager()
         
@@ -38,17 +43,22 @@ class TestAbstractLayoutManager:
     def test_get_relative_pos_abstract(self):
         """Test that get_relative_pos is abstract and raises NotImplementedError."""
         class ConcreteLayoutManager(AbstractLayoutManager):
+            box_height = 22.0
+
             def get_rect_from_maxclass(self, maxclass: str) -> Rect:
                 return Rect(0, 0, 100, 100)
-            
+
             def get_relative_pos(self, rect: Rect) -> Rect:
                 raise NotImplementedError("Abstract method")
-            
+
             def get_absolute_pos(self, rect: Rect) -> Rect:
                 return rect
-            
+
             def get_pos(self, maxclass: str = None) -> Rect:
                 return Rect(0, 0, 100, 100)
+
+            def above(self, rect: Rect) -> Rect:
+                return rect
 
         manager = ConcreteLayoutManager()
         
@@ -59,17 +69,22 @@ class TestAbstractLayoutManager:
     def test_get_absolute_pos_abstract(self):
         """Test that get_absolute_pos is abstract and raises NotImplementedError."""
         class ConcreteLayoutManager(AbstractLayoutManager):
+            box_height = 22.0
+
             def get_rect_from_maxclass(self, maxclass: str) -> Rect:
                 return Rect(0, 0, 100, 100)
-            
+
             def get_relative_pos(self, rect: Rect) -> Rect:
                 return rect
-            
+
             def get_absolute_pos(self, rect: Rect) -> Rect:
                 raise NotImplementedError("Abstract method")
-            
+
             def get_pos(self, maxclass: str = None) -> Rect:
                 return Rect(0, 0, 100, 100)
+
+            def above(self, rect: Rect) -> Rect:
+                return rect
 
         manager = ConcreteLayoutManager()
         
@@ -80,17 +95,22 @@ class TestAbstractLayoutManager:
     def test_get_pos_abstract(self):
         """Test that get_pos is abstract and raises NotImplementedError."""
         class ConcreteLayoutManager(AbstractLayoutManager):
+            box_height = 22.0
+
             def get_rect_from_maxclass(self, maxclass: str) -> Rect:
                 return Rect(0, 0, 100, 100)
-            
+
             def get_relative_pos(self, rect: Rect) -> Rect:
                 return rect
-            
+
             def get_absolute_pos(self, rect: Rect) -> Rect:
                 return rect
-            
+
             def get_pos(self, maxclass: str = None) -> Rect:
                 raise NotImplementedError("Abstract method")
+
+            def above(self, rect: Rect) -> Rect:
+                return rect
 
         manager = ConcreteLayoutManager()
         
@@ -110,12 +130,15 @@ class TestAbstractBox:
                 self.maxclass = "test"
                 self.patching_rect = Rect(0, 0, 100, 100)
                 self._kwds = {}
-            
+
             def render(self) -> None:
                 raise NotImplementedError("Abstract method")
-            
+
             def to_dict(self) -> dict:
                 return {}
+
+            def __iter__(self):
+                yield self
 
         box = ConcreteBox()
         
@@ -131,12 +154,15 @@ class TestAbstractBox:
                 self.maxclass = "test"
                 self.patching_rect = Rect(0, 0, 100, 100)
                 self._kwds = {}
-            
+
             def render(self) -> None:
                 pass
-            
+
             def to_dict(self) -> dict:
                 raise NotImplementedError("Abstract method")
+
+            def __iter__(self):
+                yield self
 
         box = ConcreteBox()
         
@@ -152,9 +178,17 @@ class TestAbstractPatchline:
         """Test that to_dict is abstract and raises NotImplementedError."""
         class ConcretePatchline(AbstractPatchline):
             def __init__(self):
-                self.src = "source"
-                self.dst = "destination"
-            
+                self._src = "source"
+                self._dst = "destination"
+
+            @property
+            def src(self) -> str:
+                return self._src
+
+            @property
+            def dst(self) -> str:
+                return self._dst
+
             def to_dict(self) -> dict:
                 raise NotImplementedError("Abstract method")
 

@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, List
 from .common import Rect
 
 
-def replace_tags(text, sub, *tags):
+def replace_tags(text: str, sub: str, *tags: str) -> str:
     """Replace XML tags with substitution string"""
     for tag in tags:
         text = text.replace(f"<{tag}>", sub).replace(f"</{tag}>", sub)

@@ -19,6 +19,9 @@ class AbstractLayoutManager(ABC):
     creating circular imports.
     """
 
+    # Required attributes
+    box_height: float
+
     @abstractmethod
     def get_rect_from_maxclass(self, maxclass: str) -> Optional[Rect]:
         """retrieves default patching_rect from defaults dictionary."""
@@ -37,6 +40,11 @@ class AbstractLayoutManager(ABC):
     @abstractmethod
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
+        ...
+
+    @abstractmethod
+    def above(self, rect: Rect) -> Rect:
+        """Return a position of a comment above the object"""
         ...
 
 
@@ -64,6 +72,11 @@ class AbstractBox(ABC):
         """Convert the box to a dictionary representation."""
         ...
 
+    @abstractmethod
+    def __iter__(self):
+        """Make the box iterable."""
+        ...
+
 
 class AbstractPatchline(ABC):
     """Abstract base class for Patchline objects.
@@ -73,8 +86,17 @@ class AbstractPatchline(ABC):
     creating circular imports.
     """
 
-    src: str
-    dst: str
+    @property
+    @abstractmethod
+    def src(self) -> str:
+        """Source object identifier."""
+        ...
+
+    @property
+    @abstractmethod
+    def dst(self) -> str:
+        """Destination object identifier."""
+        ...
 
     @abstractmethod
     def to_dict(self) -> dict:

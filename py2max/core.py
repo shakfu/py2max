@@ -82,7 +82,7 @@ class Patcher(abstract.AbstractPatcher):
         self._reset_on_render = reset_on_render
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
-        self._layout_mgr: layout.LayoutManager = self.set_layout_mgr(layout)
+        self._layout_mgr: abstract.AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
         self._maxclass_methods = {
