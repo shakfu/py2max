@@ -9,13 +9,48 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 [Unreleased]
 ------------
 
+[0.1.2] - 2025-01-15
+---------------------
+
 Added
 ~~~~~
-* Comprehensive Sphinx API documentation with autodoc
-* User guide with quickstart, tutorial, and advanced usage
-* Layout manager documentation with examples
-* Development guide with contributing guidelines
-* Testing documentation with coverage information
+* **Comprehensive Sphinx API Documentation**: Complete documentation system with autodoc
+
+  * **API Reference**: Full autodoc-generated documentation for all modules
+  * **User Guide**: Installation, quickstart, tutorial, and advanced usage guides
+  * **Layout Manager Documentation**: In-depth coverage of positioning algorithms
+  * **Development Documentation**: Contributing guidelines and testing information
+  * **Professional Theme**: Sphinx RTD theme with navigation and search
+  * **Type Hints Display**: Complete type information in documentation
+  * **Cross-references**: Proper linking between modules and classes
+  * **Code Examples**: Extensive examples throughout all documentation
+
+* **Enhanced Build System**: Improved development workflow
+
+  * **Enhanced Makefile**: Added documentation build commands (docs, docs-clean, docs-serve)
+  * **Documentation Dependencies**: Added docs dependency group in pyproject.toml
+  * **CI Integration**: Documentation builds as part of CI process
+  * **Help System**: Comprehensive Makefile help with command descriptions
+
+* **Documentation Content**: Comprehensive coverage of all features
+
+  * **Tutorial Series**: 4 detailed tutorials from basic synthesis to generative music
+  * **Layout Guide**: Complete coverage of Grid, Flow, and legacy layout managers
+  * **Advanced Usage**: Complex patterns, subpatchers, data containers, and custom extensions
+  * **API Examples**: Practical examples for every major feature
+  * **Migration Guides**: Clear upgrade paths between versions
+
+Changed
+~~~~~~~
+* **Development Workflow**: Streamlined documentation and development processes
+* **Quality Assurance**: Enhanced CI checks including documentation building
+* **Documentation Dependencies**: Added sphinx, sphinx-rtd-theme, sphinx-autodoc-typehints, myst-parser
+
+Fixed
+~~~~~
+* **Documentation Build**: Resolved all critical Sphinx configuration issues
+* **Type Safety Display**: Proper rendering of type hints in documentation
+* **Cross-platform Compatibility**: Documentation builds work across different environments
 
 [0.1.1] - 2025-01-15
 ---------------------
@@ -148,32 +183,46 @@ Added
 Development Changes
 -------------------
 
-[2025-01-15] - Documentation Release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[2025-01-15] - Documentation Release (v0.1.2)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Added
 ^^^^^
-* **Sphinx Documentation System**
+* **Comprehensive Sphinx Documentation System**
 
-  * Complete API reference with autodoc
-  * User guide with tutorials and examples
-  * Layout manager documentation
+  * Complete API reference with autodoc for all modules
+  * User guide with installation, quickstart, tutorial, and advanced usage
+  * Layout manager documentation with detailed examples
   * Development and contributing guides
-  * Automated documentation building
+  * Testing framework documentation
+  * Automated documentation building with CI integration
 
 * **Enhanced Developer Experience**
 
+  * Enhanced Makefile with documentation commands and help system
+  * Documentation dependency management in pyproject.toml
+  * CI integration with documentation building
+  * Professional Sphinx RTD theme with navigation and search
   * Type checking with mypy (zero errors)
   * Code quality with ruff (zero violations)
-  * Comprehensive test coverage reporting
-  * Development workflow documentation
+  * Comprehensive test coverage reporting (97%)
+
+* **Documentation Content Quality**
+
+  * 4 comprehensive tutorials from basic synthesis to generative music
+  * Complete API examples for every major feature
+  * Migration guides between versions
+  * Cross-references and proper linking throughout documentation
+  * Extensive code examples and usage patterns
 
 Technical Improvements
 ^^^^^^^^^^^^^^^^^^^^^^
-* **Type Safety**: Complete type annotation coverage
-* **Code Quality**: Enhanced code organization and documentation
-* **Testing**: Improved test organization and coverage reporting
-* **Build System**: Streamlined development and documentation builds
+* **Documentation System**: Professional Sphinx-based documentation with RTD theme
+* **Build Process**: Streamlined development and documentation build workflows
+* **Quality Assurance**: Enhanced CI checks including documentation building
+* **Developer Workflow**: Improved onboarding and contribution processes
+* **Type Safety**: Complete type annotation coverage with proper display in docs
+* **Cross-platform Support**: Documentation builds work across different environments
 
 Migration Guide
 ---------------
@@ -221,6 +270,27 @@ No breaking changes - all existing code continues to work. New features are opt-
 
    # Optimize layout to cluster connected objects
    patcher.optimize_layout()
+
+From 0.1.1 to 0.1.2
+~~~~~~~~~~~~~~~~~~~~
+
+No breaking changes - all existing code continues to work. This release focused on:
+
+* **Documentation**: Complete Sphinx-based documentation system
+* **Developer Experience**: Enhanced build system and development workflow
+* **Quality Assurance**: Comprehensive guides for contributors and users
+
+No API changes required for existing code. New documentation provides:
+
+**For Users**:
+- Comprehensive installation and quickstart guides
+- Detailed tutorials from basic to advanced usage
+- Complete API reference with examples
+
+**For Developers**:
+- Contributing guidelines and development setup
+- Testing framework documentation
+- Enhanced build system with documentation commands
 
 From 0.1.0 to 0.1.1
 ~~~~~~~~~~~~~~~~~~~~
