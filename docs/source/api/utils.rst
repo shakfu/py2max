@@ -71,7 +71,9 @@ Supported Pitch Notation
 The pitch2freq function supports standard pitch notation:
 
 * **Note names**: A, Bb, B, C, Db, D, Eb, E, F, Gb, G, Ab
+
 * **Octave numbers**: Any integer (typically 0-9)
+
 * **Examples**: "C3", "Bb4", "F#5" (use "Gb5" instead of "F#5")
 
 .. code-block:: python

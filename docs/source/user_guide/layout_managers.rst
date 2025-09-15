@@ -251,16 +251,16 @@ Vertical Layout
 Layout Manager Comparison
 -------------------------
 
-=========== ================ ================== =================== =================
-Feature     Grid Layout      Flow Layout        Horizontal Legacy   Vertical Legacy
-=========== ================ ================== =================== =================
-Direction   H + V            H + V              H only              V only
-Clustering  Yes              No                 No                  No
-Flow Analysis No            Yes                No                  No
-Simple Grid Yes              No                 Yes                 Yes
-Optimization Yes             Yes                Limited             Limited
-Best For    General use      Signal chains      Simple layouts      Simple layouts
-=========== ================ ================== =================== =================
+============= ================ ================== =================== =================
+Feature       Grid Layout      Flow Layout        Horizontal Legacy   Vertical Legacy
+============= ================ ================== =================== =================
+Direction     H + V            H + V              H only              V only
+Clustering    Yes              No                 No                  No
+Flow Analysis No               Yes                No                  No
+Simple Grid   Yes              No                 Yes                 Yes
+Optimization  Yes              Yes                Limited             Limited
+Best For      General use      Signal chains      Simple layouts      Simple layouts
+============= ================ ================== =================== =================
 
 Advanced Layout Techniques
 ---------------------------

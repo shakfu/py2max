@@ -11,8 +11,11 @@ The layout module provides sophisticated algorithms for positioning Max objects 
 The layout system includes several layout manager classes:
 
 * **LayoutManager** - Base layout manager providing fundamental positioning capabilities with horizontal flow layout
+
 * **GridLayoutManager** - Unified grid layout handling both horizontal and vertical arrangements with configurable flow direction, connection-aware clustering to group related objects, smart positioning with automatic wrapping, and layout optimization to minimize connection distances
+
 * **FlowLayoutManager** - Intelligent signal flow-based positioning with signal flow analysis using patchline connections, hierarchical positioning organizing objects in flow levels, dual layout modes supporting horizontal and vertical flow, and topology-based arrangement based on functional relationships
+
 * **HorizontalLayoutManager** and **VerticalLayoutManager** - Legacy layout managers maintained for backward compatibility (now aliases for GridLayoutManager with appropriate flow directions)
 
 Usage Examples

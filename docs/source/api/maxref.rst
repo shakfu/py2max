@@ -14,10 +14,15 @@ MaxRef System Overview
 The MaxRef integration system automatically discovers and parses Max object documentation, providing:
 
 * **1157+ Max objects** automatically discovered and parsed
+
 * **Complete documentation** including methods, attributes, inlets, outlets, examples
+
 * **Dynamic help system** via Box.help() and Box.get_info() methods
+
 * **Backwards compatibility** with existing MAXCLASS_DEFAULTS
+
 * **Intelligent caching** for performance
+
 * **Cross-platform support** for Max installations
 
 The module includes the **MaxRefCache** class for managing the loading, parsing, and caching of Max object documentation, along with various functions for object information retrieval, connection validation, legacy compatibility, and utility operations.
