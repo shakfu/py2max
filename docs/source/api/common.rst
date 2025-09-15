@@ -1,5 +1,5 @@
 py2max.common Module
-===================
+====================
 
 .. automodule:: py2max.common
    :members:
@@ -8,18 +8,7 @@ py2max.common Module
 
 The common module contains shared utility classes and data structures used throughout py2max.
 
-Common Classes
---------------
-
-Rect Class
-~~~~~~~~~~
-
-.. autoclass:: py2max.common.Rect
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-The Rect class is a named tuple representing rectangular areas in Max patches. It contains four fields:
+The main component is the **Rect** class, a named tuple representing rectangular areas in Max patches with four fields:
 
 * **x** (float): X coordinate of the rectangle's top-left corner
 * **y** (float): Y coordinate of the rectangle's top-left corner

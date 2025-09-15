@@ -1,5 +1,5 @@
 py2max.maxref Module
-===================
+====================
 
 .. automodule:: py2max.maxref
    :members:
@@ -20,53 +20,7 @@ The MaxRef integration system automatically discovers and parses Max object docu
 * **Intelligent caching** for performance
 * **Cross-platform support** for Max installations
 
-Main Classes
-------------
-
-MaxRef Cache
-~~~~~~~~~~~~
-
-.. autoclass:: py2max.maxref.MaxRefCache
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-The MaxRefCache class manages the loading, parsing, and caching of Max object documentation.
-
-Key Functions
--------------
-
-Object Information
-~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: py2max.maxref.get_object_help
-
-.. autofunction:: py2max.maxref.get_object_info
-
-.. autofunction:: py2max.maxref.get_available_objects
-
-Connection Validation
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: py2max.maxref.validate_connection
-
-.. autofunction:: py2max.maxref.get_inlet_count
-
-.. autofunction:: py2max.maxref.get_outlet_count
-
-.. autofunction:: py2max.maxref.get_inlet_types
-
-.. autofunction:: py2max.maxref.get_outlet_types
-
-Legacy Compatibility
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: py2max.maxref.get_legacy_defaults
-
-Utility Functions
-~~~~~~~~~~~~~~~~~
-
-.. autofunction:: py2max.maxref.replace_tags
+The module includes the **MaxRefCache** class for managing the loading, parsing, and caching of Max object documentation, along with various functions for object information retrieval, connection validation, legacy compatibility, and utility operations.
 
 Usage Examples
 --------------

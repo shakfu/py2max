@@ -1,5 +1,5 @@
 py2max.layout Module
-===================
+====================
 
 .. automodule:: py2max.layout
    :members:
@@ -8,64 +8,12 @@ py2max.layout Module
 
 The layout module provides sophisticated algorithms for positioning Max objects in patches.
 
-Layout Managers
----------------
+The layout system includes several layout manager classes:
 
-Base Layout Manager
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: py2max.layout.LayoutManager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-The base layout manager provides fundamental positioning capabilities with horizontal flow layout.
-
-Grid Layout Manager
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: py2max.layout.GridLayoutManager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-The GridLayoutManager provides:
-
-* **Unified grid layout** handling both horizontal and vertical arrangements
-* **Configurable flow direction** (horizontal or vertical)
-* **Connection-aware clustering** to group related objects
-* **Smart positioning** with automatic wrapping
-* **Layout optimization** to minimize connection distances
-
-Flow Layout Manager
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: py2max.layout.FlowLayoutManager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-The FlowLayoutManager offers intelligent signal flow-based positioning:
-
-* **Signal flow analysis** using patchline connections
-* **Hierarchical positioning** organizing objects in flow levels
-* **Dual layout modes** supporting horizontal and vertical flow
-* **Topology-based arrangement** based on functional relationships
-
-Legacy Layout Managers
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: py2max.layout.HorizontalLayoutManager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: py2max.layout.VerticalLayoutManager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Legacy layout managers maintained for backward compatibility. These are now aliases for GridLayoutManager with appropriate flow directions.
+* **LayoutManager** - Base layout manager providing fundamental positioning capabilities with horizontal flow layout
+* **GridLayoutManager** - Unified grid layout handling both horizontal and vertical arrangements with configurable flow direction, connection-aware clustering to group related objects, smart positioning with automatic wrapping, and layout optimization to minimize connection distances
+* **FlowLayoutManager** - Intelligent signal flow-based positioning with signal flow analysis using patchline connections, hierarchical positioning organizing objects in flow levels, dual layout modes supporting horizontal and vertical flow, and topology-based arrangement based on functional relationships
+* **HorizontalLayoutManager** and **VerticalLayoutManager** - Legacy layout managers maintained for backward compatibility (now aliases for GridLayoutManager with appropriate flow directions)
 
 Usage Examples
 --------------

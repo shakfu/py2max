@@ -1,5 +1,5 @@
 py2max.utils Module
-==================
+===================
 
 .. automodule:: py2max.utils
    :members:
@@ -8,15 +8,7 @@ py2max.utils Module
 
 The utils module contains utility functions for common operations in music and audio programming.
 
-Utility Functions
------------------
-
-Musical Functions
-~~~~~~~~~~~~~~~~~
-
-.. autofunction:: py2max.utils.pitch2freq
-
-The pitch2freq function converts musical pitch notation to frequency values, useful for generating oscillator frequencies and musical calculations.
+The main utility is the **pitch2freq** function which converts musical pitch notation to frequency values, useful for generating oscillator frequencies and musical calculations.
 
 Usage Examples
 --------------

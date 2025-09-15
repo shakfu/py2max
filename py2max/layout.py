@@ -1,3 +1,13 @@
+"""Layout management for py2max patches.
+
+This module provides various layout managers for automatic positioning of
+Max objects in patches:
+
+- LayoutManager: Basic horizontal layout (deprecated)
+- GridLayoutManager: Grid-based layout with clustering
+- FlowLayoutManager: Signal flow-based hierarchical layout
+"""
+
 from typing import Optional, Dict, List
 
 from .abstract import AbstractLayoutManager, AbstractPatcher
@@ -10,10 +20,18 @@ from .common import Rect
 
 
 class LayoutManager(AbstractLayoutManager):
-    """Utility class to help with object layout.
+    """Basic horizontal layout manager.
 
-    This is a basic horizontal layout manager.
-    i.e. objects flow and wrap to the right.
+    Provides simple left-to-right object positioning with wrapping.
+    This is a legacy layout manager; consider using GridLayoutManager
+    for new projects.
+
+    Args:
+        parent: The parent patcher object.
+        pad: Padding between objects (default: 48.0).
+        box_width: Default object width (default: 66.0).
+        box_height: Default object height (default: 22.0).
+        comment_pad: Padding for comments (default: 2).
     """
 
     DEFAULT_PAD = 1.5 * 32.0
@@ -40,7 +58,14 @@ class LayoutManager(AbstractLayoutManager):
         self.mclass_rect = None
 
     def get_rect_from_maxclass(self, maxclass: str) -> Optional[Rect]:
-        """retrieves default patching_rect from defaults dictionary."""
+        """Retrieve default rectangle for a Max object class.
+
+        Args:
+            maxclass: The Max object class name.
+
+        Returns:
+            Default Rect for the object class, or None if not found.
+        """
         try:
             return MAXCLASS_DEFAULTS[maxclass]["patching_rect"]
         except KeyError:
@@ -69,7 +94,17 @@ class LayoutManager(AbstractLayoutManager):
         return rect
 
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
-        """helper func providing very rough auto-layout of objects"""
+        """Get the next position for object placement.
+
+        Calculates the next position for an object based on the current
+        layout state and optional object class defaults.
+
+        Args:
+            maxclass: Optional Max object class for size defaults.
+
+        Returns:
+            Rect specifying the position and size for the next object.
+        """
         x = 0.0
         y = 0.0
         w = self.box_width  # 66.0

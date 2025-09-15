@@ -1,7 +1,16 @@
-"""py2max: a pure python library to generate .maxpat patcher files.
+"""Core classes for py2max: Patcher, Box, and Patchline.
 
-basic usage:
+This module contains the main classes for creating and managing Max/MSP patches:
 
+- Patcher: Core class for creating and managing Max patches
+- Box: Represents individual Max objects
+- Patchline: Represents connections between objects
+- InvalidConnectionError: Exception for invalid connections
+
+The Patcher class provides methods for adding various Max objects and connecting
+them together, with automatic layout management and connection validation.
+
+Example:
     >>> p = Patcher('out.maxpat')
     >>> osc1 = p.add_textbox('cycle~ 440')
     >>> gain = p.add_textbox('gain~')
@@ -9,7 +18,6 @@ basic usage:
     >>> p.add_line(osc1, gain)
     >>> p.add_line(gain, dac)
     >>> p.save()
-
 """
 
 import json
@@ -34,7 +42,12 @@ MAX_VER_REVISION = 5
 
 
 class InvalidConnectionError(Exception):
-    """Raised when attempting to create an invalid patchline connection"""
+    """Raised when attempting to create an invalid patchline connection.
+
+    This exception is raised when validation is enabled and an invalid
+    connection is attempted, such as connecting to a non-existent inlet
+    or outlet.
+    """
 
 
 # ---------------------------------------------------------------------------
@@ -46,9 +59,38 @@ class InvalidConnectionError(Exception):
 
 
 class Patcher(abstract.AbstractPatcher):
-    """Core Patcher class describing a Max patchers from the ground up.
+    """Core class for creating and managing Max/MSP patches.
 
-    Any Patcher can be converted to a .maxpat file.
+    The Patcher class provides a high-level interface for creating Max/MSP patches
+    programmatically. It handles object positioning, connection validation, and
+    automatic layout management.
+
+    Features:
+        - Automatic object positioning with multiple layout managers
+        - Connection validation using Max object metadata
+        - Support for all major Max object types
+        - Hierarchical patch organization with subpatchers
+        - Export to .maxpat file format
+
+    Args:
+        path: Output file path for the patch.
+        title: Optional title for the patch.
+        parent: Parent patcher for hierarchical organization.
+        classnamespace: Namespace for object classes (e.g., 'rnbo').
+        reset_on_render: Whether to reset layout on render.
+        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow').
+        auto_hints: Whether to automatically generate object hints.
+        openinpresentation: Presentation mode setting.
+        validate_connections: Whether to validate patchline connections.
+        flow_direction: Direction for flow-based layouts ('horizontal', 'vertical').
+        cluster_connected: Whether to cluster connected objects in grid layout.
+
+    Example:
+        >>> p = Patcher('my-patch.maxpat', layout='grid')
+        >>> osc = p.add_textbox('cycle~ 440')
+        >>> gain = p.add_textbox('gain~')
+        >>> p.add_line(osc, gain)
+        >>> p.save()
     """
 
     def __init__(
@@ -212,9 +254,16 @@ class Patcher(abstract.AbstractPatcher):
         return json.dumps(self.to_dict(), indent=4)
 
     def find(self, text: str) -> Optional["Box"]:
-        """find (recursively) box object by maxclass or type
+        """Find box object by maxclass or text pattern.
 
-        returns box if found else None
+        Recursively searches through all objects in the patch to find
+        one matching the specified maxclass or text pattern.
+
+        Args:
+            text: The maxclass name or text pattern to search for.
+
+        Returns:
+            The first matching Box object, or None if not found.
         """
         for obj in self:
             if not isinstance(obj, Patcher):
@@ -262,7 +311,14 @@ class Patcher(abstract.AbstractPatcher):
         self.lines = [line.to_dict() for line in self._lines]
 
     def save_as(self, path: Union[str, Path]) -> None:
-        """save as .maxpat json file"""
+        """Save the patch to a specified file path.
+
+        Renders all objects and connections, then saves the patch as a
+        .maxpat JSON file that can be opened in Max/MSP.
+
+        Args:
+            path: File path where the patch should be saved.
+        """
         path = Path(path)
         if path.parent:
             path.parent.mkdir(exist_ok=True)
@@ -271,7 +327,11 @@ class Patcher(abstract.AbstractPatcher):
             json.dump(self.to_dict(), f, indent=4)
 
     def save(self) -> None:
-        """save as json .maxpat file"""
+        """Save the patch to the default file path.
+
+        Uses the path specified during Patcher creation. If no path
+        was specified, this method will do nothing.
+        """
         if self._path:
             self.save_as(self._path)
 
@@ -304,11 +364,18 @@ class Patcher(abstract.AbstractPatcher):
             return self._layout_mgr.get_pos(maxclass)
         return self._layout_mgr.get_pos()
 
-    def optimize_layout(self):
-        """Optimize object positions based on signal flow topology.
+    def optimize_layout(self) -> None:
+        """Optimize object positions based on layout manager type.
 
-        This method is most effective when using FlowLayoutManager.
-        For other layout managers, this may have limited or no effect.
+        Calls the layout manager's optimization method to improve object
+        positioning. The effect depends on the layout manager:
+
+        - FlowLayoutManager: Arranges objects by signal flow topology
+        - GridLayoutManager: Clusters connected objects together
+        - Other managers: May have limited or no effect
+
+        This method should be called after all objects and connections
+        have been added to the patch.
         """
         if hasattr(self._layout_mgr, "optimize_layout"):
             self._layout_mgr.optimize_layout()
@@ -424,7 +491,28 @@ class Patcher(abstract.AbstractPatcher):
     def add_line(
         self, src_obj: "Box", dst_obj: "Box", inlet: int = 0, outlet: int = 0
     ) -> "Patchline":
-        """convenience line adding taking objects with default outlet to inlet"""
+        """Create a connection between two objects.
+
+        Connects an outlet of the source object to an inlet of the destination
+        object. Validates the connection if validation is enabled.
+
+        Args:
+            src_obj: Source object to connect from.
+            dst_obj: Destination object to connect to.
+            inlet: Destination inlet index (default: 0).
+            outlet: Source outlet index (default: 0).
+
+        Returns:
+            The created Patchline object.
+
+        Raises:
+            InvalidConnectionError: If connection validation fails.
+
+        Example:
+            >>> osc = p.add_textbox('cycle~ 440')
+            >>> gain = p.add_textbox('gain~')
+            >>> p.add_line(osc, gain)  # Connect outlet 0 to inlet 0
+        """
         assert src_obj.id and dst_obj.id, f"objects {src_obj} and {dst_obj} require ids"
         return self.add_patchline(src_obj.id, outlet, dst_obj.id, inlet)
 
@@ -444,9 +532,31 @@ class Patcher(abstract.AbstractPatcher):
         comment_pos: Optional[str] = None,
         **kwds,
     ) -> "Box":
-        """Add a generic textbox object to the patcher.
+        """Add a text-based Max object to the patch.
 
-        Looks up default attributes from a dictionary.
+        Creates a Max object from a text specification (e.g., 'cycle~ 440').
+        Automatically looks up default attributes and applies appropriate
+        maxclass based on the object type.
+
+        Args:
+            text: Max object specification (e.g., 'cycle~ 440', 'gain~').
+            maxclass: Override the automatically determined maxclass.
+            numinlets: Number of input connections.
+            numoutlets: Number of output connections.
+            outlettype: Types of outputs (e.g., ['signal', 'int']).
+            patching_rect: Position and size rectangle.
+            id: Unique identifier for the object.
+            comment: Optional comment text.
+            comment_pos: Comment position ('above', 'below', etc.).
+            **kwds: Additional Max object properties.
+
+        Returns:
+            The created Box object.
+
+        Example:
+            >>> osc = p.add_textbox('cycle~ 440')
+            >>> gain = p.add_textbox('gain~')
+            >>> metro = p.add_textbox('metro 500')
         """
         _maxclass, *tail = text.split()
         if _maxclass in maxref.MAXCLASS_DEFAULTS and not maxclass:
@@ -1177,7 +1287,27 @@ class Patcher(abstract.AbstractPatcher):
 
 
 class Box(abstract.AbstractBox):
-    """Max Box object"""
+    """Represents a Max object in a patch.
+
+    The Box class encapsulates a single Max object with its properties,
+    position, and connections. It provides methods for introspection
+    and help information.
+
+    Args:
+        maxclass: Max object class name (e.g., 'newobj', 'flonum').
+        numinlets: Number of input connections.
+        numoutlets: Number of output connections.
+        id: Unique identifier for the object.
+        patching_rect: Position and size rectangle.
+        **kwds: Additional Max object properties.
+
+    Attributes:
+        id: Unique identifier for the object.
+        maxclass: Max object class name.
+        numinlets: Number of input connections.
+        numoutlets: Number of output connections.
+        patching_rect: Position and size as Rect.
+    """
 
     def __init__(
         self,
@@ -1259,30 +1389,30 @@ class Box(abstract.AbstractBox):
         return self._kwds.get("text", "")
 
     def help_text(self) -> str:
-        """Get formatted help documentation for this Max object
+        """Get formatted help documentation for this Max object.
 
         Returns:
-            Formatted help string with object documentation from .maxref.xml files
+            Formatted help string with object documentation from .maxref.xml files.
         """
         return maxref.get_object_help(self.maxclass)
 
     def help(self) -> None:
-        """Print formatted help documentation for this Max object"""
+        """Print formatted help documentation for this Max object."""
         print(self.help_text())
 
     def get_info(self) -> Optional[dict]:
-        """Get complete object information from .maxref.xml files
+        """Get complete object information from .maxref.xml files.
 
         Returns:
-            Dictionary with complete object information or None if not found
+            Dictionary with complete object information or None if not found.
         """
         return maxref.get_object_info(self.maxclass)
 
     def get_inlet_count(self) -> Optional[int]:
-        """Get the number of inlets for this object from maxref data
+        """Get the number of inlets for this object from maxref data.
 
         Returns:
-            Number of inlets or None if unknown
+            Number of inlets or None if unknown.
         """
         from .maxref import get_inlet_count
 
@@ -1290,10 +1420,10 @@ class Box(abstract.AbstractBox):
         return get_inlet_count(object_name)
 
     def get_outlet_count(self) -> Optional[int]:
-        """Get the number of outlets for this object from maxref data
+        """Get the number of outlets for this object from maxref data.
 
         Returns:
-            Number of outlets or None if unknown
+            Number of outlets or None if unknown.
         """
         from .maxref import get_outlet_count
 
@@ -1338,7 +1468,20 @@ class Box(abstract.AbstractBox):
 
 
 class Patchline(abstract.AbstractPatchline):
-    """A class for Max patchlines."""
+    """Represents a connection between two Max objects.
+
+    A Patchline connects an outlet of one object to an inlet of another,
+    enabling signal or message flow between objects in a patch.
+
+    Args:
+        source: Source connection as [object_id, outlet_index].
+        destination: Destination connection as [object_id, inlet_index].
+        **kwds: Additional patchline properties.
+
+    Attributes:
+        source: Source object ID and outlet index.
+        destination: Destination object ID and inlet index.
+    """
 
     def __init__(
         self, source: Optional[list] = None, destination: Optional[list] = None, **kwds

@@ -1,4 +1,10 @@
-"""maxclassdb.py: meant to capture defaults related to a maxclass"""
+"""Legacy Max object class defaults database.
+
+This module provides default attributes for various Max object classes.
+It is maintained for compatibility but has been largely superseded by
+the dynamic maxref.py system which provides more comprehensive and
+up-to-date object information.
+"""
 
 from .common import Rect
 from typing import Any, Dict
