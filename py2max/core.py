@@ -356,12 +356,18 @@ class Patcher(abstract.AbstractPatcher):
                 flow_direction=self._flow_direction,
                 cluster_connected=self._cluster_connected,
             )
+        elif name == "columnar":
+            return layout.ColumnarLayoutManager(self)
+        elif name == "matrix":
+            return layout.MatrixLayoutManager(self)
         else:
             return {
                 "horizontal": layout.HorizontalLayoutManager,
                 "vertical": layout.VerticalLayoutManager,
                 "grid": layout.GridLayoutManager,
                 "flow": layout.FlowLayoutManager,
+                "columnar": layout.ColumnarLayoutManager,
+                "matrix": layout.MatrixLayoutManager,
             }[name](self)
 
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:

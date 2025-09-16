@@ -4,8 +4,7 @@ from py2max.utils import pitch2freq
 # Create patcher with layout
 p = Patcher(
     "outputs/test_tutorial_simple_synthesis.maxpat",
-    layout="flow",
-    flow_direction="vertical",
+    layout="matrix",
 )
 
 # Create oscillators for a C major chord
