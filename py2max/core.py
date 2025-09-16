@@ -78,12 +78,14 @@ class Patcher(abstract.AbstractPatcher):
         parent: Parent patcher for hierarchical organization.
         classnamespace: Namespace for object classes (e.g., 'rnbo').
         reset_on_render: Whether to reset layout on render.
-        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow').
+        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow', 'columnar', 'matrix').
         auto_hints: Whether to automatically generate object hints.
         openinpresentation: Presentation mode setting.
         validate_connections: Whether to validate patchline connections.
         flow_direction: Direction for flow-based layouts ('horizontal', 'vertical').
         cluster_connected: Whether to cluster connected objects in grid layout.
+        num_dimensions: Number of columns (columnar) or rows (matrix) for matrix/columnar layouts.
+        dimension_spacing: Spacing between columns/rows for matrix/columnar layouts.
 
     Example:
         >>> p = Patcher('my-patch.maxpat', layout='grid')
@@ -106,6 +108,9 @@ class Patcher(abstract.AbstractPatcher):
         validate_connections: bool = False,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
+        # New matrix/columnar layout parameters
+        num_dimensions: int = 4,
+        dimension_spacing: float = 100.0,
     ):
         self._path = path
         self._parent = parent
@@ -124,6 +129,8 @@ class Patcher(abstract.AbstractPatcher):
         self._reset_on_render = reset_on_render
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
+        self._num_dimensions = num_dimensions
+        self._dimension_spacing = dimension_spacing
         self._layout_mgr: abstract.AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
@@ -357,18 +364,42 @@ class Patcher(abstract.AbstractPatcher):
                 cluster_connected=self._cluster_connected,
             )
         elif name == "columnar":
-            return layout.ColumnarLayoutManager(self)
+            return layout.MatrixLayoutManager(
+                self,
+                flow_direction="column",
+                num_dimensions=self._num_dimensions,
+                dimension_spacing=self._dimension_spacing,
+            )
         elif name == "matrix":
-            return layout.MatrixLayoutManager(self)
+            return layout.MatrixLayoutManager(
+                self,
+                flow_direction="row",
+                num_dimensions=self._num_dimensions,
+                dimension_spacing=self._dimension_spacing,
+            )
         else:
-            return {
-                "horizontal": layout.HorizontalLayoutManager,
-                "vertical": layout.VerticalLayoutManager,
-                "grid": layout.GridLayoutManager,
-                "flow": layout.FlowLayoutManager,
-                "columnar": layout.ColumnarLayoutManager,
-                "matrix": layout.MatrixLayoutManager,
-            }[name](self)
+            # Legacy fallback - create layout managers with default parameters
+            if name == "columnar":
+                return layout.MatrixLayoutManager(
+                    self,
+                    flow_direction="column",
+                    num_dimensions=self._num_dimensions,
+                    dimension_spacing=self._dimension_spacing,
+                )
+            elif name == "matrix":
+                return layout.MatrixLayoutManager(
+                    self,
+                    flow_direction="row",
+                    num_dimensions=self._num_dimensions,
+                    dimension_spacing=self._dimension_spacing,
+                )
+            else:
+                return {
+                    "horizontal": layout.HorizontalLayoutManager,
+                    "vertical": layout.VerticalLayoutManager,
+                    "grid": layout.GridLayoutManager,
+                    "flow": layout.FlowLayoutManager,
+                }[name](self)
 
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""

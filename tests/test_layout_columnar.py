@@ -2,7 +2,7 @@
 
 import pytest
 from py2max import Patcher
-from py2max.layout import ColumnarLayoutManager
+from py2max.layout import ColumnarLayoutManager, MatrixLayoutManager
 from py2max.common import Rect
 import py2max.category as category
 
@@ -10,7 +10,8 @@ import py2max.category as category
 def test_layout_columnar_basic():
     """Test basic columnar layout functionality."""
     p = Patcher(layout="columnar")
-    assert isinstance(p._layout_mgr, ColumnarLayoutManager)
+    assert isinstance(p._layout_mgr, MatrixLayoutManager)
+    assert p._layout_mgr.flow_direction == "column"
 
     # Test basic positioning
     rect = p._layout_mgr.get_relative_pos(Rect(0, 0, 66, 22))
@@ -217,6 +218,48 @@ def test_object_category_sets():
     assert 'dac~' in category.OUTPUT_OBJECTS
     assert 'ezdac~' in category.OUTPUT_OBJECTS
     assert 'print' in category.OUTPUT_OBJECTS
+
+    # Test INPUT_OBJECTS
+    assert 'adc~' in category.INPUT_OBJECTS
+    assert 'inlet' in category.INPUT_OBJECTS
+    assert 'receive' in category.INPUT_OBJECTS
+    assert 'bendin' in category.INPUT_OBJECTS
+    assert 'ctlin' in category.INPUT_OBJECTS
+    assert 'midiin' in category.INPUT_OBJECTS
+
+
+def test_input_objects_classification():
+    """Test that INPUT_OBJECTS are properly classified as category 0 (Controls/Inputs)."""
+    p = Patcher(layout="columnar")
+    layout_mgr = p._layout_mgr
+
+    # Test that input objects are classified as category 0
+    test_objects = [
+        p.add_textbox('adc~'),      # Audio input
+        p.add_textbox('inlet'),     # Generic inlet
+        p.add_textbox('receive test'),  # Message receive
+        p.add_textbox('bendin'),    # MIDI bend input
+        p.add_textbox('ctlin'),     # MIDI controller input
+        p.add_textbox('midiin')     # MIDI input
+    ]
+
+    for obj in test_objects:
+        category = layout_mgr._classify_object(obj)
+        assert category == 0, f"Input object {obj.maxclass} should be classified as category 0, got {category}"
+
+
+def test_input_objects_priority():
+    """Test that INPUT_OBJECTS have priority over CONTROL_OBJECTS in classification."""
+    p = Patcher(layout="columnar")
+    layout_mgr = p._layout_mgr
+
+    # Objects that are in both INPUT_OBJECTS and CONTROL_OBJECTS
+    overlapping_objects = ['bendin', 'ctlin', 'key', 'keyup', 'midiin', 'mousestate', 'notein', 'pgmin', 'touchin']
+
+    for obj_name in overlapping_objects:
+        obj = p.add_textbox(obj_name)
+        category = layout_mgr._classify_object(obj)
+        assert category == 0, f"Overlapping object {obj_name} should be classified as category 0 (inputs take priority)"
 
 
 def test_sort_objects_in_column():
