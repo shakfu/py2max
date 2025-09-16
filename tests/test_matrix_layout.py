@@ -1,4 +1,4 @@
-"""Tests for MatrixLayoutManager in columnar mode."""
+"""Tests for MatrixLayoutManager in both columnar and matrix modes."""
 
 import pytest
 from py2max import Patcher
@@ -9,7 +9,7 @@ import py2max.category as category
 
 def test_layout_columnar_basic():
     """Test basic columnar layout functionality."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
     assert isinstance(p._layout_mgr, MatrixLayoutManager)
     assert p._layout_mgr.flow_direction == "column"
 
@@ -22,7 +22,7 @@ def test_layout_columnar_basic():
 
 def test_object_classification():
     """Test object classification into columns."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
     layout_mgr = p._layout_mgr
 
     # Add objects from different categories
@@ -40,7 +40,7 @@ def test_object_classification():
 
 def test_unknown_object_inference():
     """Test inference of unknown object types."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
     layout_mgr = p._layout_mgr
 
     # Test audio object inference
@@ -62,7 +62,7 @@ def test_unknown_object_inference():
 
 def test_layout_columnar_with_connections():
     """Test columnar layout with connected objects."""
-    p = Patcher("outputs/test_layout_columnar_with_connections.maxpat", layout="columnar")
+    p = Patcher("outputs/test_layout_columnar_with_connections.maxpat", layout="matrix", flow_direction="column")
 
     # Create a typical signal chain
     metro = p.add_textbox('metro 500')  # Control
@@ -93,7 +93,7 @@ def test_layout_columnar_with_connections():
 def test_layout_columnar_multiple_objects():
     """Test columnar layout with multiple objects per column."""
     p = Patcher("outputs/test_layout_columnar_multiple_objects.maxpat",
-        layout="columnar")
+        layout="matrix", flow_direction="column")
 
     # Add multiple objects to same categories
     metro1 = p.add_textbox('metro 500')
@@ -134,7 +134,7 @@ def test_layout_columnar_multiple_objects():
 def test_layout_columnar_signal_flow_refinement():
     """Test that signal flow analysis refines column assignments."""
     p = Patcher("outputs/test_layout_columnar_signal_flow_refinement.maxpat",
-        layout="columnar")
+        layout="matrix", flow_direction="column")
 
     # Create objects where initial classification might be refined by connections
     osc = p.add_textbox('cycle~ 440')
@@ -155,10 +155,10 @@ def test_layout_columnar_signal_flow_refinement():
 def test_layout_columnar_column_spacing():
     """Test that column spacing parameter works correctly."""
     p1 = Patcher("outputs/test_layout_columnar_column_spacing.maxpat",
-        layout="columnar")
+        layout="matrix", flow_direction="column")
     p1._layout_mgr.column_spacing = 50.0
 
-    p2 = Patcher(layout="columnar")
+    p2 = Patcher(layout="matrix", flow_direction="column")
     p2._layout_mgr.column_spacing = 200.0
 
     # Add same objects to both
@@ -181,7 +181,7 @@ def test_layout_columnar_column_spacing():
 
 def test_layout_columnar_empty_patch():
     """Test columnar layout with empty patch."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
 
     # Should not crash with empty patch
     p.optimize_layout()
@@ -190,7 +190,7 @@ def test_layout_columnar_empty_patch():
 
 def test_layout_columnar_single_object():
     """Test columnar layout with single object."""
-    p = Patcher("outputs/test_layout_columnar_single_object.maxpat", layout="columnar")
+    p = Patcher("outputs/test_layout_columnar_single_object.maxpat", layout="matrix", flow_direction="column")
 
     osc = p.add_textbox('cycle~ 440')
     p.optimize_layout()
@@ -230,7 +230,7 @@ def test_object_category_sets():
 
 def test_input_objects_classification():
     """Test that INPUT_OBJECTS are properly classified as category 0 (Controls/Inputs)."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
     layout_mgr = p._layout_mgr
 
     # Test that input objects are classified as category 0
@@ -250,7 +250,7 @@ def test_input_objects_classification():
 
 def test_input_objects_priority():
     """Test that INPUT_OBJECTS have priority over CONTROL_OBJECTS in classification."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
     layout_mgr = p._layout_mgr
 
     # Objects that are in both INPUT_OBJECTS and CONTROL_OBJECTS
@@ -264,7 +264,7 @@ def test_input_objects_priority():
 
 def test_row_spacing_property():
     """Test that row_spacing property works correctly and updates dimension_spacing."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
     layout_mgr = p._layout_mgr
 
     # Test initial value
@@ -284,7 +284,7 @@ def test_row_spacing_property():
 
 def test_sort_objects_in_column():
     """Test internal sorting of objects within a column."""
-    p = Patcher(layout="columnar")
+    p = Patcher(layout="matrix", flow_direction="column")
 
     # Create a chain within the same column (processors)
     obj1 = p.add_textbox('gain~')
@@ -306,11 +306,117 @@ def test_sort_objects_in_column():
     assert obj3.id in sorted_ids
 
 
+def test_matrix_mode_basic():
+    """Test basic matrix layout functionality (flow_direction='row')."""
+    p = Patcher(layout="matrix", flow_direction="row")
+    assert isinstance(p._layout_mgr, MatrixLayoutManager)
+    assert p._layout_mgr.flow_direction == "row"
+
+    # Test basic positioning
+    rect = p._layout_mgr.get_relative_pos(Rect(0, 0, 66, 22))
+    assert isinstance(rect, Rect)
+    assert rect.x >= p._layout_mgr.pad
+    assert rect.y >= p._layout_mgr.pad
+
+
+def test_matrix_mode_signal_chains():
+    """Test matrix mode with multiple signal chains."""
+    p = Patcher("outputs/test_matrix_mode_signal_chains.maxpat", layout="matrix", flow_direction="row")
+
+    # Create two parallel signal chains
+    # Chain 1
+    metro1 = p.add_textbox('metro 250')        # Row 0 (Controls)
+    osc1 = p.add_textbox('cycle~ 440')         # Row 1 (Generators)
+    filter1 = p.add_textbox('lores~ 1000')     # Row 2 (Processors)
+
+    # Chain 2
+    metro2 = p.add_textbox('metro 333')        # Row 0 (Controls)
+    osc2 = p.add_textbox('saw~ 220')           # Row 1 (Generators)
+    delay2 = p.add_textbox('delay~ 500')       # Row 2 (Processors)
+
+    # Shared output
+    dac = p.add_textbox('ezdac~')              # Row 3 (Outputs)
+
+    # Connect the chains
+    p.add_line(metro1, osc1)
+    p.add_line(osc1, filter1)
+    p.add_line(metro2, osc2)
+    p.add_line(osc2, delay2)
+    p.add_line(filter1, dac)
+    p.add_line(delay2, dac)
+
+    # Optimize layout
+    p.optimize_layout()
+
+    # In matrix mode, objects of same category should have similar y positions
+    # (they're in the same row)
+    assert abs(metro1.patching_rect.y - metro2.patching_rect.y) < 50
+    assert abs(osc1.patching_rect.y - osc2.patching_rect.y) < 50
+    assert abs(filter1.patching_rect.y - delay2.patching_rect.y) < 50
+
+    # Objects in different categories should have different y positions
+    assert metro1.patching_rect.y != osc1.patching_rect.y
+    assert osc1.patching_rect.y != filter1.patching_rect.y
+    assert filter1.patching_rect.y != dac.patching_rect.y
+
+    p.save()
+
+
+def test_get_signal_chain_info():
+    """Test the get_signal_chain_info method for matrix analysis."""
+    p = Patcher(layout="matrix", flow_direction="row")
+
+    # Create signal chains
+    metro = p.add_textbox('metro 500')
+    osc1 = p.add_textbox('cycle~ 440')
+    osc2 = p.add_textbox('saw~ 220')
+    gain = p.add_textbox('gain~')
+    dac = p.add_textbox('ezdac~')
+
+    # Connect in branching pattern
+    p.add_line(metro, osc1)
+    p.add_line(metro, osc2)
+    p.add_line(osc1, gain)
+    p.add_line(osc2, gain)
+    p.add_line(gain, dac)
+
+    p.optimize_layout()
+
+    # Test signal chain analysis
+    chain_info = p._layout_mgr.get_signal_chain_info()
+    assert isinstance(chain_info, dict)
+    assert "num_chains" in chain_info
+    assert "matrix_size" in chain_info
+    assert chain_info["num_chains"] >= 1
+    assert isinstance(chain_info["matrix_size"], tuple)
+    assert len(chain_info["matrix_size"]) == 2
+
+
+def test_flow_direction_property():
+    """Test that flow_direction property works correctly."""
+    # Test column flow direction
+    p1 = Patcher(layout="matrix", flow_direction="column")
+    assert p1._layout_mgr.flow_direction == "column"
+
+    # Test row flow direction
+    p2 = Patcher(layout="matrix", flow_direction="row")
+    assert p2._layout_mgr.flow_direction == "row"
+
+
 if __name__ == "__main__":
-    # Run basic tests
+    # Run columnar mode tests
     test_layout_columnar_basic()
     test_object_classification()
     test_unknown_object_inference()
     test_layout_columnar_with_connections()
     test_layout_columnar_multiple_objects()
     print("All columnar layout tests passed!")
+
+    # Run matrix mode tests
+    test_matrix_mode_basic()
+    test_matrix_mode_signal_chains()
+    test_get_signal_chain_info()
+    test_flow_direction_property()
+    print("All matrix layout tests passed!")
+
+    print("All MatrixLayoutManager tests passed!")

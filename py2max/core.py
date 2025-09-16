@@ -355,7 +355,11 @@ class Patcher(abstract.AbstractPatcher):
 
     def set_layout_mgr(self, name: str) -> layout.LayoutManager:
         """takes a name and returns an instance of a layout manager"""
-        if name == "flow":
+        if name == "horizontal":
+            return layout.HorizontalLayoutManager(self)
+        elif name == "vertical":
+            return layout.VerticalLayoutManager(self)            
+        elif name == "flow":
             return layout.FlowLayoutManager(self, flow_direction=self._flow_direction)
         elif name == "grid":
             return layout.GridLayoutManager(
@@ -371,19 +375,7 @@ class Patcher(abstract.AbstractPatcher):
                 dimension_spacing=self._dimension_spacing,
             )
         else:
-            # Legacy fallback - create layout managers with default parameters
-            if name == "columnar":
-                return layout.MatrixLayoutManager(
-                    self,
-                    flow_direction="column",
-                    num_dimensions=self._num_dimensions,
-                    dimension_spacing=self._dimension_spacing,
-                )
-            else:
-                return {
-                    "horizontal": layout.HorizontalLayoutManager,
-                    "vertical": layout.VerticalLayoutManager,
-                }[name](self)
+            raise NotImplementedError(f"layout '{name}' doesn't exist")
 
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
