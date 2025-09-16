@@ -19,7 +19,7 @@ def test_layout_matrix_basic():
 
 
 def test_layout_matrix_inheritance():
-    """Test that MatrixLayoutManager inherits from ColumnarLayoutManager."""
+    """Test that MatrixLayoutManager inherits object classification capabilities."""
     p = Patcher(layout="matrix")
     layout_mgr = p._layout_mgr
 

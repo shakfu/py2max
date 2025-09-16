@@ -1,8 +1,8 @@
-"""Tests for ColumnarLayoutManager."""
+"""Tests for MatrixLayoutManager in columnar mode."""
 
 import pytest
 from py2max import Patcher
-from py2max.layout import ColumnarLayoutManager, MatrixLayoutManager
+from py2max.layout import MatrixLayoutManager
 from py2max.common import Rect
 import py2max.category as category
 
@@ -260,6 +260,26 @@ def test_input_objects_priority():
         obj = p.add_textbox(obj_name)
         category = layout_mgr._classify_object(obj)
         assert category == 0, f"Overlapping object {obj_name} should be classified as category 0 (inputs take priority)"
+
+
+def test_row_spacing_property():
+    """Test that row_spacing property works correctly and updates dimension_spacing."""
+    p = Patcher(layout="columnar")
+    layout_mgr = p._layout_mgr
+
+    # Test initial value
+    initial_spacing = layout_mgr.dimension_spacing
+    assert layout_mgr.row_spacing == initial_spacing
+
+    # Test setting row_spacing updates dimension_spacing
+    layout_mgr.row_spacing = 150.0
+    assert layout_mgr.dimension_spacing == 150.0
+    assert layout_mgr.row_spacing == 150.0
+
+    # Test that column_spacing and row_spacing are synchronized
+    layout_mgr.column_spacing = 200.0
+    assert layout_mgr.row_spacing == 200.0
+    assert layout_mgr.dimension_spacing == 200.0
 
 
 def test_sort_objects_in_column():

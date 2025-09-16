@@ -769,296 +769,6 @@ class FlowLayoutManager(LayoutManager):
         self._position_cache = positions
 
 
-class ColumnarLayoutManager(LayoutManager):
-    """Columnar layout manager optimized for typical Max patch patterns.
-
-    This layout manager organizes objects into vertical columns based on their
-    functional categories, following the common Max pattern:
-    - Column 1: Input and control objects (parameters, inputs, UI elements, MIDI in, audio in)
-    - Column 2: Sound generators (oscillators, samplers, noise sources)
-    - Column 3: Sound processors (filters, effects, modulation)
-    - Column 4: Output objects (mixers, gain~, dac~, ezdac~)
-
-    Objects within each column flow top-down and can be replicated horizontally
-    as needed. Connected objects are automatically clustered within appropriate
-    columns to maintain signal flow coherence.
-
-    Args:
-        parent: The parent patcher object.
-        pad: Padding between objects (default: 48.0).
-        box_width: Default object width (default: 66.0).
-        box_height: Default object height (default: 22.0).
-        comment_pad: Padding for comments (default: 2).
-        num_columns: Number of functional columns (default: 4).
-        column_spacing: Extra spacing between columns (default: 100.0).
-    """
-
-    # Define object categories for column assignment
-
-    def __init__(
-        self,
-        parent: AbstractPatcher,
-        pad: Optional[int] = None,
-        box_width: Optional[int] = None,
-        box_height: Optional[int] = None,
-        comment_pad: Optional[int] = None,
-        num_columns: int = 4,
-        column_spacing: float = 100.0,
-    ):
-        super().__init__(parent, pad, box_width, box_height, comment_pad)
-        self.num_columns = num_columns
-        self.column_spacing = column_spacing
-        self._column_counters = [0] * num_columns  # Track y position in each column
-        self._column_assignments: Dict[str, int] = {}  # Cache object->column mapping
-
-    def _classify_object(self, obj) -> int:
-        """Classify an object and assign it to the appropriate column.
-
-        Args:
-            obj: The Box object to classify.
-
-        Returns:
-            Column index (0-3) for the object.
-        """
-        # Get the actual object name for classification
-        if obj.maxclass == "newobj":
-            text = obj._kwds.get("text", "")
-            if text:
-                object_name = text.split()[0] if text.split() else obj.maxclass
-            else:
-                object_name = obj.maxclass
-        else:
-            object_name = obj.maxclass
-
-        # Check each category in order
-        # Check for input objects first (they take priority over controls)
-        if object_name in category.INPUT_OBJECTS:
-            return 0  # Controls/Inputs column
-        elif object_name in category.CONTROL_OBJECTS:
-            return 0  # Controls column
-        elif object_name in category.GENERATOR_OBJECTS:
-            return 1  # Generators column
-        elif object_name in category.PROCESSOR_OBJECTS:
-            return 2  # Processors column
-        elif object_name in category.OUTPUT_OBJECTS:
-            return 3  # Outputs column
-        else:
-            # For unknown objects, try to infer from connections or name patterns
-            return self._infer_column_from_context(obj, object_name)
-
-    def _infer_column_from_context(self, obj, object_name: str) -> int:
-        """Infer column assignment from object name patterns and context.
-
-        Args:
-            obj: The Box object.
-            object_name: The object's name/type.
-
-        Returns:
-            Column index (0-3) for the object.
-        """
-        # Check specific patterns first (regardless of ~ suffix)
-
-        # Output-like patterns (check first because they can end with ~)
-        if any(out_word in object_name.lower() for out_word in
-               ['out', 'dac', 'record', 'write', 'send', 'print', 'meter']):
-            return 3  # Outputs
-
-        # Input-like patterns
-        if any(input_word in object_name.lower() for input_word in
-               ['adc', 'in', 'inlet', 'receive', 'midiin', 'notein', 'ctlin', 'bendin', 'pgmin', 'touchin']):
-            return 0  # Inputs/Controls
-
-        # UI/control-like patterns
-        if any(ctrl_word in object_name.lower() for ctrl_word in
-               ['button', 'slider', 'dial', 'knob', 'fader', 'param']):
-            return 0  # Controls
-
-        # Audio objects (end with ~) are likely processors unless clearly generators
-        if object_name.endswith('~'):
-            # Look for generator patterns
-            if any(gen_word in object_name.lower() for gen_word in
-                   ['osc', 'cycle', 'saw', 'noise', 'play', 'sample']):
-                return 1  # Generators
-            else:
-                return 2  # Processors (default for audio objects)
-
-        # Default to processors column for unknown objects
-        return 2
-
-    def _analyze_signal_flow(self) -> Dict[str, set]:
-        """Analyze signal flow to refine column assignments.
-
-        Returns:
-            Dictionary mapping object IDs to their connected object IDs.
-        """
-        connections: Dict[str, set] = {}
-
-        # Initialize all objects with empty connection sets
-        for obj_id in self.parent._objects:
-            connections[obj_id] = set()
-
-        # Build connection graph
-        for line in self.parent._lines:
-            src_id, dst_id = line.src, line.dst
-            if src_id and dst_id and src_id in connections and dst_id in connections:
-                connections[src_id].add(dst_id)
-                connections[dst_id].add(src_id)
-
-        return connections
-
-    def _refine_column_assignments_by_flow(self):
-        """Refine column assignments based on signal flow analysis."""
-        # For now, disable flow refinement to keep objects in their initial classifications
-        # The initial classification should be sufficient for most cases
-
-        # This method can be expanded later to handle more complex refinement scenarios
-        # where the initial classification might be wrong based on actual connections
-        pass
-
-    def get_relative_pos(self, rect: Rect) -> Rect:
-        """Returns a column-based position for the object."""
-        x, y, w, h = rect
-
-        # For initial positioning, we'll assign based on creation order
-        # Real optimization happens in optimize_layout()
-        column = len(self.parent._objects) % self.num_columns
-
-        # Calculate column x position
-        column_width = (self.parent.width - self.pad * 2 - self.column_spacing * (self.num_columns - 1)) / self.num_columns
-        x = self.pad + column * (column_width + self.column_spacing)
-
-        # Calculate y position within column
-        y = self.pad + self._column_counters[column] * (self.box_height + self.pad // 2)
-        self._column_counters[column] += 1
-
-        # Wrap to next "row" if column gets too long
-        if y + h + self.pad > self.parent.height:
-            # Start a new horizontal section
-            self._column_counters[column] = 0
-            # For now, just restart at top - in optimize_layout we'll handle this better
-            y = self.pad
-
-        return Rect(x, y, w, h)
-
-    def optimize_layout(self):
-        """Optimize the layout by analyzing objects and organizing into functional columns."""
-        if len(self.parent._objects) < 2:
-            return
-
-        # Step 1: Classify all objects into columns
-        for obj_id, obj in self.parent._objects.items():
-            if obj_id not in self._column_assignments:
-                self._column_assignments[obj_id] = self._classify_object(obj)
-
-        # Step 2: Refine assignments based on signal flow
-        self._refine_column_assignments_by_flow()
-
-        # Step 3: Apply columnar layout
-        self._apply_columnar_layout()
-
-    def _apply_columnar_layout(self):
-        """Apply the columnar layout to all objects."""
-        # Group objects by column
-        column_objects: Dict[int, List[str]] = {i: [] for i in range(self.num_columns)}
-
-        for obj_id, column in self._column_assignments.items():
-            column = min(column, self.num_columns - 1)  # Ensure valid column
-            column_objects[column].append(obj_id)
-
-        # Calculate column dimensions
-        column_width = (self.parent.width - self.pad * 2 - self.column_spacing * (self.num_columns - 1)) / self.num_columns
-
-        # Position objects within each column
-        for column_idx in range(self.num_columns):
-            objects_in_column = column_objects[column_idx]
-            if not objects_in_column:
-                continue
-
-            # Calculate column base x position
-            column_x = self.pad + column_idx * (column_width + self.column_spacing)
-
-            # Sort objects within column by their connections to maintain flow
-            objects_in_column = self._sort_objects_in_column(objects_in_column)
-
-            # Handle horizontal replication if column has too many objects
-            objects_per_column = max(1, int((self.parent.height - 2 * self.pad) / (self.box_height + self.pad // 2)))
-
-            for i, obj_id in enumerate(objects_in_column):
-                if obj_id in self.parent._objects:
-                    obj = self.parent._objects[obj_id]
-
-                    # Calculate position within column
-                    sub_column = i // objects_per_column  # Horizontal replication index
-                    row_in_sub_column = i % objects_per_column
-
-                    # Calculate x position (with horizontal replication)
-                    sub_column_width = column_width / max(1, (len(objects_in_column) - 1) // objects_per_column + 1)
-                    x = column_x + sub_column * sub_column_width
-
-                    # Calculate y position (top-down flow)
-                    y = self.pad + row_in_sub_column * (self.box_height + self.pad // 2)
-
-                    # Ensure bounds
-                    x = min(max(x, self.pad), self.parent.width - self.box_width - self.pad)
-                    y = min(max(y, self.pad), self.parent.height - self.box_height - self.pad)
-
-                    obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
-
-    def _sort_objects_in_column(self, obj_ids: List[str]) -> List[str]:
-        """Sort objects within a column to maintain logical flow order.
-
-        Args:
-            obj_ids: List of object IDs in the column.
-
-        Returns:
-            Sorted list of object IDs.
-        """
-        if len(obj_ids) <= 1:
-            return obj_ids
-
-        # Build local connection graph for objects in this column
-        local_connections: Dict[str, set] = {obj_id: set() for obj_id in obj_ids}
-
-        for line in self.parent._lines:
-            src_id, dst_id = line.src, line.dst
-            if src_id in local_connections and dst_id in local_connections:
-                local_connections[src_id].add(dst_id)
-
-        # Topological sort to maintain signal flow order
-        visited = set()
-        temp_visited = set()
-        result = []
-
-        def dfs(obj_id):
-            if obj_id in temp_visited:
-                return  # Cycle detected, skip
-            if obj_id in visited:
-                return
-
-            temp_visited.add(obj_id)
-
-            # Visit outputs first (reverse topological order for top-down layout)
-            for connected_id in local_connections.get(obj_id, set()):
-                if connected_id in local_connections:  # Only consider objects in this column
-                    dfs(connected_id)
-
-            temp_visited.remove(obj_id)
-            visited.add(obj_id)
-            result.insert(0, obj_id)  # Insert at beginning for reverse order
-
-        # Process all objects
-        for obj_id in obj_ids:
-            if obj_id not in visited:
-                dfs(obj_id)
-
-        # Add any remaining objects (shouldn't happen with proper DFS)
-        for obj_id in obj_ids:
-            if obj_id not in result:
-                result.append(obj_id)
-
-        return result
-
-
 class MatrixLayoutManager(LayoutManager):
     """Unified matrix/columnar layout manager with configurable flow direction.
 
@@ -1126,8 +836,6 @@ class MatrixLayoutManager(LayoutManager):
 
         # Legacy properties for backward compatibility
         self.num_rows = num_dimensions
-        self.row_spacing = dimension_spacing
-        self._column_spacing = dimension_spacing
 
         # Layout-specific properties
         self._signal_chains: List[List[str]] = []  # Each inner list is a connected signal chain (used in row mode)
@@ -1137,12 +845,21 @@ class MatrixLayoutManager(LayoutManager):
     @property
     def column_spacing(self) -> float:
         """Get column spacing (legacy property)."""
-        return self._column_spacing
+        return self.dimension_spacing
 
     @column_spacing.setter
     def column_spacing(self, value: float):
         """Set column spacing and update dimension_spacing (legacy property)."""
-        self._column_spacing = value
+        self.dimension_spacing = value
+
+    @property
+    def row_spacing(self) -> float:
+        """Get row spacing (legacy property)."""
+        return self.dimension_spacing
+
+    @row_spacing.setter
+    def row_spacing(self, value: float):
+        """Set row spacing and update dimension_spacing (legacy property)."""
         self.dimension_spacing = value
 
     def _analyze_signal_chains(self) -> List[List[str]]:
@@ -1302,7 +1019,7 @@ class MatrixLayoutManager(LayoutManager):
 
     def _optimize_matrix_layout(self):
         """Optimize the layout by organizing objects into a signal chain matrix."""
-        # Step 1: Classify all objects into categories (inherited from ColumnarLayoutManager)
+        # Step 1: Classify all objects into categories
         for obj_id, obj in self.parent._objects.items():
             if obj_id not in self._column_assignments:
                 self._column_assignments[obj_id] = self._classify_object(obj)

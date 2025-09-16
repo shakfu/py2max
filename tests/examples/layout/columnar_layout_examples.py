@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Demonstration of the ColumnarLayoutManager for py2max.
+Demonstration of the MatrixLayoutManager in columnar mode for py2max.
 
-This example shows how the ColumnarLayoutManager automatically organizes
+This example shows how the MatrixLayoutManager in columnar mode automatically organizes
 Max objects into functional columns following typical Max patch patterns:
 - Column 1: Controls (parameters, inputs, UI elements)
 - Column 2: Generators (oscillators, samplers, noise sources)
@@ -152,7 +152,7 @@ def create_multi_voice_patch():
 
 
 if __name__ == "__main__":
-    print("ColumnarLayoutManager Demo")
+    print("MatrixLayoutManager Columnar Mode Demo")
     print("=" * 50)
 
     # Create demonstration patches
