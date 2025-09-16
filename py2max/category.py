@@ -1,4 +1,34 @@
+"""
+This file contains sets of objects of a certain category which can be used by
+py2max, for example in layout managers.
+"""
 
+INPUT_OBJECTS = set([
+    'adc~',
+    'bendin',
+    'ctlin',
+    'hi',
+    'in',
+    'in~',
+    'inlet',
+    'inlet~',
+    'key',
+    'keyup',
+    'midiin',
+    'mousestate',
+    'notein',
+    'param',
+    'pgmin',
+    'receive',
+    'receive~',
+    'r',
+    'route',
+    'sel',
+    'select',
+    'touchin',
+    'udpreceive',
+    'unpack',
+])
 
 CONTROL_OBJECTS = set([
     'attrui',
@@ -154,4 +184,3 @@ OUTPUT_OBJECTS = set([
     'vu~',
     'writesf~',
 ])
-    

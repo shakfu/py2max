@@ -774,7 +774,7 @@ class ColumnarLayoutManager(LayoutManager):
 
     This layout manager organizes objects into vertical columns based on their
     functional categories, following the common Max pattern:
-    - Column 1: Control objects (parameters, inputs, UI elements)
+    - Column 1: Input and control objects (parameters, inputs, UI elements, MIDI in, audio in)
     - Column 2: Sound generators (oscillators, samplers, noise sources)
     - Column 3: Sound processors (filters, effects, modulation)
     - Column 4: Output objects (mixers, gain~, dac~, ezdac~)
@@ -831,7 +831,10 @@ class ColumnarLayoutManager(LayoutManager):
             object_name = obj.maxclass
 
         # Check each category in order
-        if object_name in category.CONTROL_OBJECTS:
+        # Check for input objects first (they take priority over controls)
+        if object_name in category.INPUT_OBJECTS:
+            return 0  # Controls/Inputs column
+        elif object_name in category.CONTROL_OBJECTS:
             return 0  # Controls column
         elif object_name in category.GENERATOR_OBJECTS:
             return 1  # Generators column
@@ -859,6 +862,11 @@ class ColumnarLayoutManager(LayoutManager):
         if any(out_word in object_name.lower() for out_word in
                ['out', 'dac', 'record', 'write', 'send', 'print', 'meter']):
             return 3  # Outputs
+
+        # Input-like patterns
+        if any(input_word in object_name.lower() for input_word in
+               ['adc', 'in', 'inlet', 'receive', 'midiin', 'notein', 'ctlin', 'bendin', 'pgmin', 'touchin']):
+            return 0  # Inputs/Controls
 
         # UI/control-like patterns
         if any(ctrl_word in object_name.lower() for ctrl_word in
@@ -1060,10 +1068,10 @@ class MatrixLayoutManager(ColumnarLayoutManager):
 
     Matrix Layout Pattern:
     ```
-    Row 0 (Controls):   [control0] [control1] [control2] ...
-    Row 1 (Generators): [gen0]     [gen1]     [gen2]     ...
-    Row 2 (Processors): [proc0]    [proc1]    [proc2]    ...
-    Row 3 (Outputs):    [output0]  [output1]  [output2]  ...
+    Row 0 (Inputs/Controls): [input0/control0] [input1/control1] [input2/control2] ...
+    Row 1 (Generators):     [gen0]             [gen1]             [gen2]             ...
+    Row 2 (Processors):     [proc0]            [proc1]            [proc2]            ...
+    Row 3 (Outputs):        [output0]          [output1]          [output2]          ...
     ```
 
     Each column represents objects that are connected together in signal chains.
@@ -1160,10 +1168,10 @@ class MatrixLayoutManager(ColumnarLayoutManager):
         # Start from objects with no inputs (sources) or minimal inputs
         sources = [obj_id for obj_id, inputs in reverse_connections.items() if len(inputs) <= 1]
 
-        # If no clear sources, start from control objects
+        # If no clear sources, start from input/control objects
         if not sources:
             sources = [obj_id for obj_id, obj in self.parent._objects.items()
-                      if self._classify_object(obj) == 0]  # Control objects
+                      if self._classify_object(obj) == 0]  # Input/Control objects
 
         # Trace chains from sources
         for source in sources:
