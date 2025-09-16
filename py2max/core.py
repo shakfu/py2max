@@ -105,7 +105,7 @@ class Patcher(abstract.AbstractPatcher):
         openinpresentation: int = 0,
         validate_connections: bool = False,
         flow_direction: str = "horizontal",
-        cluster_connected: bool = True,
+        cluster_connected: bool = False,
     ):
         self._path = path
         self._parent = parent
@@ -127,6 +127,7 @@ class Patcher(abstract.AbstractPatcher):
         self._layout_mgr: abstract.AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
+        self._pending_comments: list[tuple[str, str, Optional[str]]] = []  # [(box_id, comment_text, comment_pos), ...]
         self._maxclass_methods = {
             # specialized methods
             "m": self.add_message,  # custom -- like keyboard shortcut
@@ -330,8 +331,13 @@ class Patcher(abstract.AbstractPatcher):
         """Save the patch to the default file path.
 
         Uses the path specified during Patcher creation. If no path
-        was specified, this method will do nothing.
+        was specified, this method will do nothing. Before saving,
+        processes any pending associated comments to ensure they are
+        positioned correctly relative to their boxes.
         """
+        # Process pending comments before saving
+        self._process_pending_comments()
+
         if self._path:
             self.save_as(self._path)
 
@@ -348,7 +354,7 @@ class Patcher(abstract.AbstractPatcher):
             return layout.GridLayoutManager(
                 self,
                 flow_direction=self._flow_direction,
-                cluster_connected=getattr(self, "_cluster_connected", True),
+                cluster_connected=self._cluster_connected,
             )
         else:
             return {
@@ -368,7 +374,8 @@ class Patcher(abstract.AbstractPatcher):
         """Optimize object positions based on layout manager type.
 
         Calls the layout manager's optimization method to improve object
-        positioning. The effect depends on the layout manager:
+        positioning, then repositions any associated comments based on
+        the new box positions. The effect depends on the layout manager:
 
         - FlowLayoutManager: Arranges objects by signal flow topology
         - GridLayoutManager: Clusters connected objects together
@@ -379,6 +386,9 @@ class Patcher(abstract.AbstractPatcher):
         """
         if hasattr(self._layout_mgr, "optimize_layout"):
             self._layout_mgr.optimize_layout()
+
+        # Process pending comments after layout optimization
+        self._process_pending_comments()
 
     def _get_object_name(self, obj: abstract.AbstractBox) -> str:
         """Get the actual object name for validation purposes.
@@ -413,19 +423,12 @@ class Patcher(abstract.AbstractPatcher):
     def add_associated_comment(
         self, box: "Box", comment: str, comment_pos: Optional[str] = None
     ):
-        """add a comment associated with the object"""
+        """Store a comment association to be processed later during layout optimization or save.
 
-        rect = box.patching_rect
-        x, y, w, h = rect
-        if h != self._layout_mgr.box_height:
-            if box.maxclass in maxref.MAXCLASS_DEFAULTS:
-                dh: float = 0.0
-                _, _, _, dh = maxref.MAXCLASS_DEFAULTS[box.maxclass]["patching_rect"]
-                rect = Rect(x, y, w, dh)
-            else:
-                h = self._layout_mgr.box_height
-                rect = Rect(x, y, w, h)
-        # rect = x, y, self._layout_mgr.box_width, self._layout_mgr.box_height
+        This defers the actual comment positioning until after layout optimization,
+        ensuring comments stay properly positioned relative to their associated boxes.
+        """
+
         if comment_pos:
             assert comment_pos in [
                 "above",
@@ -433,13 +436,48 @@ class Patcher(abstract.AbstractPatcher):
                 "right",
                 "left",
             ], f"comment:{comment} / comment_pos: {comment_pos}"
-            patching_rect = getattr(self._layout_mgr, comment_pos)(rect)
-        else:
-            patching_rect = self._layout_mgr.above(rect)
-        if comment_pos == "left":  # special case
-            self.add_comment(comment, patching_rect, justify="right")
-        else:
-            self.add_comment(comment, patching_rect)
+
+        # Store the association for deferred processing
+        self._pending_comments.append((box.id, comment, comment_pos))
+
+    def _process_pending_comments(self):
+        """Process all pending comment associations and position comments relative to their boxes.
+
+        This method is called during layout optimization and save operations to ensure
+        comments are positioned correctly after any layout changes.
+        """
+        for box_id, comment_text, comment_pos in self._pending_comments:
+            if box_id not in self._objects:
+                continue  # Skip if box was removed
+
+            box = self._objects[box_id]
+            rect = box.patching_rect
+            x, y, w, h = rect
+
+            # Adjust rect height if needed
+            if h != self._layout_mgr.box_height:
+                if box.maxclass in maxref.MAXCLASS_DEFAULTS:
+                    dh: float = 0.0
+                    _, _, _, dh = maxref.MAXCLASS_DEFAULTS[box.maxclass]["patching_rect"]
+                    rect = Rect(x, y, w, dh)
+                else:
+                    h = self._layout_mgr.box_height
+                    rect = Rect(x, y, w, h)
+
+            # Calculate comment position
+            if comment_pos:
+                patching_rect = getattr(self._layout_mgr, comment_pos)(rect)
+            else:
+                patching_rect = self._layout_mgr.above(rect)
+
+            # Create the comment with appropriate justification
+            if comment_pos == "left":  # special case
+                self.add_comment(comment_text, patching_rect, justify="right")
+            else:
+                self.add_comment(comment_text, patching_rect)
+
+        # Clear pending comments after processing
+        self._pending_comments.clear()
 
     def add_patchline_by_index(
         self, src_id: str, dst_id: str, dst_inlet: int = 0, src_outlet: int = 0
