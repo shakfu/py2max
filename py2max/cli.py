@@ -19,6 +19,7 @@ from .core import InvalidConnectionError, Patcher, Patchline
 from .common import Rect
 from .maxref import MaxRefCache, validate_connection
 from .transformers import available_transformers, create_transformer, run_pipeline
+from .converters import maxpat_to_python, maxref_to_sqlite
 
 
 LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
@@ -297,6 +298,39 @@ def cmd_transform(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_convert(args: argparse.Namespace) -> int:
+    if args.mode == "maxpat-to-python":
+        if not args.input or not args.output:
+            print(
+                "Usage: py2max convert maxpat-to-python <input.maxpat> <output.py>",
+                file=sys.stderr,
+            )
+            return 1
+
+        maxpat_to_python(args.input, args.output, default_output=args.default_output)
+        print(f"Wrote Python builder to {args.output}")
+        return 0
+
+    if args.mode == "maxref-to-sqlite":
+        if not args.output:
+            print(
+                "Usage: py2max convert maxref-to-sqlite --output cache.db [--names name1 name2]",
+                file=sys.stderr,
+            )
+            return 1
+
+        names = args.names if args.names else None
+        count = maxref_to_sqlite(args.output, names=names, overwrite=args.overwrite)
+        print(f"Stored {count} maxref entr{'y' if count == 1 else 'ies'} in {args.output}")
+        return 0
+
+    print(
+        "Unknown convert mode. Supported: maxpat-to-python, maxref-to-sqlite",
+        file=sys.stderr,
+    )
+    return 1
+
+
 def cmd_maxref(args: argparse.Namespace) -> int:
     cache = MaxRefCache()
 
@@ -419,6 +453,42 @@ def build_parser() -> argparse.ArgumentParser:
         help="List available transformers and exit",
     )
     transform_parser.set_defaults(func=cmd_transform)
+
+    convert_parser = subparsers.add_parser("convert", help="Convert between patch representations")
+    convert_sub = convert_parser.add_subparsers(dest="mode")
+
+    convert_mp_py = convert_sub.add_parser(
+        "maxpat-to-python",
+        help="Generate a Python script that recreates a .maxpat file",
+    )
+    convert_mp_py.add_argument("input", help="Source .maxpat file")
+    convert_mp_py.add_argument("output", help="Destination Python file")
+    convert_mp_py.add_argument(
+        "--default-output",
+        help="Default output path embedded in the generated script",
+    )
+    convert_mp_py.set_defaults(func=cmd_convert)
+
+    convert_maxref = convert_sub.add_parser(
+        "maxref-to-sqlite",
+        help="Cache maxref metadata into an SQLite database",
+    )
+    convert_maxref.add_argument(
+        "--output",
+        required=True,
+        help="SQLite database path to write",
+    )
+    convert_maxref.add_argument(
+        "--names",
+        nargs="*",
+        help="Optional list of object names to include (defaults to all)",
+    )
+    convert_maxref.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Remove existing database before writing",
+    )
+    convert_maxref.set_defaults(func=cmd_convert)
 
     maxref_parser = subparsers.add_parser("maxref", help="Inspect Cycling '74 maxref metadata")
     maxref_parser.add_argument("name", nargs="?", help="Max object name (without .maxref.xml)")

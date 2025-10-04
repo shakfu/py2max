@@ -318,6 +318,13 @@ py2max maxref ezdac~ --test --output tests/test_ezdac_maxref.py
 # Apply a transformer pipeline via CLI
 py2max transform outputs/demo.maxpat --apply set-font-size=18 --apply add-comment=Auto
 
+# Convert a .maxpat file to a Python builder
+py2max convert maxpat-to-python tests/data/simple.maxpat outputs/simple_builder.py --default-output outputs/simple_from_py.maxpat
+
+# Cache maxref metadata locally for fast lookups
+py2max convert maxref-to-sqlite --output cache/maxref.db --overwrite
+# Optionally scope to specific objects or append with --names oscillators~ jit.world
+
 # Apply a transformer pipeline from Python
 from py2max import Patcher
 from py2max.transformers import run_pipeline, set_font_size, optimize_layout
