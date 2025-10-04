@@ -18,6 +18,7 @@ except Exception:  # pragma: no cover - optional dependency
 from .core import InvalidConnectionError, Patcher, Patchline
 from .common import Rect
 from .maxref import MaxRefCache, validate_connection
+from .transformers import available_transformers, create_transformer, run_pipeline
 
 
 LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
@@ -249,6 +250,53 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _parse_transform_spec(spec: str) -> tuple[str, str | None]:
+    if "=" in spec:
+        name, value = spec.split("=", 1)
+        name = name.strip()
+        value = value.strip()
+        return name, value or None
+    return spec.strip(), None
+
+
+def cmd_transform(args: argparse.Namespace) -> int:
+    if args.list_transformers:
+        for name, desc in available_transformers().items():
+            print(f"{name}: {desc}")
+        return 0
+
+    if not args.input:
+        print("Please provide an input .maxpat file.", file=sys.stderr)
+        return 1
+
+    if not args.apply:
+        print("No transformers specified. Use --apply name or --apply name=value.", file=sys.stderr)
+        return 1
+
+    input_path = Path(args.input)
+    output_path = Path(args.output) if args.output else input_path
+
+    patcher = Patcher.from_file(input_path, save_to=str(output_path))
+
+    transformers = []
+    for spec in args.apply:
+        name, value = _parse_transform_spec(spec)
+        try:
+            transformer = create_transformer(name, value)
+        except KeyError:
+            print(f"Unknown transformer '{name}'. Use --list-transformers to see options.", file=sys.stderr)
+            return 1
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        transformers.append(transformer)
+
+    run_pipeline(patcher, transformers)
+    patcher.save_as(output_path)
+    print(f"Saved transformed patcher to {output_path}")
+    return 0
+
+
 def cmd_maxref(args: argparse.Namespace) -> int:
     cache = MaxRefCache()
 
@@ -352,6 +400,25 @@ def build_parser() -> argparse.ArgumentParser:
     val_parser = subparsers.add_parser("validate", help="Validate patcher connections against maxref metadata")
     val_parser.add_argument("path", help="Target .maxpat path")
     val_parser.set_defaults(func=cmd_validate)
+
+    transform_parser = subparsers.add_parser("transform", help="Apply transformer pipeline to a patcher")
+    transform_parser.add_argument("input", nargs="?", help="Source .maxpat file")
+    transform_parser.add_argument("-o", "--output", help="Destination path (defaults to input)")
+    transform_parser.add_argument(
+        "-t",
+        "--apply",
+        metavar="NAME[=VALUE]",
+        action="append",
+        help="Transformer to apply (may be specified multiple times)",
+    )
+    transform_parser.add_argument(
+        "-l",
+        "--list-transformers",
+        action="store_true",
+        dest="list_transformers",
+        help="List available transformers and exit",
+    )
+    transform_parser.set_defaults(func=cmd_transform)
 
     maxref_parser = subparsers.add_parser("maxref", help="Inspect Cycling '74 maxref metadata")
     maxref_parser.add_argument("name", nargs="?", help="Max object name (without .maxref.xml)")

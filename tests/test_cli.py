@@ -175,3 +175,39 @@ def test_cli_maxref_requires_name(monkeypatch, capsys):
 
     assert exit_code == 1
     assert "Please specify" in captured.err
+
+
+def test_cli_transform_chain(tmp_path: Path):
+    source = tmp_path / "pipeline.maxpat"
+    patcher = Patcher(path=source)
+    osc = patcher.add_textbox("cycle~ 440")
+    dac = patcher.add_textbox("ezdac~")
+    patcher.add_line(osc, dac)
+    patcher.save()
+
+    dest = tmp_path / "pipeline_out.maxpat"
+    exit_code = run_cli([
+        "transform",
+        str(source),
+        "--output",
+        str(dest),
+        "--apply",
+        "set-font-size=24",
+        "--apply",
+        "add-comment=CLI",
+    ])
+
+    assert exit_code == 0
+    transformed = Patcher.from_file(dest)
+    assert transformed.default_fontsize == 24
+    comments = [box for box in transformed._boxes if box.maxclass == "comment"]
+    assert comments
+    assert all(comment.text == "CLI" for comment in comments)
+
+
+def test_cli_transform_list(capsys):
+    exit_code = run_cli(["transform", "--list-transformers"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "set-font-size" in captured.out

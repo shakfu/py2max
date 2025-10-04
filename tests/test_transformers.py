@@ -4,6 +4,7 @@ from py2max.transformers import (
     compose,
     optimize_layout,
     run_pipeline,
+    set_flow_direction,
     set_font_size,
 )
 
@@ -46,8 +47,8 @@ def test_compose_matches_pipeline():
 
 def test_optimize_layout_transform_updates_layout():
     patcher = build_patch()
-    transformed = optimize_layout(layout="vertical", flow_direction="vertical")(patcher)
+    transformed = optimize_layout(layout="vertical")(patcher)
 
     assert transformed._layout_mgr is not None
+    transformed = set_flow_direction("vertical")(transformed)
     assert getattr(transformed._layout_mgr, "flow_direction", "") == "vertical"
-

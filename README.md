@@ -315,6 +315,9 @@ py2max maxref cycle~ --json
 # Scaffold a pytest skeleton for an object
 py2max maxref ezdac~ --test --output tests/test_ezdac_maxref.py
 
+# Apply a transformer pipeline via CLI
+py2max transform outputs/demo.maxpat --apply set-font-size=18 --apply add-comment=Auto
+
 # Apply a transformer pipeline from Python
 from py2max import Patcher
 from py2max.transformers import run_pipeline, set_font_size, optimize_layout
