@@ -137,7 +137,7 @@ dmypy.json
 # uv
 uv.lock
 
-# claude
+# ai
 .claude
 CLAUDE.md
-
+AGENTS.md

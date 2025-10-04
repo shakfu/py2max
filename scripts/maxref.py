@@ -52,6 +52,31 @@ def to_pascal_case(s):
 # -----------------------------------------------------------------------------
 # main class
 
+class MaxRefDatabase:
+    def __init__(self):
+        self.suffix = '.maxref.xml'
+        self.db = {}
+
+    def _get_refpages(self) -> Path:
+        if PLATFORM == 'Darwin':
+            for p in Path('/Applications').glob('**/Max.app'):
+                if not 'Ableton' in str(p):
+                    return p / 'Contents/Resources/C74/docs/refpages'
+
+    def collect(self) -> dict[str, Path]:
+        refpages = self._get_refpages()
+        # for prefix in ['jit', 'max', 'msp', 'm4l']:
+        for prefix in ['msp']:
+            ref_dir = refpages / f'{prefix}-ref'
+            for f in ref_dir.iterdir():
+                name = f.name.replace(self.suffix, '')
+                self.db[name] = MaxRefParser(name)
+
+    def names(self):
+        return list(self.db.keys())
+
+
+
 
 class MaxRefParser:
     OBJECT_SUPER_CLASS = 'Object'
@@ -450,6 +475,7 @@ class MaxRefParser:
 
 
 if __name__ == '__main__':
+    from pprint import pprint
     import argparse
     parser = argparse.ArgumentParser(
         prog='maxref-parser',
@@ -463,6 +489,7 @@ if __name__ == '__main__':
     if HAVE_YAML:
         parser.add_argument('-y', '--yaml', action='store_true', help="dump parsed maxref as yaml")
     parser.add_argument('-l', '--list', action='store_true', help="list all objects")
+    parser.add_argument('-i', '--info', action='store_true', help="list all objects with info")
 
     args = parser.parse_args()
     p = MaxRefParser(args.name)
@@ -472,6 +499,23 @@ if __name__ == '__main__':
         for name in sorted(p.refdict.keys()):
             print(name)
         sys.exit(0)
+    elif args.info:
+        _db = MaxRefDatabase()
+        _db.collect()
+        res = {}
+        for name, refobj in _db.db.items():
+            # print(name)
+            try:
+                refobj.parse()
+                res[name] = refobj.d['digest']
+            except:
+                pass
+                # print((name, refobj))
+        # print(res)
+        with open('objects-msp.py', 'w') as f:
+            pprint(res, stream=f)
+        sys.exit(0)
+
 
     # post-parsing actions ------- 
     p.parse()

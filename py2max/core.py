@@ -610,23 +610,40 @@ class Patcher(abstract.AbstractPatcher):
             >>> metro = p.add_textbox('metro 500')
         """
         _maxclass, *tail = text.split()
-        if _maxclass in maxref.MAXCLASS_DEFAULTS and not maxclass:
-            defaults = maxref.MAXCLASS_DEFAULTS[_maxclass]
-            if "maxclass" in defaults:
-                maxclass = _maxclass
+
+        defaults = maxref.MAXCLASS_DEFAULTS.get(_maxclass)
+
+        if defaults:
+            if maxclass is None and defaults.get("maxclass"):
+                maxclass = defaults["maxclass"]
+
+            if numinlets is None and "numinlets" in defaults:
+                numinlets = defaults["numinlets"]
+
+            if numoutlets is None and "numoutlets" in defaults:
+                numoutlets = defaults["numoutlets"]
+
+            if outlettype is None and "outlettype" in defaults:
+                outlettype = defaults["outlettype"]
 
         kwds = self._textbox_helper(_maxclass, kwds)
+
+        layout_rect = self.get_pos(maxclass) if maxclass else self.get_pos()
+        if patching_rect is None and defaults and defaults.get("patching_rect"):
+            default_rect = defaults["patching_rect"]
+            patching_rect = Rect(layout_rect.x, layout_rect.y, default_rect.w, default_rect.h)
+        elif patching_rect is None:
+            patching_rect = layout_rect
 
         return self.add_box(
             Box(
                 id=id or self.get_id(),
                 text=text,
                 maxclass=maxclass or "newobj",
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 0,
-                outlettype=outlettype or [""],
-                patching_rect=patching_rect
-                or (self.get_pos(maxclass) if maxclass else self.get_pos()),
+                numinlets=numinlets if numinlets is not None else 1,
+                numoutlets=numoutlets if numoutlets is not None else 0,
+                outlettype=outlettype if outlettype is not None else [""],
+                patching_rect=patching_rect,
                 **kwds,
             ),
             comment,
