@@ -289,6 +289,33 @@ uv build
 
 The wheel then should be in the `dist` directory.
 
+## Command Line Usage
+
+py2max includes a small CLI so you can bootstrap and inspect patches without writing code:
+
+```bash
+# Create a starter stereo patch (use --force to overwrite)
+py2max new outputs/demo.maxpat --template stereo
+
+# Summarise basic stats for an existing patcher
+py2max info outputs/demo.maxpat
+
+# Optimise layout (writes in place unless you pass -o)
+py2max optimize outputs/demo.maxpat --layout matrix
+
+# Validate connections against maxref metadata
+py2max validate outputs/demo.maxpat
+
+# Inspect maxref metadata (list all objects)
+py2max maxref --list
+
+# Dump a specific object's metadata as JSON
+py2max maxref cycle~ --json
+
+# Scaffold a pytest skeleton for an object
+py2max maxref ezdac~ --test --output tests/test_ezdac_maxref.py
+```
+
 ## Examples of Use
 
 - [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
