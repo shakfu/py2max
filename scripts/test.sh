@@ -5,11 +5,11 @@
 
 PYSCRIPT=$1
 TO_COMPARE_WITH=$2
-NAME=`basename -s .py `
-MAXPAT=${NAME}.maxpat
+NAME=$(basename "${PYSCRIPT%.py}")
+MAXPAT="${NAME}.maxpat"
 
 mkdir -p outputs
-python3 $1 && \
-	./scripts/convert.py outputs/${MAXPAT} && \
-	./scripts/compare.py -y outputs/${MAXPAT} ${TO_COMPARE_WITH}
+python3 "$PYSCRIPT" && \
+	./scripts/convert.py "outputs/${MAXPAT}" && \
+	./scripts/compare.py -y "outputs/${MAXPAT}" "${TO_COMPARE_WITH}"
 echo "done"

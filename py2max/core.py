@@ -78,14 +78,14 @@ class Patcher(abstract.AbstractPatcher):
         parent: Parent patcher for hierarchical organization.
         classnamespace: Namespace for object classes (e.g., 'rnbo').
         reset_on_render: Whether to reset layout on render.
-        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow', 'columnar', 'matrix').
+        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow', 'matrix').
         auto_hints: Whether to automatically generate object hints.
         openinpresentation: Presentation mode setting.
         validate_connections: Whether to validate patchline connections.
         flow_direction: Direction for flow-based layouts ('horizontal', 'vertical').
         cluster_connected: Whether to cluster connected objects in grid layout.
-        num_dimensions: Number of columns (columnar) or rows (matrix) for matrix/columnar layouts.
-        dimension_spacing: Spacing between columns/rows for matrix/columnar layouts.
+        num_dimensions: Number of rows used by the matrix layout (also treated as column count when flow_direction='column').
+        dimension_spacing: Spacing between rows/columns for matrix layout variants.
 
     Example:
         >>> p = Patcher('my-patch.maxpat', layout='grid')
@@ -108,7 +108,7 @@ class Patcher(abstract.AbstractPatcher):
         validate_connections: bool = False,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
-        # New matrix/columnar layout parameters
+        # Matrix layout configuration parameters
         num_dimensions: int = 4,
         dimension_spacing: float = 100.0,
     ):
@@ -329,7 +329,7 @@ class Patcher(abstract.AbstractPatcher):
         """
         path = Path(path)
         if path.parent:
-            path.parent.mkdir(exist_ok=True)
+            path.parent.mkdir(parents=True, exist_ok=True)
         self.render()
         with open(path, "w", encoding="utf8") as f:
             json.dump(self.to_dict(), f, indent=4)
