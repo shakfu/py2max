@@ -2,6 +2,38 @@
 
 ## 0.2.x
 
+### New: SQLite Database Support
+
+- Added `py2max.db` module with comprehensive SQLite database support for Max object reference data
+
+- Added `MaxRefDB` class for creating, querying, and managing Max object databases
+
+- Added 14 normalized database tables: objects, metadata, inlets, outlets, methods, method_args, attributes, attribute_enums, objargs, examples, seealso, misc, palette, parameter
+
+- Added support for both in-memory and file-based databases
+
+- Added database query API: `search_objects()`, `get_objects_by_category()`, `get_all_categories()`
+
+- Added bidirectional conversion: .maxref.xml → SQLite → JSON
+
+- Added `export_to_json()` and `import_from_json()` methods for database portability
+
+- Added `create_database()` convenience function for database creation and population
+
+- Added category-based population methods: `populate_all_objects()`, `populate_all_max_objects()`, `populate_all_jit_objects()`, `populate_all_msp_objects()`, `populate_all_m4l_objects()`
+
+- Added maxref category helper functions: `get_all_max_objects()`, `get_all_jit_objects()`, `get_all_msp_objects()`, `get_all_m4l_objects()`, `get_objects_by_category()`
+
+- Added category tracking to maxref module (462 Max, 448 MSP, 210 Jitter, 37 M4L objects)
+
+- Added complete test suite with 17 test cases
+
+- Added `examples/maxref_db_demo.py` demonstration script
+
+- Added `examples/category_db_demo.py` category-specific examples
+
+- Added `docs/database.md` API documentation
+
 ## 0.1.2
 
 ### Improvements in Type Safety

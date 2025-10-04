@@ -22,13 +22,21 @@ class MaxRefCache:
     def __init__(self):
         self._cache: Dict[str, Dict[str, Any]] = {}
         self._refdict: Optional[Dict[str, Path]] = None
+        self._category_map: Optional[Dict[str, str]] = None
 
     @property
     def refdict(self) -> Dict[str, Path]:
         """Get dictionary of available .maxref.xml files"""
         if self._refdict is None:
-            self._refdict = self._get_refdict()
+            self._refdict, self._category_map = self._get_refdict()
         return self._refdict
+
+    @property
+    def category_map(self) -> Dict[str, str]:
+        """Get dictionary mapping object names to categories (jit, max, msp, m4l)"""
+        if self._category_map is None:
+            self._refdict, self._category_map = self._get_refdict()
+        return self._category_map
 
     def _get_refpages(self) -> Optional[Path]:
         """Find Max refpages directory"""
@@ -40,9 +48,10 @@ class MaxRefCache:
                         return refpages_path
         return None
 
-    def _get_refdict(self) -> Dict[str, Path]:
-        """Build dictionary of all available .maxref.xml files"""
+    def _get_refdict(self) -> tuple[Dict[str, Path], Dict[str, str]]:
+        """Build dictionary of all available .maxref.xml files and category mapping"""
         refdict = {}
+        category_map = {}
         refpages = self._get_refpages()
         if refpages:
             for prefix in ["jit", "max", "msp", "m4l"]:
@@ -52,7 +61,8 @@ class MaxRefCache:
                         if f.name.endswith(".maxref.xml"):
                             name = f.name.replace(".maxref.xml", "")
                             refdict[name] = f
-        return refdict
+                            category_map[name] = prefix
+        return refdict, category_map
 
     def _clean_text(self, text: str) -> str:
         """Clean XML text for parsing"""
@@ -411,6 +421,41 @@ def get_object_help(name: str) -> str:
 def get_available_objects() -> List[str]:
     """Get list of all available Max objects with .maxref.xml files"""
     return sorted(_maxref_cache.refdict.keys())
+
+
+def get_objects_by_category(category: str) -> List[str]:
+    """Get list of objects in a specific category (jit, max, msp, m4l)
+
+    Args:
+        category: Category name ('jit', 'max', 'msp', or 'm4l')
+
+    Returns:
+        Sorted list of object names in that category
+    """
+    return sorted([
+        name for name, cat in _maxref_cache.category_map.items()
+        if cat == category
+    ])
+
+
+def get_all_max_objects() -> List[str]:
+    """Get list of all Max objects (max-ref category)"""
+    return get_objects_by_category('max')
+
+
+def get_all_jit_objects() -> List[str]:
+    """Get list of all Jitter objects (jit-ref category)"""
+    return get_objects_by_category('jit')
+
+
+def get_all_msp_objects() -> List[str]:
+    """Get list of all MSP objects (msp-ref category)"""
+    return get_objects_by_category('msp')
+
+
+def get_all_m4l_objects() -> List[str]:
+    """Get list of all Max for Live objects (m4l-ref category)"""
+    return get_objects_by_category('m4l')
 
 
 # Legacy compatibility - generate defaults from .maxref.xml when available
