@@ -2,9 +2,9 @@
 
 ## General
 
-- [ ] Reverse-engineer a `.maxpat` file and produce python code (using py2max)
+- [x] Reverse-engineer a `.maxpat` file and produce python code (using py2max)
 
-- [ ] Apply patcher to a pipeline of transformations. Each of these is a function which takes a patcher and returns it transformed in some way. For example apply new layout add automatic comments or change font size.
+- [x] Apply patcher to a pipeline of transformations. Each of these is a function which takes a patcher and returns it transformed in some way. For example apply new layout add automatic comments or change font size.
 
 - [ ] Add a `py2max preview` command that exports patch layouts to PNG/SVG to enable offline visual validation without Max.
 

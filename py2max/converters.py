@@ -17,6 +17,7 @@ from __future__ import annotations
 from py2max import Box, Patcher
 from py2max.common import Rect
 
+{helper_functions_block}
 
 def build(output_path: str = {default_output_repr}) -> Patcher:
     """Rebuild the patcher and write it to ``output_path``."""
@@ -56,8 +57,24 @@ def _format_value(value: object) -> str:
     return repr(value)
 
 
-def _build_patcher_attribute_block(patcher_dict: dict) -> str:
+def _build_subpatch_function(name: str, patcher_dict: dict, ctx: _CodeGenContext) -> str:
+    attr_block, box_block, line_block, _ = _build_patcher_sections(
+        patcher_dict, ctx, "sp", f"{name}_obj", "    "
+    )
+    body = (
+        f"def {name}() -> Patcher:\n"
+        f"    sp = Patcher()\n"
+        f"{attr_block}{box_block}{line_block}"
+        "    return sp\n"
+    )
+    return body
+
+
+def _build_patcher_attribute_lines(
+    patcher_dict: dict, patcher_var: str, indent: str
+) -> str:
     lines: list[str] = []
+    keys_present: set[str] = set()
     for key, value in patcher_dict.items():
         if key in {"boxes", "lines"}:
             continue
@@ -67,8 +84,13 @@ def _build_patcher_attribute_block(patcher_dict: dict) -> str:
             formatted = _format_rect(value)
         else:
             formatted = _format_value(value)
-        line = f"    p.{key} = {formatted}"
+        line = f"{indent}{patcher_var}.{key} = {formatted}"
         lines.append(line)
+        keys_present.add(key)
+    missing = sorted(_DEFAULT_PUBLIC_ATTRS - keys_present)
+    for key in missing:
+        lines.append(f"{indent}if hasattr({patcher_var}, '{key}'):")
+        lines.append(f"{indent}    delattr({patcher_var}, '{key}')")
     return "\n".join(lines) + ("\n" if lines else "")
 
 
@@ -112,22 +134,65 @@ def _format_box(box: dict) -> tuple[str, dict[str, object]]:
     return f"Box({', '.join(parts)})", post_assign
 
 
-def _build_boxes_block(box_entries: list) -> tuple[str, dict[str, str]]:
+class _CodeGenContext:
+    def __init__(self):
+        self.counter = 0
+        self.helper_functions: list[str] = []
+
+    def new_subpatch_name(self) -> str:
+        name = f"_build_subpatch_{self.counter}"
+        self.counter += 1
+        return name
+
+
+def _build_patcher_sections(
+    patcher_dict: dict,
+    ctx: _CodeGenContext,
+    patcher_var: str,
+    obj_prefix: str,
+    indent: str,
+) -> tuple[str, str, str, dict[str, str]]:
+    attr_block = _build_patcher_attribute_lines(patcher_dict, patcher_var, indent)
+    box_block, id_map = _build_boxes_block(
+        patcher_dict.get("boxes", []), ctx, patcher_var, obj_prefix, indent
+    )
+    line_block = _build_lines_block(
+        patcher_dict.get("lines", []), id_map, patcher_var, indent
+    )
+    return attr_block, box_block, line_block, id_map
+
+
+def _build_boxes_block(
+    box_entries: list,
+    ctx: _CodeGenContext,
+    patcher_var: str,
+    obj_prefix: str,
+    indent: str,
+) -> tuple[str, dict[str, str]]:
     lines: list[str] = []
     id_map: dict[str, str] = {}
     for idx, entry in enumerate(box_entries, start=1):
-        box_data = entry.get("box", {})
+        box_data = dict(entry.get("box", {}))
         box_id = box_data.get("id", f"obj-{idx}")
-        var_name = f"obj_{idx}"
+        var_name = f"{obj_prefix}_{idx}"
         id_map[box_id] = var_name
+        subpatch_dict = box_data.pop("patcher", None)
         box_repr, post_assign = _format_box(box_data)
-        lines.append(f"    {var_name} = p.add_box({box_repr})")
+        lines.append(f"{indent}{var_name} = {patcher_var}.add_box({box_repr})")
         for attr, value in post_assign.items():
-            lines.append(f"    {var_name}.{attr} = {_format_value(value)}")
+            lines.append(f"{indent}{var_name}.{attr} = {_format_value(value)}")
+        if subpatch_dict:
+            func_name = ctx.new_subpatch_name()
+            helper = _build_subpatch_function(func_name, subpatch_dict, ctx)
+            ctx.helper_functions.append(helper)
+            lines.append(f"{indent}{var_name}._patcher = {func_name}()")
+            lines.append(f"{indent}{var_name}._patcher._parent = {patcher_var}")
     return ("\n".join(lines) + ("\n" if lines else ""), id_map)
 
 
-def _build_lines_block(lines_data: list, id_var_map: dict[str, str]) -> str:
+def _build_lines_block(
+    lines_data: list, id_var_map: dict[str, str], patcher_var: str, indent: str
+) -> str:
     lines_out: list[str] = []
     for idx, entry in enumerate(lines_data, start=1):
         line_data = entry.get("patchline", {})
@@ -140,16 +205,14 @@ def _build_lines_block(lines_data: list, id_var_map: dict[str, str]) -> str:
 
         var_name = f"line_{idx}"
         lines_out.append(
-            f"    {var_name} = p.add_patchline('{src_id}', {src_outlet}, '{dst_id}', {dst_inlet})"
+            f"{indent}{var_name} = {patcher_var}.add_patchline('{src_id}', {src_outlet}, '{dst_id}', {dst_inlet})"
         )
 
         for key, value in line_data.items():
             if key in {"source", "destination"}:
                 continue
             formatted = _format_value(value)
-            if "\n" in formatted:
-                formatted = formatted.replace("\n", "\n        ")
-            lines_out.append(f"    {var_name}.{key} = {formatted}")
+            lines_out.append(f"{indent}{var_name}.{key} = {formatted}")
 
     return "\n".join(lines_out) + ("\n" if lines_out else "")
 
@@ -183,9 +246,13 @@ def maxpat_to_python(
 
     default_output_repr = repr(default_output or f"{source_path.stem}.maxpat")
 
-    patcher_attr_block = _build_patcher_attribute_block(patcher_dict)
-    box_block, id_var_map = _build_boxes_block(patcher_dict.get("boxes", []))
-    line_block = _build_lines_block(patcher_dict.get("lines", []), id_var_map)
+    ctx = _CodeGenContext()
+    patcher_attr_block, box_block, line_block, _ = _build_patcher_sections(
+        patcher_dict, ctx, "p", "obj", "    "
+    )
+    helper_functions_block = "\n".join(ctx.helper_functions)
+    if helper_functions_block:
+        helper_functions_block += "\n\n"
 
     module_text = PY_TEMPLATE.format(
         source_name=source_path.name,
@@ -193,6 +260,7 @@ def maxpat_to_python(
         patcher_attr_block=patcher_attr_block,
         box_block=box_block,
         line_block=line_block,
+        helper_functions_block=helper_functions_block,
     )
 
     module_text = textwrap.dedent(module_text)
@@ -308,3 +376,8 @@ def maxref_to_sqlite(
         return len(rows)
     finally:
         conn.close()
+_DEFAULT_PUBLIC_ATTRS = {
+    name
+    for name in vars(Patcher()).keys()
+    if not name.startswith("_") and name not in {"boxes", "lines"}
+}

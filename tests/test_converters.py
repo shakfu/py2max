@@ -140,3 +140,15 @@ def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
 
     assert len(rows) == 2
     assert all(row[1] == "msp" for row in rows)
+
+
+def test_maxpat_to_python_with_subpatcher(tmp_path: Path):
+    source = DATA_DIR / "nested.maxpat"
+    script_path = OUTPUT_DIR / "nested_builder.py"
+    output_maxpat = OUTPUT_DIR / "nested_roundtrip.maxpat"
+
+    maxpat_to_python(source, script_path, default_output=str(output_maxpat))
+    runpy.run_path(str(script_path), run_name="__main__")
+
+    assert output_maxpat.exists()
+    assert _canonical(output_maxpat) == _canonical(source)
