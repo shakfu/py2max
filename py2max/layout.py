@@ -8,7 +8,7 @@ Max objects in patches:
 - FlowLayoutManager: Signal flow-based hierarchical layout
 """
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any, Set
 
 from .abstract import AbstractLayoutManager, AbstractPatcher
 from .maxref import MAXCLASS_DEFAULTS
@@ -888,9 +888,9 @@ class MatrixLayoutManager(LayoutManager):
 
         def trace_chain(start_obj: str) -> List[str]:
             """Trace a signal chain from a starting object."""
-            chain = []
-            current = start_obj
-            chain_visited = set()
+            chain: List[str] = []
+            current: Optional[str] = start_obj
+            chain_visited: set[str] = set()
 
             while current and current not in chain_visited:
                 if current in visited:
@@ -906,7 +906,7 @@ class MatrixLayoutManager(LayoutManager):
                 elif len(next_objects) > 1:
                     # Multiple outputs - choose based on object type priority
                     # Prefer continuing to processors/outputs over controls
-                    next_current = None
+                    next_current: Optional[str] = None
                     for next_obj in next_objects:
                         if next_obj in self.parent._objects:
                             next_obj_category = self._classify_object(self.parent._objects[next_obj])
@@ -954,7 +954,7 @@ class MatrixLayoutManager(LayoutManager):
         Returns:
             Dictionary mapping object_id -> (row, column) tuple.
         """
-        positions = {}
+        positions: Dict[str, tuple[int, float]] = {}
 
         # Group objects by signal chain and category
         for chain_idx, chain in enumerate(self._signal_chains):
@@ -1088,7 +1088,7 @@ class MatrixLayoutManager(LayoutManager):
 
                 obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
 
-    def get_signal_chain_info(self) -> Dict[str, any]:
+    def get_signal_chain_info(self) -> Dict[str, Any]:
         """Get information about detected signal chains.
 
         Returns:
@@ -1162,7 +1162,7 @@ class MatrixLayoutManager(LayoutManager):
             return []
 
         # Build simplified connection graph for this column
-        connections = {}
+        connections: Dict[str, Set[str]] = {}
         for obj_id in obj_ids:
             connections[obj_id] = set()
 
@@ -1307,5 +1307,3 @@ class MatrixLayoutManager(LayoutManager):
         # This method can be expanded later to handle more complex refinement scenarios
         # where the initial classification might be wrong based by actual connections
         pass
-
-

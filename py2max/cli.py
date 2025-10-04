@@ -8,14 +8,14 @@ import sys
 from pathlib import Path
 from pprint import pprint
 from textwrap import fill
-from typing import Iterable, List
+from typing import Iterable, List, Dict, Any, cast
 
 try:  # pragma: no cover - optional dependency
     import yaml  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
     yaml = None
 
-from .core import InvalidConnectionError, Patcher
+from .core import InvalidConnectionError, Patcher, Patchline
 from .common import Rect
 from .maxref import MaxRefCache, validate_connection
 
@@ -218,9 +218,10 @@ def cmd_validate(args: argparse.Namespace) -> int:
     errors: List[str] = []
 
     for line in patcher._lines:
-        src_id, dst_id = line.src, line.dst
-        src_port = int(line.source[1]) if len(line.source) > 1 else 0
-        dst_port = int(line.destination[1]) if len(line.destination) > 1 else 0
+        patchline = cast(Patchline, line)
+        src_id, dst_id = patchline.src, patchline.dst
+        src_port = int(patchline.source[1]) if len(patchline.source) > 1 else 0
+        dst_port = int(patchline.destination[1]) if len(patchline.destination) > 1 else 0
 
         src_obj = patcher._objects.get(src_id)
         dst_obj = patcher._objects.get(dst_id)
@@ -260,8 +261,8 @@ def cmd_maxref(args: argparse.Namespace) -> int:
     if args.info:
         names = sorted(cache.refdict.keys())
         for name in names:
-            data = cache.get_object_data(name) or {}
-            digest = data.get("digest", "")
+            info = cache.get_object_data(name) or {}
+            digest = info.get("digest", "")
             print(f"{name}: {digest}")
         return 0
 
@@ -269,10 +270,11 @@ def cmd_maxref(args: argparse.Namespace) -> int:
         print("Please specify a Max object name (e.g. 'cycle~').", file=sys.stderr)
         return 1
 
-    data = cache.get_object_data(args.name)
-    if not data:
+    data_dict = cache.get_object_data(args.name)
+    if not data_dict:
         print(f"Could not load maxref for '{args.name}'.", file=sys.stderr)
         return 1
+    data: Dict[str, Any] = data_dict
 
     if args.dict:
         pprint(data)

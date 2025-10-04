@@ -451,6 +451,8 @@ class Patcher(abstract.AbstractPatcher):
             ], f"comment:{comment} / comment_pos: {comment_pos}"
 
         # Store the association for deferred processing
+        if box.id is None:
+            raise AssertionError("associated comment requires box with id")
         self._pending_comments.append((box.id, comment, comment_pos))
 
     def _process_pending_comments(self):
