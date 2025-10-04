@@ -314,6 +314,17 @@ py2max maxref cycle~ --json
 
 # Scaffold a pytest skeleton for an object
 py2max maxref ezdac~ --test --output tests/test_ezdac_maxref.py
+
+# Apply a transformer pipeline from Python
+from py2max import Patcher
+from py2max.transformers import run_pipeline, set_font_size, optimize_layout
+
+patcher = Patcher('outputs/transform_example.maxpat')
+patcher.add_textbox('cycle~ 440')
+patcher.add_textbox('ezdac~')
+
+run_pipeline(patcher, [set_font_size(18.0), optimize_layout('grid')])
+patcher.save()
 ```
 
 ## Examples of Use
