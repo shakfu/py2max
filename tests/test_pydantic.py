@@ -1,12 +1,14 @@
 import pytest
 from typing import NamedTuple, Optional, Dict
 
-try:
-    from pydantic import BaseModel, ConfigDict, model_serializer
+HAS_PYDANTIC = False
 
-    HAS_PYDANTIC = True
-except ImportError:
-    HAS_PYDANTIC = False
+# try:
+#     from pydantic import BaseModel, ConfigDict, model_serializer
+
+#     HAS_PYDANTIC = True
+# except ImportError:
+#     HAS_PYDANTIC = False
 
 
 @pytest.mark.skipif(not HAS_PYDANTIC, reason="requires pydantic")
