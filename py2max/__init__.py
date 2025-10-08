@@ -22,6 +22,6 @@ Example:
 """
 
 from .core import Patcher, Box, Patchline, InvalidConnectionError
-from .db import MaxRefDB, create_database
+from .db import MaxRefDB
 
-__all__ = ["Patcher", "Box", "Patchline", "InvalidConnectionError", "MaxRefDB", "create_database"]
+__all__ = ["Patcher", "Box", "Patchline", "InvalidConnectionError", "MaxRefDB"]

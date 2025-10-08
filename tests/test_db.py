@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from py2max.db import MaxRefDB, create_database
+from py2max.db import MaxRefDB
 from py2max.maxref import get_object_info
 
 
@@ -342,7 +342,7 @@ class TestMaxRefDB:
             db_path = Path(tmpdir) / "test.db"
 
             # Create without populating
-            db1 = create_database(db_path, populate=False)
+            db1 = MaxRefDB.create_database(db_path, populate=False)
             assert db1.get_object_count() == 0
 
             # Create with populating (limit to a few objects for speed)

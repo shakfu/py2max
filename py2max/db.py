@@ -33,6 +33,22 @@ class MaxRefDB:
             self._conn.row_factory = sqlite3.Row
         self._init_schema()
 
+    @classmethod
+    def create_database(cls, db_path: Path, populate: bool = True) -> 'MaxRefDB':
+        """Create and optionally populate a Max reference database
+
+        Args:
+            db_path: Path to SQLite database file
+            populate: Whether to populate with all available .maxref.xml files
+
+        Returns:
+            MaxRefDB instance
+        """
+        db = cls(db_path)
+        if populate:
+            db.populate_from_maxref()
+        return db
+
     @contextmanager
     def _get_cursor(self):
         """Context manager for database cursor"""
@@ -721,18 +737,3 @@ class MaxRefDB:
         for name, obj_data in data.items():
             self.insert_object(name, obj_data)
 
-
-def create_database(db_path: Path, populate: bool = True) -> MaxRefDB:
-    """Create and optionally populate a Max reference database
-
-    Args:
-        db_path: Path to SQLite database file
-        populate: Whether to populate with all available .maxref.xml files
-
-    Returns:
-        MaxRefDB instance
-    """
-    db = MaxRefDB(db_path)
-    if populate:
-        db.populate_from_maxref()
-    return db
