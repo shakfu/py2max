@@ -37,7 +37,7 @@ docs = [
 "Homepage" = "https://github.com/shakfu/py2max"
 
 [project.scripts]
-py2max = "py2max:__main__" # not yet implemented
+py2max = "py2max.__main__:main"
 
 
 [tool.uv]

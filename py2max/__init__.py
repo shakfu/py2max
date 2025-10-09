@@ -23,5 +23,14 @@ Example:
 
 from .core import Patcher, Box, Patchline, InvalidConnectionError
 from .db import MaxRefDB
+from .svg import export_svg, export_svg_string
 
-__all__ = ["Patcher", "Box", "Patchline", "InvalidConnectionError", "MaxRefDB"]
+__all__ = [
+    "Patcher",
+    "Box",
+    "Patchline",
+    "InvalidConnectionError",
+    "MaxRefDB",
+    "export_svg",
+    "export_svg_string",
+]

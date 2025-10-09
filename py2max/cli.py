@@ -21,6 +21,7 @@ from .maxref import MaxRefCache, validate_connection
 from .transformers import available_transformers, create_transformer, run_pipeline
 from .converters import maxpat_to_python, maxref_to_sqlite
 from .db import MaxRefDB
+from .svg import export_svg
 
 
 LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
@@ -615,6 +616,52 @@ def cmd_db_cache(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_preview(args: argparse.Namespace) -> int:
+    """Generate SVG preview of a patcher."""
+    import webbrowser
+    import tempfile
+
+    input_path = Path(args.input)
+
+    if not input_path.exists():
+        print(f"Input file not found: {input_path}", file=sys.stderr)
+        return 1
+
+    # Load patcher
+    patcher = Patcher.from_file(input_path)
+    _coerce_rect(patcher)
+
+    # Determine output path
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        # Use temporary file
+        temp_dir = Path(tempfile.gettempdir())
+        output_path = temp_dir / f"{input_path.stem}_preview.svg"
+
+    # Export to SVG
+    try:
+        title = args.title or input_path.name
+        export_svg(
+            patcher,
+            output_path,
+            show_ports=args.show_ports,
+            title=title if not args.no_title else None,
+        )
+        print(f"SVG preview saved to: {output_path}")
+
+        # Open in browser if requested
+        if args.open:
+            print(f"Opening preview in browser...")
+            webbrowser.open(f"file://{output_path.absolute()}")
+
+        return 0
+
+    except Exception as e:
+        print(f"Error generating SVG preview: {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_maxref(args: argparse.Namespace) -> int:
     cache = MaxRefCache()
 
@@ -718,6 +765,15 @@ def build_parser() -> argparse.ArgumentParser:
     val_parser = subparsers.add_parser("validate", help="Validate patcher connections against maxref metadata")
     val_parser.add_argument("path", help="Target .maxpat path")
     val_parser.set_defaults(func=cmd_validate)
+
+    preview_parser = subparsers.add_parser("preview", help="Generate SVG preview of a patcher")
+    preview_parser.add_argument("input", help="Input .maxpat file")
+    preview_parser.add_argument("-o", "--output", help="Output SVG file path (default: /tmp/<name>_preview.svg)")
+    preview_parser.add_argument("--title", help="Custom title for the SVG")
+    preview_parser.add_argument("--no-title", action="store_true", help="Don't show title in SVG")
+    preview_parser.add_argument("--no-ports", dest="show_ports", action="store_false", default=True, help="Don't show inlet/outlet ports")
+    preview_parser.add_argument("--open", action="store_true", help="Open preview in web browser")
+    preview_parser.set_defaults(func=cmd_preview)
 
     transform_parser = subparsers.add_parser("transform", help="Apply transformer pipeline to a patcher")
     transform_parser.add_argument("input", nargs="?", help="Source .maxpat file")

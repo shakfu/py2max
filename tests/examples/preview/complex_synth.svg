@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="186.0 28.0 220.0 398.0" width="220.0" height="398.0">
+
+<defs>
+  <style>
+    text { user-select: none; }
+  </style>
+</defs>
+
+<text x="296.0" y="48.0" font-family="Monaco, Courier, monospace" font-size="16" font-weight="bold" fill="#000000" text-anchor="middle">Complex Multi-Voice Synth</text>
+
+<!-- Patchlines -->
+<line x1="296.0" y1="118.0" x2="342.0" y2="144.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="296.0" y1="118.0" x2="228.0" y2="144.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="296.0" y1="70.0" x2="285.0" y2="96.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="353.0" y1="166.0" x2="336.5" y2="192.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="239.0" y1="166.0" x2="222.5" y2="192.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="353.0" y1="214.0" x2="296.0" y2="240.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="239.0" y1="214.0" x2="329.0" y2="240.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="296.0" y1="262.0" x2="296.0" y2="288.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="285.0" y1="310.0" x2="296.0" y2="336.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="296.0" y1="358.0" x2="285.0" y2="384.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+<line x1="296.0" y1="358.0" x2="307.0" y2="384.0" stroke="#666666" stroke-width="2" stroke-linecap="round" />
+
+<!-- Boxes -->
+<rect x="263.0" y="96.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="268.0" y="111.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">metro 250</text>
+<circle cx="285.0" cy="96.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="307.0" cy="96.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="296.0" cy="118.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<rect x="263.0" y="48.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="268.0" y="63.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">button</text>
+<circle cx="296.0" cy="48.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="296.0" cy="70.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<rect x="320.0" y="144.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="325.0" y="159.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">cycle~ 440</text>
+<circle cx="342.0" cy="144.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="364.0" cy="144.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="353.0" cy="166.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<rect x="320.0" y="192.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="325.0" y="207.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">lores~ 1000</text>
+<circle cx="336.5" cy="192.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="353.0" cy="192.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="369.5" cy="192.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="353.0" cy="214.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<rect x="206.0" y="144.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="211.0" y="159.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">saw~ 220</text>
+<circle cx="228.0" cy="144.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="250.0" cy="144.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="239.0" cy="166.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<rect x="206.0" y="192.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="211.0" y="207.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">lores~ 500</text>
+<circle cx="222.5" cy="192.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="239.0" cy="192.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="255.5" cy="192.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="239.0" cy="214.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<rect x="263.0" y="240.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="268.0" y="255.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">+~</text>
+<rect x="263.0" y="288.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="268.0" y="303.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">gain~ 0.5</text>
+<circle cx="296.0" cy="288.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="285.0" cy="310.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<circle cx="307.0" cy="310.0" r="3" fill="#ff8040" stroke="#333333" stroke-width="0.5" />
+<rect x="263.0" y="336.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="268.0" y="351.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">reverb~</text>
+<rect x="263.0" y="384.0" width="66.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="268.0" y="399.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">ezdac~</text>
+<circle cx="285.0" cy="384.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+<circle cx="307.0" cy="384.0" r="3" fill="#4080ff" stroke="#333333" stroke-width="0.5" />
+
+</svg>

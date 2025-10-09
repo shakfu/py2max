@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="28.0 28.0 388.0 62.0" width="388.0" height="62.0">
+
+<defs>
+  <style>
+    text { user-select: none; }
+  </style>
+</defs>
+
+<text x="222.0" y="48.0" font-family="Monaco, Courier, monospace" font-size="16" font-weight="bold" fill="#000000" text-anchor="middle">Without Ports</text>
+
+<!-- Patchlines -->
+
+<!-- Boxes -->
+<rect x="48.0" y="48.0" width="66.0" height="22.0" fill="#ffffd0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="53.0" y="63.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">This is a comment - should be yellow</text>
+<rect x="192.0" y="48.0" width="66.0" height="22.0" fill="#e0e0e0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="197.0" y="63.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">bang</text>
+<rect x="336.0" y="48.0" width="60.0" height="22.0" fill="#f0f0f0" stroke="#333333" stroke-width="1" rx="2" />
+<text x="341.0" y="63.0" font-family="Monaco, Courier, monospace" font-size="12" fill="#000000">cycle~ 440</text>
+
+</svg>
