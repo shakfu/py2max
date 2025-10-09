@@ -2,6 +2,93 @@
 
 ## 0.2.x
 
+### New: Interactive Editor - Advanced Layout with SVG.js, WebCola, and D3.js
+
+- Added complete SVG.js (v3.2.5) integration for all SVG manipulation and animation in the interactive editor
+
+- Added WebCola constraint-based force-directed graph layout engine with D3.js (v7) integration
+
+- Added interactive auto-layout controls panel with real-time parameter adjustment
+
+- Added 5 adjustable layout parameters via sliders and controls:
+  - **Link Distance** (50-300): Controls spacing between connected objects
+  - **Iterations** (10-200): Controls layout quality and convergence
+  - **Canvas Width** (400-1600): Adjustable layout area width
+  - **Canvas Height** (300-1200): Adjustable layout area height
+  - **Avoid Overlaps** (checkbox): Toggle automatic overlap prevention
+
+- Added constraint-based layout system with 4 presets:
+  - **None**: Natural force-directed layout without alignment constraints
+  - **Horizontal Flow**: Aligns objects in horizontal rows (left-to-right signal flow)
+  - **Vertical Flow**: Aligns objects in vertical columns (top-to-bottom signal flow)
+  - **Grid**: Strict grid alignment with both row and column constraints
+
+- Added smooth SVG.js animations (500ms ease-in-out) for layout transitions
+
+- Added constraint generation algorithm that analyzes object positions and creates alignment constraints
+
+- Added collapsible controls panel with "Apply Layout" and "Hide" buttons
+
+- Added visual feedback showing active parameters and constraint count
+
+**SVG.js Implementation:**
+- Refactored all SVG rendering to use SVG.js declarative API instead of native DOM manipulation
+- `initializeSVG()`: Creates SVG canvas and layer groups using SVG.js
+- `createBox()`: Renders boxes with rectangles, text, and clipping paths using SVG.js
+- `createLine()`: Renders connection lines with hitboxes using SVG.js
+- `addPorts()`: Renders inlet/outlet circles using SVG.js
+- `autoLayout()`: Animates box movements using SVG.js transforms
+
+**WebCola Integration:**
+- Force-directed graph layout with configurable parameters
+- Constraint-based positioning using alignment constraints
+- Automatic overlap avoidance with adjustable node dimensions
+- Handles disconnected graph components gracefully
+- Jaccard link lengths for natural connection spacing
+
+**Constraint System:**
+- Automatic constraint generation based on object proximity (50px threshold)
+- Alignment constraints for horizontal rows (Y-axis alignment)
+- Alignment constraints for vertical columns (X-axis alignment)
+- Grid constraints combining both row and column alignment
+- Real-time constraint application with visual feedback
+
+**Documentation:**
+- Added comprehensive `docs/LIBRARIES_INTEGRATION.md` (518 lines)
+- Detailed parameter descriptions and effects
+- Constraint preset usage examples
+- Testing procedures and expected behavior
+- Code examples and API documentation
+- Performance considerations for different patch sizes
+
+**Demo Scripts:**
+- Added `examples/auto_layout_demo.py`: Complex synthesizer with randomized positions (13 objects, 16 connections)
+- Hierarchical layout demo: Tree structure with multiple processing layers (12 objects)
+
+**Benefits:**
+- Professional animated transitions for all layout operations
+- Interactive experimentation with layout parameters
+- Structured layouts matching typical Max patch patterns
+- Clean, maintainable SVG.js codebase
+- Four layout presets for different use cases
+- Real-time visual feedback
+- Minimal overhead (234KB total: D3 + SVG.js + WebCola, minified)
+
+**Example Usage:**
+
+```bash
+# Start interactive editor
+py2max serve outputs/auto_layout_demo.maxpat
+
+# In browser:
+# 1. Click "🔄 Auto-Layout" to show controls
+# 2. Adjust Link Distance slider (50-300)
+# 3. Select Constraint Preset (Grid/Horizontal/Vertical/None)
+# 4. Adjust Iterations for convergence quality
+# 5. Click "Apply Layout" to see smooth animations
+# 6. Experiment with different parameter combinations
+```
+
 ### New: Interactive Editor - Nested Patcher Navigation
 
 - Added full nested patcher (subpatcher) navigation support in interactive editor

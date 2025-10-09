@@ -220,6 +220,71 @@
             color: #888;
             margin-left: 20px;
         }
+
+        #layout-controls {
+            background: #2d2d2d;
+            padding: 12px 20px;
+            border-bottom: 1px solid #444;
+            display: none;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+
+        #layout-controls.visible {
+            display: flex;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .control-group label {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-group input[type="range"] {
+            width: 120px;
+            height: 4px;
+            background: #444;
+            outline: none;
+            border-radius: 2px;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #4080ff;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #4080ff;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .control-group .value-display {
+            font-size: 11px;
+            color: #4080ff;
+            font-weight: 500;
+        }
+
+        .control-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -234,6 +299,7 @@
         <div id="controls">
             <span class="help-text">Click to select | Delete/Backspace to remove | Double-click on patcher to open</span>
             <button id="parent-btn" title="Go to parent patcher (ESC)">⬆️ Parent</button>
+            <button id="auto-layout-btn" title="Auto-arrange objects using force-directed layout">🔄 Auto-Layout</button>
             <button id="save-btn" title="Save patch to .maxpat file">💾 Save</button>
             <button id="create-btn" title="Create new object">+ Object</button>
             <div id="status" class="disconnected">
@@ -242,12 +308,56 @@
         </div>
     </div>
 
+    <div id="layout-controls">
+        <div class="control-group">
+            <label>Link Distance</label>
+            <input type="range" id="link-distance-slider" min="50" max="300" value="100" step="10">
+            <span class="value-display" id="link-distance-value">100</span>
+        </div>
+        <div class="control-group">
+            <label>Iterations</label>
+            <input type="range" id="iterations-slider" min="10" max="200" value="50" step="10">
+            <span class="value-display" id="iterations-value">50</span>
+        </div>
+        <div class="control-group">
+            <label>Canvas Width</label>
+            <input type="range" id="canvas-width-slider" min="400" max="1600" value="800" step="50">
+            <span class="value-display" id="canvas-width-value">800</span>
+        </div>
+        <div class="control-group">
+            <label>Canvas Height</label>
+            <input type="range" id="canvas-height-slider" min="300" max="1200" value="600" step="50">
+            <span class="value-display" id="canvas-height-value">600</span>
+        </div>
+        <div class="control-group">
+            <label>Avoid Overlaps</label>
+            <input type="checkbox" id="avoid-overlaps-checkbox" checked>
+        </div>
+        <div class="control-group">
+            <label>Constraint Preset</label>
+            <select id="constraint-preset" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="none">None</option>
+                <option value="horizontal-flow">Horizontal Flow</option>
+                <option value="vertical-flow">Vertical Flow</option>
+                <option value="grid">Grid Alignment</option>
+            </select>
+        </div>
+        <button id="apply-layout-btn" style="margin-top: 14px;">Apply Layout</button>
+        <button id="hide-controls-btn" style="margin-top: 14px;">Hide</button>
+    </div>
+
     <div id="canvas"></div>
 
     <div id="info">
         <span id="info-text">Initializing...</span>
     </div>
 
+    <!-- External libraries -->
+    <script src="d3.v7.min.js"></script>
+    <script src="svg.min.js"></script>
+    <script src="cola.min.js"></script>
+
+    <!-- Main interactive editor -->
     <script src="interactive.js"></script>
 </body>
 </html>

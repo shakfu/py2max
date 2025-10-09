@@ -64,22 +64,21 @@ class InteractiveEditor {
     initializeSVG() {
         const canvas = document.getElementById('canvas');
 
-        // Create SVG element
-        this.svg = document.createElementNS(this.svgNS, 'svg');
-        this.svg.setAttribute('width', '100%');
-        this.svg.setAttribute('height', '100%');
-        this.svg.setAttribute('viewBox', '0 0 1200 800');
-        this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        // Create SVG using SVG.js library
+        this.draw = SVG().addTo('#canvas').size('100%', '100%');
+        this.draw.viewbox(0, 0, 1200, 800);
+        this.draw.attr('preserveAspectRatio', 'xMidYMid meet');
 
-        // Create groups for layers
-        this.linesGroup = document.createElementNS(this.svgNS, 'g');
-        this.linesGroup.id = 'patchlines';
+        // Get the native SVG element for event listeners
+        this.svg = this.draw.node;
 
-        this.boxesGroup = document.createElementNS(this.svgNS, 'g');
-        this.boxesGroup.id = 'boxes';
+        // Create groups for layers using SVG.js
+        this.linesGroupSVG = this.draw.group().id('patchlines');
+        this.boxesGroupSVG = this.draw.group().id('boxes');
 
-        this.svg.appendChild(this.linesGroup);
-        this.svg.appendChild(this.boxesGroup);
+        // Get native DOM elements for compatibility with existing code
+        this.linesGroup = this.linesGroupSVG.node;
+        this.boxesGroup = this.boxesGroupSVG.node;
 
         // Add event listeners for canvas interactions
         this.svg.addEventListener('mousedown', this.handleCanvasMouseDown.bind(this));
@@ -90,7 +89,7 @@ class InteractiveEditor {
         // Use event delegation for box double-clicks (since boxes are recreated on render)
         this.boxesGroup.addEventListener('dblclick', this.handleBoxesGroupDoubleClick.bind(this));
 
-        canvas.appendChild(this.svg);
+        console.log('SVG.js initialized:', SVG);
     }
 
     initializeControls() {
@@ -117,6 +116,23 @@ class InteractiveEditor {
                 this.navigateToParent();
             });
         }
+
+        // Auto-layout button - toggle layout controls panel
+        const autoLayoutBtn = document.getElementById('auto-layout-btn');
+        if (autoLayoutBtn) {
+            autoLayoutBtn.addEventListener('click', () => {
+                const controlsPanel = document.getElementById('layout-controls');
+                controlsPanel.classList.toggle('visible');
+
+                // If panel just became visible, apply layout immediately
+                if (controlsPanel.classList.contains('visible')) {
+                    this.autoLayout();
+                }
+            });
+        }
+
+        // Initialize layout controls
+        this.initializeLayoutControls();
 
         // Keyboard handler for delete/backspace and ESC
         document.addEventListener('keydown', (e) => {
@@ -206,9 +222,9 @@ class InteractiveEditor {
     }
 
     render() {
-        // Clear SVG
-        this.linesGroup.innerHTML = '';
-        this.boxesGroup.innerHTML = '';
+        // Clear SVG using SVG.js
+        this.linesGroupSVG.clear();
+        this.boxesGroupSVG.clear();
 
         // Render patchlines first (behind boxes)
         this.lines.forEach(line => {
@@ -216,7 +232,7 @@ class InteractiveEditor {
             const dstBox = this.boxes.get(line.dst);
 
             if (srcBox && dstBox) {
-                const lineEl = this.createLine(srcBox, dstBox, line);
+                const lineGroup = this.createLine(srcBox, dstBox, line);
 
                 // Highlight if selected
                 if (this.selectedLine &&
@@ -224,33 +240,28 @@ class InteractiveEditor {
                     this.selectedLine.dst === line.dst &&
                     (this.selectedLine.src_outlet || 0) === (line.src_outlet || 0) &&
                     (this.selectedLine.dst_inlet || 0) === (line.dst_inlet || 0)) {
-                    const visibleLine = lineEl.querySelector('.patchline');
+                    // Find the visible line element
+                    const visibleLine = lineGroup.node.querySelector('.patchline');
                     if (visibleLine) {
-                        visibleLine.setAttribute('stroke', '#ff8040');
-                        visibleLine.setAttribute('stroke-width', '3');
+                        SVG(visibleLine).stroke({ color: '#ff8040', width: 3 });
                     }
                 }
-
-                this.linesGroup.appendChild(lineEl);
             }
         });
 
         // Render boxes
         this.boxes.forEach(box => {
-            const boxEl = this.createBox(box);
+            const boxGroup = this.createBox(box);
 
             // Highlight if selected
             if (this.selectedBox && this.selectedBox.id === box.id) {
                 // Add selected class to disable hover styling
-                boxEl.classList.add('selected');
-                const rect = boxEl.querySelector('rect');
+                boxGroup.node.classList.add('selected');
+                const rect = boxGroup.node.querySelector('rect');
                 if (rect) {
-                    rect.setAttribute('stroke', '#ff8040');
-                    rect.setAttribute('stroke-width', '3');
+                    SVG(rect).stroke({ color: '#ff8040', width: 3 });
                 }
             }
-
-            this.boxesGroup.appendChild(boxEl);
         });
 
         // Highlight selected port (inlet or outlet) if in connection mode
@@ -274,13 +285,14 @@ class InteractiveEditor {
     }
 
     createBox(box) {
-        const g = document.createElementNS(this.svgNS, 'g');
-        g.setAttribute('class', 'box');
-        g.setAttribute('data-id', box.id);
+        // Create group using SVG.js
+        const g = this.boxesGroupSVG.group();
+        g.addClass('box');
+        g.attr('data-id', box.id);
 
         // Add special class for boxes with subpatchers
         if (box.has_subpatcher) {
-            g.classList.add('has-subpatcher');
+            g.addClass('has-subpatcher');
         }
 
         const x = box.x || 0;
@@ -288,66 +300,37 @@ class InteractiveEditor {
         const width = box.width || 60;
         const height = box.height || 22;
 
-        // Create rectangle
-        const rect = document.createElementNS(this.svgNS, 'rect');
-        rect.setAttribute('x', x);
-        rect.setAttribute('y', y);
-        rect.setAttribute('width', width);
-        rect.setAttribute('height', height);
-        rect.setAttribute('fill', this.getBoxFill(box));
-        rect.setAttribute('stroke', '#333');
-        rect.setAttribute('stroke-width', '1');
-        rect.setAttribute('rx', '3');
+        // Create rectangle using SVG.js
+        const rect = g.rect(width, height)
+            .move(x, y)
+            .fill(this.getBoxFill(box))
+            .stroke({ color: '#333', width: 1 })
+            .radius(3);
 
-        // Create text
-        const text = document.createElementNS(this.svgNS, 'text');
-        text.setAttribute('x', x + 5);
-        text.setAttribute('y', y + height / 2 + 4);
-        text.setAttribute('fill', '#000');
-        text.setAttribute('font-family', 'Monaco, Courier, monospace');
-        text.setAttribute('font-size', '11');
-        text.setAttribute('dominant-baseline', 'middle');
-
+        // Create text using SVG.js
         const textContent = box.text || box.maxclass || '';
-        text.textContent = textContent;
+        const text = g.text(textContent)
+            .attr({ x: x + 5, y: y + height / 2 + 4 })
+            .fill('#000')
+            .font({ family: 'Monaco, Courier, monospace', size: 11 })
+            .attr('dominant-baseline', 'middle');
 
-        // Add clipping
+        // Add clipping using SVG.js
         const clipId = `clip-${box.id}`;
-        const clipPath = document.createElementNS(this.svgNS, 'clipPath');
-        clipPath.setAttribute('id', clipId);
-        const clipRect = document.createElementNS(this.svgNS, 'rect');
-        clipRect.setAttribute('x', x);
-        clipRect.setAttribute('y', y);
-        clipRect.setAttribute('width', width);
-        clipRect.setAttribute('height', height);
-        clipPath.appendChild(clipRect);
-
-        const defs = this.svg.querySelector('defs') || this.createDefs();
-        defs.appendChild(clipPath);
-        text.setAttribute('clip-path', `url(#${clipId})`);
-
-        g.appendChild(rect);
-        g.appendChild(text);
+        const clip = this.draw.clip().id(clipId);
+        clip.rect(width, height).move(x, y);
+        text.clipWith(clip);
 
         // Add ports
         if (box.inlet_count > 0 || box.outlet_count > 0) {
             this.addPorts(g, box);
         }
 
-        // Add interaction handlers
-        g.addEventListener('mousedown', (e) => this.handleBoxMouseDown(e, box));
+        // Add interaction handlers to native DOM node
+        g.node.addEventListener('mousedown', (e) => this.handleBoxMouseDown(e, box));
         // Note: dblclick is now handled via event delegation on boxesGroup
 
         return g;
-    }
-
-    createDefs() {
-        let defs = this.svg.querySelector('defs');
-        if (!defs) {
-            defs = document.createElementNS(this.svgNS, 'defs');
-            this.svg.insertBefore(defs, this.svg.firstChild);
-        }
-        return defs;
     }
 
     addPorts(group, box) {
@@ -356,53 +339,43 @@ class InteractiveEditor {
         const w = box.width || 60;
         const h = box.height || 22;
 
-        // Draw inlets (top of box)
+        // Draw inlets (top of box) using SVG.js
         if (box.inlet_count > 0) {
             const spacing = w / (box.inlet_count + 1);
             for (let i = 0; i < box.inlet_count; i++) {
-                const circle = document.createElementNS(this.svgNS, 'circle');
-                circle.setAttribute('cx', x + spacing * (i + 1));
-                circle.setAttribute('cy', y);
-                circle.setAttribute('r', '4');
-                circle.setAttribute('fill', '#4080ff');
-                circle.setAttribute('stroke', '#333');
-                circle.setAttribute('stroke-width', '1');
-                circle.setAttribute('class', 'inlet port');
-                circle.setAttribute('data-index', i);
-                circle.style.cursor = 'pointer';
+                const circle = group.circle(8)  // diameter = 8, radius = 4
+                    .center(x + spacing * (i + 1), y)
+                    .fill('#4080ff')
+                    .stroke({ color: '#333', width: 1 })
+                    .addClass('inlet port')
+                    .attr('data-index', i)
+                    .css('cursor', 'pointer');
 
-                // Add click handler for inlet
-                circle.addEventListener('click', (e) => {
+                // Add click handler for inlet (on native DOM node)
+                circle.node.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.handlePortClick(box, i, false);  // false = inlet
                 });
-
-                group.appendChild(circle);
             }
         }
 
-        // Draw outlets (bottom of box)
+        // Draw outlets (bottom of box) using SVG.js
         if (box.outlet_count > 0) {
             const spacing = w / (box.outlet_count + 1);
             for (let i = 0; i < box.outlet_count; i++) {
-                const circle = document.createElementNS(this.svgNS, 'circle');
-                circle.setAttribute('cx', x + spacing * (i + 1));
-                circle.setAttribute('cy', y + h);
-                circle.setAttribute('r', '4');
-                circle.setAttribute('fill', '#ff8040');
-                circle.setAttribute('stroke', '#333');
-                circle.setAttribute('stroke-width', '1');
-                circle.setAttribute('class', 'outlet port');
-                circle.setAttribute('data-index', i);
-                circle.style.cursor = 'pointer';
+                const circle = group.circle(8)  // diameter = 8, radius = 4
+                    .center(x + spacing * (i + 1), y + h)
+                    .fill('#ff8040')
+                    .stroke({ color: '#333', width: 1 })
+                    .addClass('outlet port')
+                    .attr('data-index', i)
+                    .css('cursor', 'pointer');
 
-                // Add click handler for outlet
-                circle.addEventListener('click', (e) => {
+                // Add click handler for outlet (on native DOM node)
+                circle.node.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.handlePortClick(box, i, true);  // true = outlet
                 });
-
-                group.appendChild(circle);
             }
         }
     }
@@ -411,45 +384,31 @@ class InteractiveEditor {
         const srcPoint = this.getPortPosition(srcBox, line.src_outlet || 0, true);
         const dstPoint = this.getPortPosition(dstBox, line.dst_inlet || 0, false);
 
-        // Create group for the line
-        const g = document.createElementNS(this.svgNS, 'g');
-        g.setAttribute('class', 'patchline-group');
-        g.setAttribute('data-src', line.src);
-        g.setAttribute('data-dst', line.dst);
-        g.setAttribute('data-src-outlet', line.src_outlet || 0);
-        g.setAttribute('data-dst-inlet', line.dst_inlet || 0);
-        g.style.cursor = 'pointer';
+        // Create group for the line using SVG.js
+        const g = this.linesGroupSVG.group();
+        g.addClass('patchline-group');
+        g.attr('data-src', line.src);
+        g.attr('data-dst', line.dst);
+        g.attr('data-src-outlet', line.src_outlet || 0);
+        g.attr('data-dst-inlet', line.dst_inlet || 0);
+        g.css('cursor', 'pointer');
 
-        // Add invisible wider hitbox for easier clicking
-        const hitbox = document.createElementNS(this.svgNS, 'line');
-        hitbox.setAttribute('x1', srcPoint.x);
-        hitbox.setAttribute('y1', srcPoint.y);
-        hitbox.setAttribute('x2', dstPoint.x);
-        hitbox.setAttribute('y2', dstPoint.y);
-        hitbox.setAttribute('stroke', 'transparent');
-        hitbox.setAttribute('stroke-width', '10');  // Wider for easier clicking
-        hitbox.setAttribute('class', 'patchline-hitbox');
+        // Add invisible wider hitbox for easier clicking using SVG.js
+        const hitbox = g.line(srcPoint.x, srcPoint.y, dstPoint.x, dstPoint.y)
+            .stroke({ color: 'transparent', width: 10 })
+            .addClass('patchline-hitbox');
 
-        // Visible line
-        const lineEl = document.createElementNS(this.svgNS, 'line');
-        lineEl.setAttribute('x1', srcPoint.x);
-        lineEl.setAttribute('y1', srcPoint.y);
-        lineEl.setAttribute('x2', dstPoint.x);
-        lineEl.setAttribute('y2', dstPoint.y);
-        lineEl.setAttribute('stroke', '#666');
-        lineEl.setAttribute('stroke-width', '2');
-        lineEl.setAttribute('stroke-linecap', 'round');
-        lineEl.setAttribute('class', 'patchline');
+        // Visible line using SVG.js
+        const lineEl = g.line(srcPoint.x, srcPoint.y, dstPoint.x, dstPoint.y)
+            .stroke({ color: '#666', width: 2, linecap: 'round' })
+            .addClass('patchline');
 
         // Add click handler to the group (catches both hitbox and line clicks)
-        g.addEventListener('click', (e) => {
+        g.node.addEventListener('click', (e) => {
             e.stopPropagation();
             this.handleLineClick(line);
         });
 
-        // Append elements
-        g.appendChild(hitbox);  // Hitbox first (behind)
-        g.appendChild(lineEl);  // Visible line on top
         return g;
     }
 
@@ -794,6 +753,330 @@ class InteractiveEditor {
             type: 'navigate_to_root'
         });
         this.updateInfo('Navigating to root...');
+    }
+
+    initializeLayoutControls() {
+        // Link Distance slider
+        const linkDistanceSlider = document.getElementById('link-distance-slider');
+        const linkDistanceValue = document.getElementById('link-distance-value');
+        if (linkDistanceSlider && linkDistanceValue) {
+            linkDistanceSlider.addEventListener('input', (e) => {
+                linkDistanceValue.textContent = e.target.value;
+            });
+        }
+
+        // Iterations slider
+        const iterationsSlider = document.getElementById('iterations-slider');
+        const iterationsValue = document.getElementById('iterations-value');
+        if (iterationsSlider && iterationsValue) {
+            iterationsSlider.addEventListener('input', (e) => {
+                iterationsValue.textContent = e.target.value;
+            });
+        }
+
+        // Canvas Width slider
+        const canvasWidthSlider = document.getElementById('canvas-width-slider');
+        const canvasWidthValue = document.getElementById('canvas-width-value');
+        if (canvasWidthSlider && canvasWidthValue) {
+            canvasWidthSlider.addEventListener('input', (e) => {
+                canvasWidthValue.textContent = e.target.value;
+            });
+        }
+
+        // Canvas Height slider
+        const canvasHeightSlider = document.getElementById('canvas-height-slider');
+        const canvasHeightValue = document.getElementById('canvas-height-value');
+        if (canvasHeightSlider && canvasHeightValue) {
+            canvasHeightSlider.addEventListener('input', (e) => {
+                canvasHeightValue.textContent = e.target.value;
+            });
+        }
+
+        // Apply Layout button
+        const applyLayoutBtn = document.getElementById('apply-layout-btn');
+        if (applyLayoutBtn) {
+            applyLayoutBtn.addEventListener('click', () => {
+                this.autoLayout();
+            });
+        }
+
+        // Hide Controls button
+        const hideControlsBtn = document.getElementById('hide-controls-btn');
+        if (hideControlsBtn) {
+            hideControlsBtn.addEventListener('click', () => {
+                const controlsPanel = document.getElementById('layout-controls');
+                controlsPanel.classList.remove('visible');
+            });
+        }
+    }
+
+    generateConstraints(nodes, preset) {
+        const constraints = [];
+
+        if (preset === 'none' || nodes.length === 0) {
+            return constraints;
+        }
+
+        // Sort nodes by their current position for alignment
+        const sortedByY = [...nodes].sort((a, b) => a.y - b.y);
+        const sortedByX = [...nodes].sort((a, b) => a.x - b.x);
+
+        if (preset === 'horizontal-flow') {
+            // Align nodes in horizontal rows (same y coordinate for groups)
+            // Group nodes into rows based on Y proximity
+            const rows = [];
+            const threshold = 50; // Y-distance threshold for same row
+
+            sortedByY.forEach(node => {
+                let addedToRow = false;
+                for (let row of rows) {
+                    const avgY = row.reduce((sum, n) => sum + n.y, 0) / row.length;
+                    if (Math.abs(node.y - avgY) < threshold) {
+                        row.push(node);
+                        addedToRow = true;
+                        break;
+                    }
+                }
+                if (!addedToRow) {
+                    rows.push([node]);
+                }
+            });
+
+            // Create alignment constraints for each row
+            rows.forEach(row => {
+                if (row.length > 1) {
+                    constraints.push({
+                        type: 'alignment',
+                        axis: 'y',
+                        offsets: row.map(n => ({ node: nodes.indexOf(n), offset: 0 }))
+                    });
+                }
+            });
+
+        } else if (preset === 'vertical-flow') {
+            // Align nodes in vertical columns (same x coordinate for groups)
+            const columns = [];
+            const threshold = 50; // X-distance threshold for same column
+
+            sortedByX.forEach(node => {
+                let addedToColumn = false;
+                for (let column of columns) {
+                    const avgX = column.reduce((sum, n) => sum + n.x, 0) / column.length;
+                    if (Math.abs(node.x - avgX) < threshold) {
+                        column.push(node);
+                        addedToColumn = true;
+                        break;
+                    }
+                }
+                if (!addedToColumn) {
+                    columns.push([node]);
+                }
+            });
+
+            // Create alignment constraints for each column
+            columns.forEach(column => {
+                if (column.length > 1) {
+                    constraints.push({
+                        type: 'alignment',
+                        axis: 'x',
+                        offsets: column.map(n => ({ node: nodes.indexOf(n), offset: 0 }))
+                    });
+                }
+            });
+
+        } else if (preset === 'grid') {
+            // Create both horizontal and vertical alignment constraints
+            // This creates a grid-like structure
+
+            // Horizontal alignment (rows)
+            const rows = [];
+            const yThreshold = 50;
+
+            sortedByY.forEach(node => {
+                let addedToRow = false;
+                for (let row of rows) {
+                    const avgY = row.reduce((sum, n) => sum + n.y, 0) / row.length;
+                    if (Math.abs(node.y - avgY) < yThreshold) {
+                        row.push(node);
+                        addedToRow = true;
+                        break;
+                    }
+                }
+                if (!addedToRow) {
+                    rows.push([node]);
+                }
+            });
+
+            rows.forEach(row => {
+                if (row.length > 1) {
+                    constraints.push({
+                        type: 'alignment',
+                        axis: 'y',
+                        offsets: row.map(n => ({ node: nodes.indexOf(n), offset: 0 }))
+                    });
+                }
+            });
+
+            // Vertical alignment (columns)
+            const columns = [];
+            const xThreshold = 50;
+
+            sortedByX.forEach(node => {
+                let addedToColumn = false;
+                for (let column of columns) {
+                    const avgX = column.reduce((sum, n) => sum + n.x, 0) / column.length;
+                    if (Math.abs(node.x - avgX) < xThreshold) {
+                        column.push(node);
+                        addedToColumn = true;
+                        break;
+                    }
+                }
+                if (!addedToColumn) {
+                    columns.push([node]);
+                }
+            });
+
+            columns.forEach(column => {
+                if (column.length > 1) {
+                    constraints.push({
+                        type: 'alignment',
+                        axis: 'x',
+                        offsets: column.map(n => ({ node: nodes.indexOf(n), offset: 0 }))
+                    });
+                }
+            });
+        }
+
+        console.log(`Generated ${constraints.length} constraints for preset: ${preset}`);
+        return constraints;
+    }
+
+    autoLayout() {
+        // Use WebCola for force-directed graph layout
+        if (typeof cola === 'undefined') {
+            console.error('WebCola library not loaded');
+            this.updateInfo('Error: WebCola library not available');
+            return;
+        }
+
+        if (this.boxes.size === 0) {
+            this.updateInfo('No objects to layout');
+            return;
+        }
+
+        // Get parameters from controls
+        const linkDistance = parseInt(document.getElementById('link-distance-slider')?.value || 100);
+        const iterations = parseInt(document.getElementById('iterations-slider')?.value || 50);
+        const canvasWidth = parseInt(document.getElementById('canvas-width-slider')?.value || 800);
+        const canvasHeight = parseInt(document.getElementById('canvas-height-slider')?.value || 600);
+        const avoidOverlaps = document.getElementById('avoid-overlaps-checkbox')?.checked !== false;
+        const constraintPreset = document.getElementById('constraint-preset')?.value || 'none';
+
+        this.updateInfo(`Computing auto-layout (linkDistance: ${linkDistance}, iterations: ${iterations}, constraints: ${constraintPreset})...`);
+
+        // Prepare nodes and links for WebCola
+        const nodes = [];
+        const links = [];
+        const nodeMap = new Map();
+
+        // Create nodes array
+        let index = 0;
+        this.boxes.forEach((box, boxId) => {
+            nodes.push({
+                id: boxId,
+                width: box.width || 60,
+                height: box.height || 22,
+                x: box.x || 0,
+                y: box.y || 0,
+                fixed: 0  // Not fixed
+            });
+            nodeMap.set(boxId, index++);
+        });
+
+        // Create links array from patchlines
+        this.lines.forEach(line => {
+            const sourceIdx = nodeMap.get(line.src);
+            const targetIdx = nodeMap.get(line.dst);
+            if (sourceIdx !== undefined && targetIdx !== undefined) {
+                links.push({
+                    source: sourceIdx,
+                    target: targetIdx,
+                    length: linkDistance  // Use slider value
+                });
+            }
+        });
+
+        // Generate constraints based on preset
+        const constraints = this.generateConstraints(nodes, constraintPreset);
+
+        // Configure WebCola using d3adaptor with parameters from sliders
+        const layout = cola.d3adaptor(d3)
+            .size([canvasWidth, canvasHeight])
+            .nodes(nodes)
+            .links(links)
+            .avoidOverlaps(avoidOverlaps)
+            .handleDisconnected(true)
+            .jaccardLinkLengths(linkDistance);
+
+        // Apply constraints if any
+        if (constraints.length > 0) {
+            layout.constraints(constraints);
+        }
+
+        // Run the layout algorithm with custom iteration count
+        layout.start(iterations, iterations, iterations);
+
+        // Update box positions with smooth SVG.js animations
+
+        const animationPromises = [];
+
+        nodes.forEach(node => {
+            const box = this.boxes.get(node.id);
+            if (box) {
+                const oldX = box.x || 0;
+                const oldY = box.y || 0;
+                const newX = Math.round(node.x);
+                const newY = Math.round(node.y);
+
+                // Update internal state
+                box.x = newX;
+                box.y = newY;
+
+                // Find the SVG element for this box
+                const boxElement = this.boxesGroup.querySelector(`[data-id="${node.id}"]`);
+
+                if (boxElement) {
+                    // Use SVG.js to animate the transform
+                    const svgElement = SVG(boxElement);
+                    const promise = new Promise(resolve => {
+                        svgElement.animate(500, 0, 'now')
+                            .ease('<>')  // Ease in-out
+                            .transform({ translateX: newX - oldX, translateY: newY - oldY })
+                            .after(() => {
+                                // After animation, update actual position and reset transform
+                                resolve();
+                            });
+                    });
+                    animationPromises.push(promise);
+                }
+
+                // Send position update to server
+                this.sendMessage({
+                    type: 'update_position',
+                    box_id: node.id,
+                    x: box.x,
+                    y: box.y
+                });
+            }
+        });
+
+        // Wait for animations to complete, then re-render
+        Promise.all(animationPromises).then(() => {
+            console.log('Animations complete, re-rendering...');
+            this.render();
+            const constraintInfo = constraints.length > 0 ? `, ${constraints.length} constraints` : '';
+            this.updateInfo(`Auto-layout applied: ${nodes.length} objects, linkDistance: ${linkDistance}, iterations: ${iterations}${constraintInfo}`);
+        });
     }
 
     // Helper methods
