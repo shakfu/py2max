@@ -121,7 +121,7 @@ render() {
 </span>
 ```
 
-### Python Side (`py2max/websocket_server.py`)
+### Python Side (`py2max/server.py`)
 
 No changes needed - the WebSocket handlers for `delete_connection` and `delete_object` already existed and work correctly.
 

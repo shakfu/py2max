@@ -229,7 +229,7 @@ p2 = Patcher.from_file('synth.maxpat')
 
 ### Server-Side (Python)
 
-**File**: `py2max/websocket_server.py`
+**File**: `py2max/server.py`
 
 **Key Components**:
 

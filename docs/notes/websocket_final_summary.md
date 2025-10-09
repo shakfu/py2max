@@ -118,7 +118,7 @@ handlePortClick(box, portIndex, isOutlet) {
 }
 ```
 
-### Python Side (`py2max/websocket_server.py`)
+### Python Side (`py2max/server.py`)
 
 No changes needed - the WebSocket message handling already supported specific inlet/outlet indices in the `create_connection` message.
 
@@ -172,7 +172,7 @@ Opens browser to http://localhost:8000 with:
 - `py2max/static/interactive.html` - Removed Connect button, updated help text
 
 ### Python
-- `py2max/websocket_server.py` - Already had auto-save from previous fix
+- `py2max/server.py` - Already had auto-save from previous fix
 
 ### Documentation
 - `tests/examples/interactive_demo.py` - Updated instructions

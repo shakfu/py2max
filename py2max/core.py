@@ -447,7 +447,7 @@ class Patcher(abstract.AbstractPatcher):
         Note:
             Requires websockets package: pip install websockets
         """
-        from .websocket_server import serve_interactive
+        from .server import serve_interactive
 
         self._server = await serve_interactive(self, port, auto_open)
         return self._server

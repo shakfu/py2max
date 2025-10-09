@@ -6,7 +6,7 @@ When an object is deleted, **all connections to and from that object are automat
 
 ## Implementation
 
-### Server-Side Logic (`py2max/websocket_server.py`)
+### Server-Side Logic (`py2max/server.py`)
 
 When `handle_delete_object()` is called:
 

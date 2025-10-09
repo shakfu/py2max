@@ -35,7 +35,7 @@ handleBoxMouseDown(event, box) {
 
 **Root Cause**: No save mechanism after position updates.
 
-**Fix**: Implemented debounced auto-save in `py2max/websocket_server.py`:
+**Fix**: Implemented debounced auto-save in `py2max/server.py`:
 
 1. Added `_save_task` tracking to `InteractiveWebSocketHandler.__init__` (line 85)
 2. Added call to `schedule_save()` in `handle_update_position()` (line 183)
@@ -113,7 +113,7 @@ This script:
 - `py2max/static/interactive.js` - Fixed event propagation (1 line change + comment)
 
 ### Python
-- `py2max/websocket_server.py` - Added debounced auto-save (4 lines added, 25 lines new methods)
+- `py2max/server.py` - Added debounced auto-save (4 lines added, 25 lines new methods)
 
 ### Documentation
 - `WEBSOCKET_TODO.md` - Updated status (replaced issues with solutions)

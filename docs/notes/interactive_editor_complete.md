@@ -60,7 +60,7 @@ This is the critical outcome - users can:
 
 ### Server-Side (Python)
 
-**File**: `py2max/websocket_server.py`
+**File**: `py2max/server.py`
 
 - **InteractiveWebSocketHandler** - Handles WebSocket messages
 - **InteractivePatcherServer** - Manages HTTP + WebSocket servers

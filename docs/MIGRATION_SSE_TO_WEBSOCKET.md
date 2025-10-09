@@ -269,7 +269,7 @@ The following files were removed:
 
 The following was moved:
 
-- `get_patcher_state_json()` - Moved from `server.py` to `websocket_server.py`
+- `get_patcher_state_json()` - Moved from `server.py` to `server.py`
 
 ---
 

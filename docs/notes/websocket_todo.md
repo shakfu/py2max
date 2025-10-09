@@ -29,9 +29,9 @@ handleBoxMouseDown(event, box) {
 **Solution**: Implemented debounced auto-save that saves the patch 2 seconds after the last position update. This prevents excessive disk writes during dragging while ensuring changes are persisted.
 
 **Files Changed**:
-- `py2max/websocket_server.py:81-85` (added `_save_task` tracking)
-- `py2max/websocket_server.py:183` (call to `schedule_save()`)
-- `py2max/websocket_server.py:186-206` (debounced save implementation)
+- `py2max/server.py:81-85` (added `_save_task` tracking)
+- `py2max/server.py:183` (call to `schedule_save()`)
+- `py2max/server.py:186-206` (debounced save implementation)
 
 **Implementation**:
 ```python

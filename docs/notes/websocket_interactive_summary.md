@@ -12,7 +12,7 @@ Successfully implemented a full-featured **interactive WebSocket-based editor** 
 
 ### New Files (4 files, ~800 lines)
 
-1. **`py2max/websocket_server.py`** (400 lines)
+1. **`py2max/server.py`** (400 lines)
    - Complete WebSocket server implementation using `websockets>=12.0`
    - Bidirectional message handling
    - HTTP server for static files

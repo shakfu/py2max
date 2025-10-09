@@ -233,7 +233,7 @@ py2max/
 │   ├── db.py             # SQLite database for maxref
 │   ├── svg.py            # SVG export
 │   ├── server.py         # Live preview server (SSE)
-│   ├── websocket_server.py  # Interactive WebSocket server
+│   ├── server.py  # Interactive WebSocket server
 │   ├── cli.py            # Command-line interface
 │   └── ...
 ├── tests/                 # Test suite

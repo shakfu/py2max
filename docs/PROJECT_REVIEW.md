@@ -301,7 +301,7 @@ class InvalidBoxError(PatcherValidationError):
 # server.py - sync
 p.serve()
 
-# websocket_server.py - async
+# server.py - async
 await p.serve_interactive()
 ```
 
@@ -634,7 +634,7 @@ layout.py:            1309 lines
 cli.py:               977 lines
 db.py:                928 lines
 maxref.py:            670 lines
-websocket_server.py:  507 lines
+server.py:  507 lines
 server.py:            445 lines
 svg.py:               391 lines
 converters.py:        343 lines
