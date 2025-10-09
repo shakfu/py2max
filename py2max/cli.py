@@ -616,6 +616,39 @@ def cmd_db_cache(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_serve(args: argparse.Namespace) -> int:
+    """Start live preview server for a patcher."""
+    input_path = Path(args.input)
+
+    if not input_path.exists():
+        print(f"Input file not found: {input_path}", file=sys.stderr)
+        return 1
+
+    # Load patcher
+    patcher = Patcher.from_file(input_path)
+    _coerce_rect(patcher)
+
+    # Start server
+    try:
+        print(f"Starting live preview server for: {input_path}")
+        print("Press Ctrl+C to stop")
+        server = patcher.serve(port=args.port, auto_open=not args.no_open)
+
+        # Keep running
+        try:
+            import time
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nStopping server...")
+            server.stop()
+            return 0
+
+    except Exception as e:
+        print(f"Error starting server: {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_preview(args: argparse.Namespace) -> int:
     """Generate SVG preview of a patcher."""
     import webbrowser
@@ -765,6 +798,12 @@ def build_parser() -> argparse.ArgumentParser:
     val_parser = subparsers.add_parser("validate", help="Validate patcher connections against maxref metadata")
     val_parser.add_argument("path", help="Target .maxpat path")
     val_parser.set_defaults(func=cmd_validate)
+
+    serve_parser = subparsers.add_parser("serve", help="Start live preview server for a patcher")
+    serve_parser.add_argument("input", help="Input .maxpat file")
+    serve_parser.add_argument("--port", type=int, default=8000, help="HTTP server port (default: 8000)")
+    serve_parser.add_argument("--no-open", action="store_true", help="Don't automatically open browser")
+    serve_parser.set_defaults(func=cmd_serve)
 
     preview_parser = subparsers.add_parser("preview", help="Generate SVG preview of a patcher")
     preview_parser.add_argument("input", help="Input .maxpat file")

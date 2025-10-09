@@ -348,6 +348,34 @@ class Patcher(abstract.AbstractPatcher):
         if self._path:
             self.save_as(self._path)
 
+        # Notify live preview server if active
+        if hasattr(self, '_live_server') and self._live_server:
+            self._live_server.notify_update()
+
+    def serve(self, port: int = 8000, auto_open: bool = True):
+        """Start a live preview server for this patcher.
+
+        Opens a web browser with real-time visualization that updates
+        as you modify the patcher in the Python REPL.
+
+        Args:
+            port: HTTP server port (default: 8000)
+            auto_open: Automatically open browser (default: True)
+
+        Returns:
+            PatcherServer instance
+
+        Example:
+            >>> p = Patcher('demo.maxpat')
+            >>> p.serve()  # Opens browser with live preview
+            >>> osc = p.add_textbox('cycle~ 440')  # Updates browser
+            >>> p.save()  # Triggers update
+        """
+        from .server import serve_patcher
+
+        self._live_server = serve_patcher(self, port, auto_open)
+        return self._live_server
+
     def get_id(self) -> str:
         """helper func to increment object ids"""
         self._id_counter += 1
