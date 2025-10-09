@@ -125,6 +125,30 @@ cycle_objects = [b for b in p.find_by_text('cycle', case_sensitive=False)
                  if 'cycle~' in b.text]
 ```
 
+### Semantic Object IDs
+
+By default, py2max generates numeric IDs like `obj-1`, `obj-2`. Enable semantic IDs for more readable, object-type-based IDs:
+
+```python
+# Enable semantic IDs
+p = Patcher('my-patch.maxpat', semantic_ids=True)
+
+osc1 = p.add_textbox('cycle~ 440')    # ID: 'cycle_1'
+osc2 = p.add_textbox('cycle~ 220')    # ID: 'cycle_2'
+gain = p.add_textbox('gain~')         # ID: 'gain_1'
+metro = p.add_textbox('metro 500')    # ID: 'metro_1'
+msg = p.add_message('start')          # ID: 'message_1'
+
+# Find objects by semantic ID
+osc1 = p.find_by_id('cycle_1')
+gain = p.find_by_id('gain_1')
+```
+
+Benefits of semantic IDs:
+- **Easier debugging**: Immediately know object type from ID
+- **Better readability**: IDs like `cycle_1` more intuitive than `obj-5`
+- **Type-based counters**: Each object type gets its own counter
+
 ### Live Server
 
 py2max provides an interactive WebSocket server for real-time visualization and editing:

@@ -12,6 +12,12 @@
 
 - [x] Convert maxref files to an sqlite database, would make sense for local caching (retrieval). 
 
+- [ ] Implement nested patchers in the interactive patcher editor
+
+- [ ] Add object groups (can help in layout)
+
+- [ ] Make the colors of the svg similar to Max's colors
+
 - [ ] Run `mypy --strict py2max` and fix all errors.
 
 - [ ] add optional mode where `id==varname` if id is set
@@ -26,11 +32,11 @@
 
 - [ ] restructure `.add`
 
-- [ ] add option to enable semantic ids (e.g. `cycle-1`)
+- [x] add option to enable semantic ids (e.g. `cycle-1`)
 
 - [ ] add option to convert patchlines to references (send/receive)
 
-- [ ] add `find_object_by_id`, `find_object_by_type`
+- [x] add `find_object_by_id`, `find_object_by_type`
 
 ## Layout
 

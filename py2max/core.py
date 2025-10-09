@@ -86,6 +86,8 @@ class Patcher(abstract.AbstractPatcher):
         cluster_connected: Whether to cluster connected objects in grid layout.
         num_dimensions: Number of rows used by the matrix layout (also treated as column count when flow_direction='column').
         dimension_spacing: Spacing between rows/columns for matrix layout variants.
+        semantic_ids: Whether to generate semantic IDs based on object names (e.g., 'cycle_1')
+                     instead of numeric IDs (e.g., 'obj-1'). Enables more readable debugging.
 
     Example:
         >>> p = Patcher('my-patch.maxpat', layout='grid')
@@ -93,6 +95,12 @@ class Patcher(abstract.AbstractPatcher):
         >>> gain = p.add_textbox('gain~')
         >>> p.add_line(osc, gain)
         >>> p.save()
+
+        >>> # With semantic IDs
+        >>> p = Patcher('my-patch.maxpat', semantic_ids=True)
+        >>> osc1 = p.add_textbox('cycle~ 440')  # ID: 'cycle_1'
+        >>> osc2 = p.add_textbox('cycle~ 220')  # ID: 'cycle_2'
+        >>> gain = p.add_textbox('gain~')       # ID: 'gain_1'
     """
 
     def __init__(
@@ -111,6 +119,7 @@ class Patcher(abstract.AbstractPatcher):
         # Matrix layout configuration parameters
         num_dimensions: int = 4,
         dimension_spacing: float = 100.0,
+        semantic_ids: bool = False,
     ):
         self._path = path
         self._parent = parent
@@ -127,6 +136,8 @@ class Patcher(abstract.AbstractPatcher):
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
         self._reset_on_render = reset_on_render
+        self._semantic_ids = semantic_ids
+        self._semantic_counters: dict[str, int] = {}  # Track counts per object type
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
         self._num_dimensions = num_dimensions
@@ -452,10 +463,37 @@ class Patcher(abstract.AbstractPatcher):
         self._server = await serve_interactive(self, port, auto_open)
         return self._server
 
-    def get_id(self) -> str:
-        """helper func to increment object ids"""
-        self._id_counter += 1
-        return f"obj-{self._id_counter}"
+    def get_id(self, object_name: Optional[str] = None) -> str:
+        """Generate object ID, optionally semantic based on object name.
+
+        Args:
+            object_name: Optional Max object name (e.g., 'cycle~', 'gain~').
+                        Used to generate semantic IDs like 'cycle_1' when
+                        semantic_ids mode is enabled.
+
+        Returns:
+            Object ID string (e.g., 'obj-5' or 'cycle_1').
+        """
+        if self._semantic_ids and object_name:
+            # Sanitize object name (remove ~, spaces, special chars)
+            clean_name = (object_name
+                         .replace('~', '')
+                         .replace(' ', '_')
+                         .replace('.', '_')
+                         .replace('-', '_')
+                         .replace('[', '')
+                         .replace(']', '')
+                         .replace('(', '')
+                         .replace(')', ''))
+
+            # Get or increment counter for this object type
+            count = self._semantic_counters.get(clean_name, 0) + 1
+            self._semantic_counters[clean_name] = count
+            return f"{clean_name}_{count}"
+        else:
+            # Standard numeric ID
+            self._id_counter += 1
+            return f"obj-{self._id_counter}"
 
     def set_layout_mgr(self, name: str) -> layout.LayoutManager:
         """takes a name and returns an instance of a layout manager"""
@@ -743,7 +781,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id(_maxclass),
                 text=text,
                 maxclass=maxclass or "newobj",
                 numinlets=numinlets if numinlets is not None else 1,
@@ -867,7 +905,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id(_maxclass),
                 code=code,
                 maxclass=_maxclass,
                 outlettype=[""],
@@ -905,7 +943,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("message"),
                 text=text or "",
                 maxclass="message",
                 numinlets=2,
@@ -931,7 +969,7 @@ class Patcher(abstract.AbstractPatcher):
             kwds["textjustification"] = {"left": 0, "center": 1, "right": 2}[justify]
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("comment"),
                 text=text,
                 maxclass="comment",
                 patching_rect=patching_rect or self.get_pos(),
@@ -951,7 +989,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("number"),
                 maxclass="number",
                 numinlets=1,
                 numoutlets=2,
@@ -978,7 +1016,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("flonum"),
                 maxclass="flonum",
                 numinlets=1,
                 numoutlets=2,
@@ -1011,7 +1049,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("flonum"),
                 maxclass="flonum",
                 numinlets=1,
                 numoutlets=2,
@@ -1055,7 +1093,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("number"),
                 maxclass="number",
                 numinlets=1,
                 numoutlets=2,
@@ -1101,7 +1139,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("attrui"),
                 text="attrui",
                 maxclass="attrui",
                 attr=name,
@@ -1137,9 +1175,11 @@ class Patcher(abstract.AbstractPatcher):
     ) -> "Box":
         """Add a subpatcher object."""
 
+        # For subpatchers, use the text (e.g., "p subpatch") for semantic ID
+        obj_name = text.split()[0] if text else "newobj"
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id(obj_name),
                 text=text,
                 maxclass=maxclass or "newobj",
                 numinlets=numinlets or 1,
@@ -1208,7 +1248,7 @@ class Patcher(abstract.AbstractPatcher):
         kwds.update(extra)
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("coll"),
                 text=text or f"coll {name} @embed {embed}"
                 if name
                 else f"coll @embed {embed}",
@@ -1247,7 +1287,7 @@ class Patcher(abstract.AbstractPatcher):
         kwds.update(extra)
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("dict"),
                 text=text or f"dict {name} @embed {embed}"
                 if name
                 else f"dict @embed {embed}",
@@ -1296,7 +1336,7 @@ class Patcher(abstract.AbstractPatcher):
         table_type = "table~" if tilde else "table"
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id(table_type),
                 text=text or f"{table_type} {name} @embed {embed}"
                 if name
                 else f"{table_type} @embed {embed}",
@@ -1359,7 +1399,7 @@ class Patcher(abstract.AbstractPatcher):
         kwds.update(extra)
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("itable"),
                 text=text or f"itable {name}",
                 maxclass="itable",
                 numinlets=2,
@@ -1392,7 +1432,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("umenu"),
                 maxclass="umenu",
                 numinlets=1,
                 numoutlets=3,
@@ -1432,7 +1472,7 @@ class Patcher(abstract.AbstractPatcher):
 
         return self.add_box(
             Box(
-                id=id or self.get_id(),
+                id=id or self.get_id("bpatcher"),
                 name=name,
                 maxclass="bpatcher",
                 numinlets=numinlets,
