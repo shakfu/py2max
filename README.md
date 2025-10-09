@@ -125,6 +125,24 @@ cycle_objects = [b for b in p.find_by_text('cycle', case_sensitive=False)
                  if 'cycle~' in b.text]
 ```
 
+### Live Server
+
+py2max provides an interactive WebSocket server for real-time visualization and editing:
+
+```bash
+# Install websockets dependency
+pip install websockets
+
+# Start interactive server
+py2max serve my-patch.maxpat
+```
+
+The server provides:
+- **Bidirectional sync**: Changes in Python or browser update both
+- **Visual editing**: Drag objects, draw connections in browser
+- **Auto-save**: Changes automatically saved to file
+- **Live preview**: See patch updates in real-time
+
 ### Parsing Existing Patches
 
 Parse existing `.maxpat` files, modify them, and save changes:

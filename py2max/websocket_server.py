@@ -40,7 +40,85 @@ except ImportError:
 if TYPE_CHECKING:
     from .core import Patcher
 
-from .server import get_patcher_state_json
+
+def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
+    """Convert patcher to JSON state for browser.
+
+    Args:
+        patcher: The patcher to convert
+
+    Returns:
+        Dictionary with boxes and lines data
+    """
+    if not patcher:
+        return {'type': 'update', 'boxes': [], 'lines': []}
+
+    boxes = []
+    for box in patcher._boxes:
+        box_data = {
+            'id': getattr(box, 'id', ''),
+            'text': getattr(box, 'text', ''),
+            'maxclass': getattr(box, 'maxclass', 'newobj'),
+            'patching_rect': {
+                'x': 0, 'y': 0, 'w': 100, 'h': 22
+            }
+        }
+
+        # Get patching_rect
+        rect = getattr(box, 'patching_rect', None)
+        if rect:
+            if hasattr(rect, 'x'):
+                box_data['patching_rect'] = {
+                    'x': rect.x, 'y': rect.y, 'w': rect.w, 'h': rect.h
+                }
+            elif isinstance(rect, (list, tuple)) and len(rect) >= 4:
+                box_data['patching_rect'] = {
+                    'x': rect[0], 'y': rect[1], 'w': rect[2], 'h': rect[3]
+                }
+
+        # Get inlet/outlet counts
+        if hasattr(box, 'get_inlet_count'):
+            try:
+                box_data['inlet_count'] = box.get_inlet_count() or 0
+            except Exception:
+                box_data['inlet_count'] = 0
+        else:
+            box_data['inlet_count'] = 0
+
+        if hasattr(box, 'get_outlet_count'):
+            try:
+                box_data['outlet_count'] = box.get_outlet_count() or 0
+            except Exception:
+                box_data['outlet_count'] = 0
+        else:
+            box_data['outlet_count'] = 0
+
+        boxes.append(box_data)
+
+    lines = []
+    for line in patcher._lines:
+        line_data = {
+            'src': getattr(line, 'src', ''),
+            'dst': getattr(line, 'dst', ''),
+            'src_outlet': 0,
+            'dst_inlet': 0
+        }
+
+        source = getattr(line, 'source', None)
+        if source and len(source) > 1:
+            line_data['src_outlet'] = source[1]
+
+        destination = getattr(line, 'destination', None)
+        if destination and len(destination) > 1:
+            line_data['dst_inlet'] = destination[1]
+
+        lines.append(line_data)
+
+    return {
+        'type': 'update',
+        'boxes': boxes,
+        'lines': lines
+    }
 
 
 class InteractiveHTTPHandler(http.server.SimpleHTTPRequestHandler):

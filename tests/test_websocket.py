@@ -85,14 +85,14 @@ class TestWebSocketServer:
         await server.shutdown()
 
     @pytest.mark.asyncio
-    async def test_patcher_serve_interactive(self):
-        """Test Patcher.serve_interactive() method."""
+    async def test_patcher_serve(self):
+        """Test Patcher.serve() method."""
         p = Patcher('test.maxpat')
-        server = await p.serve_interactive(port=9005, auto_open=False)
+        server = await p.serve(port=9005, auto_open=False)
 
         assert server._running is True
-        assert hasattr(p, '_interactive_server')
-        assert p._interactive_server is server
+        assert hasattr(p, '_server')
+        assert p._server is server
 
         await server.shutdown()
 

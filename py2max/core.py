@@ -422,35 +422,9 @@ class Patcher(abstract.AbstractPatcher):
         if self._path:
             self.save_as(self._path)
 
-        # Notify live preview server if active
-        if hasattr(self, '_live_server') and self._live_server:
-            self._live_server.notify_update()
 
-    def serve(self, port: int = 8000, auto_open: bool = True):
-        """Start a live preview server for this patcher.
 
-        Opens a web browser with real-time visualization that updates
-        as you modify the patcher in the Python REPL.
-
-        Args:
-            port: HTTP server port (default: 8000)
-            auto_open: Automatically open browser (default: True)
-
-        Returns:
-            PatcherServer instance
-
-        Example:
-            >>> p = Patcher('demo.maxpat')
-            >>> p.serve()  # Opens browser with live preview
-            >>> osc = p.add_textbox('cycle~ 440')  # Updates browser
-            >>> p.save()  # Triggers update
-        """
-        from .server import serve_patcher
-
-        self._live_server = serve_patcher(self, port, auto_open)
-        return self._live_server
-
-    async def serve_interactive(self, port: int = 8000, auto_open: bool = True):
+    async def serve(self, port: int = 8000, auto_open: bool = True):
         """Start an interactive WebSocket server for this patcher.
 
         Opens a web browser with interactive editor that allows bidirectional
@@ -466,7 +440,7 @@ class Patcher(abstract.AbstractPatcher):
 
         Example:
             >>> p = Patcher('demo.maxpat')
-            >>> async with await p.serve_interactive() as server:
+            >>> async with await p.serve() as server:
             ...     # Edit in browser - changes sync back to Python!
             ...     await asyncio.sleep(10)
 
@@ -475,8 +449,8 @@ class Patcher(abstract.AbstractPatcher):
         """
         from .websocket_server import serve_interactive
 
-        self._interactive_server = await serve_interactive(self, port, auto_open)
-        return self._interactive_server
+        self._server = await serve_interactive(self, port, auto_open)
+        return self._server
 
     def get_id(self) -> str:
         """helper func to increment object ids"""
