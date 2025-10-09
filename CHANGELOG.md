@@ -2,6 +2,8 @@
 
 ## 0.2.x
 
+## 0.2.0
+
 ### New: Interactive Editor - Advanced Layout with SVG.js, WebCola, and D3.js
 
 - Added complete SVG.js (v3.2.5) integration for all SVG manipulation and animation in the interactive editor
