@@ -34,6 +34,53 @@
 
 - Added `docs/database.md` API documentation
 
+### Improved: MaxRefDB API Enhancements
+
+**Python API Improvements:**
+
+- Added Pythonic properties: `.count`, `.categories`, `.objects` for cleaner access
+- Added magic methods: `len(db)`, `'obj' in db`, `db['obj']`, `repr(db)` for natural Python usage
+- Added simplified methods: `populate()`, `search()`, `by_category()`, `export()`, `load()` with cleaner naming
+- Added `summary()` method for database statistics with category breakdown
+- Maintained full backward compatibility with deprecated methods
+- All 18 database tests pass
+
+**CLI Improvements:**
+
+- Added comprehensive `py2max db` subcommand with 7 operations:
+  - `db create` - Create new databases with optional category filtering
+  - `db populate` - Add objects to existing databases
+  - `db info` - Show database information with summary and listing options
+  - `db search` - Search objects by text or category with verbose mode
+  - `db query` - Get detailed object information (JSON, dict, or human-readable)
+  - `db export` - Export database to JSON
+  - `db import` - Import JSON data into database
+- Updated `convert maxref-to-sqlite` to use MaxRefDB internally
+- Added 7 new CLI tests covering all db subcommands
+- All 272 tests pass (258 passed, 14 skipped)
+
+**Example Usage:**
+
+```python
+# New Pythonic API
+db = MaxRefDB('maxref.db')
+db.populate(category='msp')
+print(len(db))  # Total objects
+if 'cycle~' in db:
+    cycle = db['cycle~']
+results = db.search('filter')
+db.export('backup.json')
+```
+
+```bash
+# New CLI commands
+py2max db create msp.db --category msp
+py2max db info msp.db --summary
+py2max db search msp.db "oscillator" -v
+py2max db query msp.db cycle~ --json
+py2max db export msp.db backup.json
+```
+
 ## 0.1.2
 
 ### Improvements in Type Safety

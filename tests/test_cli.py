@@ -211,3 +211,170 @@ def test_cli_transform_list(capsys):
 
     assert exit_code == 0
     assert "set-font-size" in captured.out
+
+
+def test_cli_db_create(tmp_path: Path):
+    """Test creating a new MaxRefDB database"""
+    db_path = tmp_path / "test.db"
+
+    exit_code = run_cli([
+        "db",
+        "create",
+        str(db_path),
+        "--category",
+        "msp",
+    ])
+
+    assert exit_code == 0
+    assert db_path.exists()
+
+    # Verify database was populated
+    from py2max.db import MaxRefDB
+    db = MaxRefDB(db_path)
+    assert db.count > 0
+
+
+def test_cli_db_create_empty(tmp_path: Path):
+    """Test creating an empty MaxRefDB database"""
+    db_path = tmp_path / "empty.db"
+
+    exit_code = run_cli([
+        "db",
+        "create",
+        str(db_path),
+        "--empty",
+    ])
+
+    assert exit_code == 0
+    assert db_path.exists()
+
+    from py2max.db import MaxRefDB
+    db = MaxRefDB(db_path)
+    assert db.count == 0
+
+
+def test_cli_db_populate(tmp_path: Path):
+    """Test populating an existing database"""
+    db_path = tmp_path / "populate.db"
+
+    # Create empty database first
+    run_cli(["db", "create", str(db_path), "--empty"])
+
+    # Populate with specific objects
+    exit_code = run_cli([
+        "db",
+        "populate",
+        str(db_path),
+        "--objects",
+        "cycle~",
+        "gain~",
+    ])
+
+    assert exit_code == 0
+
+    from py2max.db import MaxRefDB
+    db = MaxRefDB(db_path)
+    assert db.count == 2
+    assert 'cycle~' in db
+    assert 'gain~' in db
+
+
+def test_cli_db_info(tmp_path: Path, capsys):
+    """Test getting database info"""
+    db_path = tmp_path / "info.db"
+
+    # Create database with specific objects
+    from py2max.db import MaxRefDB
+    db = MaxRefDB(db_path)
+    db.populate(['cycle~', 'gain~'])
+
+    exit_code = run_cli([
+        "db",
+        "info",
+        str(db_path),
+        "--summary",
+    ])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "Total objects: 2" in captured.out
+    assert "Categories:" in captured.out
+
+
+def test_cli_db_search(tmp_path: Path, capsys):
+    """Test searching database"""
+    db_path = tmp_path / "search.db"
+
+    # Create database with specific objects
+    from py2max.db import MaxRefDB
+    db = MaxRefDB(db_path)
+    db.populate(['cycle~', 'gain~', 'dac~'])
+
+    exit_code = run_cli([
+        "db",
+        "search",
+        str(db_path),
+        "cycle",
+    ])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "cycle~" in captured.out
+
+
+def test_cli_db_query(tmp_path: Path, capsys):
+    """Test querying object details"""
+    db_path = tmp_path / "query.db"
+
+    # Create database with specific objects
+    from py2max.db import MaxRefDB
+    db = MaxRefDB(db_path)
+    db.populate(['cycle~'])
+
+    exit_code = run_cli([
+        "db",
+        "query",
+        str(db_path),
+        "cycle~",
+    ])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "cycle~" in captured.out
+    assert "Digest:" in captured.out
+
+
+def test_cli_db_export_import(tmp_path: Path):
+    """Test exporting and importing database"""
+    db_path = tmp_path / "export.db"
+    json_path = tmp_path / "export.json"
+    db_path2 = tmp_path / "import.db"
+
+    # Create database
+    from py2max.db import MaxRefDB
+    db = MaxRefDB(db_path)
+    db.populate(['cycle~', 'gain~'])
+
+    # Export to JSON
+    exit_code = run_cli([
+        "db",
+        "export",
+        str(db_path),
+        str(json_path),
+    ])
+    assert exit_code == 0
+    assert json_path.exists()
+
+    # Create new database and import
+    run_cli(["db", "create", str(db_path2), "--empty"])
+    exit_code = run_cli([
+        "db",
+        "import",
+        str(db_path2),
+        str(json_path),
+    ])
+
+    assert exit_code == 0
+    db2 = MaxRefDB(db_path2)
+    assert db2.count == 2
+    assert 'cycle~' in db2

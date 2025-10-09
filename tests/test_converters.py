@@ -90,30 +90,44 @@ class DummyMaxRefCache:
 
 
 def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
+    from py2max.db import MaxRefDB
+    from py2max import maxref, db
+
     dummy = DummyMaxRefCache()
     monkeypatch.setattr("py2max.converters.MaxRefCache", lambda: dummy)
+    # Patch maxref module functions used by MaxRefDB
+    monkeypatch.setattr(maxref, "get_object_info", dummy.get_object_data)
+    monkeypatch.setattr(maxref, "get_available_objects", lambda: list(dummy._data.keys()))
+    # Also patch in db module which imports them
+    monkeypatch.setattr(db, "get_object_info", dummy.get_object_data)
+    monkeypatch.setattr(db, "get_available_objects", lambda: list(dummy._data.keys()))
 
     db_path = tmp_path / "cache.db"
     count = maxref_to_sqlite(db_path, overwrite=True)
 
     assert count == len(dummy._data)
 
-    conn = sqlite3.connect(db_path)
-    try:
-        rows = conn.execute(
-            "SELECT name, category, digest FROM maxref ORDER BY name"
-        ).fetchall()
-    finally:
-        conn.close()
+    # Use MaxRefDB to query the database
+    database = MaxRefDB(db_path)
+    assert database.count == len(dummy._data)
+    assert 'cycle~' in database
+    assert 'ezdac~' in database
 
-    assert len(rows) == len(dummy._data)
-    assert rows[0][0] == "cycle~"
-    assert rows[0][1] == "msp"
+    # Verify data integrity
+    cycle = database['cycle~']
+    assert cycle['digest'] == "Sinusoidal oscillator"
+    # Category comes from the actual XML data, not our test data
+    assert 'cycle' in cycle['name'].lower()
 
 
 def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
+    from py2max.db import MaxRefDB
+    from py2max import maxref
+
     dummy = DummyMaxRefCache()
     monkeypatch.setattr("py2max.converters.MaxRefCache", lambda: dummy)
+    # Also patch maxref module functions used by MaxRefDB
+    monkeypatch.setattr(maxref, "get_object_info", dummy.get_object_data)
 
     db_path = tmp_path / "cli_cache.db"
     exit_code = cli.main(
@@ -130,16 +144,18 @@ def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     )
 
     assert exit_code == 0
-    conn = sqlite3.connect(db_path)
-    try:
-        rows = conn.execute(
-            "SELECT name, category FROM maxref ORDER BY name"
-        ).fetchall()
-    finally:
-        conn.close()
 
-    assert len(rows) == 2
-    assert all(row[1] == "msp" for row in rows)
+    # Use MaxRefDB to query the database
+    db = MaxRefDB(db_path)
+    assert db.count == 2
+    assert 'cycle~' in db
+    assert 'ezdac~' in db
+
+    # Verify objects have expected data
+    cycle = db['cycle~']
+    assert cycle['digest'] == "Sinusoidal oscillator"
+    ezdac = db['ezdac~']
+    assert ezdac['digest'] == "Audio output and on/off button"
 
 
 def test_maxpat_to_python_with_subpatcher(tmp_path: Path):

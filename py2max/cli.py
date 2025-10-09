@@ -20,6 +20,7 @@ from .common import Rect
 from .maxref import MaxRefCache, validate_connection
 from .transformers import available_transformers, create_transformer, run_pipeline
 from .converters import maxpat_to_python, maxref_to_sqlite
+from .db import MaxRefDB
 
 
 LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
@@ -331,6 +332,237 @@ def cmd_convert(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_db(args: argparse.Namespace) -> int:
+    """Handle database subcommands"""
+    if args.db_command == "create":
+        return cmd_db_create(args)
+    elif args.db_command == "populate":
+        return cmd_db_populate(args)
+    elif args.db_command == "info":
+        return cmd_db_info(args)
+    elif args.db_command == "search":
+        return cmd_db_search(args)
+    elif args.db_command == "query":
+        return cmd_db_query(args)
+    elif args.db_command == "export":
+        return cmd_db_export(args)
+    elif args.db_command == "import":
+        return cmd_db_import(args)
+    else:
+        print(f"Unknown db subcommand: {args.db_command}", file=sys.stderr)
+        return 1
+
+
+def cmd_db_create(args: argparse.Namespace) -> int:
+    """Create a new MaxRefDB database"""
+    db_path = Path(args.database)
+
+    if db_path.exists() and not args.force:
+        print(f"Database already exists: {db_path}", file=sys.stderr)
+        print("Use --force to overwrite or use 'db populate' to add to existing database", file=sys.stderr)
+        return 1
+
+    if db_path.exists():
+        db_path.unlink()
+
+    db = MaxRefDB(db_path)
+
+    if not args.empty:
+        # Populate with specified category or all
+        category = args.category if hasattr(args, 'category') else None
+        print(f"Creating database and populating with {category or 'all'} objects...")
+        db.populate(category=category)
+        print(f"Created database with {db.count} objects at {db_path}")
+    else:
+        print(f"Created empty database at {db_path}")
+
+    return 0
+
+
+def cmd_db_populate(args: argparse.Namespace) -> int:
+    """Populate an existing MaxRefDB database"""
+    db_path = Path(args.database)
+
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        print("Use 'db create' to create a new database", file=sys.stderr)
+        return 1
+
+    db = MaxRefDB(db_path)
+    initial_count = db.count
+
+    if args.objects:
+        print(f"Populating with {len(args.objects)} specific objects...")
+        db.populate(args.objects)
+    elif args.category:
+        print(f"Populating with {args.category} objects...")
+        db.populate(category=args.category)
+    else:
+        print("Populating with all objects...")
+        db.populate()
+
+    added = db.count - initial_count
+    print(f"Added {added} objects (total: {db.count})")
+    return 0
+
+
+def cmd_db_info(args: argparse.Namespace) -> int:
+    """Show information about a MaxRefDB database"""
+    db_path = Path(args.database)
+
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        return 1
+
+    db = MaxRefDB(db_path)
+
+    print(f"Database: {db_path}")
+    print(f"Total objects: {db.count}")
+
+    if args.summary:
+        summary = db.summary()
+        print("\nCategories:")
+        for category, count in sorted(summary['categories'].items()):
+            print(f"  {category}: {count} objects")
+
+    if args.list:
+        print("\nObjects:")
+        for obj_name in db.objects:
+            print(f"  {obj_name}")
+
+    if args.categories:
+        print("\nCategories:")
+        for category in db.categories:
+            print(f"  {category}")
+
+    return 0
+
+
+def cmd_db_search(args: argparse.Namespace) -> int:
+    """Search for objects in a MaxRefDB database"""
+    db_path = Path(args.database)
+
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        return 1
+
+    db = MaxRefDB(db_path)
+
+    if args.category:
+        results = db.by_category(args.category)
+        print(f"Objects in category '{args.category}':")
+    else:
+        fields = args.fields.split(',') if args.fields else None
+        results = db.search(args.query, fields=fields)
+        print(f"Search results for '{args.query}':")
+
+    if not results:
+        print("  (no matches)")
+        return 0
+
+    for name in results:
+        if args.verbose:
+            obj = db[name]
+            digest = obj.get('digest', '')
+            print(f"  {name}: {digest}")
+        else:
+            print(f"  {name}")
+
+    print(f"\nFound {len(results)} objects")
+    return 0
+
+
+def cmd_db_query(args: argparse.Namespace) -> int:
+    """Query object details from a MaxRefDB database"""
+    db_path = Path(args.database)
+
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        return 1
+
+    db = MaxRefDB(db_path)
+
+    if args.name not in db:
+        print(f"Object not found: {args.name}", file=sys.stderr)
+        return 1
+
+    obj = db[args.name]
+
+    if args.json:
+        print(json.dumps(obj, indent=2))
+    elif args.dict:
+        pprint(obj)
+    else:
+        # Human-readable output
+        print(f"{args.name}")
+        if obj.get('digest'):
+            print(f"  Digest: {obj['digest']}")
+        if obj.get('description'):
+            print(f"  Description: {obj['description']}")
+        if obj.get('category'):
+            print(f"  Category: {obj['category']}")
+
+        inlets = obj.get('inlets', [])
+        outlets = obj.get('outlets', [])
+        if inlets:
+            print(f"  Inlets: {len(inlets)}")
+        if outlets:
+            print(f"  Outlets: {len(outlets)}")
+
+        methods = obj.get('methods', {})
+        attributes = obj.get('attributes', {})
+        if methods:
+            print(f"  Methods: {len(methods)}")
+        if attributes:
+            print(f"  Attributes: {len(attributes)}")
+
+    return 0
+
+
+def cmd_db_export(args: argparse.Namespace) -> int:
+    """Export MaxRefDB database to JSON"""
+    db_path = Path(args.database)
+
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        return 1
+
+    output_path = Path(args.output)
+
+    if output_path.exists() and not args.force:
+        print(f"Output file already exists: {output_path}", file=sys.stderr)
+        print("Use --force to overwrite", file=sys.stderr)
+        return 1
+
+    db = MaxRefDB(db_path)
+    db.export(output_path)
+    print(f"Exported {db.count} objects to {output_path}")
+    return 0
+
+
+def cmd_db_import(args: argparse.Namespace) -> int:
+    """Import JSON data into MaxRefDB database"""
+    db_path = Path(args.database)
+    input_path = Path(args.input)
+
+    if not input_path.exists():
+        print(f"Input file not found: {input_path}", file=sys.stderr)
+        return 1
+
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        print("Use 'db create --empty' to create a new database first", file=sys.stderr)
+        return 1
+
+    db = MaxRefDB(db_path)
+    initial_count = db.count
+
+    db.load(input_path)
+    added = db.count - initial_count
+    print(f"Imported {added} objects from {input_path} (total: {db.count})")
+    return 0
+
+
 def cmd_maxref(args: argparse.Namespace) -> int:
     cache = MaxRefCache()
 
@@ -501,6 +733,63 @@ def build_parser() -> argparse.ArgumentParser:
     maxref_parser.add_argument("--list", action="store_true", help="List all available maxref entries")
     maxref_parser.add_argument("--info", action="store_true", help="List all entries with their digests")
     maxref_parser.set_defaults(func=cmd_maxref)
+
+    # Database (db) command
+    db_parser = subparsers.add_parser("db", help="Manage MaxRefDB databases")
+    db_subparsers = db_parser.add_subparsers(dest="db_command")
+
+    # db create
+    db_create = db_subparsers.add_parser("create", help="Create a new MaxRefDB database")
+    db_create.add_argument("database", help="Database file path (e.g., maxref.db)")
+    db_create.add_argument("--category", choices=['max', 'msp', 'jit', 'm4l'], help="Populate with specific category")
+    db_create.add_argument("--empty", action="store_true", help="Create empty database without populating")
+    db_create.add_argument("--force", action="store_true", help="Overwrite existing database")
+    db_create.set_defaults(func=cmd_db)
+
+    # db populate
+    db_populate = db_subparsers.add_parser("populate", help="Populate existing database with objects")
+    db_populate.add_argument("database", help="Database file path")
+    db_populate.add_argument("--category", choices=['max', 'msp', 'jit', 'm4l'], help="Populate with specific category")
+    db_populate.add_argument("--objects", nargs="+", help="Specific object names to add")
+    db_populate.set_defaults(func=cmd_db)
+
+    # db info
+    db_info = db_subparsers.add_parser("info", help="Show database information")
+    db_info.add_argument("database", help="Database file path")
+    db_info.add_argument("--summary", action="store_true", help="Show category summary")
+    db_info.add_argument("--list", action="store_true", help="List all object names")
+    db_info.add_argument("--categories", action="store_true", help="List all categories")
+    db_info.set_defaults(func=cmd_db)
+
+    # db search
+    db_search = db_subparsers.add_parser("search", help="Search for objects in database")
+    db_search.add_argument("database", help="Database file path")
+    db_search.add_argument("query", nargs="?", help="Search query")
+    db_search.add_argument("--category", help="Search within specific category")
+    db_search.add_argument("--fields", help="Comma-separated fields to search (name,digest,description)")
+    db_search.add_argument("-v", "--verbose", action="store_true", help="Show object digests")
+    db_search.set_defaults(func=cmd_db)
+
+    # db query
+    db_query = db_subparsers.add_parser("query", help="Get detailed object information")
+    db_query.add_argument("database", help="Database file path")
+    db_query.add_argument("name", help="Object name to query")
+    db_query.add_argument("--json", action="store_true", help="Output as JSON")
+    db_query.add_argument("--dict", action="store_true", help="Output as Python dict")
+    db_query.set_defaults(func=cmd_db)
+
+    # db export
+    db_export = db_subparsers.add_parser("export", help="Export database to JSON")
+    db_export.add_argument("database", help="Database file path")
+    db_export.add_argument("output", help="Output JSON file path")
+    db_export.add_argument("--force", action="store_true", help="Overwrite existing output file")
+    db_export.set_defaults(func=cmd_db)
+
+    # db import
+    db_import = db_subparsers.add_parser("import", help="Import JSON data into database")
+    db_import.add_argument("database", help="Database file path")
+    db_import.add_argument("input", help="Input JSON file path")
+    db_import.set_defaults(func=cmd_db)
 
     return parser
 

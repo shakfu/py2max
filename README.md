@@ -291,7 +291,9 @@ The wheel then should be in the `dist` directory.
 
 ## Command Line Usage
 
-py2max includes a small CLI so you can bootstrap and inspect patches without writing code:
+py2max includes a comprehensive CLI for bootstrapping, inspecting, and managing patches and databases:
+
+### Patcher Management
 
 ```bash
 # Create a starter stereo patch (use --force to overwrite)
@@ -306,6 +308,13 @@ py2max optimize outputs/demo.maxpat --layout matrix
 # Validate connections against maxref metadata
 py2max validate outputs/demo.maxpat
 
+# Apply a transformer pipeline via CLI
+py2max transform outputs/demo.maxpat --apply set-font-size=18 --apply add-comment=Auto
+```
+
+### MaxRef Metadata
+
+```bash
 # Inspect maxref metadata (list all objects)
 py2max maxref --list
 
@@ -314,18 +323,89 @@ py2max maxref cycle~ --json
 
 # Scaffold a pytest skeleton for an object
 py2max maxref ezdac~ --test --output tests/test_ezdac_maxref.py
+```
 
-# Apply a transformer pipeline via CLI
-py2max transform outputs/demo.maxpat --apply set-font-size=18 --apply add-comment=Auto
+### MaxRefDB Database Management
 
+py2max now includes a powerful database system for managing Max object metadata:
+
+```bash
+# Create database with all MSP objects
+py2max db create msp.db --category msp
+
+# Create database with all objects (max, msp, jit, m4l)
+py2max db create maxref.db
+
+# Create empty database
+py2max db create empty.db --empty
+
+# Populate existing database with specific objects
+py2max db populate maxref.db --objects cycle~ gain~ dac~
+
+# Populate with a category
+py2max db populate maxref.db --category jit
+
+# Show database info
+py2max db info maxref.db --summary
+
+# List all objects
+py2max db info maxref.db --list
+
+# Search for objects
+py2max db search maxref.db "oscillator"
+py2max db search maxref.db --category MSP -v
+
+# Get detailed object information
+py2max db query maxref.db cycle~ --json
+
+# Export database to JSON
+py2max db export maxref.db backup.json
+
+# Import JSON data into database
+py2max db import maxref.db data.json
+```
+
+### Converters
+
+```bash
 # Convert a .maxpat file to a Python builder
-py2max convert maxpat-to-python tests/data/simple.maxpat outputs/simple_builder.py --default-output outputs/simple_from_py.maxpat
+py2max convert maxpat-to-python tests/data/simple.maxpat outputs/simple_builder.py
 
-# Cache maxref metadata locally for fast lookups
+# Cache maxref metadata (uses MaxRefDB internally)
 py2max convert maxref-to-sqlite --output cache/maxref.db --overwrite
-# Optionally scope to specific objects or append with --names oscillators~ jit.world
+```
 
-# Apply a transformer pipeline from Python
+### Python API Examples
+
+```python
+# Use MaxRefDB with the improved API
+from py2max.db import MaxRefDB
+
+# Create and populate database
+db = MaxRefDB('maxref.db')
+db.populate(category='msp')  # or db.populate(['cycle~', 'gain~'])
+
+# Pythonic access
+print(f"Total objects: {len(db)}")  # or db.count
+print(f"Categories: {db.categories}")
+
+if 'cycle~' in db:
+    cycle = db['cycle~']
+    print(cycle['digest'])
+
+# Search and filter
+results = db.search('filter')
+msp_objects = db.by_category('MSP')
+
+# Export/import
+db.export('backup.json')
+db.load('data.json')
+
+# Get summary statistics
+summary = db.summary()
+print(f"Database: {summary}")
+
+# Apply transformer pipeline
 from py2max import Patcher
 from py2max.transformers import run_pipeline, set_font_size, optimize_layout
 

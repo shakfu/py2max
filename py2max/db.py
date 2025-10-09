@@ -33,6 +33,23 @@ class MaxRefDB:
             self._conn.row_factory = sqlite3.Row
         self._init_schema()
 
+    def __len__(self) -> int:
+        """Return number of objects in database"""
+        return self.count
+
+    def __contains__(self, name: str) -> bool:
+        """Check if object exists in database"""
+        with self._get_cursor() as cursor:
+            cursor.execute("SELECT 1 FROM objects WHERE name = ?", (name,))
+            return cursor.fetchone() is not None
+
+    def __getitem__(self, name: str) -> Dict[str, Any]:
+        """Get object by name using subscript notation"""
+        obj = self.get_object(name)
+        if obj is None:
+            raise KeyError(f"Object '{name}' not found in database")
+        return obj
+
     @classmethod
     def create_database(cls, db_path: Path, populate: bool = True) -> 'MaxRefDB':
         """Create and optionally populate a Max reference database
@@ -266,39 +283,61 @@ class MaxRefDB:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_methods_object ON methods(object_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_attributes_object ON attributes(object_id)")
 
-    def populate_from_maxref(self, object_names: Optional[List[str]] = None):
+    def populate(self, object_names: Optional[List[str]] = None, category: Optional[str] = None):
         """Populate database from .maxref.xml files
 
         Args:
-            object_names: List of object names to import. If None, imports all available objects.
+            object_names: List of object names to import. If None, imports based on category.
+            category: Category to import ('max', 'msp', 'jit', 'm4l', or None for all).
+                     Ignored if object_names is provided.
         """
         if object_names is None:
-            object_names = get_available_objects()
+            if category is None:
+                object_names = get_available_objects()
+            elif category.lower() == 'max':
+                object_names = get_all_max_objects()
+            elif category.lower() == 'msp':
+                object_names = get_all_msp_objects()
+            elif category.lower() == 'jit':
+                object_names = get_all_jit_objects()
+            elif category.lower() == 'm4l':
+                object_names = get_all_m4l_objects()
+            else:
+                raise ValueError(f"Unknown category: {category}. Use 'max', 'msp', 'jit', 'm4l', or None")
 
         for name in object_names:
             data = get_object_info(name)
             if data:
                 self.insert_object(name, data)
 
+    # Deprecated methods - use populate() instead
+    def populate_from_maxref(self, object_names: Optional[List[str]] = None):
+        """Populate database from .maxref.xml files (deprecated: use populate())
+
+        Args:
+            object_names: List of object names to import. If None, imports all available objects.
+        """
+        self.populate(object_names)
+
     def populate_all_objects(self):
-        """Populate database with all available Max objects (all categories)"""
-        self.populate_from_maxref(get_available_objects())
+        """Populate database with all available Max objects (deprecated: use populate())"""
+        self.populate(category=None)
 
     def populate_all_max_objects(self):
-        """Populate database with all Max objects (max-ref category only)"""
-        self.populate_from_maxref(get_all_max_objects())
+        """Populate database with all Max objects (deprecated: use populate(category='max'))"""
+        self.populate(category='max')
 
     def populate_all_jit_objects(self):
-        """Populate database with all Jitter objects (jit-ref category only)"""
-        self.populate_from_maxref(get_all_jit_objects())
+        """Populate database with all Jitter objects (deprecated: use populate(category='jit'))"""
+        self.populate(category='jit')
 
     def populate_all_msp_objects(self):
-        """Populate database with all MSP objects (msp-ref category only)"""
-        self.populate_from_maxref(get_all_msp_objects())
+        """Populate database with all MSP objects (deprecated: use populate(category='msp'))"""
+        self.populate(category='msp')
 
     def populate_all_m4l_objects(self):
-        """Populate database with all Max for Live objects (m4l-ref category only)"""
-        self.populate_from_maxref(get_all_m4l_objects())
+        """Populate database with all Max for Live objects (deprecated: use populate(category='m4l'))"""
+        self.populate(category='m4l')
 
     def insert_object(self, name: str, data: Dict[str, Any]) -> int:
         """Insert object data into database
@@ -653,7 +692,7 @@ class MaxRefDB:
 
             return data
 
-    def search_objects(self, query: str, fields: Optional[List[str]] = None) -> List[str]:
+    def search(self, query: str, fields: Optional[List[str]] = None) -> List[str]:
         """Search for objects by name, digest, or description
 
         Args:
@@ -678,7 +717,19 @@ class MaxRefDB:
             cursor.execute(sql, tuple([f"%{query}%" for _ in conditions]))
             return [row['name'] for row in cursor.fetchall()]
 
-    def get_objects_by_category(self, category: str) -> List[str]:
+    def search_objects(self, query: str, fields: Optional[List[str]] = None) -> List[str]:
+        """Search for objects by name, digest, or description (deprecated: use search())
+
+        Args:
+            query: Search query string
+            fields: List of fields to search in. Default: ['name', 'digest', 'description']
+
+        Returns:
+            List of matching object names
+        """
+        return self.search(query, fields)
+
+    def by_category(self, category: str) -> List[str]:
         """Get all objects in a category
 
         Args:
@@ -691,27 +742,55 @@ class MaxRefDB:
             cursor.execute("SELECT name FROM objects WHERE category = ? ORDER BY name", (category,))
             return [row['name'] for row in cursor.fetchall()]
 
-    def get_all_categories(self) -> List[str]:
-        """Get all unique categories
+    def get_objects_by_category(self, category: str) -> List[str]:
+        """Get all objects in a category (deprecated: use by_category())
+
+        Args:
+            category: Category name
 
         Returns:
-            List of category names
+            List of object names
         """
+        return self.by_category(category)
+
+    @property
+    def categories(self) -> List[str]:
+        """All unique categories in database"""
         with self._get_cursor() as cursor:
             cursor.execute("SELECT DISTINCT category FROM objects WHERE category IS NOT NULL ORDER BY category")
             return [row['category'] for row in cursor.fetchall()]
 
-    def get_object_count(self) -> int:
-        """Get total number of objects in database
+    def get_all_categories(self) -> List[str]:
+        """Get all unique categories (deprecated: use .categories property)
 
         Returns:
-            Object count
+            List of category names
         """
+        return self.categories
+
+    @property
+    def count(self) -> int:
+        """Total number of objects in database"""
         with self._get_cursor() as cursor:
             cursor.execute("SELECT COUNT(*) as count FROM objects")
             return cursor.fetchone()['count']
 
-    def export_to_json(self, output_path: Path):
+    @property
+    def objects(self) -> List[str]:
+        """All object names in database"""
+        with self._get_cursor() as cursor:
+            cursor.execute("SELECT name FROM objects ORDER BY name")
+            return [row['name'] for row in cursor.fetchall()]
+
+    def get_object_count(self) -> int:
+        """Get total number of objects in database (deprecated: use .count property)
+
+        Returns:
+            Object count
+        """
+        return self.count
+
+    def export(self, output_path: Path):
         """Export entire database to JSON file
 
         Args:
@@ -727,7 +806,15 @@ class MaxRefDB:
 
             output_path.write_text(json.dumps(all_objects, indent=2))
 
-    def import_from_json(self, input_path: Path):
+    def export_to_json(self, output_path: Path):
+        """Export entire database to JSON file (deprecated: use export())
+
+        Args:
+            output_path: Path to output JSON file
+        """
+        self.export(output_path)
+
+    def load(self, input_path: Path):
         """Import objects from JSON file
 
         Args:
@@ -736,4 +823,36 @@ class MaxRefDB:
         data = json.loads(input_path.read_text())
         for name, obj_data in data.items():
             self.insert_object(name, obj_data)
+
+    def import_from_json(self, input_path: Path):
+        """Import objects from JSON file (deprecated: use load())
+
+        Args:
+            input_path: Path to input JSON file
+        """
+        self.load(input_path)
+
+    def summary(self) -> Dict[str, Any]:
+        """Get database summary statistics
+
+        Returns:
+            Dictionary with count, categories, and category counts
+        """
+        summary = {
+            'total_objects': self.count,
+            'categories': {},
+        }
+
+        for category in self.categories:
+            summary['categories'][category] = len(self.by_category(category))
+
+        return summary
+
+    def __repr__(self) -> str:
+        """String representation of database"""
+        if self.db_path == ":memory:":
+            location = "in-memory"
+        else:
+            location = str(self.db_path)
+        return f"MaxRefDB({location}, {self.count} objects)"
 
