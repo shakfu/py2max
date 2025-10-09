@@ -87,6 +87,9 @@ class InteractiveEditor {
         this.svg.addEventListener('mouseup', this.handleCanvasMouseUp.bind(this));
         this.svg.addEventListener('dblclick', this.handleCanvasDoubleClick.bind(this));
 
+        // Use event delegation for box double-clicks (since boxes are recreated on render)
+        this.boxesGroup.addEventListener('dblclick', this.handleBoxesGroupDoubleClick.bind(this));
+
         canvas.appendChild(this.svg);
     }
 
@@ -107,11 +110,22 @@ class InteractiveEditor {
             });
         }
 
-        // Keyboard handler for delete/backspace
+        // Parent button - navigate to parent patcher
+        const parentBtn = document.getElementById('parent-btn');
+        if (parentBtn) {
+            parentBtn.addEventListener('click', () => {
+                this.navigateToParent();
+            });
+        }
+
+        // Keyboard handler for delete/backspace and ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();  // Prevent browser back navigation
                 this.handleDelete();
+            } else if (e.key === 'Escape') {
+                // ESC key navigates to parent patcher
+                this.navigateToParent();
             }
         });
 
@@ -138,9 +152,16 @@ class InteractiveEditor {
     handleUpdate(data) {
         if (data.type === 'update') {
             // Update title
-            if (data.title) {
-                document.getElementById('title').textContent =
-                    `py2max Interactive Editor - ${data.title}`;
+            const patcherTitle = data.patcher_title || 'Untitled';
+            document.getElementById('title').textContent =
+                `py2max Interactive Editor - ${patcherTitle}`;
+
+            // Update breadcrumb
+            if (data.patcher_path && data.patcher_path.length > 0) {
+                const breadcrumbPath = document.getElementById('breadcrumb-path');
+                if (breadcrumbPath) {
+                    breadcrumbPath.textContent = data.patcher_path.join(' / ');
+                }
             }
 
             // Update save button tooltip with filepath
@@ -157,6 +178,13 @@ class InteractiveEditor {
 
             // Update boxes
             data.boxes.forEach(box => {
+                // Flatten patching_rect into box properties for easier access
+                if (box.patching_rect) {
+                    box.x = box.patching_rect.x;
+                    box.y = box.patching_rect.y;
+                    box.width = box.patching_rect.w;
+                    box.height = box.patching_rect.h;
+                }
                 this.boxes.set(box.id, box);
             });
 
@@ -250,6 +278,11 @@ class InteractiveEditor {
         g.setAttribute('class', 'box');
         g.setAttribute('data-id', box.id);
 
+        // Add special class for boxes with subpatchers
+        if (box.has_subpatcher) {
+            g.classList.add('has-subpatcher');
+        }
+
         const x = box.x || 0;
         const y = box.y || 0;
         const width = box.width || 60;
@@ -303,6 +336,7 @@ class InteractiveEditor {
 
         // Add interaction handlers
         g.addEventListener('mousedown', (e) => this.handleBoxMouseDown(e, box));
+        // Note: dblclick is now handled via event delegation on boxesGroup
 
         return g;
     }
@@ -491,9 +525,11 @@ class InteractiveEditor {
             return;
         }
 
+        // Stop propagation for ALL boxes to prevent canvas handler from running
         event.stopPropagation();
 
-        // Prepare for potential drag
+        // Enable dragging for all boxes (including subpatchers)
+        // Double-click still works via event delegation
         this.dragging = true;
         this.dragStarted = false;  // Not started until movement
 
@@ -698,6 +734,66 @@ class InteractiveEditor {
         } else {
             this.updateInfo('Nothing selected to delete');
         }
+    }
+
+    // Navigation methods
+
+    handleBoxDoubleClick(event, box) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        // If box has subpatcher, navigate to it
+        if (box.has_subpatcher) {
+            this.navigateToSubpatcher(box.id);
+        }
+    }
+
+    handleBoxesGroupDoubleClick(event) {
+        // Event delegation: find which box was double-clicked
+        let target = event.target;
+        let boxElement = null;
+
+        // Walk up the DOM tree to find the box group element
+        while (target && target !== this.boxesGroup) {
+            if (target.classList && target.classList.contains('box')) {
+                boxElement = target;
+                break;
+            }
+            target = target.parentElement;
+        }
+
+        if (boxElement) {
+            const boxId = boxElement.getAttribute('data-id');
+            const box = this.boxes.get(boxId);
+
+            if (box && box.has_subpatcher) {
+                event.stopPropagation();
+                event.preventDefault();
+                this.navigateToSubpatcher(box.id);
+            }
+        }
+    }
+
+    navigateToSubpatcher(boxId) {
+        this.sendMessage({
+            type: 'navigate_to_subpatcher',
+            box_id: boxId
+        });
+        this.updateInfo('Navigating to subpatcher...');
+    }
+
+    navigateToParent() {
+        this.sendMessage({
+            type: 'navigate_to_parent'
+        });
+        this.updateInfo('Navigating to parent...');
+    }
+
+    navigateToRoot() {
+        this.sendMessage({
+            type: 'navigate_to_root'
+        });
+        this.updateInfo('Navigating to root...');
     }
 
     // Helper methods

@@ -128,6 +128,29 @@
             stroke-width: 2;
         }
 
+        /* Subpatcher boxes have distinct styling */
+        .box.has-subpatcher {
+            cursor: pointer;
+        }
+
+        .box.has-subpatcher rect {
+            fill: #f0f8ff !important;
+            stroke: #4080ff;
+            stroke-width: 2;
+            stroke-dasharray: 4,2;
+        }
+
+        .box.has-subpatcher:hover rect {
+            fill: #e6f2ff !important;
+            stroke: #5090ff;
+            stroke-width: 3;
+        }
+
+        .box.has-subpatcher text {
+            fill: #4080ff;
+            font-weight: bold;
+        }
+
         /* Disable box hover when hovering over ports - ports have their own hover */
         .box:has(.port:hover) rect {
             stroke: #000;
@@ -201,9 +224,16 @@
 </head>
 <body>
     <div id="header">
-        <h1 id="title">py2max Interactive Editor</h1>
+        <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+            <h1 id="title">py2max Interactive Editor</h1>
+            <div id="breadcrumb" style="display: flex; gap: 8px; align-items: center; font-size: 12px; color: #888;">
+                <span style="color: #4080ff;">📁</span>
+                <span id="breadcrumb-path">Loading...</span>
+            </div>
+        </div>
         <div id="controls">
-            <span class="help-text">Click to select | Delete/Backspace to remove | Double-click to create</span>
+            <span class="help-text">Click to select | Delete/Backspace to remove | Double-click on patcher to open</span>
+            <button id="parent-btn" title="Go to parent patcher (ESC)">⬆️ Parent</button>
             <button id="save-btn" title="Save patch to .maxpat file">💾 Save</button>
             <button id="create-btn" title="Create new object">+ Object</button>
             <div id="status" class="disconnected">

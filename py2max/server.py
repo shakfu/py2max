@@ -51,7 +51,7 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
         Dictionary with boxes and lines data
     """
     if not patcher:
-        return {'type': 'update', 'boxes': [], 'lines': []}
+        return {'type': 'update', 'boxes': [], 'lines': [], 'patcher_path': [], 'patcher_title': 'Untitled'}
 
     boxes = []
     for box in patcher._boxes:
@@ -63,6 +63,10 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
                 'x': 0, 'y': 0, 'w': 100, 'h': 22
             }
         }
+
+        # Check if box has a subpatcher
+        has_patcher = hasattr(box, 'subpatcher') and box.subpatcher is not None
+        box_data['has_subpatcher'] = has_patcher
 
         # Get patching_rect
         rect = getattr(box, 'patching_rect', None)
@@ -77,21 +81,34 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
                 }
 
         # Get inlet/outlet counts
+        inlet_count = 0
+        outlet_count = 0
+
+        # Try get_inlet_count() method first
         if hasattr(box, 'get_inlet_count'):
             try:
-                box_data['inlet_count'] = box.get_inlet_count() or 0
+                inlet_count = box.get_inlet_count()
             except Exception:
-                box_data['inlet_count'] = 0
-        else:
-            box_data['inlet_count'] = 0
+                pass
 
+        # If get_inlet_count() returned None, try numinlets attribute (from loaded files)
+        if inlet_count is None and hasattr(box, 'numinlets'):
+            inlet_count = getattr(box, 'numinlets', 0)
+
+        box_data['inlet_count'] = inlet_count or 0
+
+        # Try get_outlet_count() method first
         if hasattr(box, 'get_outlet_count'):
             try:
-                box_data['outlet_count'] = box.get_outlet_count() or 0
+                outlet_count = box.get_outlet_count()
             except Exception:
-                box_data['outlet_count'] = 0
-        else:
-            box_data['outlet_count'] = 0
+                pass
+
+        # If get_outlet_count() returned None, try numoutlets attribute (from loaded files)
+        if outlet_count is None and hasattr(box, 'numoutlets'):
+            outlet_count = getattr(box, 'numoutlets', 0)
+
+        box_data['outlet_count'] = outlet_count or 0
 
         boxes.append(box_data)
 
@@ -114,10 +131,25 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
 
         lines.append(line_data)
 
+    # Build patcher path (breadcrumb trail)
+    patcher_path = []
+    current = patcher
+    while current:
+        title = getattr(current, 'title', None) or 'Main'
+        patcher_path.insert(0, title)
+        current = getattr(current, '_parent', None)
+
+    # Get current patcher title
+    patcher_title = getattr(patcher, 'title', None) or getattr(patcher, '_path', 'Untitled')
+    if patcher_title and hasattr(patcher_title, 'name'):
+        patcher_title = patcher_title.name
+
     return {
         'type': 'update',
         'boxes': boxes,
-        'lines': lines
+        'lines': lines,
+        'patcher_path': patcher_path,
+        'patcher_title': str(patcher_title)
     }
 
 
@@ -155,7 +187,8 @@ class InteractiveWebSocketHandler:
     """WebSocket handler for interactive patcher editing."""
 
     def __init__(self, patcher: Optional['Patcher'], auto_save: bool = False):
-        self.patcher = patcher
+        self.root_patcher = patcher  # Keep reference to root patcher
+        self.patcher = patcher  # Current patcher being viewed
         self.clients: Set[ServerConnection] = set()
         self._lock = asyncio.Lock()
         self._save_task = None  # Track pending save task for debouncing
@@ -224,6 +257,12 @@ class InteractiveWebSocketHandler:
                 await self.handle_delete_connection(data)
             elif message_type == 'save':
                 await self.handle_save()
+            elif message_type == 'navigate_to_subpatcher':
+                await self.handle_navigate_to_subpatcher(data)
+            elif message_type == 'navigate_to_parent':
+                await self.handle_navigate_to_parent()
+            elif message_type == 'navigate_to_root':
+                await self.handle_navigate_to_root()
             else:
                 print(f"Unknown message type: {message_type}")
 
@@ -403,18 +442,18 @@ class InteractiveWebSocketHandler:
 
     async def handle_save(self):
         """Handle manual save request from browser."""
-        if not self.patcher:
+        if not self.root_patcher:  # Save root patcher
             return
 
         try:
-            if hasattr(self.patcher, 'filepath') and self.patcher.filepath:
-                self.patcher.save()
-                print(f"Saved: {self.patcher.filepath}")
+            if hasattr(self.root_patcher, 'filepath') and self.root_patcher.filepath:
+                self.root_patcher.save()
+                print(f"Saved: {self.root_patcher.filepath}")
 
                 # Notify clients that save completed
                 await self.broadcast({
                     'type': 'save_complete',
-                    'filepath': str(self.patcher.filepath)
+                    'filepath': str(self.root_patcher.filepath)
                 })
             else:
                 print("Warning: No filepath set, cannot save")
@@ -428,6 +467,58 @@ class InteractiveWebSocketHandler:
                 'type': 'save_error',
                 'message': str(e)
             })
+
+    async def handle_navigate_to_subpatcher(self, data: dict):
+        """Handle navigation to a subpatcher."""
+        if not self.patcher:
+            return
+
+        box_id = data.get('box_id')
+        if not box_id:
+            return
+
+        # Find box with matching ID
+        for box in self.patcher._boxes:
+            if box.id == box_id:
+                # Check if box has a subpatcher
+                if hasattr(box, 'subpatcher') and box.subpatcher is not None:
+                    # Navigate to subpatcher
+                    self.patcher = box.subpatcher
+                    print(f"Navigated to subpatcher: {box.text}")
+
+                    # Send updated state to all clients
+                    state = get_patcher_state_json(self.patcher)
+                    await self.broadcast(state)
+                    break
+
+    async def handle_navigate_to_parent(self):
+        """Handle navigation to parent patcher."""
+        if not self.patcher:
+            return
+
+        # Get parent patcher
+        parent = getattr(self.patcher, '_parent', None)
+        if parent:
+            self.patcher = parent
+            print(f"Navigated to parent patcher")
+
+            # Send updated state to all clients
+            state = get_patcher_state_json(self.patcher)
+            await self.broadcast(state)
+        else:
+            print("Already at root patcher")
+
+    async def handle_navigate_to_root(self):
+        """Handle navigation to root patcher."""
+        if not self.root_patcher:
+            return
+
+        self.patcher = self.root_patcher
+        print(f"Navigated to root patcher")
+
+        # Send updated state to all clients
+        state = get_patcher_state_json(self.patcher)
+        await self.broadcast(state)
 
     async def notify_update(self):
         """Notify all clients of a patcher update."""

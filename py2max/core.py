@@ -314,6 +314,10 @@ class Patcher(abstract.AbstractPatcher):
             # b = patcher.box_from_dict(box)
             patcher._boxes.append(b)
 
+            # Set parent reference for nested subpatchers
+            if hasattr(b, '_patcher') and b._patcher is not None:
+                b._patcher._parent = patcher
+
         for line_dict in patcher.lines:
             line = line_dict["patchline"]
             pl = Patchline.from_dict(line)

@@ -1,10 +1,10 @@
 name: CI
-
-on:
-  push:
-    branches: [main, maxref]
-  pull_request:
-    branches: [main, maxref]
+on: [workflow_dispatch]
+# on:
+#   push:
+#     branches: [main, maxref]
+#   pull_request:
+#     branches: [main, maxref]
 
 jobs:
   test:

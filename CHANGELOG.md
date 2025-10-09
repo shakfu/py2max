@@ -2,6 +2,44 @@
 
 ## 0.2.x
 
+### New: Interactive Editor - Nested Patcher Navigation
+
+- Added full nested patcher (subpatcher) navigation support in interactive editor
+- Double-click on subpatcher boxes (blue dashed border) to navigate into them
+- Navigate back using "⬆️ Parent" button or ESC key
+- Breadcrumb navigation displays current location (e.g., "Main / Oscillator / Envelope")
+- Subpatcher boxes are fully interactive: draggable, connectable, deletable
+- Visual distinction: subpatcher boxes have blue dashed borders and bold blue text
+- Event delegation for reliable double-click detection even with dynamic DOM updates
+- Automatic parent reference restoration when loading patches from files
+
+**Server-Side Changes:**
+- Modified `get_patcher_state_json()` to include `has_subpatcher` flag and `patcher_path` breadcrumb
+- Added `handle_navigate_to_subpatcher()`, `handle_navigate_to_parent()`, `handle_navigate_to_root()` handlers
+- Fixed inlet/outlet count detection to use `numinlets`/`numoutlets` attributes from loaded files
+- Handler now tracks both `root_patcher` (for saving) and `patcher` (current view)
+
+**Client-Side Changes:**
+- Added breadcrumb UI showing patcher hierarchy
+- Implemented event delegation for double-click handling on dynamically created boxes
+- Fixed object positioning by flattening `patching_rect` into `x`, `y`, `width`, `height`
+- CSS styling for subpatcher boxes with distinct visual appearance
+- ESC key navigation support
+
+**Core Changes:**
+- Modified `Patcher.from_dict()` to set `_parent` references for nested subpatchers when loading from files
+- Ensures bidirectional parent-child relationships for proper navigation
+
+**Tests:**
+- Added 14 comprehensive tests in `tests/test_nested_patchers.py`
+- All tests passing (326 passed, 14 skipped)
+
+**Demo:**
+- Added `examples/nested_patcher_demo.py` with three demonstration patches:
+  - Synthesizer with nested envelope subpatcher
+  - Effects chain with parallel subpatchers
+  - Deeply nested hierarchy (6 levels)
+
 ### New: SVG Preview Feature
 
 - Added `py2max preview` CLI command for offline visual validation of Max patches
