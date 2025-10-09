@@ -348,6 +348,8 @@ def cmd_db(args: argparse.Namespace) -> int:
         return cmd_db_export(args)
     elif args.db_command == "import":
         return cmd_db_import(args)
+    elif args.db_command == "cache":
+        return cmd_db_cache(args)
     else:
         print(f"Unknown db subcommand: {args.db_command}", file=sys.stderr)
         return 1
@@ -365,7 +367,7 @@ def cmd_db_create(args: argparse.Namespace) -> int:
     if db_path.exists():
         db_path.unlink()
 
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
 
     if not args.empty:
         # Populate with specified category or all
@@ -388,7 +390,7 @@ def cmd_db_populate(args: argparse.Namespace) -> int:
         print("Use 'db create' to create a new database", file=sys.stderr)
         return 1
 
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     initial_count = db.count
 
     if args.objects:
@@ -414,7 +416,7 @@ def cmd_db_info(args: argparse.Namespace) -> int:
         print(f"Database not found: {db_path}", file=sys.stderr)
         return 1
 
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
 
     print(f"Database: {db_path}")
     print(f"Total objects: {db.count}")
@@ -446,7 +448,7 @@ def cmd_db_search(args: argparse.Namespace) -> int:
         print(f"Database not found: {db_path}", file=sys.stderr)
         return 1
 
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
 
     if args.category:
         results = db.by_category(args.category)
@@ -480,7 +482,7 @@ def cmd_db_query(args: argparse.Namespace) -> int:
         print(f"Database not found: {db_path}", file=sys.stderr)
         return 1
 
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
 
     if args.name not in db:
         print(f"Object not found: {args.name}", file=sys.stderr)
@@ -534,7 +536,7 @@ def cmd_db_export(args: argparse.Namespace) -> int:
         print("Use --force to overwrite", file=sys.stderr)
         return 1
 
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     db.export(output_path)
     print(f"Exported {db.count} objects to {output_path}")
     return 0
@@ -554,13 +556,63 @@ def cmd_db_import(args: argparse.Namespace) -> int:
         print("Use 'db create --empty' to create a new database first", file=sys.stderr)
         return 1
 
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     initial_count = db.count
 
     db.load(input_path)
     added = db.count - initial_count
     print(f"Imported {added} objects from {input_path} (total: {db.count})")
     return 0
+
+
+def cmd_db_cache(args: argparse.Namespace) -> int:
+    """Manage cache database"""
+    if args.cache_command == "location":
+        cache_dir = MaxRefDB.get_cache_dir()
+        db_path = MaxRefDB.get_default_db_path()
+        print(f"Cache directory: {cache_dir}")
+        print(f"Database path: {db_path}")
+        if db_path.exists():
+            db = MaxRefDB(auto_populate=False)
+            print(f"Status: Populated with {db.count} objects")
+        else:
+            print("Status: Not initialized")
+        return 0
+
+    elif args.cache_command == "init":
+        db_path = MaxRefDB.get_default_db_path()
+        if db_path.exists() and not args.force:
+            print(f"Cache already exists at {db_path}", file=sys.stderr)
+            print("Use --force to reinitialize", file=sys.stderr)
+            return 1
+
+        if db_path.exists():
+            db_path.unlink()
+
+        print(f"Initializing cache at {db_path}...")
+        db = MaxRefDB(auto_populate=True)
+        print(f"Cache initialized with {db.count} objects")
+        return 0
+
+    elif args.cache_command == "clear":
+        db_path = MaxRefDB.get_default_db_path()
+        if not db_path.exists():
+            print("Cache does not exist", file=sys.stderr)
+            return 1
+
+        if not args.force:
+            response = input(f"Delete cache at {db_path}? [y/N]: ")
+            if response.lower() != 'y':
+                print("Cancelled")
+                return 0
+
+        db_path.unlink()
+        print(f"Cache cleared: {db_path}")
+        return 0
+
+    else:
+        print(f"Unknown cache subcommand: {args.cache_command}", file=sys.stderr)
+        return 1
 
 
 def cmd_maxref(args: argparse.Namespace) -> int:
@@ -790,6 +842,24 @@ def build_parser() -> argparse.ArgumentParser:
     db_import.add_argument("database", help="Database file path")
     db_import.add_argument("input", help="Input JSON file path")
     db_import.set_defaults(func=cmd_db)
+
+    # db cache
+    db_cache = db_subparsers.add_parser("cache", help="Manage cache database")
+    cache_subparsers = db_cache.add_subparsers(dest="cache_command")
+
+    # db cache location
+    cache_location = cache_subparsers.add_parser("location", help="Show cache location and status")
+    cache_location.set_defaults(func=cmd_db)
+
+    # db cache init
+    cache_init = cache_subparsers.add_parser("init", help="Initialize/reinitialize cache")
+    cache_init.add_argument("--force", action="store_true", help="Force reinitialize existing cache")
+    cache_init.set_defaults(func=cmd_db)
+
+    # db cache clear
+    cache_clear = cache_subparsers.add_parser("clear", help="Clear cache database")
+    cache_clear.add_argument("--force", action="store_true", help="Skip confirmation prompt")
+    cache_clear.set_defaults(func=cmd_db)
 
     return parser
 

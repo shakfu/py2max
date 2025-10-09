@@ -327,10 +327,36 @@ py2max maxref ezdac~ --test --output tests/test_ezdac_maxref.py
 
 ### MaxRefDB Database Management
 
-py2max now includes a powerful database system for managing Max object metadata:
+py2max now includes a powerful database system for managing Max object metadata with **automatic caching**:
+
+#### Default Cache Location
+
+MaxRefDB automatically creates and populates a cache database on first use:
+- **macOS**: `~/Library/Caches/py2max/maxref.db`
+- **Linux**: `~/.cache/py2max/maxref.db`
+- **Windows**: `~/AppData/Local/py2max/Cache/maxref.db`
+
+The cache is populated once and reused, providing instant access to all 1157 Max objects!
+
+#### Cache Management
 
 ```bash
-# Create database with all MSP objects
+# Show cache location and status
+py2max db cache location
+
+# Manually initialize/reinitialize cache
+py2max db cache init
+py2max db cache init --force
+
+# Clear cache
+py2max db cache clear
+py2max db cache clear --force
+```
+
+#### Working with Databases
+
+```bash
+# Create custom database with all MSP objects
 py2max db create msp.db --category msp
 
 # Create database with all objects (max, msp, jit, m4l)
@@ -378,11 +404,14 @@ py2max convert maxref-to-sqlite --output cache/maxref.db --overwrite
 ### Python API Examples
 
 ```python
-# Use MaxRefDB with the improved API
+# Use MaxRefDB with automatic caching
 from py2max.db import MaxRefDB
 
-# Create and populate database
-db = MaxRefDB('maxref.db')
+# Use default cache (auto-populated on first use)
+db = MaxRefDB()  # Uses platform-specific cache location
+
+# Or create custom database
+db = MaxRefDB('my_custom.db', auto_populate=False)
 db.populate(category='msp')  # or db.populate(['cycle~', 'gain~'])
 
 # Pythonic access
@@ -404,6 +433,10 @@ db.load('data.json')
 # Get summary statistics
 summary = db.summary()
 print(f"Database: {summary}")
+
+# Get cache location (using static methods)
+print(f"Cache: {MaxRefDB.get_default_db_path()}")
+print(f"Cache dir: {MaxRefDB.get_cache_dir()}")
 
 # Apply transformer pipeline
 from py2max import Patcher

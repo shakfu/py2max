@@ -79,6 +79,52 @@ py2max db info msp.db --summary
 py2max db search msp.db "oscillator" -v
 py2max db query msp.db cycle~ --json
 py2max db export msp.db backup.json
+
+# Cache management
+py2max db cache location
+py2max db cache init
+py2max db cache clear
+```
+
+### New: Automatic Cache System
+
+**Platform-Specific Cache:**
+
+MaxRefDB now automatically creates and populates a cache database on first use:
+- **macOS**: `~/Library/Caches/py2max/maxref.db`
+- **Linux**: `~/.cache/py2max/maxref.db`
+- **Windows**: `~/AppData/Local/py2max/Cache/maxref.db`
+
+**Benefits:**
+- One-time population of all 1157 Max objects
+- Instant access on subsequent use
+- No manual setup required
+- Platform-appropriate cache location
+
+**New Static Methods:**
+- `MaxRefDB.get_cache_dir()` - Get platform-specific cache directory
+- `MaxRefDB.get_default_db_path()` - Get default database path
+
+**Updated API:**
+- `MaxRefDB()` - Now uses cache by default
+- `MaxRefDB(db_path, auto_populate=True)` - Control auto-population
+- `MaxRefDB(':memory:')` - In-memory database (no caching)
+
+**New CLI Commands:**
+- `py2max db cache location` - Show cache location and status
+- `py2max db cache init` - Manually initialize cache
+- `py2max db cache clear` - Clear cache database
+
+**Example Usage:**
+
+```python
+# Automatic caching (default)
+from py2max.db import MaxRefDB
+db = MaxRefDB()  # Auto-populates cache on first use
+print(f"Objects: {len(db)}")  # 1157
+
+# Get cache location
+print(f"Cache: {MaxRefDB.get_default_db_path()}")
 ```
 
 ## 0.1.2

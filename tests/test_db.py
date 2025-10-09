@@ -15,7 +15,7 @@ class TestMaxRefDB:
 
     def test_init_in_memory(self):
         """Test initialization with in-memory database"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
         assert db.db_path == ":memory:"
         # Test both new property and deprecated method
         assert db.count == 0
@@ -32,7 +32,7 @@ class TestMaxRefDB:
 
     def test_schema_creation(self):
         """Test that all tables are created"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
         with db._get_cursor() as cursor:
             cursor.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
@@ -62,7 +62,7 @@ class TestMaxRefDB:
 
     def test_insert_and_get_simple_object(self):
         """Test inserting and retrieving a simple object"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         # Create simple test data
         test_data = {
@@ -99,7 +99,7 @@ class TestMaxRefDB:
 
     def test_insert_complex_object(self):
         """Test inserting an object with complex nested data"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         test_data = {
             'name': 'complex_obj',
@@ -214,7 +214,7 @@ class TestMaxRefDB:
 
     def test_populate_from_maxref(self):
         """Test populating database from .maxref.xml files"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         # Test new populate() method
         db.populate(['cycle~', 'gain~', 'dac~'])
@@ -244,13 +244,13 @@ class TestMaxRefDB:
             assert cycle['digest'] == cycle_ref.get('digest')
 
         # Test deprecated method still works
-        db2 = MaxRefDB()
+        db2 = MaxRefDB(":memory:", auto_populate=False)
         db2.populate_from_maxref(['cycle~'])
         assert db2.get_object_count() == 1
 
     def test_search_objects(self):
         """Test searching for objects"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         # Insert test objects
         test_objects = [
@@ -281,7 +281,7 @@ class TestMaxRefDB:
 
     def test_get_objects_by_category(self):
         """Test getting objects by category"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         test_objects = [
             {'name': 'obj1', 'category': 'audio', 'digest': '', 'description': '', 'metadata': {}, 'inlets': [], 'outlets': [], 'objargs': [], 'methods': {}, 'attributes': {}, 'examples': [], 'seealso': [], 'misc': {}, 'palette': {}, 'parameter': {}},
@@ -308,7 +308,7 @@ class TestMaxRefDB:
 
     def test_get_all_categories(self):
         """Test getting all unique categories"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         test_objects = [
             {'name': 'obj1', 'category': 'audio', 'digest': '', 'description': '', 'metadata': {}, 'inlets': [], 'outlets': [], 'objargs': [], 'methods': {}, 'attributes': {}, 'examples': [], 'seealso': [], 'misc': {}, 'palette': {}, 'parameter': {}},
@@ -335,7 +335,7 @@ class TestMaxRefDB:
         """Test exporting and importing database as JSON"""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create and populate database
-            db1 = MaxRefDB()
+            db1 = MaxRefDB(":memory:", auto_populate=False)
             test_data = {
                 'name': 'test_export',
                 'digest': 'Test export',
@@ -360,7 +360,7 @@ class TestMaxRefDB:
             assert json_path.exists()
 
             # Test new load() method
-            db2 = MaxRefDB()
+            db2 = MaxRefDB(":memory:", auto_populate=False)
             db2.load(json_path)
 
             # Verify imported data
@@ -373,7 +373,7 @@ class TestMaxRefDB:
             # Test deprecated methods still work
             json_path2 = Path(tmpdir) / "export2.json"
             db1.export_to_json(json_path2)
-            db3 = MaxRefDB()
+            db3 = MaxRefDB(":memory:", auto_populate=False)
             db3.import_from_json(json_path2)
             assert db3.get_object('test_export') is not None
 
@@ -387,13 +387,13 @@ class TestMaxRefDB:
             assert db1.get_object_count() == 0
 
             # Create with populating (limit to a few objects for speed)
-            db2 = MaxRefDB()
+            db2 = MaxRefDB(":memory:", auto_populate=False)
             db2.populate_from_maxref(['cycle~', 'gain~'])
             assert db2.get_object_count() == 2
 
     def test_replace_object(self):
         """Test that inserting an object twice replaces the first"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         # Insert original
         data1 = {
@@ -442,19 +442,19 @@ class TestMaxRefDB:
 
     def test_get_nonexistent_object(self):
         """Test getting an object that doesn't exist"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
         result = db.get_object('nonexistent_object')
         assert result is None
 
     def test_empty_search(self):
         """Test searching with no matches"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
         results = db.search_objects('nonexistent_query')
         assert len(results) == 0
 
     def test_root_attributes_preservation(self):
         """Test that root-level attributes are preserved"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         test_data = {
             'name': 'test_root',
@@ -486,31 +486,31 @@ class TestMaxRefDB:
     def test_populate_by_category(self):
         """Test populating database by Max object category"""
         # Test Max objects with new populate() API
-        db_max = MaxRefDB()
+        db_max = MaxRefDB(":memory:", auto_populate=False)
         db_max.populate(category='max')
         assert db_max.count > 0
         max_count = db_max.count
 
         # Test MSP objects with new populate() API
-        db_msp = MaxRefDB()
+        db_msp = MaxRefDB(":memory:", auto_populate=False)
         db_msp.populate(category='msp')
         assert db_msp.count > 0
         msp_count = db_msp.count
 
         # Test Jitter objects with new populate() API
-        db_jit = MaxRefDB()
+        db_jit = MaxRefDB(":memory:", auto_populate=False)
         db_jit.populate(category='jit')
         assert db_jit.count > 0
         jit_count = db_jit.count
 
         # Test M4L objects with new populate() API
-        db_m4l = MaxRefDB()
+        db_m4l = MaxRefDB(":memory:", auto_populate=False)
         db_m4l.populate(category='m4l')
         assert db_m4l.count > 0
         m4l_count = db_m4l.count
 
         # Test all objects with new populate() API
-        db_all = MaxRefDB()
+        db_all = MaxRefDB(":memory:", auto_populate=False)
         db_all.populate()  # No category = all
         all_count = db_all.count
 
@@ -523,7 +523,7 @@ class TestMaxRefDB:
             assert db_msp['cycle~'] is not None
 
         # Test deprecated methods still work
-        db_test = MaxRefDB()
+        db_test = MaxRefDB(":memory:", auto_populate=False)
         db_test.populate_all_msp_objects()
         assert db_test.get_object_count() > 0
 
@@ -572,7 +572,7 @@ class TestMaxRefDB:
 
     def test_new_convenience_methods(self):
         """Test new convenience methods and properties"""
-        db = MaxRefDB()
+        db = MaxRefDB(":memory:", auto_populate=False)
 
         # Add some test objects
         test_objects = [
@@ -609,7 +609,77 @@ class TestMaxRefDB:
         # Test with file-based database
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test.db"
-            db_file = MaxRefDB(db_path)
+            db_file = MaxRefDB(db_path, auto_populate=False)
             repr_str = repr(db_file)
             assert 'test.db' in repr_str
             assert '0 objects' in repr_str
+
+    def test_cache_functions(self):
+        """Test cache directory static methods"""
+        import sys
+
+        cache_dir = MaxRefDB.get_cache_dir()
+        assert cache_dir.exists()
+        assert cache_dir.is_dir()
+
+        # Check platform-specific paths
+        if sys.platform == 'darwin':
+            assert 'Library/Caches/py2max' in str(cache_dir)
+        elif sys.platform == 'win32':
+            assert 'AppData' in str(cache_dir) and 'py2max' in str(cache_dir)
+        else:  # Linux
+            assert '.cache/py2max' in str(cache_dir)
+
+        db_path = MaxRefDB.get_default_db_path()
+        assert db_path == cache_dir / 'maxref.db'
+
+    def test_auto_populate(self, monkeypatch):
+        """Test auto-population with cache"""
+        import tempfile
+        from py2max import db as db_module
+
+        # Use temp directory for testing
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_cache = Path(tmpdir) / 'maxref.db'
+
+            # Patch static method on MaxRefDB class (static methods don't receive self)
+            @staticmethod
+            def mock_get_default_db_path():
+                return test_cache
+
+            monkeypatch.setattr(MaxRefDB, 'get_default_db_path', mock_get_default_db_path)
+
+            # Also patch maxref functions
+            def mock_get_available_objects():
+                return ['cycle~', 'gain~']
+
+            def mock_get_object_info(name):
+                return {
+                    'name': name,
+                    'digest': f'Test {name}',
+                    'description': f'Test object {name}',
+                    'category': 'MSP',
+                    'metadata': {},
+                    'inlets': [],
+                    'outlets': [],
+                    'objargs': [],
+                    'methods': {},
+                    'attributes': {},
+                    'examples': [],
+                    'seealso': [],
+                    'misc': {},
+                    'palette': {},
+                    'parameter': {},
+                }
+
+            monkeypatch.setattr(db_module, 'get_available_objects', mock_get_available_objects)
+            monkeypatch.setattr(db_module, 'get_object_info', mock_get_object_info)
+
+            # First call should auto-populate
+            db = MaxRefDB(auto_populate=True)
+            assert db.count == 2
+            assert test_cache.exists()
+
+            # Second call should use existing cache
+            db2 = MaxRefDB(auto_populate=True)
+            assert db2.count == 2

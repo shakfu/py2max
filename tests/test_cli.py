@@ -230,7 +230,7 @@ def test_cli_db_create(tmp_path: Path):
 
     # Verify database was populated
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     assert db.count > 0
 
 
@@ -249,7 +249,7 @@ def test_cli_db_create_empty(tmp_path: Path):
     assert db_path.exists()
 
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     assert db.count == 0
 
 
@@ -273,7 +273,7 @@ def test_cli_db_populate(tmp_path: Path):
     assert exit_code == 0
 
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     assert db.count == 2
     assert 'cycle~' in db
     assert 'gain~' in db
@@ -285,7 +285,7 @@ def test_cli_db_info(tmp_path: Path, capsys):
 
     # Create database with specific objects
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     db.populate(['cycle~', 'gain~'])
 
     exit_code = run_cli([
@@ -307,7 +307,7 @@ def test_cli_db_search(tmp_path: Path, capsys):
 
     # Create database with specific objects
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     db.populate(['cycle~', 'gain~', 'dac~'])
 
     exit_code = run_cli([
@@ -328,7 +328,7 @@ def test_cli_db_query(tmp_path: Path, capsys):
 
     # Create database with specific objects
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     db.populate(['cycle~'])
 
     exit_code = run_cli([
@@ -352,7 +352,7 @@ def test_cli_db_export_import(tmp_path: Path):
 
     # Create database
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path)
+    db = MaxRefDB(db_path, auto_populate=False)
     db.populate(['cycle~', 'gain~'])
 
     # Export to JSON
@@ -375,6 +375,6 @@ def test_cli_db_export_import(tmp_path: Path):
     ])
 
     assert exit_code == 0
-    db2 = MaxRefDB(db_path2)
+    db2 = MaxRefDB(db_path2, auto_populate=False)
     assert db2.count == 2
     assert 'cycle~' in db2

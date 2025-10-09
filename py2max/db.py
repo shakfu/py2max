@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from contextlib import contextmanager
@@ -17,21 +18,78 @@ from .maxref import (
 
 
 class MaxRefDB:
-    """SQLite database for Max object reference data"""
+    """SQLite database for Max object reference data
 
-    def __init__(self, db_path: Optional[Path] = None):
+    By default, uses a cached database at:
+    - macOS: ~/Library/Caches/py2max/maxref.db
+    - Linux: ~/.cache/py2max/maxref.db
+    - Windows: ~/AppData/Local/py2max/Cache/maxref.db
+
+    The cache is automatically populated on first use.
+    """
+
+    @staticmethod
+    def get_cache_dir() -> Path:
+        """Get platform-specific cache directory for py2max
+
+        Returns:
+            Path to cache directory:
+            - macOS: ~/Library/Caches/py2max
+            - Linux: ~/.cache/py2max
+            - Windows: ~/AppData/Local/py2max/Cache
+        """
+        home = Path.home()
+
+        if sys.platform == 'darwin':  # macOS
+            cache_dir = home / 'Library' / 'Caches' / 'py2max'
+        elif sys.platform == 'win32':  # Windows
+            cache_dir = home / 'AppData' / 'Local' / 'py2max' / 'Cache'
+        else:  # Linux and others
+            cache_dir = home / '.cache' / 'py2max'
+
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        return cache_dir
+
+    @staticmethod
+    def get_default_db_path() -> Path:
+        """Get default database path
+
+        Returns:
+            Path to default maxref.db in cache directory
+        """
+        return MaxRefDB.get_cache_dir() / 'maxref.db'
+
+    def __init__(self, db_path: Optional[Path] = None, auto_populate: bool = True):
         """Initialize database connection
 
         Args:
-            db_path: Path to SQLite database file. If None, uses in-memory database.
+            db_path: Path to SQLite database file.
+                    If None, uses platform-specific cache location.
+                    Use ":memory:" for in-memory database.
+            auto_populate: If True and database is empty, automatically populate
+                          with all Max objects (only applies to file-based databases).
         """
-        self.db_path = db_path or ":memory:"
+        if db_path is None:
+            self.db_path = self.get_default_db_path()
+            self._use_cache = True
+        elif db_path == ":memory:":
+            self.db_path = ":memory:"
+            self._use_cache = False
+        else:
+            self.db_path = Path(db_path)
+            self._use_cache = False
+
         self._conn = None
         # For in-memory databases, maintain a persistent connection
         if self.db_path == ":memory:":
             self._conn = sqlite3.connect(":memory:")
             self._conn.row_factory = sqlite3.Row
+
         self._init_schema()
+
+        # Auto-populate cache on first use
+        if auto_populate and self._use_cache and self.count == 0:
+            self._auto_populate_cache()
 
     def __len__(self) -> int:
         """Return number of objects in database"""
@@ -855,4 +913,16 @@ class MaxRefDB:
         else:
             location = str(self.db_path)
         return f"MaxRefDB({location}, {self.count} objects)"
+
+    def _auto_populate_cache(self):
+        """Auto-populate cache database with all Max objects"""
+        import sys
+        print("Initializing py2max cache (one-time setup)...", file=sys.stderr)
+        print(f"Location: {self.db_path}", file=sys.stderr)
+        print("Populating with all Max objects (1157 objects)...", file=sys.stderr)
+        self.populate()
+        print(f"Cache ready with {self.count} objects", file=sys.stderr)
+
+
+__all__ = ["MaxRefDB"]
 
