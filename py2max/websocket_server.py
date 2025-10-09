@@ -23,12 +23,10 @@ from __future__ import annotations
 import asyncio
 import json
 import webbrowser
-import time
 import http.server
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Set
-from contextlib import asynccontextmanager
 
 try:
     import websockets
@@ -122,14 +120,15 @@ class InteractiveWebSocketHandler:
 
             # Listen for messages from client
             async for message in websocket:
-                await self.handle_message(websocket, message)
+                msg_str = message.decode('utf-8') if isinstance(message, bytes) else message
+                await self.handle_message(websocket, msg_str)
 
         except websockets.exceptions.ConnectionClosed:
             pass
         finally:
             await self.unregister(websocket)
 
-    async def handle_message(self, websocket: WebSocketServerProtocol, message: str):
+    async def handle_message(self, websocket: ServerConnection, message: str):
         """Handle incoming message from client."""
         try:
             data = json.loads(message)
@@ -173,7 +172,9 @@ class InteractiveWebSocketHandler:
                     if hasattr(rect, 'x'):
                         # Rect is a NamedTuple (immutable), create new one
                         from .common import Rect
-                        box.patching_rect = Rect(x, y, rect.w, rect.h)
+                        box.patching_rect = Rect(float(x) if x is not None else 0.0,
+                                                  float(y) if y is not None else 0.0,
+                                                  rect.w, rect.h)
                     elif isinstance(rect, list):
                         rect[0] = x
                         rect[1] = y
@@ -263,7 +264,7 @@ class InteractiveWebSocketHandler:
 
         if src_box and dst_box:
             # Create connection
-            self.patcher.add_line(src_box, dst_box, outlet=src_outlet, inlet=dst_inlet)
+            self.patcher.add_line(src_box, dst_box, outlet=src_outlet, inlet=dst_inlet)  # type: ignore[arg-type]
 
             # Broadcast update to all clients
             state = get_patcher_state_json(self.patcher)
@@ -311,7 +312,7 @@ class InteractiveWebSocketHandler:
         # Find and remove matching line
         for i, line in enumerate(self.patcher._lines):
             if (line.src == src_id and line.dst == dst_id and
-                line.source[1] == src_outlet and line.destination[1] == dst_inlet):
+                line.source[1] == src_outlet and line.destination[1] == dst_inlet):  # type: ignore[attr-defined]
                 self.patcher._lines.pop(i)
 
                 # Broadcast update to all clients

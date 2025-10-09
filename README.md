@@ -1,6 +1,10 @@
 # py2max
 
-A pure python3 library without dependencies intended to facilitate the offline generation of Max patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
+[![CI](https://github.com/shakfu/py2max/workflows/CI/badge.svg)](https://github.com/shakfu/py2max/actions)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A pure Python library for offline generation of Max/MSP patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
 
 If you are looking for python3 externals for Max/MSP check out the [py-js](https://github.com/shakfu/py-js) project.
 
@@ -44,7 +48,24 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 - etc..
 
-## Usage examples
+## Quick Start
+
+### Installation
+
+```bash
+pip install py2max
+```
+
+Or for development:
+
+```bash
+git clone https://github.com/shakfu/py2max.git
+cd py2max
+uv sync
+source .venv/bin/activate
+```
+
+## Usage Examples
 
 ```python
 p = Patcher('my-patch.maxpat')
@@ -83,7 +104,30 @@ p.link(gain, dac, 1)
 p.save()
 ```
 
-In addition, you can parse existing `.maxpat` files, change them and then save the changes:
+### Object Search
+
+Find and manipulate objects in complex patches:
+
+```python
+p = Patcher('my-patch.maxpat')
+
+# Find by ID
+osc = p.find_by_id('obj-5')
+
+# Find all oscillators
+oscillators = p.find_by_text('~')  # Case-insensitive by default
+
+# Find specific object types
+messages = p.find_by_type('message')
+
+# Combine searches
+cycle_objects = [b for b in p.find_by_text('cycle', case_sensitive=False)
+                 if 'cycle~' in b.text]
+```
+
+### Parsing Existing Patches
+
+Parse existing `.maxpat` files, modify them, and save changes:
 
 ```python
 p = Patcher.from_file('example1.maxpat')
@@ -544,6 +588,29 @@ p.boxes
 ### properties branch
 
 There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branch and will not be developed further.
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Quick Contribution Checklist
+
+- [ ] Fork the repository
+- [ ] Create a feature branch
+- [ ] Run `make quality` (linting + type checking)
+- [ ] Run `make test` (ensure all tests pass)
+- [ ] Update documentation if needed
+- [ ] Submit a pull request
+
+### Development Setup
+
+```bash
+git clone https://github.com/shakfu/py2max.git
+cd py2max
+uv sync
+source .venv/bin/activate
+make test  # Verify everything works
+```
 
 ## Credits and Licensing
 

@@ -685,7 +685,7 @@ def cmd_preview(args: argparse.Namespace) -> int:
 
         # Open in browser if requested
         if args.open:
-            print(f"Opening preview in browser...")
+            print("Opening preview in browser...")
             webbrowser.open(f"file://{output_path.absolute()}")
 
         return 0

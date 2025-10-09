@@ -6,11 +6,11 @@
 
 - [x] Apply patcher to a pipeline of transformations. Each of these is a function which takes a patcher and returns it transformed in some way. For example apply new layout add automatic comments or change font size.
 
-- [ ] Add a `py2max preview` command that exports patch layouts to PNG/SVG to enable offline visual validation without Max.
+- [x] Add a `py2max preview` command that exports patch layouts to PNG/SVG to enable offline visual validation without Max.
 
 - [ ] Introduce recipe-driven project scaffolding (e.g., `py2max new --from tutorials/basic.yml`) so contributors can spin up teaching or demo patches from structured descriptors.
 
-- [ ] If the maxref files can be converted to an sqlite database, that would make sense for local caching (retrieval). But this is not necessarily as useful as the others. Why don't you update the AGENTS.md with these TODOs
+- [x] Convert maxref files to an sqlite database, would make sense for local caching (retrieval). 
 
 - [ ] Run `mypy --strict py2max` and fix all errors.
 

@@ -201,8 +201,78 @@ class Patcher(abstract.AbstractPatcher):
         for box in self._boxes:
             yield from iter(box)
 
+    def find_by_id(self, box_id: str) -> Optional['Box']:
+        """Find a box by its ID.
+
+        Args:
+            box_id: The ID of the box to find.
+
+        Returns:
+            The Box object if found, None otherwise.
+
+        Example:
+            >>> p = Patcher('patch.maxpat')
+            >>> osc = p.add_textbox('cycle~ 440')
+            >>> found = p.find_by_id(osc.id)
+            >>> assert found is osc
+        """
+        return self._objects.get(box_id)
+
+    def find_by_type(self, maxclass: str) -> List['Box']:
+        """Find all boxes of a specific Max object type.
+
+        Args:
+            maxclass: The Max object class name (e.g., 'newobj', 'message', 'comment').
+
+        Returns:
+            List of Box objects matching the type.
+
+        Example:
+            >>> p = Patcher('patch.maxpat')
+            >>> p.add_textbox('cycle~ 440')
+            >>> p.add_textbox('saw~ 220')
+            >>> p.add_message('bang')
+            >>> oscillators = [b for b in p.find_by_type('newobj')
+            ...                if 'cycle~' in b.text or 'saw~' in b.text]
+            >>> assert len(oscillators) == 2
+        """
+        return [box for box in self._boxes if getattr(box, 'maxclass', None) == maxclass]
+
+    def find_by_text(self, pattern: str, case_sensitive: bool = False) -> List['Box']:
+        """Find all boxes whose text matches a pattern.
+
+        Args:
+            pattern: The text pattern to search for (substring match).
+            case_sensitive: Whether the search should be case-sensitive (default: False).
+
+        Returns:
+            List of Box objects whose text contains the pattern.
+
+        Example:
+            >>> p = Patcher('patch.maxpat')
+            >>> p.add_textbox('cycle~ 440')
+            >>> p.add_textbox('saw~ 220')
+            >>> p.add_textbox('gain~ 0.5')
+            >>> oscillators = p.find_by_text('~')
+            >>> assert len(oscillators) == 3
+            >>> just_cycle = p.find_by_text('cycle')
+            >>> assert len(just_cycle) == 1
+        """
+        results = []
+        for box in self._boxes:
+            text = getattr(box, 'text', '') or ''
+            if not case_sensitive:
+                if pattern.lower() in text.lower():
+                    results.append(box)
+            else:
+                if pattern in text:
+                    results.append(box)
+        return results
+
     @property
     def filepath(self) -> Union[str, Path]:
+        if self._path is None:
+            return ""
         return self._path
 
     @property

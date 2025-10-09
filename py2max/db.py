@@ -4,7 +4,7 @@ import json
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from contextlib import contextmanager
 
 from .maxref import (
@@ -59,7 +59,7 @@ class MaxRefDB:
         """
         return MaxRefDB.get_cache_dir() / 'maxref.db'
 
-    def __init__(self, db_path: Optional[Path] = None, auto_populate: bool = True):
+    def __init__(self, db_path: Optional[Union[Path, str]] = None, auto_populate: bool = True):
         """Initialize database connection
 
         Args:
@@ -70,7 +70,7 @@ class MaxRefDB:
                           with all Max objects (only applies to file-based databases).
         """
         if db_path is None:
-            self.db_path = self.get_default_db_path()
+            self.db_path: Union[Path, str] = self.get_default_db_path()
             self._use_cache = True
         elif db_path == ":memory:":
             self.db_path = ":memory:"
@@ -661,7 +661,7 @@ class MaxRefDB:
 
             # Get metadata
             cursor.execute("SELECT key, value FROM metadata WHERE object_id = ?", (object_id,))
-            metadata = {}
+            metadata: Dict[str, Any] = {}
             for meta_row in cursor.fetchall():
                 key, value = meta_row['key'], meta_row['value']
                 if key in metadata:
@@ -724,7 +724,7 @@ class MaxRefDB:
 
             # Get misc
             cursor.execute("SELECT * FROM misc WHERE object_id = ?", (object_id,))
-            misc = {}
+            misc: Dict[str, Dict[str, str]] = {}
             for misc_row in cursor.fetchall():
                 category = misc_row['category']
                 if category not in misc:
@@ -901,8 +901,10 @@ class MaxRefDB:
             'categories': {},
         }
 
+        categories_dict: Dict[str, int] = {}
         for category in self.categories:
-            summary['categories'][category] = len(self.by_category(category))
+            categories_dict[category] = len(self.by_category(category))
+        summary['categories'] = categories_dict
 
         return summary
 

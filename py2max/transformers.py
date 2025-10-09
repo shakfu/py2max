@@ -66,7 +66,7 @@ def add_comment_transform(comment: str, pos: str = "above") -> Transformer:
     def _transform(patcher: Patcher) -> Patcher:
         for box in list(patcher._boxes):
             if box.id:
-                patcher.add_associated_comment(box, comment, comment_pos=pos)
+                patcher.add_associated_comment(box, comment, comment_pos=pos)  # type: ignore[arg-type]
         patcher._process_pending_comments()
         return patcher
 

@@ -26,7 +26,7 @@ import threading
 import time
 import webbrowser
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, List, Set
+from typing import TYPE_CHECKING, Optional, Set
 from queue import Queue, Empty
 
 if TYPE_CHECKING:
@@ -72,7 +72,7 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
         if hasattr(box, 'get_inlet_count'):
             try:
                 box_data['inlet_count'] = box.get_inlet_count() or 0
-            except:
+            except Exception:
                 box_data['inlet_count'] = 0
         else:
             box_data['inlet_count'] = 0
@@ -80,7 +80,7 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
         if hasattr(box, 'get_outlet_count'):
             try:
                 box_data['outlet_count'] = box.get_outlet_count() or 0
-            except:
+            except Exception:
                 box_data['outlet_count'] = 0
         else:
             box_data['outlet_count'] = 0
@@ -401,7 +401,7 @@ class PatcherServer:
             for queue in SSEHandler.event_queues:
                 try:
                     queue.put_nowait(state)
-                except:
+                except Exception:
                     pass
 
 

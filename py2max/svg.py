@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
-    from .core import Patcher, Box, Patchline
+    from .core import Patcher, Box
 
 
 # SVG styling constants
@@ -75,7 +75,7 @@ def _get_box_text(box: Box) -> str:
     return maxclass
 
 
-def _render_box(box: Box, show_ports: bool = True) -> str:
+def _render_box(box, show_ports: bool = True) -> str:
     """Render a single box to SVG elements."""
     rect = getattr(box, "patching_rect", None)
     if not rect:
@@ -123,13 +123,13 @@ def _render_box(box: Box, show_ports: bool = True) -> str:
         if hasattr(box, 'get_inlet_count'):
             try:
                 inlet_count = box.get_inlet_count() or 0
-            except:
+            except Exception:
                 pass
 
         if hasattr(box, 'get_outlet_count'):
             try:
                 outlet_count = box.get_outlet_count() or 0
-            except:
+            except Exception:
                 pass
 
         # Fallback to private attributes if methods don't exist
@@ -163,7 +163,7 @@ def _render_box(box: Box, show_ports: bool = True) -> str:
     return "\n".join(svg_parts)
 
 
-def _get_port_position(box: Box, port_index: int, is_outlet: bool) -> tuple[float, float]:
+def _get_port_position(box, port_index: int, is_outlet: bool) -> tuple[float, float]:
     """Calculate the x,y position of an inlet or outlet port."""
     rect = getattr(box, "patching_rect", None)
     if not rect:
@@ -183,7 +183,7 @@ def _get_port_position(box: Box, port_index: int, is_outlet: bool) -> tuple[floa
         if hasattr(box, 'get_outlet_count'):
             try:
                 count = box.get_outlet_count() or 1
-            except:
+            except Exception:
                 count = getattr(box, "_outlet_count", 1) or 1
         else:
             count = getattr(box, "_outlet_count", 1) or 1
@@ -196,7 +196,7 @@ def _get_port_position(box: Box, port_index: int, is_outlet: bool) -> tuple[floa
         if hasattr(box, 'get_inlet_count'):
             try:
                 count = box.get_inlet_count() or 1
-            except:
+            except Exception:
                 count = getattr(box, "_inlet_count", 1) or 1
         else:
             count = getattr(box, "_inlet_count", 1) or 1
@@ -208,7 +208,7 @@ def _get_port_position(box: Box, port_index: int, is_outlet: bool) -> tuple[floa
     return (port_x, port_y)
 
 
-def _render_patchline(line: Patchline, patcher: Patcher) -> str:
+def _render_patchline(line, patcher: Patcher) -> str:
     """Render a patchline connection to SVG."""
     # Get source and destination boxes
     src_id = getattr(line, "src", None)

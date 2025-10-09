@@ -94,7 +94,7 @@ def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     from py2max import maxref, db
 
     dummy = DummyMaxRefCache()
-    monkeypatch.setattr("py2max.converters.MaxRefCache", lambda: dummy)
+    # MaxRefCache was removed, patch maxref module directly
     # Patch maxref module functions used by MaxRefDB
     monkeypatch.setattr(maxref, "get_object_info", dummy.get_object_data)
     monkeypatch.setattr(maxref, "get_available_objects", lambda: list(dummy._data.keys()))
@@ -125,8 +125,7 @@ def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     from py2max import maxref
 
     dummy = DummyMaxRefCache()
-    monkeypatch.setattr("py2max.converters.MaxRefCache", lambda: dummy)
-    # Also patch maxref module functions used by MaxRefDB
+    # MaxRefCache was removed, patch maxref module directly
     monkeypatch.setattr(maxref, "get_object_info", dummy.get_object_data)
 
     db_path = tmp_path / "cli_cache.db"
