@@ -40,7 +40,7 @@ async def demo_interactive():
     print()
 
     # Create patcher with some initial objects
-    p = Patcher('interactive_demo.maxpat', layout='grid')
+    p = Patcher('outputs/interactive_demo.maxpat', layout='grid')
 
     # Add initial objects
     print("Creating initial patch...")
@@ -62,6 +62,11 @@ async def demo_interactive():
     # Optimize layout
     p.optimize_layout()
 
+    # Save initial patch
+    p.save()
+    print(f"Saved initial patch: {p.filepath}")
+    print()
+
     print("Starting interactive server...")
     print()
 
@@ -81,7 +86,8 @@ async def demo_interactive():
         print("     - Start from inlet → end at outlet (both work!)")
         print("  4. Click a connection (line) to select it, press Delete to remove")
         print("  5. Click an object to select it, press Delete to remove")
-        print("  6. Watch the info bar for feedback")
+        print("  6. Click the 💾 Save button to save changes to .maxpat file")
+        print("  7. Watch the info bar for feedback")
         print()
         print("Press Ctrl+C to stop the server")
         print("=" * 70)

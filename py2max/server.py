@@ -114,6 +114,7 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
         'boxes': boxes,
         'lines': lines,
         'title': getattr(patcher, 'title', 'Untitled Patch'),
+        'filepath': str(getattr(patcher, 'filepath', '')) if hasattr(patcher, 'filepath') else '',
     }
 
 

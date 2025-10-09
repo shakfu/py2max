@@ -91,6 +91,14 @@ class InteractiveEditor {
     }
 
     initializeControls() {
+        // Save button
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.handleSave();
+            });
+        }
+
         // Create object button
         const createBtn = document.getElementById('create-btn');
         if (createBtn) {
@@ -135,6 +143,14 @@ class InteractiveEditor {
                     `py2max Interactive Editor - ${data.title}`;
             }
 
+            // Update save button tooltip with filepath
+            if (data.filepath) {
+                const saveBtn = document.getElementById('save-btn');
+                if (saveBtn) {
+                    saveBtn.title = `Save patch to ${data.filepath}`;
+                }
+            }
+
             // Clear current state
             this.boxes.clear();
             this.lines = [];
@@ -152,6 +168,12 @@ class InteractiveEditor {
 
             // Update info
             this.updateInfo(`${this.boxes.size} objects · ${this.lines.length} connections`);
+        } else if (data.type === 'save_complete') {
+            this.updateInfo(`✅ Saved to ${data.filepath}`);
+            console.log('Patch saved:', data.filepath);
+        } else if (data.type === 'save_error') {
+            this.updateInfo(`❌ Save error: ${data.message}`);
+            console.error('Save error:', data.message);
         }
     }
 
@@ -698,6 +720,11 @@ class InteractiveEditor {
                 y: y || 100
             });
         }
+    }
+
+    handleSave() {
+        this.sendMessage({ type: 'save' });
+        this.updateInfo('Saving...');
     }
 
     sendMessage(message) {

@@ -202,6 +202,10 @@ class Patcher(abstract.AbstractPatcher):
             yield from iter(box)
 
     @property
+    def filepath(self) -> Union[str, Path]:
+        return self._path
+
+    @property
     def width(self) -> float:
         """width of patcher window."""
         return self.rect.w

@@ -78,11 +78,12 @@ class InteractiveHTTPHandler(http.server.SimpleHTTPRequestHandler):
 class InteractiveWebSocketHandler:
     """WebSocket handler for interactive patcher editing."""
 
-    def __init__(self, patcher: Optional['Patcher']):
+    def __init__(self, patcher: Optional['Patcher'], auto_save: bool = False):
         self.patcher = patcher
         self.clients: Set[ServerConnection] = set()
         self._lock = asyncio.Lock()
         self._save_task = None  # Track pending save task for debouncing
+        self.auto_save = auto_save  # Auto-save configuration
 
     async def register(self, websocket: ServerConnection):
         """Register a new client connection."""
@@ -144,6 +145,8 @@ class InteractiveWebSocketHandler:
                 await self.handle_delete_object(data)
             elif message_type == 'delete_connection':
                 await self.handle_delete_connection(data)
+            elif message_type == 'save':
+                await self.handle_save()
             else:
                 print(f"Unknown message type: {message_type}")
 
@@ -184,7 +187,10 @@ class InteractiveWebSocketHandler:
                 break
 
     async def schedule_save(self):
-        """Schedule a debounced save after 2 seconds of no updates."""
+        """Schedule a debounced save after 2 seconds of no updates (if auto-save enabled)."""
+        if not self.auto_save:
+            return  # Auto-save disabled
+
         # Cancel previous save task if exists
         if self._save_task and not self._save_task.done():
             self._save_task.cancel()
@@ -232,6 +238,9 @@ class InteractiveWebSocketHandler:
         state = get_patcher_state_json(self.patcher)
         await self.broadcast(state)
 
+        # Schedule auto-save
+        await self.schedule_save()
+
     async def handle_create_connection(self, data: dict):
         """Handle connection creation from browser."""
         if not self.patcher:
@@ -260,6 +269,9 @@ class InteractiveWebSocketHandler:
             state = get_patcher_state_json(self.patcher)
             await self.broadcast(state)
 
+            # Schedule auto-save
+            await self.schedule_save()
+
     async def handle_delete_object(self, data: dict):
         """Handle object deletion from browser."""
         if not self.patcher:
@@ -281,6 +293,9 @@ class InteractiveWebSocketHandler:
                 # Broadcast update to all clients
                 state = get_patcher_state_json(self.patcher)
                 await self.broadcast(state)
+
+                # Schedule auto-save
+                await self.schedule_save()
                 break
 
     async def handle_delete_connection(self, data: dict):
@@ -302,7 +317,38 @@ class InteractiveWebSocketHandler:
                 # Broadcast update to all clients
                 state = get_patcher_state_json(self.patcher)
                 await self.broadcast(state)
+
+                # Schedule auto-save
+                await self.schedule_save()
                 break
+
+    async def handle_save(self):
+        """Handle manual save request from browser."""
+        if not self.patcher:
+            return
+
+        try:
+            if hasattr(self.patcher, 'filepath') and self.patcher.filepath:
+                self.patcher.save()
+                print(f"Saved: {self.patcher.filepath}")
+
+                # Notify clients that save completed
+                await self.broadcast({
+                    'type': 'save_complete',
+                    'filepath': str(self.patcher.filepath)
+                })
+            else:
+                print("Warning: No filepath set, cannot save")
+                await self.broadcast({
+                    'type': 'save_error',
+                    'message': 'No filepath set'
+                })
+        except Exception as e:
+            print(f"Error saving: {e}")
+            await self.broadcast({
+                'type': 'save_error',
+                'message': str(e)
+            })
 
     async def notify_update(self):
         """Notify all clients of a patcher update."""
@@ -321,19 +367,20 @@ class InteractivePatcherServer:
         # Server automatically stopped
     """
 
-    def __init__(self, patcher: 'Patcher', port: int = 8000, auto_open: bool = True):
+    def __init__(self, patcher: 'Patcher', port: int = 8000, auto_open: bool = True, auto_save: bool = False):
         """Initialize the interactive server.
 
         Args:
             patcher: Patcher instance to serve
             port: HTTP/WebSocket server port (default: 8000)
             auto_open: Automatically open browser (default: True)
+            auto_save: Automatically save changes after 2 seconds (default: False)
         """
         self.patcher = patcher
         self.port = port
         self.ws_port = port + 1  # WebSocket on different port
         self.auto_open = auto_open
-        self.handler = InteractiveWebSocketHandler(patcher)
+        self.handler = InteractiveWebSocketHandler(patcher, auto_save=auto_save)
         self.ws_server = None
         self.http_server = None
         self.http_thread = None
@@ -422,7 +469,8 @@ class InteractivePatcherServer:
 async def serve_interactive(
     patcher: 'Patcher',
     port: int = 8000,
-    auto_open: bool = True
+    auto_open: bool = True,
+    auto_save: bool = False
 ) -> InteractivePatcherServer:
     """Start an interactive WebSocket server for a patcher.
 
@@ -442,11 +490,12 @@ async def serve_interactive(
         patcher: Patcher instance to serve
         port: WebSocket server port (default: 8000)
         auto_open: Automatically open browser (default: True)
+        auto_save: Automatically save changes after 2 seconds (default: False)
 
     Returns:
         InteractivePatcherServer instance
     """
-    server = InteractivePatcherServer(patcher, port, auto_open)
+    server = InteractivePatcherServer(patcher, port, auto_open, auto_save)
     await server.start()
     return server
 
