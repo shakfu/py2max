@@ -376,6 +376,34 @@ class Patcher(abstract.AbstractPatcher):
         self._live_server = serve_patcher(self, port, auto_open)
         return self._live_server
 
+    async def serve_interactive(self, port: int = 8000, auto_open: bool = True):
+        """Start an interactive WebSocket server for this patcher.
+
+        Opens a web browser with interactive editor that allows bidirectional
+        editing between Python and the browser. Supports drag-and-drop,
+        connection drawing, and object creation.
+
+        Args:
+            port: HTTP server port (default: 8000, WebSocket on port+1)
+            auto_open: Automatically open browser (default: True)
+
+        Returns:
+            InteractivePatcherServer instance (async context manager)
+
+        Example:
+            >>> p = Patcher('demo.maxpat')
+            >>> async with await p.serve_interactive() as server:
+            ...     # Edit in browser - changes sync back to Python!
+            ...     await asyncio.sleep(10)
+
+        Note:
+            Requires websockets package: pip install websockets
+        """
+        from .websocket_server import serve_interactive
+
+        self._interactive_server = await serve_interactive(self, port, auto_open)
+        return self._interactive_server
+
     def get_id(self) -> str:
         """helper func to increment object ids"""
         self._id_counter += 1

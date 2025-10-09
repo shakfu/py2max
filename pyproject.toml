@@ -16,13 +16,16 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
 ]
-dependencies = []
+dependencies = [
+    "websockets>=12.0",
+]
 
 
 [dependency-groups]
 dev = [
     "mypy>=1.4.1",
     "pytest>=7.4.4",
+    "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
     "ruff>=0.11.10",
 ]
