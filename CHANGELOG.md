@@ -2,6 +2,87 @@
 
 ## 0.2.x
 
+### New: SVG Preview Feature
+
+- Added `py2max preview` CLI command for offline visual validation of Max patches
+
+- Added `py2max.svg` module with complete SVG rendering engine (330 lines)
+
+- Added `export_svg()` and `export_svg_string()` functions for programmatic SVG generation
+
+- Added SVG rendering for boxes with type-specific styling:
+  - Regular objects: Light gray fill
+  - Comments: Yellow fill (#ffffd0)
+  - Messages: Medium gray fill
+
+- Added patchline rendering with correct inlet/outlet connection points
+
+- Added optional inlet/outlet port visualization (blue inlets, orange outlets)
+
+- Added automatic port detection from MaxRef metadata via `get_inlet_count()` and `get_outlet_count()`
+
+- Added support for both Rect objects and list/tuple coordinate formats
+
+- Added proper XML text escaping for special characters
+
+- Added automatic viewBox calculation with padding
+
+- Added browser integration with `--open` flag
+
+- Added 17 comprehensive tests covering all SVG functionality
+
+- Added `tests/examples/preview/svg_preview_demo.py` demonstration script
+
+- Added `docs/SVG_PREVIEW.md` complete documentation
+
+**CLI Usage:**
+
+```bash
+# Basic preview (saves to /tmp)
+py2max preview my-patch.maxpat
+
+# Specify output path
+py2max preview my-patch.maxpat -o output.svg
+
+# Custom title
+py2max preview my-patch.maxpat --title "My Synth"
+
+# Hide inlet/outlet ports
+py2max preview my-patch.maxpat --no-ports
+
+# Open in browser automatically
+py2max preview my-patch.maxpat --open
+
+# Combine options
+py2max preview synth.maxpat -o docs/synth.svg --title "Synth" --open
+```
+
+**Python API:**
+
+```python
+from py2max import Patcher, export_svg, export_svg_string
+
+# Create and export
+p = Patcher('synth.maxpat', layout='grid')
+osc = p.add_textbox('cycle~ 440')
+dac = p.add_textbox('ezdac~')
+p.add_line(osc, dac)
+p.optimize_layout()
+export_svg(p, 'synth.svg', title="Simple Synth", show_ports=True)
+
+# Export to string
+svg_content = export_svg_string(p, show_ports=True)
+```
+
+**Benefits:**
+
+- No Max installation required for visual validation
+- High-quality, scalable vector graphics
+- Works with all py2max layout managers
+- Perfect for CI/CD, documentation, and version control
+- Pure Python implementation with no binary dependencies
+- Viewable in any web browser
+
 ### New: SQLite Database Support
 
 - Added `py2max.db` module with comprehensive SQLite database support for Max object reference data

@@ -6,6 +6,8 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 ## Features
 
+- **SVG Preview Generation**: Offline visual validation of Max patches without requiring Max installation - generates high-quality, scalable SVG graphics viewable in any browser
+
 - Scripted *offline* generation of Max patcher files using Python objects, corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
 
 - *Round-trip conversion* between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
@@ -302,6 +304,10 @@ py2max new outputs/demo.maxpat --template stereo
 # Summarise basic stats for an existing patcher
 py2max info outputs/demo.maxpat
 
+# Generate SVG preview for visual validation (NEW!)
+py2max preview outputs/demo.maxpat
+py2max preview outputs/demo.maxpat -o docs/demo.svg --title "My Synth" --open
+
 # Optimise layout (writes in place unless you pass -o)
 py2max optimize outputs/demo.maxpat --layout matrix
 
@@ -400,6 +406,56 @@ py2max convert maxpat-to-python tests/data/simple.maxpat outputs/simple_builder.
 # Cache maxref metadata (uses MaxRefDB internally)
 py2max convert maxref-to-sqlite --output cache/maxref.db --overwrite
 ```
+
+### SVG Preview
+
+Generate high-quality SVG previews of Max patches without requiring Max:
+
+```bash
+# Basic preview (saves to /tmp)
+py2max preview my-patch.maxpat
+
+# Custom output and title
+py2max preview synth.maxpat -o docs/synth.svg --title "My Synthesizer"
+
+# Hide inlet/outlet ports
+py2max preview patch.maxpat --no-ports
+
+# Open in browser automatically
+py2max preview patch.maxpat --open
+
+# Combine options
+py2max preview synth.maxpat -o synth.svg --title "Synth" --open
+```
+
+**Python API:**
+
+```python
+from py2max import Patcher, export_svg, export_svg_string
+
+# Create patch and export to SVG
+p = Patcher('synth.maxpat', layout='grid')
+osc = p.add_textbox('cycle~ 440')
+gain = p.add_textbox('gain~ 0.5')
+dac = p.add_textbox('ezdac~')
+p.add_line(osc, gain)
+p.add_line(gain, dac)
+p.optimize_layout()
+p.save()
+
+# Export to SVG file
+export_svg(p, 'synth.svg', title="Simple Synth", show_ports=True)
+
+# Or get SVG as string
+svg_content = export_svg_string(p, show_ports=False)
+```
+
+**Features:**
+- High-quality, scalable vector graphics
+- Automatic inlet/outlet port detection from MaxRef
+- Works with all layout managers (grid, flow, matrix, etc.)
+- Perfect for CI/CD, documentation, and version control
+- Pure Python with no binary dependencies
 
 ### Python API Examples
 
