@@ -14,33 +14,33 @@ Transform the static SVG preview into a live, interactive web-based Max/MSP patc
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Python REPL                               │
-│  >>> from py2max import Patcher                                  │
-│  >>> p = Patcher.serve('patch.maxpat', live=True)              │
-│  >>> osc = p.add('cycle~ 440')  # Auto-updates browser         │
+│                        Python REPL                              │
+│  >>> from py2max import Patcher                                 │
+│  >>> p = Patcher.serve('patch.maxpat', live=True)               │
+│  >>> osc = p.add('cycle~ 440')  # Auto-updates browser          │
 └─────────────────┬───────────────────────────────────────────────┘
                   │
                   │ WebSocket (bidirectional)
                   │
 ┌─────────────────▼───────────────────────────────────────────────┐
-│              WebSocket Server (Python)                           │
+│              WebSocket Server (Python)                          │
 │  - Serves static HTML/JS/CSS                                    │
 │  - Manages WebSocket connections                                │
 │  - Broadcasts patcher updates                                   │
-│  - Receives UI events (drag, connect, add object)              │
+│  - Receives UI events (drag, connect, add object)               │
 └─────────────────┬───────────────────────────────────────────────┘
                   │
                   │ HTTP/WebSocket
                   │
 ┌─────────────────▼───────────────────────────────────────────────┐
-│              Web Browser (Interactive SVG)                       │
-│  ┌───────────────────────────────────────────────────────────┐ │
-│  │  SVG Canvas                                               │ │
-│  │  - Draggable objects                                      │ │
-│  │  - Connection drawing                                     │ │
-│  │  - Layout controls                                        │ │
-│  │  - Object palette                                         │ │
-│  └───────────────────────────────────────────────────────────┘ │
+│              Web Browser (Interactive SVG)                      │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  SVG Canvas                                               │  │
+│  │  - Draggable objects                                      │  │
+│  │  - Connection drawing                                     │  │
+│  │  - Layout controls                                        │  │
+│  │  - Object palette                                         │  │
+│  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

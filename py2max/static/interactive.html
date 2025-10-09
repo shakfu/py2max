@@ -128,18 +128,48 @@
             stroke-width: 2;
         }
 
+        /* Disable box hover when hovering over ports - ports have their own hover */
+        .box:has(.port:hover) rect {
+            stroke: #000;
+            stroke-width: 1;
+        }
+
+        /* Disable hover when selected - selection takes priority */
+        .box.selected:hover rect {
+            stroke: #ff8040;
+            stroke-width: 3;
+        }
+
+        /* Keep selected styling even when hovering over ports */
+        .box.selected:has(.port:hover) rect {
+            stroke: #ff8040;
+            stroke-width: 3;
+        }
+
         .box text {
             pointer-events: none;
             user-select: none;
         }
 
-        .inlet, .outlet {
+        .port {
             cursor: pointer;
-            transition: r 0.15s ease;
+            transition: all 0.15s ease;
         }
 
-        .inlet:hover, .outlet:hover {
-            r: 5;
+        .inlet:hover {
+            fill: #5090ff !important;
+            stroke-width: 2 !important;
+        }
+
+        .outlet:hover {
+            fill: #ff9050 !important;
+            stroke-width: 2 !important;
+        }
+
+        .port.selected {
+            stroke: #ffff00 !important;
+            stroke-width: 3 !important;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 0, 0.8));
         }
 
         #info {
@@ -173,9 +203,8 @@
     <div id="header">
         <h1 id="title">py2max Interactive Editor</h1>
         <div id="controls">
-            <span class="help-text">Double-click canvas to create objects</span>
+            <span class="help-text">Click to select | Delete/Backspace to remove | Double-click to create</span>
             <button id="create-btn" title="Create new object">+ Object</button>
-            <button id="connection-btn" title="Toggle connection mode">Connect</button>
             <div id="status" class="disconnected">
                 <span class="status-text">Connecting...</span>
             </div>

@@ -82,6 +82,7 @@ class InteractiveWebSocketHandler:
         self.patcher = patcher
         self.clients: Set[ServerConnection] = set()
         self._lock = asyncio.Lock()
+        self._save_task = None  # Track pending save task for debouncing
 
     async def register(self, websocket: ServerConnection):
         """Register a new client connection."""
@@ -177,7 +178,32 @@ class InteractiveWebSocketHandler:
                 # Broadcast update to all clients
                 state = get_patcher_state_json(self.patcher)
                 await self.broadcast(state)
+
+                # Schedule debounced save
+                await self.schedule_save()
                 break
+
+    async def schedule_save(self):
+        """Schedule a debounced save after 2 seconds of no updates."""
+        # Cancel previous save task if exists
+        if self._save_task and not self._save_task.done():
+            self._save_task.cancel()
+
+        # Schedule new save task
+        self._save_task = asyncio.create_task(self._debounced_save())
+
+    async def _debounced_save(self):
+        """Save patch after delay (debounced)."""
+        try:
+            await asyncio.sleep(2.0)  # Wait 2 seconds
+            if self.patcher and hasattr(self.patcher, 'filepath') and self.patcher.filepath:
+                self.patcher.save()
+                print(f"Auto-saved: {self.patcher.filepath}")
+        except asyncio.CancelledError:
+            # Task was cancelled (new position update came in)
+            pass
+        except Exception as e:
+            print(f"Error during auto-save: {e}")
 
     async def handle_create_object(self, data: dict):
         """Handle object creation from browser."""

@@ -34,7 +34,8 @@ async def demo_interactive():
     print("Features:")
     print("  - Drag objects to reposition them")
     print("  - Double-click canvas to create new objects")
-    print("  - Click 'Connect' button, then click two objects to connect them")
+    print("  - Click any port, then opposite port to connect (works both ways!)")
+    print("  - Click object or connection to select, press Delete/Backspace to remove")
     print("  - Press Ctrl+C to stop the server")
     print()
 
@@ -75,19 +76,26 @@ async def demo_interactive():
         print("Try these interactions in the browser:")
         print("  1. Drag objects to move them around")
         print("  2. Double-click the canvas to create new objects")
-        print("  3. Click 'Connect' button to enable connection mode")
-        print("  4. In connection mode, click two objects to connect them")
+        print("  3. Click any port, then the opposite port type to connect")
+        print("     - Start from outlet → end at inlet, OR")
+        print("     - Start from inlet → end at outlet (both work!)")
+        print("  4. Click a connection (line) to select it, press Delete to remove")
+        print("  5. Click an object to select it, press Delete to remove")
+        print("  6. Watch the info bar for feedback")
         print()
         print("Press Ctrl+C to stop the server")
         print("=" * 70)
         print()
 
-        # Keep server running
+        # Keep server running until Ctrl+C
         try:
-            while True:
-                await asyncio.sleep(1)
-        except KeyboardInterrupt:
-            print("\nStopping server...")
+            # Create a future that waits indefinitely
+            stop_event = asyncio.Event()
+            await stop_event.wait()
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            print("\n\nStopping server...")
+            print("Goodbye!")
+            print("=" * 70)
 
 
 async def demo_interactive_async_updates():
@@ -149,12 +157,14 @@ async def demo_interactive_async_updates():
         print("Press Ctrl+C to stop")
         print("=" * 70)
 
-        # Keep running
-        while True:
-            await asyncio.sleep(1)
+        # Keep running until Ctrl+C
+        stop_event = asyncio.Event()
+        await stop_event.wait()
 
-    except KeyboardInterrupt:
-        print("\nStopping server...")
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("\n\nStopping server...")
+        print("Goodbye!")
+        print("=" * 70)
     finally:
         await server.shutdown()
 
@@ -195,14 +205,18 @@ async def demo_context_manager():
 if __name__ == '__main__':
     import sys
 
-    if len(sys.argv) > 1:
-        mode = sys.argv[1]
-        if mode == 'async':
-            asyncio.run(demo_interactive_async_updates())
-        elif mode == 'context':
-            asyncio.run(demo_context_manager())
+    try:
+        if len(sys.argv) > 1:
+            mode = sys.argv[1]
+            if mode == 'async':
+                asyncio.run(demo_interactive_async_updates())
+            elif mode == 'context':
+                asyncio.run(demo_context_manager())
+            else:
+                print(f"Unknown mode: {mode}")
+                print("Usage: python examples/interactive_demo.py [async|context]")
         else:
-            print(f"Unknown mode: {mode}")
-            print("Usage: python examples/interactive_demo.py [async|context]")
-    else:
-        asyncio.run(demo_interactive())
+            asyncio.run(demo_interactive())
+    except KeyboardInterrupt:
+        # Already handled gracefully in the async functions
+        pass
