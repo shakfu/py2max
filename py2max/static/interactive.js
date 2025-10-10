@@ -21,6 +21,9 @@ class InteractiveEditor {
         // Connection state - tracks outlet -> inlet connections
         this.connectionStart = null;  // {box, portIndex, isOutlet}
 
+        // Store original box positions for reset functionality
+        this.originalPositions = new Map();
+
         this.initializeWebSocket();
         this.initializeSVG();
         this.initializeControls();
@@ -93,6 +96,28 @@ class InteractiveEditor {
     }
 
     initializeControls() {
+        // Load layout mode preference from localStorage (default to sidebar)
+        const savedMode = localStorage.getItem('layoutControlsMode') || 'sidebar';
+        if (savedMode === 'sidebar') {
+            document.body.classList.add('sidebar-mode');
+        }
+
+        // Toggle layout mode button - switch between panel and sidebar
+        const toggleLayoutModeBtn = document.getElementById('toggle-layout-mode-btn');
+        if (toggleLayoutModeBtn) {
+            // Update button text based on current mode
+            this.updateLayoutModeButton();
+
+            toggleLayoutModeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('sidebar-mode');
+                this.updateLayoutModeButton();
+
+                // Save preference
+                const mode = document.body.classList.contains('sidebar-mode') ? 'sidebar' : 'panel';
+                localStorage.setItem('layoutControlsMode', mode);
+            });
+        }
+
         // Save button
         const saveBtn = document.getElementById('save-btn');
         if (saveBtn) {
@@ -122,7 +147,14 @@ class InteractiveEditor {
         if (autoLayoutBtn) {
             autoLayoutBtn.addEventListener('click', () => {
                 const controlsPanel = document.getElementById('layout-controls');
+                const isSidebarMode = document.body.classList.contains('sidebar-mode');
+
                 controlsPanel.classList.toggle('visible');
+
+                // In sidebar mode, also toggle the controls-visible class on body for canvas padding
+                if (isSidebarMode) {
+                    document.body.classList.toggle('controls-visible');
+                }
 
                 // If panel just became visible, apply layout immediately
                 if (controlsPanel.classList.contains('visible')) {
@@ -165,6 +197,17 @@ class InteractiveEditor {
         }
     }
 
+    updateLayoutModeButton() {
+        const toggleBtn = document.getElementById('toggle-layout-mode-btn');
+        if (toggleBtn) {
+            const isSidebarMode = document.body.classList.contains('sidebar-mode');
+            toggleBtn.textContent = isSidebarMode ? '📋 Panel Mode' : '⚙️ Sidebar Mode';
+            toggleBtn.title = isSidebarMode
+                ? 'Switch to horizontal panel layout'
+                : 'Switch to right sidebar layout';
+        }
+    }
+
     handleUpdate(data) {
         if (data.type === 'update') {
             // Update title
@@ -202,6 +245,14 @@ class InteractiveEditor {
                     box.height = box.patching_rect.h;
                 }
                 this.boxes.set(box.id, box);
+
+                // Save original position if not already saved
+                if (!this.originalPositions.has(box.id)) {
+                    this.originalPositions.set(box.id, {
+                        x: box.x,
+                        y: box.y
+                    });
+                }
             });
 
             // Update lines
@@ -839,12 +890,11 @@ class InteractiveEditor {
             });
         }
 
-        // Hide Controls button
-        const hideControlsBtn = document.getElementById('hide-controls-btn');
-        if (hideControlsBtn) {
-            hideControlsBtn.addEventListener('click', () => {
-                const controlsPanel = document.getElementById('layout-controls');
-                controlsPanel.classList.remove('visible');
+        // Reset Layout button
+        const resetLayoutBtn = document.getElementById('reset-layout-btn');
+        if (resetLayoutBtn) {
+            resetLayoutBtn.addEventListener('click', () => {
+                this.resetLayout();
             });
         }
     }
@@ -1011,6 +1061,39 @@ class InteractiveEditor {
 
         console.log(`Generated ${constraints.length} constraints for preset: ${preset}`);
         return constraints;
+    }
+
+    resetLayout() {
+        /**
+         * Reset all boxes to their original positions from when the patch was loaded.
+         */
+        if (this.originalPositions.size === 0) {
+            this.updateInfo('No original positions to reset to');
+            return;
+        }
+
+        this.updateInfo('Resetting to original layout...');
+
+        // Restore original positions for all boxes
+        this.boxes.forEach((box, boxId) => {
+            const original = this.originalPositions.get(boxId);
+            if (original) {
+                box.x = original.x;
+                box.y = original.y;
+
+                // Send position update to server
+                this.sendMessage({
+                    type: 'update_position',
+                    box_id: boxId,
+                    x: original.x,
+                    y: original.y
+                });
+            }
+        });
+
+        // Re-render to show updated positions
+        this.render();
+        this.updateInfo(`Reset ${this.originalPositions.size} objects to original positions`);
     }
 
     autoLayout() {

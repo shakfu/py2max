@@ -235,6 +235,62 @@
             display: flex;
         }
 
+        /* Sidebar mode styles */
+        body.sidebar-mode #layout-controls {
+            position: fixed;
+            top: 72px;
+            right: -280px;
+            bottom: 0;
+            width: 280px;
+            height: auto;
+            flex-direction: column;
+            overflow-y: auto;
+            border-bottom: none;
+            border-left: 2px solid #4080ff;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+            z-index: 100;
+            transition: right 0.3s ease;
+        }
+
+        body.sidebar-mode #layout-controls.visible {
+            right: 0;
+        }
+
+        body.sidebar-mode #canvas {
+            padding-right: 0;
+            transition: padding-right 0.3s ease;
+        }
+
+        body.sidebar-mode.controls-visible #canvas {
+            padding-right: 300px;
+        }
+
+        body.sidebar-mode #layout-controls .control-group {
+            width: 100%;
+        }
+
+        body.sidebar-mode #layout-controls button {
+            width: 100%;
+            margin-top: 0;
+        }
+
+        /* Collapsed sidebar indicator */
+        body.sidebar-mode::after {
+            content: '';
+            position: fixed;
+            top: 72px;
+            right: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #4080ff, #5090ff);
+            z-index: 99;
+            transition: opacity 0.3s ease;
+        }
+
+        body.sidebar-mode.controls-visible::after {
+            opacity: 0;
+        }
+
         .control-group {
             display: flex;
             flex-direction: column;
@@ -298,6 +354,7 @@
         </div>
         <div id="controls">
             <span class="help-text">Click to select | Delete/Backspace to remove | Double-click on patcher to open</span>
+            <button id="toggle-layout-mode-btn" title="Toggle between panel and sidebar layout">📋 Panel Mode</button>
             <button id="parent-btn" title="Go to parent patcher (ESC)">⬆️ Parent</button>
             <button id="auto-layout-btn" title="Auto-arrange objects using force-directed layout">🔄 Auto-Layout</button>
             <button id="save-btn" title="Save patch to .maxpat file">💾 Save</button>
@@ -309,6 +366,30 @@
     </div>
 
     <div id="layout-controls">
+        <div class="control-group">
+            <label>Constraint Preset</label>
+            <select id="constraint-preset" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="none">None</option>
+                <option value="horizontal-flow">Horizontal Flow</option>
+                <option value="vertical-flow">Vertical Flow</option>
+                <option value="grid">Grid Alignment</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Flow Layout Direction</label>
+            <select id="flow-direction" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="none">None</option>
+                <option value="x">Horizontal (Left-to-Right)</option>
+                <option value="x-reverse">Horizontal (Right-to-Left)</option>
+                <option value="y">Vertical (Top-to-Bottom)</option>
+                <option value="y-reverse">Vertical (Bottom-to-Top)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Flow Spacing</label>
+            <input type="range" id="flow-spacing-slider" min="50" max="300" value="150" step="10">
+            <span class="value-display" id="flow-spacing-value">150</span>
+        </div>
         <div class="control-group">
             <label>Link Distance</label>
             <input type="range" id="link-distance-slider" min="50" max="300" value="100" step="10">
@@ -343,32 +424,8 @@
             <label>Avoid Overlaps</label>
             <input type="checkbox" id="avoid-overlaps-checkbox" checked>
         </div>
-        <div class="control-group">
-            <label>Constraint Preset</label>
-            <select id="constraint-preset" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
-                <option value="none">None</option>
-                <option value="horizontal-flow">Horizontal Flow</option>
-                <option value="vertical-flow">Vertical Flow</option>
-                <option value="grid">Grid Alignment</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label>Flow Layout Direction</label>
-            <select id="flow-direction" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
-                <option value="none">None</option>
-                <option value="x">Horizontal (Left-to-Right)</option>
-                <option value="x-reverse">Horizontal (Right-to-Left)</option>
-                <option value="y">Vertical (Top-to-Bottom)</option>
-                <option value="y-reverse">Vertical (Bottom-to-Top)</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label>Flow Spacing</label>
-            <input type="range" id="flow-spacing-slider" min="50" max="300" value="150" step="10">
-            <span class="value-display" id="flow-spacing-value">150</span>
-        </div>
         <button id="apply-layout-btn" style="margin-top: 14px;">Apply Layout</button>
-        <button id="hide-controls-btn" style="margin-top: 14px;">Hide</button>
+        <button id="reset-layout-btn" style="margin-top: 14px;">Reset Layout</button>
     </div>
 
     <div id="canvas"></div>
