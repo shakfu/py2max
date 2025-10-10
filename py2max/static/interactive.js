@@ -468,8 +468,18 @@ class InteractiveEditor {
         maxX += padding;
         maxY += padding;
 
-        const width = maxX - minX;
-        const height = maxY - minY;
+        // Ensure viewBox doesn't shift below/left of origin
+        // Keep at least some visible area starting from (0, 0)
+        minX = Math.min(minX, 0);
+        minY = Math.min(minY, 0);
+
+        // Ensure minimum viewBox size to prevent cramped layouts
+        // Read from sliders if available, otherwise use defaults
+        const minViewWidth = parseInt(document.getElementById('min-viewbox-width-slider')?.value || 800);
+        const minViewHeight = parseInt(document.getElementById('min-viewbox-height-slider')?.value || 600);
+
+        let width = Math.max(maxX - minX, minViewWidth);
+        let height = Math.max(maxY - minY, minViewHeight);
 
         this.svg.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
     }
@@ -792,6 +802,35 @@ class InteractiveEditor {
             });
         }
 
+        // Min ViewBox Width slider
+        const minViewboxWidthSlider = document.getElementById('min-viewbox-width-slider');
+        const minViewboxWidthValue = document.getElementById('min-viewbox-width-value');
+        if (minViewboxWidthSlider && minViewboxWidthValue) {
+            minViewboxWidthSlider.addEventListener('input', (e) => {
+                minViewboxWidthValue.textContent = e.target.value;
+                this.render();  // Re-render to update viewBox
+            });
+        }
+
+        // Min ViewBox Height slider
+        const minViewboxHeightSlider = document.getElementById('min-viewbox-height-slider');
+        const minViewboxHeightValue = document.getElementById('min-viewbox-height-value');
+        if (minViewboxHeightSlider && minViewboxHeightValue) {
+            minViewboxHeightSlider.addEventListener('input', (e) => {
+                minViewboxHeightValue.textContent = e.target.value;
+                this.render();  // Re-render to update viewBox
+            });
+        }
+
+        // Flow Spacing slider
+        const flowSpacingSlider = document.getElementById('flow-spacing-slider');
+        const flowSpacingValue = document.getElementById('flow-spacing-value');
+        if (flowSpacingSlider && flowSpacingValue) {
+            flowSpacingSlider.addEventListener('input', (e) => {
+                flowSpacingValue.textContent = e.target.value;
+            });
+        }
+
         // Apply Layout button
         const applyLayoutBtn = document.getElementById('apply-layout-btn');
         if (applyLayoutBtn) {
@@ -806,6 +845,29 @@ class InteractiveEditor {
             hideControlsBtn.addEventListener('click', () => {
                 const controlsPanel = document.getElementById('layout-controls');
                 controlsPanel.classList.remove('visible');
+            });
+        }
+    }
+
+    reverseFlowLayout(nodes, axis, canvasWidth, canvasHeight) {
+        /**
+         * Reverse the flow layout by flipping coordinates along the specified axis.
+         * For 'x' axis: flip horizontally (right-to-left)
+         * For 'y' axis: flip vertically (bottom-to-top)
+         */
+        if (axis === 'x') {
+            // Flip horizontally: mirror around vertical center
+            const centerX = canvasWidth / 2;
+            nodes.forEach(node => {
+                const distanceFromCenter = node.x - centerX;
+                node.x = centerX - distanceFromCenter;
+            });
+        } else if (axis === 'y') {
+            // Flip vertically: mirror around horizontal center
+            const centerY = canvasHeight / 2;
+            nodes.forEach(node => {
+                const distanceFromCenter = node.y - centerY;
+                node.y = centerY - distanceFromCenter;
             });
         }
     }
@@ -971,8 +1033,13 @@ class InteractiveEditor {
         const canvasHeight = parseInt(document.getElementById('canvas-height-slider')?.value || 600);
         const avoidOverlaps = document.getElementById('avoid-overlaps-checkbox')?.checked !== false;
         const constraintPreset = document.getElementById('constraint-preset')?.value || 'none';
+        const flowDirection = document.getElementById('flow-direction')?.value || 'none';
+        const flowSpacing = parseInt(document.getElementById('flow-spacing-slider')?.value || 150);
 
-        this.updateInfo(`Computing auto-layout (linkDistance: ${linkDistance}, iterations: ${iterations}, constraints: ${constraintPreset})...`);
+        // Use sensible default for convergence threshold (not exposed in UI)
+        const convergenceThreshold = 1e-3;
+
+        this.updateInfo(`Computing auto-layout (linkDistance: ${linkDistance}, iterations: ${iterations}, flow: ${flowDirection})...`);
 
         // Prepare nodes and links for WebCola
         const nodes = [];
@@ -1011,12 +1078,22 @@ class InteractiveEditor {
 
         // Configure WebCola using d3adaptor with parameters from sliders
         const layout = cola.d3adaptor(d3)
+            .convergenceThreshold(convergenceThreshold)
             .size([canvasWidth, canvasHeight])
             .nodes(nodes)
             .links(links)
             .avoidOverlaps(avoidOverlaps)
             .handleDisconnected(true)
             .jaccardLinkLengths(linkDistance);
+
+        // Determine if flow direction is reversed
+        const isReversed = flowDirection.endsWith('-reverse');
+        const baseFlowAxis = isReversed ? flowDirection.replace('-reverse', '') : flowDirection;
+
+        // Apply flow layout if direction is specified
+        if (flowDirection !== 'none') {
+            layout.flowLayout(baseFlowAxis, flowSpacing);
+        }
 
         // Apply constraints if any
         if (constraints.length > 0) {
@@ -1025,6 +1102,11 @@ class InteractiveEditor {
 
         // Run the layout algorithm with custom iteration count
         layout.start(iterations, iterations, iterations);
+
+        // If flow direction is reversed, flip the coordinates
+        if (isReversed) {
+            this.reverseFlowLayout(nodes, baseFlowAxis, canvasWidth, canvasHeight);
+        }
 
         // Update box positions with smooth SVG.js animations
 
@@ -1075,7 +1157,8 @@ class InteractiveEditor {
             console.log('Animations complete, re-rendering...');
             this.render();
             const constraintInfo = constraints.length > 0 ? `, ${constraints.length} constraints` : '';
-            this.updateInfo(`Auto-layout applied: ${nodes.length} objects, linkDistance: ${linkDistance}, iterations: ${iterations}${constraintInfo}`);
+            const flowInfo = flowDirection !== 'none' ? `, flow: ${flowDirection} (${flowSpacing}px)` : '';
+            this.updateInfo(`Auto-layout applied: ${nodes.length} objects, linkDistance: ${linkDistance}, iterations: ${iterations}${flowInfo}${constraintInfo}`);
         });
     }
 

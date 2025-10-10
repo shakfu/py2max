@@ -330,6 +330,16 @@
             <span class="value-display" id="canvas-height-value">600</span>
         </div>
         <div class="control-group">
+            <label>Min ViewBox Width</label>
+            <input type="range" id="min-viewbox-width-slider" min="400" max="1600" value="800" step="50">
+            <span class="value-display" id="min-viewbox-width-value">800</span>
+        </div>
+        <div class="control-group">
+            <label>Min ViewBox Height</label>
+            <input type="range" id="min-viewbox-height-slider" min="300" max="1200" value="600" step="50">
+            <span class="value-display" id="min-viewbox-height-value">600</span>
+        </div>
+        <div class="control-group">
             <label>Avoid Overlaps</label>
             <input type="checkbox" id="avoid-overlaps-checkbox" checked>
         </div>
@@ -341,6 +351,21 @@
                 <option value="vertical-flow">Vertical Flow</option>
                 <option value="grid">Grid Alignment</option>
             </select>
+        </div>
+        <div class="control-group">
+            <label>Flow Layout Direction</label>
+            <select id="flow-direction" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="none">None</option>
+                <option value="x">Horizontal (Left-to-Right)</option>
+                <option value="x-reverse">Horizontal (Right-to-Left)</option>
+                <option value="y">Vertical (Top-to-Bottom)</option>
+                <option value="y-reverse">Vertical (Bottom-to-Top)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Flow Spacing</label>
+            <input type="range" id="flow-spacing-slider" min="50" max="300" value="150" step="10">
+            <span class="value-display" id="flow-spacing-value">150</span>
         </div>
         <button id="apply-layout-btn" style="margin-top: 14px;">Apply Layout</button>
         <button id="hide-controls-btn" style="margin-top: 14px;">Hide</button>
