@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
-    from .core import Patcher, Box
+    from .core import Box, Patcher
 
 
 # SVG styling constants
@@ -82,7 +82,7 @@ def _render_box(box, show_ports: bool = True) -> str:
         return ""
 
     # Handle both Rect objects and list/tuple representations
-    if hasattr(rect, 'x'):
+    if hasattr(rect, "x"):
         x, y, w, h = rect.x, rect.y, rect.w, rect.h
     elif isinstance(rect, (list, tuple)) and len(rect) >= 4:
         x, y, w, h = rect[0], rect[1], rect[2], rect[3]
@@ -102,7 +102,7 @@ def _render_box(box, show_ports: bool = True) -> str:
 
     # Draw text (centered vertically, with padding)
     text_x = x + 5
-    text_y = y + h/2 + TEXT_FONT_SIZE/3
+    text_y = y + h / 2 + TEXT_FONT_SIZE / 3
     escaped_text = _escape_text(text)
 
     # Note: We don't truncate text to match Max's behavior where text can overflow
@@ -120,13 +120,13 @@ def _render_box(box, show_ports: bool = True) -> str:
         inlet_count = 0
         outlet_count = 0
 
-        if hasattr(box, 'get_inlet_count'):
+        if hasattr(box, "get_inlet_count"):
             try:
                 inlet_count = box.get_inlet_count() or 0
             except Exception:
                 pass
 
-        if hasattr(box, 'get_outlet_count'):
+        if hasattr(box, "get_outlet_count"):
             try:
                 outlet_count = box.get_outlet_count() or 0
             except Exception:
@@ -170,7 +170,7 @@ def _get_port_position(box, port_index: int, is_outlet: bool) -> tuple[float, fl
         return (0, 0)
 
     # Handle both Rect objects and list/tuple representations
-    if hasattr(rect, 'x'):
+    if hasattr(rect, "x"):
         x, y, w, h = rect.x, rect.y, rect.w, rect.h
     elif isinstance(rect, (list, tuple)) and len(rect) >= 4:
         x, y, w, h = rect[0], rect[1], rect[2], rect[3]
@@ -180,7 +180,7 @@ def _get_port_position(box, port_index: int, is_outlet: bool) -> tuple[float, fl
     # Try to get port count via methods first
     if is_outlet:
         count = 1
-        if hasattr(box, 'get_outlet_count'):
+        if hasattr(box, "get_outlet_count"):
             try:
                 count = box.get_outlet_count() or 1
             except Exception:
@@ -193,7 +193,7 @@ def _get_port_position(box, port_index: int, is_outlet: bool) -> tuple[float, fl
         port_y = y + h
     else:
         count = 1
-        if hasattr(box, 'get_inlet_count'):
+        if hasattr(box, "get_inlet_count"):
             try:
                 count = box.get_inlet_count() or 1
             except Exception:
@@ -249,16 +249,16 @@ def _calculate_viewbox(patcher: Patcher) -> tuple[float, float, float, float]:
     if not boxes:
         return (0, 0, 800, 600)
 
-    min_x = float('inf')
-    min_y = float('inf')
-    max_x = float('-inf')
-    max_y = float('-inf')
+    min_x = float("inf")
+    min_y = float("inf")
+    max_x = float("-inf")
+    max_y = float("-inf")
 
     for box in boxes:
         rect = getattr(box, "patching_rect", None)
         if rect:
             # Handle both Rect objects and list/tuple representations
-            if hasattr(rect, 'x'):
+            if hasattr(rect, "x"):
                 x, y, w, h = rect.x, rect.y, rect.w, rect.h
             elif isinstance(rect, (list, tuple)) and len(rect) >= 4:
                 x, y, w, h = rect[0], rect[1], rect[2], rect[3]
@@ -314,43 +314,45 @@ def export_svg(
         f'<svg xmlns="http://www.w3.org/2000/svg" '
         f'viewBox="{vx} {vy} {vw} {vh}" '
         f'width="{vw}" height="{vh}">',
-        '',
-        '<defs>',
-        '  <style>',
-        '    text { user-select: none; }',
-        '  </style>',
-        '</defs>',
-        '',
+        "",
+        "<defs>",
+        "  <style>",
+        "    text { user-select: none; }",
+        "  </style>",
+        "</defs>",
+        "",
     ]
 
     # Add title if provided
     if title:
         title_y = vy + 20
-        svg_parts.extend([
-            f'<text x="{vx + vw/2}" y="{title_y}" '
-            f'font-family="{TEXT_FONT_FAMILY}" font-size="16" font-weight="bold" '
-            f'fill="{TEXT_COLOR}" text-anchor="middle">{_escape_text(title)}</text>',
-            '',
-        ])
+        svg_parts.extend(
+            [
+                f'<text x="{vx + vw / 2}" y="{title_y}" '
+                f'font-family="{TEXT_FONT_FAMILY}" font-size="16" font-weight="bold" '
+                f'fill="{TEXT_COLOR}" text-anchor="middle">{_escape_text(title)}</text>',
+                "",
+            ]
+        )
 
     # Render patchlines first (so they appear behind boxes)
-    svg_parts.append('<!-- Patchlines -->')
+    svg_parts.append("<!-- Patchlines -->")
     for line in patcher._lines:
         line_svg = _render_patchline(line, patcher)
         if line_svg:
             svg_parts.append(line_svg)
-    svg_parts.append('')
+    svg_parts.append("")
 
     # Render boxes
-    svg_parts.append('<!-- Boxes -->')
+    svg_parts.append("<!-- Boxes -->")
     for box in patcher._boxes:
         box_svg = _render_box(box, show_ports=show_ports)
         if box_svg:
             svg_parts.append(box_svg)
-    svg_parts.append('')
+    svg_parts.append("")
 
     # Close SVG
-    svg_parts.append('</svg>')
+    svg_parts.append("</svg>")
 
     # Write to file
     svg_content = "\n".join(svg_parts)
@@ -378,12 +380,12 @@ def export_svg_string(
     """
     import tempfile
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".svg", delete=False) as f:
         temp_path = Path(f.name)
 
     try:
         export_svg(patcher, temp_path, show_ports=show_ports, title=title)
-        return temp_path.read_text(encoding='utf-8')
+        return temp_path.read_text(encoding="utf-8")
     finally:
         temp_path.unlink()
 

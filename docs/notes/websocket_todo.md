@@ -1,8 +1,9 @@
 # WebSocket Interactive Editor - Status Update
 
-## ✅ FIXED Issues
+## [x] FIXED Issues
 
-### 1. Connection Mode - FIXED ✅
+### 1. Connection Mode - FIXED [x]
+
 **Problem**: The "Connect" button mode was not functioning correctly in the browser.
 
 **Root Cause**: Event handler conflict - `handleBoxMouseDown` was calling `event.stopPropagation()` even in connection mode, preventing click events from firing.
@@ -12,6 +13,7 @@
 **File Changed**: `py2max/static/interactive.js:372-389`
 
 **Fix**:
+
 ```javascript
 handleBoxMouseDown(event, box) {
     if (this.connectionMode) {
@@ -23,17 +25,20 @@ handleBoxMouseDown(event, box) {
 }
 ```
 
-### 2. Auto-Save for Repositioned Objects - FIXED ✅
+### 2. Auto-Save for Repositioned Objects - FIXED [x]
+
 **Problem**: When objects were dragged in the browser, positions updated in Python memory but didn't persist to the .maxpat file.
 
 **Solution**: Implemented debounced auto-save that saves the patch 2 seconds after the last position update. This prevents excessive disk writes during dragging while ensuring changes are persisted.
 
 **Files Changed**:
+
 - `py2max/server.py:81-85` (added `_save_task` tracking)
 - `py2max/server.py:183` (call to `schedule_save()`)
 - `py2max/server.py:186-206` (debounced save implementation)
 
 **Implementation**:
+
 ```python
 class InteractiveWebSocketHandler:
     def __init__(self, patcher):
@@ -61,17 +66,19 @@ class InteractiveWebSocketHandler:
             pass  # New update came in, this save was cancelled
 ```
 
-## ✅ Testing Status
+## [x] Testing Status
 
 **All Tests Pass**: 312 passed, 14 skipped
 
 **WebSocket Tests**: 13/13 passed
+
 ```bash
 uv run pytest tests/test_websocket.py -v
 # All tests pass in 2.59s
 ```
 
 **Full Test Suite**:
+
 ```bash
 make test
 # 312 passed, 14 skipped in 11.48s
@@ -79,19 +86,20 @@ make test
 
 **Manual Testing**: Created `test_fixes.py` script for interactive verification
 
-## ✅ Current Functionality
+## [x] Current Functionality
 
 **Working Features**:
-- ✅ WebSocket server with bidirectional communication
-- ✅ HTTP server serving static files
-- ✅ Drag-and-drop object repositioning
-- ✅ Connection mode (click Connect, then click two boxes to connect)
-- ✅ Auto-save of repositioned objects (2-second debounce)
-- ✅ Real-time sync Python ↔ Browser
-- ✅ All 312 tests passing
-- ✅ Context manager support
-- ✅ Object creation from browser
-- ✅ Delete operations
+
+- [x] WebSocket server with bidirectional communication
+- [x] HTTP server serving static files
+- [x] Drag-and-drop object repositioning
+- [x] Connection mode (click Connect, then click two boxes to connect)
+- [x] Auto-save of repositioned objects (2-second debounce)
+- [x] Real-time sync Python ↔ Browser
+- [x] All 312 tests passing
+- [x] Context manager support
+- [x] Object creation from browser
+- [x] Delete operations
 
 ## Enhancement Ideas (Future)
 
@@ -111,20 +119,23 @@ make test
 ## How to Test
 
 ### Quick Test Script
+
 ```bash
 uv run python test_fixes.py
 ```
 
 This will:
+
 1. Create a test patch with several objects
-2. Start the interactive server on http://localhost:8000
+2. Start the interactive server on <http://localhost:8000>
 3. Provide clear instructions for testing connection mode and auto-save
 4. Clean up test files when done
 
 ### Manual Testing Steps
 
 **Test Connection Mode**:
-1. Open http://localhost:8000
+
+1. Open <http://localhost:8000>
 2. Click "Connect" button (should turn blue/active)
 3. Click first object (e.g., "cycle~ 440")
 4. Click second object (e.g., "gain~")
@@ -132,12 +143,14 @@ This will:
 6. Check browser console for confirmation message
 
 **Test Auto-Save**:
+
 1. Drag any object to a new position
 2. Wait 2 seconds
 3. Check terminal output for "Auto-saved: <filename>"
 4. Verify .maxpat file has been updated with new positions
 
 ### Demo Scripts
+
 ```bash
 # Basic interactive demo
 uv run python tests/examples/interactive_demo.py
@@ -157,6 +170,7 @@ Both known issues have been successfully fixed:
 2. **Auto-Save**: Implemented with debounced save mechanism (25 lines added)
 
 The interactive editor is now fully functional with:
+
 - Seamless drag-and-drop repositioning
 - Working connection drawing mode
 - Automatic persistence of changes

@@ -40,6 +40,7 @@ await p.serve_interactive()
 Added filepath to the state JSON so the Save button can show which file will be saved:
 
 **Server (`py2max/server.py:117`)**:
+
 ```python
 return {
     'type': 'update',
@@ -51,6 +52,7 @@ return {
 ```
 
 **Client (`py2max/static/interactive.js:147-151`)**:
+
 ```javascript
 // Update save button tooltip with filepath
 if (data.filepath) {
@@ -80,22 +82,25 @@ await p.serve_interactive()
 ```
 
 **Updated instructions**:
-```
-6. Click the 💾 Save button to save changes to .maxpat file
+
+```text
+6. Click the  Save button to save changes to .maxpat file
 ```
 
 ## Testing
 
 Run the demo:
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 ```
 
 Verify:
-1. ✅ Console shows: "Saved initial patch: interactive_demo.maxpat"
-2. ✅ Hover over Save button → Shows filepath in tooltip
-3. ✅ Click Save button → "✅ Saved to interactive_demo.maxpat"
-4. ✅ No "No filepath set" error
+
+1. [x] Console shows: "Saved initial patch: interactive_demo.maxpat"
+2. [x] Hover over Save button → Shows filepath in tooltip
+3. [x] Click Save button → "[x] Saved to interactive_demo.maxpat"
+4. [x] No "No filepath set" error
 
 ## Best Practice
 
@@ -104,13 +109,13 @@ Verify:
 ```python
 from py2max import Patcher
 
-# Good ✅
+# Good [x]
 p = Patcher('myfile.maxpat')
 p.add_textbox('cycle~ 440')
 p.save()  # Save initial version
 await p.serve_interactive()
 
-# Bad ❌
+# Bad [X]
 p = Patcher('myfile.maxpat')
 p.add_textbox('cycle~ 440')
 await p.serve_interactive()  # File doesn't exist yet!
@@ -138,10 +143,10 @@ temp_path.unlink()
 
 The save functionality now works correctly:
 
-✅ Demo saves initial patch before starting server
-✅ Save button tooltip shows filepath
-✅ No "No filepath set" error
-✅ Clear visual feedback on save success
-✅ Best practices documented
+[x] Demo saves initial patch before starting server
+[x] Save button tooltip shows filepath
+[x] No "No filepath set" error
+[x] Clear visual feedback on save success
+[x] Best practices documented
 
 **Key lesson**: Always call `patcher.save()` before starting the interactive server to ensure the file exists and can be saved to.

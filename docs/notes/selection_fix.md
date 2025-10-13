@@ -7,6 +7,7 @@ Selection wasn't working because clicking an object immediately started dragging
 ## Root Cause
 
 The original logic:
+
 1. **Mouse down** → Set `dragging = true` immediately
 2. **Mouse move** → Always re-render (clearing selection state)
 3. **Mouse up** → Clear selection
@@ -37,12 +38,14 @@ Implemented **click detection with drag threshold**:
 ### Implementation
 
 **Added State Variables**:
+
 ```javascript
 this.dragStarted = false;   // Track if drag actually started
 this.mouseDownPos = null;   // Track mouse down position for threshold
 ```
 
 **Mouse Down**:
+
 ```javascript
 handleBoxMouseDown(event, box) {
     this.dragging = true;
@@ -58,6 +61,7 @@ handleBoxMouseDown(event, box) {
 ```
 
 **Mouse Move with Threshold**:
+
 ```javascript
 handleCanvasMouseMove(event) {
     if (this.dragging && this.selectedBox) {
@@ -83,6 +87,7 @@ handleCanvasMouseMove(event) {
 ```
 
 **Mouse Up - Click vs Drag**:
+
 ```javascript
 handleCanvasMouseUp(event) {
     if (this.dragging && this.selectedBox) {
@@ -111,31 +116,36 @@ handleCanvasMouseUp(event) {
 ## Benefits
 
 ### 1. Clear Click Detection
+
 - **Click**: Mouse down + up with <5px movement
 - **Drag**: Mouse down + move >5px + up
 
 ### 2. Better UX
+
 - **Small movements** don't trigger drag (prevents accidental moves)
 - **Click to select** works reliably
 - **Drag to move** still smooth and responsive
 
 ### 3. Visual Feedback
+
 - **Selected objects** show orange border
 - **Selected connections** show orange thick line
 - **Info bar** shows what's selected
 
 ## User Experience
 
-### Before Fix (Broken):
-```
+### Before Fix (Broken)
+
+```text
 1. Click object → Starts dragging immediately
 2. Release mouse → Object deselected
 3. No way to select without dragging
 4. Delete key does nothing (nothing selected)
 ```
 
-### After Fix (Working):
-```
+### After Fix (Working)
+
+```text
 1. Click object → Object selected, orange border appears
 2. Info bar: "Selected: cycle~ (Press Delete to remove)"
 3. Press Delete → Object removed
@@ -143,7 +153,7 @@ handleCanvasMouseUp(event) {
 
 OR:
 
-```
+```text
 1. Click and drag >5px → Starts dragging
 2. Move object to new position
 3. Release → Object moved, selection cleared
@@ -152,12 +162,14 @@ OR:
 ## Threshold Details
 
 **5px threshold chosen because**:
+
 - Small enough to feel immediate
 - Large enough to prevent accidental micro-drags
 - Matches typical OS/browser click tolerance
 - Works well on both mouse and trackpad
 
 **Calculation**:
+
 ```javascript
 const dx = Math.abs(svgPoint.x - this.mouseDownPos.x);
 const dy = Math.abs(svgPoint.y - this.mouseDownPos.y);
@@ -170,28 +182,32 @@ Uses Manhattan distance (not Euclidean) for performance - faster than `Math.sqrt
 
 ## Testing
 
-### Manual Testing:
+### Manual Testing
 
 **Test Click Selection**:
+
 1. Click object without moving mouse
-2. ✓ Orange border appears
-3. ✓ Info bar shows selection
-4. ✓ Press Delete removes object
+2. [x] Orange border appears
+3. [x] Info bar shows selection
+4. [x] Press Delete removes object
 
 **Test Drag**:
+
 1. Click and drag >5px
-2. ✓ Object moves smoothly
-3. ✓ Selection clears after drag
-4. ✓ Position saved to Python
+2. [x] Object moves smoothly
+3. [x] Selection clears after drag
+4. [x] Position saved to Python
 
 **Test Threshold**:
-1. Click and move 3px (micro-movement)
-2. ✓ Doesn't start drag
-3. ✓ Object stays selected
-4. Click and move 10px
-5. ✓ Starts drag immediately
 
-### All Tests Pass ✅:
+1. Click and move 3px (micro-movement)
+2. [x] Doesn't start drag
+3. [x] Object stays selected
+4. Click and move 10px
+5. [x] Starts drag immediately
+
+### All Tests Pass [x]
+
 ```bash
 uv run pytest tests/
 # 312 passed, 14 skipped
@@ -208,6 +224,7 @@ uv run pytest tests/
 ## Files Modified
 
 **`py2max/static/interactive.js`**:
+
 - Added `dragStarted` and `mouseDownPos` state
 - Updated `handleBoxMouseDown()` to prepare for drag
 - Updated `handleCanvasMouseMove()` with threshold logic
@@ -217,11 +234,11 @@ uv run pytest tests/
 
 Selection now works perfectly:
 
-✅ **Click** → Select (shows orange border)
-✅ **Drag** → Move (>5px threshold)
-✅ **Info bar** → Shows selection
-✅ **Delete key** → Removes selected item
-✅ **Visual feedback** → Orange highlighting
-✅ **Smooth interaction** → Natural feel
+[x] **Click** → Select (shows orange border)
+[x] **Drag** → Move (>5px threshold)
+[x] **Info bar** → Shows selection
+[x] **Delete key** → Removes selected item
+[x] **Visual feedback** → Orange highlighting
+[x] **Smooth interaction** → Natural feel
 
 The 5px threshold creates a natural distinction between clicking to select and dragging to move, matching user expectations from Max/MSP and other applications.

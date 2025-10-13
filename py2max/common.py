@@ -12,6 +12,7 @@ class Rect(NamedTuple):
     Represents a rectangular area in Max patch coordinates using four coordinates:
     x (horizontal position), y (vertical position), w (width), and h (height).
     """
+
     x: float
     y: float
     w: float

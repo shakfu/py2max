@@ -9,6 +9,7 @@ There was a noticeable delay between clicking an object and seeing the orange se
 The selection highlight was only rendered in `handleCanvasMouseUp()` (after determining if it was a click vs drag):
 
 **Previous flow:**
+
 1. `mousedown` → Set `selectedBox`, but don't render
 2. `mousemove` → Check if drag started (>5px threshold)
 3. `mouseup` → If no drag, render selection ← **Delay here**
@@ -36,7 +37,7 @@ handleBoxMouseDown(event, box) {
 
 ## How It Works Now
 
-### Immediate Feedback Flow:
+### Immediate Feedback Flow
 
 1. **Mouse down** → Select box, render immediately → **Orange border appears instantly**
 2. **Mouse move** (if >5px) → Start dragging
@@ -44,16 +45,18 @@ handleBoxMouseDown(event, box) {
    - If dragged: Send update, clear selection
    - If clicked: Keep selection (already visible)
 
-### User Experience:
+### User Experience
 
 **Before (delayed):**
-```
+
+```text
 Click down → (wait) → Release → Orange border appears
          └─ Noticeable delay ─┘
 ```
 
 **After (instant):**
-```
+
+```text
 Click down → Orange border appears immediately!
 ```
 
@@ -69,6 +72,7 @@ Click down → Orange border appears immediately!
 ### What if user starts dragging?
 
 The selection is shown immediately on mousedown, but if drag starts (>5px movement):
+
 - Object moves with selection visible
 - On mouseup: Selection cleared after position update
 - Result: Selection briefly visible during drag, which is fine
@@ -76,6 +80,7 @@ The selection is shown immediately on mousedown, but if drag starts (>5px moveme
 ### What if click is canceled?
 
 If user clicks empty canvas or another object:
+
 - Previous selection cleared
 - New selection shown
 - Works as expected
@@ -83,6 +88,7 @@ If user clicks empty canvas or another object:
 ### Multiple rapid clicks?
 
 Each click:
+
 - Shows selection immediately
 - Switches selection to new object
 - Previous selection cleared
@@ -90,27 +96,31 @@ Each click:
 
 ## Testing
 
-### Manual Test:
+### Manual Test
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 ```
 
 **Test instant feedback:**
+
 1. Click an object → Orange border appears **immediately**
 2. Release mouse → Border stays (selected)
 3. Click and drag >5px → Object moves
 4. Release → Selection cleared (was a drag)
 
-### Performance Impact:
+### Performance Impact
 
 **Added one `render()` call per mousedown.**
 
 Impact: Minimal
+
 - Render is already fast
 - Only affects clicks/drags on objects
 - No performance degradation noticed
 
-### All Tests Pass ✅:
+### All Tests Pass [x]
+
 ```bash
 uv run pytest tests/
 # 312 passed, 14 skipped in 11.48s
@@ -120,9 +130,9 @@ uv run pytest tests/
 
 | Action | Max/MSP | py2max (before) | py2max (after) |
 |--------|---------|-----------------|----------------|
-| Click object | Immediate border | Delayed until mouseup | **Immediate border** ✅ |
-| Drag object | Border during drag | No border until release | **Border appears** ✅ |
-| Release after drag | No border | No border | **No border** ✅ |
+| Click object | Immediate border | Delayed until mouseup | **Immediate border** [x] |
+| Drag object | Border during drag | No border until release | **Border appears** [x] |
+| Release after drag | No border | No border | **No border** [x] |
 
 Now matches Max/MSP's instant visual feedback!
 
@@ -146,11 +156,11 @@ Now matches Max/MSP's instant visual feedback!
 
 Selection feedback is now **instant**:
 
-✅ Orange border appears on `mousedown` (not `mouseup`)
-✅ No noticeable delay
-✅ Feels responsive and snappy
-✅ Matches expected behavior from Max/MSP
-✅ All tests pass
-✅ No performance impact
+[x] Orange border appears on `mousedown` (not `mouseup`)
+[x] No noticeable delay
+[x] Feels responsive and snappy
+[x] Matches expected behavior from Max/MSP
+[x] All tests pass
+[x] No performance impact
 
 Simple one-line fix that significantly improves perceived responsiveness!

@@ -6,8 +6,9 @@ the dynamic maxref.py system which provides more comprehensive and
 up-to-date object information.
 """
 
-from .common import Rect
 from typing import Any, Dict
+
+from .common import Rect
 
 MAXCLASS_DEFAULTS: Dict[str, Dict[str, Any]] = {
     "button": {

@@ -14,10 +14,10 @@ This is the critical feature that makes the interactive editor useful - changes 
 
 ### 1. Manual Save (Default)
 
-- **Save Button**: Click the 💾 Save button in the web interface
+- **Save Button**: Click the  Save button in the web interface
 - **Keyboard Shortcut**: Could be added (e.g., Ctrl+S / Cmd+S)
-- **Visual Feedback**: Shows "Saving..." then "✅ Saved to [filepath]"
-- **Error Handling**: Shows "❌ Save error: [message]" if save fails
+- **Visual Feedback**: Shows "Saving..." then "[x] Saved to [filepath]"
+- **Error Handling**: Shows "[X] Save error: [message]" if save fails
 
 ### 2. Auto-Save (Optional)
 
@@ -85,6 +85,7 @@ await server.shutdown()
 All interactive operations are saved to the `.maxpat` file:
 
 ### 1. Object Position Updates
+
 ```javascript
 // Browser → Python
 { type: 'update_position', box_id: 'obj-123', x: 200, y: 150 }
@@ -94,6 +95,7 @@ All interactive operations are saved to the `.maxpat` file:
 ```
 
 ### 2. Object Creation
+
 ```javascript
 // Browser → Python
 { type: 'create_object', text: 'dac~', x: 300, y: 200 }
@@ -103,6 +105,7 @@ All interactive operations are saved to the `.maxpat` file:
 ```
 
 ### 3. Connection Creation
+
 ```javascript
 // Browser → Python
 {
@@ -118,6 +121,7 @@ All interactive operations are saved to the `.maxpat` file:
 ```
 
 ### 4. Object Deletion
+
 ```javascript
 // Browser → Python
 { type: 'delete_object', box_id: 'obj-123' }
@@ -127,6 +131,7 @@ All interactive operations are saved to the `.maxpat` file:
 ```
 
 ### 5. Connection Deletion
+
 ```javascript
 // Browser → Python
 {
@@ -145,7 +150,7 @@ All interactive operations are saved to the `.maxpat` file:
 
 ### Manual Save Flow
 
-```
+```text
 1. User edits patch in browser
    ↓
 2. WebSocket sends edit message to Python
@@ -164,12 +169,12 @@ All interactive operations are saved to the `.maxpat` file:
    ↓
 9. Python sends { type: 'save_complete', filepath: '...' }
    ↓
-10. Browser shows "✅ Saved to [filepath]"
+10. Browser shows "[x] Saved to [filepath]"
 ```
 
 ### Auto-Save Flow
 
-```
+```text
 1. User edits patch in browser
    ↓
 2. WebSocket sends edit message to Python
@@ -233,7 +238,8 @@ p2 = Patcher.from_file('synth.maxpat')
 
 **Key Components**:
 
-1. **InteractiveWebSocketHandler.__init__**:
+1. **InteractiveWebSocketHandler.**init****:
+
    ```python
    def __init__(self, patcher, auto_save=False):
        self.auto_save = auto_save
@@ -241,6 +247,7 @@ p2 = Patcher.from_file('synth.maxpat')
    ```
 
 2. **handle_save()** - Manual save handler:
+
    ```python
    async def handle_save(self):
        if self.patcher and self.patcher.filepath:
@@ -252,6 +259,7 @@ p2 = Patcher.from_file('synth.maxpat')
    ```
 
 3. **schedule_save()** - Auto-save scheduler:
+
    ```python
    async def schedule_save(self):
        if not self.auto_save:
@@ -266,6 +274,7 @@ p2 = Patcher.from_file('synth.maxpat')
    ```
 
 4. **_debounced_save()** - Delayed save:
+
    ```python
    async def _debounced_save(self):
        try:
@@ -284,6 +293,7 @@ p2 = Patcher.from_file('synth.maxpat')
 **Key Components**:
 
 1. **Save Button Handler**:
+
    ```javascript
    initializeControls() {
        const saveBtn = document.getElementById('save-btn');
@@ -294,6 +304,7 @@ p2 = Patcher.from_file('synth.maxpat')
    ```
 
 2. **handleSave()** - Send save request:
+
    ```javascript
    handleSave() {
        this.sendMessage({ type: 'save' });
@@ -302,12 +313,13 @@ p2 = Patcher.from_file('synth.maxpat')
    ```
 
 3. **handleUpdate()** - Process save responses:
+
    ```javascript
    handleUpdate(data) {
        if (data.type === 'save_complete') {
-           this.updateInfo(`✅ Saved to ${data.filepath}`);
+           this.updateInfo(`[x] Saved to ${data.filepath}`);
        } else if (data.type === 'save_error') {
-           this.updateInfo(`❌ Save error: ${data.message}`);
+           this.updateInfo(`[X] Save error: ${data.message}`);
        }
    }
    ```
@@ -315,7 +327,7 @@ p2 = Patcher.from_file('synth.maxpat')
 **File**: `py2max/static/interactive.html`
 
 ```html
-<button id="save-btn" title="Save patch to .maxpat file">💾 Save</button>
+<button id="save-btn" title="Save patch to .maxpat file"> Save</button>
 ```
 
 ## Auto-Save vs Manual Save
@@ -323,16 +335,19 @@ p2 = Patcher.from_file('synth.maxpat')
 ### Manual Save (Recommended)
 
 **Pros**:
-- ✅ User has full control
-- ✅ No accidental saves
-- ✅ Can review changes before saving
-- ✅ Clear when file is modified vs saved
+
+- [x] User has full control
+- [x] No accidental saves
+- [x] Can review changes before saving
+- [x] Clear when file is modified vs saved
 
 **Cons**:
-- ❌ User must remember to save
-- ❌ Could lose work if browser crashes
+
+- [X] User must remember to save
+- [X] Could lose work if browser crashes
 
 **Best for**:
+
 - Careful editing
 - Experimental changes
 - Teaching/demonstrations
@@ -340,16 +355,19 @@ p2 = Patcher.from_file('synth.maxpat')
 ### Auto-Save
 
 **Pros**:
-- ✅ Never lose work
-- ✅ Automatic persistence
-- ✅ Good for rapid prototyping
+
+- [x] Never lose work
+- [x] Automatic persistence
+- [x] Good for rapid prototyping
 
 **Cons**:
-- ❌ No undo (saves everything)
-- ❌ Could save unwanted changes
-- ❌ Frequent disk writes
+
+- [X] No undo (saves everything)
+- [X] Could save unwanted changes
+- [X] Frequent disk writes
 
 **Best for**:
+
 - Long editing sessions
 - Rapid prototyping
 - Collaborative editing
@@ -369,7 +387,8 @@ uv run python tests/examples/interactive_demo.py
 ```
 
 Test workflow:
-1. Open browser to http://localhost:8000/
+
+1. Open browser to <http://localhost:8000/>
 2. Move an object
 3. Click Save button
 4. Check console: "Saved: [filepath]"
@@ -385,7 +404,7 @@ p = Patcher()  # No filepath!
 await p.serve_interactive()
 
 # Click Save → Error message
-# Browser shows: "❌ Save error: No filepath set"
+# Browser shows: "[X] Save error: No filepath set"
 ```
 
 ### File Permission Error
@@ -395,7 +414,7 @@ p = Patcher('/readonly/path.maxpat')
 await p.serve_interactive()
 
 # Click Save → Error message
-# Browser shows: "❌ Save error: Permission denied"
+# Browser shows: "[X] Save error: Permission denied"
 ```
 
 ### WebSocket Disconnected
@@ -412,13 +431,13 @@ this.updateStatus('Disconnected', 'disconnected');
 
 The interactive editor now provides **complete persistence**:
 
-✅ **Manual save** - User clicks button to save (default)
-✅ **Auto-save** - Optional 2-second debounced save
-✅ **Visual feedback** - Shows save status in info bar
-✅ **Error handling** - Clear error messages
-✅ **Max/MSP compatible** - Saves to standard .maxpat format
-✅ **All operations** - Position, create, delete, connect
-✅ **Debouncing** - Prevents excessive saves during drag
-✅ **Configurable** - Enable/disable auto-save as needed
+[x] **Manual save** - User clicks button to save (default)
+[x] **Auto-save** - Optional 2-second debounced save
+[x] **Visual feedback** - Shows save status in info bar
+[x] **Error handling** - Clear error messages
+[x] **Max/MSP compatible** - Saves to standard .maxpat format
+[x] **All operations** - Position, create, delete, connect
+[x] **Debouncing** - Prevents excessive saves during drag
+[x] **Configurable** - Enable/disable auto-save as needed
 
 **Key outcome achieved**: Web-based patch edits are persisted to .maxpat files that Max/MSP can read!

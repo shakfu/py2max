@@ -8,21 +8,20 @@ import sys
 from pathlib import Path
 from pprint import pprint
 from textwrap import fill
-from typing import Iterable, List, Dict, Any, cast
+from typing import Any, Dict, Iterable, List, cast
 
 try:  # pragma: no cover - optional dependency
     import yaml  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
     yaml = None
 
-from .core import InvalidConnectionError, Patcher, Patchline
 from .common import Rect
-from .maxref import MaxRefCache, validate_connection
-from .transformers import available_transformers, create_transformer, run_pipeline
 from .converters import maxpat_to_python, maxref_to_sqlite
+from .core import InvalidConnectionError, Patcher, Patchline
 from .db import MaxRefDB
+from .maxref import MaxRefCache, validate_connection
 from .svg import export_svg
-
+from .transformers import available_transformers, create_transformer, run_pipeline
 
 LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
 FLOW_CHOICES = ["horizontal", "vertical", "column"]
@@ -37,7 +36,10 @@ def _sanitize_identifier(name: str) -> str:
 
 
 def _to_pascal_case(name: str) -> str:
-    return "".join(part.capitalize() for part in _sanitize_identifier(name).split("_")) or "Object"
+    return (
+        "".join(part.capitalize() for part in _sanitize_identifier(name).split("_"))
+        or "Object"
+    )
 
 
 def _object_name(box) -> str:
@@ -79,12 +81,14 @@ def _dump_code(name: str, data: dict) -> None:
     description = data.get("description", "")
 
     print(f"class {class_name}:")
-    print("    \"\"\"" + digest)
+    print('    """' + digest)
     if description:
-        formatted = fill(description, width=76, initial_indent="    ", subsequent_indent="    ")
+        formatted = fill(
+            description, width=76, initial_indent="    ", subsequent_indent="    "
+        )
         for line in formatted.splitlines():
             print(line)
-    print("    \"\"\"")
+    print('    """')
 
     for method_name, method in sorted(data.get("methods", {}).items()):
         if method_name.startswith("("):
@@ -94,10 +98,15 @@ def _dump_code(name: str, data: dict) -> None:
         print(f"    def {identifier}({signature}):")
         digest = method.get("digest")
         if digest:
-            print(f"        \"\"\"{digest}\"\"\"")
+            print(f'        """{digest}"""')
         description = method.get("description")
         if description and description != "TEXT_HERE":
-            formatted = fill(description, width=70, initial_indent="        ", subsequent_indent="        ")
+            formatted = fill(
+                description,
+                width=70,
+                initial_indent="        ",
+                subsequent_indent="        ",
+            )
             for line in formatted.splitlines():
                 print(line)
         print("        raise NotImplementedError\n")
@@ -110,7 +119,7 @@ def _dump_tests(name: str, data: dict) -> None:
         digest = method.get("digest", "")
         print(f"def test_{base}_{identifier}():")
         if digest:
-            print(f"    \"\"\"{digest}\"\"\"")
+            print(f'    """{digest}"""')
         print("    # TODO: implement test\n")
 
 
@@ -121,21 +130,21 @@ def _generate_test_source(name: str, data: dict) -> str:
         "",
         f"def test_{base}_maxref():",
         "    cache = MaxRefCache()",
-        f"    data = cache.get_object_data(\"{name}\")",
+        f'    data = cache.get_object_data("{name}")',
         "    assert data is not None",
     ]
 
     digest = data.get("digest")
     if digest:
-        lines.append(f"    assert data.get(\"digest\") == {digest!r}")
+        lines.append(f'    assert data.get("digest") == {digest!r}')
 
     inlet_count = len(data.get("inlets", []) or [])
     if inlet_count:
-        lines.append(f"    assert len(data.get(\"inlets\", [])) == {inlet_count}")
+        lines.append(f'    assert len(data.get("inlets", [])) == {inlet_count}')
 
     outlet_count = len(data.get("outlets", []) or [])
     if outlet_count:
-        lines.append(f"    assert len(data.get(\"outlets\", [])) == {outlet_count}")
+        lines.append(f'    assert len(data.get("outlets", [])) == {outlet_count}')
 
     return "\n".join(lines) + "\n"
 
@@ -225,7 +234,9 @@ def cmd_validate(args: argparse.Namespace) -> int:
         patchline = cast(Patchline, line)
         src_id, dst_id = patchline.src, patchline.dst
         src_port = int(patchline.source[1]) if len(patchline.source) > 1 else 0
-        dst_port = int(patchline.destination[1]) if len(patchline.destination) > 1 else 0
+        dst_port = (
+            int(patchline.destination[1]) if len(patchline.destination) > 1 else 0
+        )
 
         src_obj = patcher._objects.get(src_id)
         dst_obj = patcher._objects.get(dst_id)
@@ -273,7 +284,10 @@ def cmd_transform(args: argparse.Namespace) -> int:
         return 1
 
     if not args.apply:
-        print("No transformers specified. Use --apply name or --apply name=value.", file=sys.stderr)
+        print(
+            "No transformers specified. Use --apply name or --apply name=value.",
+            file=sys.stderr,
+        )
         return 1
 
     input_path = Path(args.input)
@@ -287,7 +301,10 @@ def cmd_transform(args: argparse.Namespace) -> int:
         try:
             transformer = create_transformer(name, value)
         except KeyError:
-            print(f"Unknown transformer '{name}'. Use --list-transformers to see options.", file=sys.stderr)
+            print(
+                f"Unknown transformer '{name}'. Use --list-transformers to see options.",
+                file=sys.stderr,
+            )
             return 1
         except ValueError as exc:
             print(str(exc), file=sys.stderr)
@@ -323,7 +340,9 @@ def cmd_convert(args: argparse.Namespace) -> int:
 
         names = args.names if args.names else None
         count = maxref_to_sqlite(args.output, names=names, overwrite=args.overwrite)
-        print(f"Stored {count} maxref entr{'y' if count == 1 else 'ies'} in {args.output}")
+        print(
+            f"Stored {count} maxref entr{'y' if count == 1 else 'ies'} in {args.output}"
+        )
         return 0
 
     print(
@@ -362,7 +381,10 @@ def cmd_db_create(args: argparse.Namespace) -> int:
 
     if db_path.exists() and not args.force:
         print(f"Database already exists: {db_path}", file=sys.stderr)
-        print("Use --force to overwrite or use 'db populate' to add to existing database", file=sys.stderr)
+        print(
+            "Use --force to overwrite or use 'db populate' to add to existing database",
+            file=sys.stderr,
+        )
         return 1
 
     if db_path.exists():
@@ -372,7 +394,7 @@ def cmd_db_create(args: argparse.Namespace) -> int:
 
     if not args.empty:
         # Populate with specified category or all
-        category = args.category if hasattr(args, 'category') else None
+        category = args.category if hasattr(args, "category") else None
         print(f"Creating database and populating with {category or 'all'} objects...")
         db.populate(category=category)
         print(f"Created database with {db.count} objects at {db_path}")
@@ -425,7 +447,7 @@ def cmd_db_info(args: argparse.Namespace) -> int:
     if args.summary:
         summary = db.summary()
         print("\nCategories:")
-        for category, count in sorted(summary['categories'].items()):
+        for category, count in sorted(summary["categories"].items()):
             print(f"  {category}: {count} objects")
 
     if args.list:
@@ -455,7 +477,7 @@ def cmd_db_search(args: argparse.Namespace) -> int:
         results = db.by_category(args.category)
         print(f"Objects in category '{args.category}':")
     else:
-        fields = args.fields.split(',') if args.fields else None
+        fields = args.fields.split(",") if args.fields else None
         results = db.search(args.query, fields=fields)
         print(f"Search results for '{args.query}':")
 
@@ -466,7 +488,7 @@ def cmd_db_search(args: argparse.Namespace) -> int:
     for name in results:
         if args.verbose:
             obj = db[name]
-            digest = obj.get('digest', '')
+            digest = obj.get("digest", "")
             print(f"  {name}: {digest}")
         else:
             print(f"  {name}")
@@ -498,22 +520,22 @@ def cmd_db_query(args: argparse.Namespace) -> int:
     else:
         # Human-readable output
         print(f"{args.name}")
-        if obj.get('digest'):
+        if obj.get("digest"):
             print(f"  Digest: {obj['digest']}")
-        if obj.get('description'):
+        if obj.get("description"):
             print(f"  Description: {obj['description']}")
-        if obj.get('category'):
+        if obj.get("category"):
             print(f"  Category: {obj['category']}")
 
-        inlets = obj.get('inlets', [])
-        outlets = obj.get('outlets', [])
+        inlets = obj.get("inlets", [])
+        outlets = obj.get("outlets", [])
         if inlets:
             print(f"  Inlets: {len(inlets)}")
         if outlets:
             print(f"  Outlets: {len(outlets)}")
 
-        methods = obj.get('methods', {})
-        attributes = obj.get('attributes', {})
+        methods = obj.get("methods", {})
+        attributes = obj.get("attributes", {})
         if methods:
             print(f"  Methods: {len(methods)}")
         if attributes:
@@ -603,7 +625,7 @@ def cmd_db_cache(args: argparse.Namespace) -> int:
 
         if not args.force:
             response = input(f"Delete cache at {db_path}? [y/N]: ")
-            if response.lower() != 'y':
+            if response.lower() != "y":
                 print("Cancelled")
                 return 0
 
@@ -649,10 +671,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
         print("Press Ctrl+C to stop")
 
         async def run_server():
-            server = await patcher.serve(
-                port=args.port,
-                auto_open=not args.no_open
-            )
+            server = await patcher.serve(port=args.port, auto_open=not args.no_open)
             # Keep running
             try:
                 while True:
@@ -670,14 +689,15 @@ def cmd_serve(args: argparse.Namespace) -> int:
     except Exception as e:
         print(f"Error starting server: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         return 1
 
 
 def cmd_preview(args: argparse.Namespace) -> int:
     """Generate SVG preview of a patcher."""
-    import webbrowser
     import tempfile
+    import webbrowser
 
     input_path = Path(args.input)
 
@@ -764,7 +784,9 @@ def cmd_maxref(args: argparse.Namespace) -> int:
             output_path = Path(args.output)
             if output_path.parent:
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(_generate_test_source(args.name, data), encoding="utf8")
+            output_path.write_text(
+                _generate_test_source(args.name, data), encoding="utf8"
+            )
             print(f"Wrote test skeleton to {output_path}")
         else:
             _dump_tests(args.name, data)
@@ -784,65 +806,116 @@ def cmd_maxref(args: argparse.Namespace) -> int:
         print(f"  Digest: {digest}")
     if description:
         print("  Description:")
-        formatted = fill(description, width=76, initial_indent="    ", subsequent_indent="    ")
+        formatted = fill(
+            description, width=76, initial_indent="    ", subsequent_indent="    "
+        )
         for line in formatted.splitlines():
             print(line)
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="py2max", description="Utilities for working with Max patchers.")
+    parser = argparse.ArgumentParser(
+        prog="py2max", description="Utilities for working with Max patchers."
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     new_parser = subparsers.add_parser("new", help="Create a new patcher file")
     new_parser.add_argument("path", help="Destination .maxpat path")
     new_parser.add_argument("--title", help="Optional patcher title")
     new_parser.add_argument("--layout", choices=LAYOUT_CHOICES, default="horizontal")
-    new_parser.add_argument("--flow-direction", choices=FLOW_CHOICES, default="horizontal")
+    new_parser.add_argument(
+        "--flow-direction", choices=FLOW_CHOICES, default="horizontal"
+    )
     new_parser.add_argument(
         "--template",
         choices=["blank", "stereo"],
         default="blank",
         help="Preset object layout to populate the patch",
     )
-    new_parser.add_argument("--force", action="store_true", help="Overwrite existing files")
+    new_parser.add_argument(
+        "--force", action="store_true", help="Overwrite existing files"
+    )
     new_parser.set_defaults(func=cmd_new)
 
     info_parser = subparsers.add_parser("info", help="Summarize an existing patcher")
     info_parser.add_argument("path", help="Target .maxpat path")
-    info_parser.add_argument("--verbose", action="store_true", help="List every object in the patch")
+    info_parser.add_argument(
+        "--verbose", action="store_true", help="List every object in the patch"
+    )
     info_parser.set_defaults(func=cmd_info)
 
-    opt_parser = subparsers.add_parser("optimize", help="Run layout optimization on a patch")
+    opt_parser = subparsers.add_parser(
+        "optimize", help="Run layout optimization on a patch"
+    )
     opt_parser.add_argument("input", help="Existing .maxpat file")
     opt_parser.add_argument("-o", "--output", help="Output path (defaults to in-place)")
-    opt_parser.add_argument("--layout", choices=LAYOUT_CHOICES, help="Override layout manager before optimizing")
-    opt_parser.add_argument("--flow-direction", choices=FLOW_CHOICES, help="Set flow direction before optimizing")
+    opt_parser.add_argument(
+        "--layout",
+        choices=LAYOUT_CHOICES,
+        help="Override layout manager before optimizing",
+    )
+    opt_parser.add_argument(
+        "--flow-direction",
+        choices=FLOW_CHOICES,
+        help="Set flow direction before optimizing",
+    )
     opt_parser.set_defaults(func=cmd_optimize)
 
-    val_parser = subparsers.add_parser("validate", help="Validate patcher connections against maxref metadata")
+    val_parser = subparsers.add_parser(
+        "validate", help="Validate patcher connections against maxref metadata"
+    )
     val_parser.add_argument("path", help="Target .maxpat path")
     val_parser.set_defaults(func=cmd_validate)
 
-    serve_parser = subparsers.add_parser("serve", help="Start interactive server with live preview")
+    serve_parser = subparsers.add_parser(
+        "serve", help="Start interactive server with live preview"
+    )
     serve_parser.add_argument("input", help="Input .maxpat file")
-    serve_parser.add_argument("--port", type=int, default=8000, help="HTTP server port (default: 8000, WebSocket on port+1)")
-    serve_parser.add_argument("--no-open", action="store_true", help="Don't automatically open browser")
-    serve_parser.add_argument("--no-save", action="store_true", help="Disable auto-save on changes")
+    serve_parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="HTTP server port (default: 8000, WebSocket on port+1)",
+    )
+    serve_parser.add_argument(
+        "--no-open", action="store_true", help="Don't automatically open browser"
+    )
+    serve_parser.add_argument(
+        "--no-save", action="store_true", help="Disable auto-save on changes"
+    )
     serve_parser.set_defaults(func=cmd_serve)
 
-    preview_parser = subparsers.add_parser("preview", help="Generate SVG preview of a patcher")
+    preview_parser = subparsers.add_parser(
+        "preview", help="Generate SVG preview of a patcher"
+    )
     preview_parser.add_argument("input", help="Input .maxpat file")
-    preview_parser.add_argument("-o", "--output", help="Output SVG file path (default: /tmp/<name>_preview.svg)")
+    preview_parser.add_argument(
+        "-o", "--output", help="Output SVG file path (default: /tmp/<name>_preview.svg)"
+    )
     preview_parser.add_argument("--title", help="Custom title for the SVG")
-    preview_parser.add_argument("--no-title", action="store_true", help="Don't show title in SVG")
-    preview_parser.add_argument("--no-ports", dest="show_ports", action="store_false", default=True, help="Don't show inlet/outlet ports")
-    preview_parser.add_argument("--open", action="store_true", help="Open preview in web browser")
+    preview_parser.add_argument(
+        "--no-title", action="store_true", help="Don't show title in SVG"
+    )
+    preview_parser.add_argument(
+        "--no-ports",
+        dest="show_ports",
+        action="store_false",
+        default=True,
+        help="Don't show inlet/outlet ports",
+    )
+    preview_parser.add_argument(
+        "--open", action="store_true", help="Open preview in web browser"
+    )
     preview_parser.set_defaults(func=cmd_preview)
 
-    transform_parser = subparsers.add_parser("transform", help="Apply transformer pipeline to a patcher")
+    transform_parser = subparsers.add_parser(
+        "transform", help="Apply transformer pipeline to a patcher"
+    )
     transform_parser.add_argument("input", nargs="?", help="Source .maxpat file")
-    transform_parser.add_argument("-o", "--output", help="Destination path (defaults to input)")
+    transform_parser.add_argument(
+        "-o", "--output", help="Destination path (defaults to input)"
+    )
     transform_parser.add_argument(
         "-t",
         "--apply",
@@ -859,7 +932,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     transform_parser.set_defaults(func=cmd_transform)
 
-    convert_parser = subparsers.add_parser("convert", help="Convert between patch representations")
+    convert_parser = subparsers.add_parser(
+        "convert", help="Convert between patch representations"
+    )
     convert_sub = convert_parser.add_subparsers(dest="mode")
 
     convert_mp_py = convert_sub.add_parser(
@@ -895,16 +970,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
     convert_maxref.set_defaults(func=cmd_convert)
 
-    maxref_parser = subparsers.add_parser("maxref", help="Inspect Cycling '74 maxref metadata")
-    maxref_parser.add_argument("name", nargs="?", help="Max object name (without .maxref.xml)")
-    maxref_parser.add_argument("--dict", action="store_true", help="Dump parsed maxref as a Python dict")
-    maxref_parser.add_argument("--json", action="store_true", help="Dump parsed maxref as JSON")
-    maxref_parser.add_argument("--code", action="store_true", help="Generate a Python class outline")
-    maxref_parser.add_argument("--test", action="store_true", help="Generate pytest skeletons")
-    maxref_parser.add_argument("-o", "--output", help="Write generated code/tests to this file")
-    maxref_parser.add_argument("--yaml", action="store_true", help="Dump parsed maxref as YAML (requires PyYAML)")
-    maxref_parser.add_argument("--list", action="store_true", help="List all available maxref entries")
-    maxref_parser.add_argument("--info", action="store_true", help="List all entries with their digests")
+    maxref_parser = subparsers.add_parser(
+        "maxref", help="Inspect Cycling '74 maxref metadata"
+    )
+    maxref_parser.add_argument(
+        "name", nargs="?", help="Max object name (without .maxref.xml)"
+    )
+    maxref_parser.add_argument(
+        "--dict", action="store_true", help="Dump parsed maxref as a Python dict"
+    )
+    maxref_parser.add_argument(
+        "--json", action="store_true", help="Dump parsed maxref as JSON"
+    )
+    maxref_parser.add_argument(
+        "--code", action="store_true", help="Generate a Python class outline"
+    )
+    maxref_parser.add_argument(
+        "--test", action="store_true", help="Generate pytest skeletons"
+    )
+    maxref_parser.add_argument(
+        "-o", "--output", help="Write generated code/tests to this file"
+    )
+    maxref_parser.add_argument(
+        "--yaml",
+        action="store_true",
+        help="Dump parsed maxref as YAML (requires PyYAML)",
+    )
+    maxref_parser.add_argument(
+        "--list", action="store_true", help="List all available maxref entries"
+    )
+    maxref_parser.add_argument(
+        "--info", action="store_true", help="List all entries with their digests"
+    )
     maxref_parser.set_defaults(func=cmd_maxref)
 
     # Database (db) command
@@ -912,18 +1009,36 @@ def build_parser() -> argparse.ArgumentParser:
     db_subparsers = db_parser.add_subparsers(dest="db_command")
 
     # db create
-    db_create = db_subparsers.add_parser("create", help="Create a new MaxRefDB database")
+    db_create = db_subparsers.add_parser(
+        "create", help="Create a new MaxRefDB database"
+    )
     db_create.add_argument("database", help="Database file path (e.g., maxref.db)")
-    db_create.add_argument("--category", choices=['max', 'msp', 'jit', 'm4l'], help="Populate with specific category")
-    db_create.add_argument("--empty", action="store_true", help="Create empty database without populating")
-    db_create.add_argument("--force", action="store_true", help="Overwrite existing database")
+    db_create.add_argument(
+        "--category",
+        choices=["max", "msp", "jit", "m4l"],
+        help="Populate with specific category",
+    )
+    db_create.add_argument(
+        "--empty", action="store_true", help="Create empty database without populating"
+    )
+    db_create.add_argument(
+        "--force", action="store_true", help="Overwrite existing database"
+    )
     db_create.set_defaults(func=cmd_db)
 
     # db populate
-    db_populate = db_subparsers.add_parser("populate", help="Populate existing database with objects")
+    db_populate = db_subparsers.add_parser(
+        "populate", help="Populate existing database with objects"
+    )
     db_populate.add_argument("database", help="Database file path")
-    db_populate.add_argument("--category", choices=['max', 'msp', 'jit', 'm4l'], help="Populate with specific category")
-    db_populate.add_argument("--objects", nargs="+", help="Specific object names to add")
+    db_populate.add_argument(
+        "--category",
+        choices=["max", "msp", "jit", "m4l"],
+        help="Populate with specific category",
+    )
+    db_populate.add_argument(
+        "--objects", nargs="+", help="Specific object names to add"
+    )
     db_populate.set_defaults(func=cmd_db)
 
     # db info
@@ -931,16 +1046,24 @@ def build_parser() -> argparse.ArgumentParser:
     db_info.add_argument("database", help="Database file path")
     db_info.add_argument("--summary", action="store_true", help="Show category summary")
     db_info.add_argument("--list", action="store_true", help="List all object names")
-    db_info.add_argument("--categories", action="store_true", help="List all categories")
+    db_info.add_argument(
+        "--categories", action="store_true", help="List all categories"
+    )
     db_info.set_defaults(func=cmd_db)
 
     # db search
-    db_search = db_subparsers.add_parser("search", help="Search for objects in database")
+    db_search = db_subparsers.add_parser(
+        "search", help="Search for objects in database"
+    )
     db_search.add_argument("database", help="Database file path")
     db_search.add_argument("query", nargs="?", help="Search query")
     db_search.add_argument("--category", help="Search within specific category")
-    db_search.add_argument("--fields", help="Comma-separated fields to search (name,digest,description)")
-    db_search.add_argument("-v", "--verbose", action="store_true", help="Show object digests")
+    db_search.add_argument(
+        "--fields", help="Comma-separated fields to search (name,digest,description)"
+    )
+    db_search.add_argument(
+        "-v", "--verbose", action="store_true", help="Show object digests"
+    )
     db_search.set_defaults(func=cmd_db)
 
     # db query
@@ -955,11 +1078,15 @@ def build_parser() -> argparse.ArgumentParser:
     db_export = db_subparsers.add_parser("export", help="Export database to JSON")
     db_export.add_argument("database", help="Database file path")
     db_export.add_argument("output", help="Output JSON file path")
-    db_export.add_argument("--force", action="store_true", help="Overwrite existing output file")
+    db_export.add_argument(
+        "--force", action="store_true", help="Overwrite existing output file"
+    )
     db_export.set_defaults(func=cmd_db)
 
     # db import
-    db_import = db_subparsers.add_parser("import", help="Import JSON data into database")
+    db_import = db_subparsers.add_parser(
+        "import", help="Import JSON data into database"
+    )
     db_import.add_argument("database", help="Database file path")
     db_import.add_argument("input", help="Input JSON file path")
     db_import.set_defaults(func=cmd_db)
@@ -969,17 +1096,25 @@ def build_parser() -> argparse.ArgumentParser:
     cache_subparsers = db_cache.add_subparsers(dest="cache_command")
 
     # db cache location
-    cache_location = cache_subparsers.add_parser("location", help="Show cache location and status")
+    cache_location = cache_subparsers.add_parser(
+        "location", help="Show cache location and status"
+    )
     cache_location.set_defaults(func=cmd_db)
 
     # db cache init
-    cache_init = cache_subparsers.add_parser("init", help="Initialize/reinitialize cache")
-    cache_init.add_argument("--force", action="store_true", help="Force reinitialize existing cache")
+    cache_init = cache_subparsers.add_parser(
+        "init", help="Initialize/reinitialize cache"
+    )
+    cache_init.add_argument(
+        "--force", action="store_true", help="Force reinitialize existing cache"
+    )
     cache_init.set_defaults(func=cmd_db)
 
     # db cache clear
     cache_clear = cache_subparsers.add_parser("clear", help="Clear cache database")
-    cache_clear.add_argument("--force", action="store_true", help="Skip confirmation prompt")
+    cache_clear.add_argument(
+        "--force", action="store_true", help="Skip confirmation prompt"
+    )
     cache_clear.set_defaults(func=cmd_db)
 
     return parser

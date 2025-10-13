@@ -23,43 +23,43 @@ import random
 
 def create_complex_patch():
     """Create a complex patch with many connections for auto-layout demo."""
-    Path('outputs').mkdir(exist_ok=True)
+    Path("outputs").mkdir(exist_ok=True)
 
-    p = Patcher('outputs/auto_layout_demo.maxpat', title='Auto-Layout Demo')
+    p = Patcher("outputs/auto_layout_demo.maxpat", title="Auto-Layout Demo")
 
     # Create a complex synthesizer
     # We'll randomize positions after creation
 
     # Control section
-    metro = p.add_textbox('metro 250')
-    toggle = p.add_message('1')
+    metro = p.add_textbox("metro 250")
+    toggle = p.add_message("1")
 
     # Oscillators
-    osc1 = p.add_textbox('cycle~ 440')
-    osc2 = p.add_textbox('saw~ 220')
-    osc3 = p.add_textbox('tri~ 330')
+    osc1 = p.add_textbox("cycle~ 440")
+    osc2 = p.add_textbox("saw~ 220")
+    osc3 = p.add_textbox("tri~ 330")
 
     # Mixer
-    mix = p.add_textbox('+~')
+    mix = p.add_textbox("+~")
 
     # Filter
-    filter_obj = p.add_textbox('lores~ 1000 0.5')
+    filter_obj = p.add_textbox("lores~ 1000 0.5")
 
     # Envelope
-    env = p.add_textbox('adsr~ 10 50 0.7 100')
+    env = p.add_textbox("adsr~ 10 50 0.7 100")
 
     # VCA
-    vca = p.add_textbox('*~')
+    vca = p.add_textbox("*~")
 
     # Effects
-    delay = p.add_textbox('delay~ 500')
-    reverb = p.add_textbox('freeverb~')
+    delay = p.add_textbox("delay~ 500")
+    reverb = p.add_textbox("freeverb~")
 
     # Master gain
-    master = p.add_textbox('gain~ 0.7')
+    master = p.add_textbox("gain~ 0.7")
 
     # Output
-    dac = p.add_textbox('ezdac~')
+    dac = p.add_textbox("ezdac~")
 
     # Randomize all positions to create a messy layout
     # This will look chaotic until auto-layout is applied
@@ -67,8 +67,8 @@ def create_complex_patch():
         box.patching_rect = [
             random.randint(50, 700),  # x
             random.randint(50, 500),  # y
-            box.patching_rect[2],      # width
-            box.patching_rect[3]       # height
+            box.patching_rect[2],  # width
+            box.patching_rect[3],  # height
         ]
 
     # Create connections (signal flow)
@@ -120,43 +120,45 @@ def create_complex_patch():
 
 def create_hierarchical_patch():
     """Create a patch with hierarchical structure for auto-layout."""
-    Path('outputs').mkdir(exist_ok=True)
+    Path("outputs").mkdir(exist_ok=True)
 
-    p = Patcher('outputs/auto_layout_hierarchical.maxpat', title='Hierarchical Layout Demo')
+    p = Patcher(
+        "outputs/auto_layout_hierarchical.maxpat", title="Hierarchical Layout Demo"
+    )
 
     # Create a hierarchical structure: source -> processors -> output
 
     # Sources
     sources = []
     for i in range(4):
-        src = p.add_textbox(f'cycle~ {440 + i * 110}')
+        src = p.add_textbox(f"cycle~ {440 + i * 110}")
         sources.append(src)
 
     # First level processors
     proc1 = []
     for i in range(4):
-        proc = p.add_textbox(f'*~ 0.{5 + i}')
+        proc = p.add_textbox(f"*~ 0.{5 + i}")
         proc1.append(proc)
 
     # Second level processors
     proc2 = []
     for i in range(2):
-        proc = p.add_textbox(f'+~')
+        proc = p.add_textbox(f"+~")
         proc2.append(proc)
 
     # Final mix
-    mix = p.add_textbox('+~')
+    mix = p.add_textbox("+~")
 
     # Output
-    dac = p.add_textbox('ezdac~')
+    dac = p.add_textbox("ezdac~")
 
     # Randomize all positions
     for box in p._boxes:
         box.patching_rect = [
             random.randint(50, 700),  # x
             random.randint(50, 500),  # y
-            box.patching_rect[2],      # width
-            box.patching_rect[3]       # height
+            box.patching_rect[2],  # width
+            box.patching_rect[3],  # height
         ]
 
     # Connect hierarchically
@@ -199,5 +201,5 @@ def main():
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

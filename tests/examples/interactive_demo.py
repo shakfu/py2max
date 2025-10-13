@@ -40,16 +40,16 @@ async def demo_interactive():
     print()
 
     # Create patcher with some initial objects
-    p = Patcher('outputs/interactive_demo.maxpat', layout='grid')
+    p = Patcher("outputs/interactive_demo.maxpat", layout="grid")
 
     # Add initial objects
     print("Creating initial patch...")
-    metro = p.add_textbox('metro 500')
-    random_obj = p.add_textbox('random 127')
-    mtof = p.add_textbox('mtof')
-    osc = p.add_textbox('cycle~')
-    gain = p.add_textbox('gain~ 0.5')
-    dac = p.add_textbox('ezdac~')
+    metro = p.add_textbox("metro 500")
+    random_obj = p.add_textbox("random 127")
+    mtof = p.add_textbox("mtof")
+    osc = p.add_textbox("cycle~")
+    gain = p.add_textbox("gain~ 0.5")
+    dac = p.add_textbox("ezdac~")
 
     # Create connections
     p.add_line(metro, random_obj)
@@ -115,10 +115,10 @@ async def demo_interactive_async_updates():
     print()
 
     # Create simple patcher
-    p = Patcher('async_demo.maxpat', layout='grid')
+    p = Patcher("async_demo.maxpat", layout="grid")
 
     # Add one initial object
-    metro = p.add_textbox('metro 1000')
+    metro = p.add_textbox("metro 1000")
     p.optimize_layout()
 
     print("Starting interactive server...")
@@ -136,19 +136,19 @@ async def demo_interactive_async_updates():
         # Add objects periodically from Python while browser is interactive
         for i in range(5):
             await asyncio.sleep(2)
-            print(f"Adding object {i+1} from Python...")
+            print(f"Adding object {i + 1} from Python...")
 
             # Add new object
             if i == 0:
-                box = p.add_textbox('random 127')
+                box = p.add_textbox("random 127")
             elif i == 1:
-                box = p.add_textbox('mtof')
+                box = p.add_textbox("mtof")
             elif i == 2:
-                box = p.add_textbox('cycle~')
+                box = p.add_textbox("cycle~")
             elif i == 3:
-                box = p.add_textbox('gain~ 0.5')
+                box = p.add_textbox("gain~ 0.5")
             else:
-                box = p.add_textbox('ezdac~')
+                box = p.add_textbox("ezdac~")
 
             # Notify browser of update
             await server.notify_update()
@@ -182,12 +182,12 @@ async def demo_context_manager():
     print("=" * 70)
     print()
 
-    p = Patcher('context_demo.maxpat', layout='flow')
+    p = Patcher("context_demo.maxpat", layout="flow")
 
     # Build a simple synth
-    osc = p.add_textbox('cycle~ 440')
-    gain = p.add_textbox('gain~ 0.5')
-    dac = p.add_textbox('ezdac~')
+    osc = p.add_textbox("cycle~ 440")
+    gain = p.add_textbox("gain~ 0.5")
+    dac = p.add_textbox("ezdac~")
     p.add_line(osc, gain)
     p.add_line(gain, dac)
     p.optimize_layout()
@@ -208,15 +208,15 @@ async def demo_context_manager():
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     try:
         if len(sys.argv) > 1:
             mode = sys.argv[1]
-            if mode == 'async':
+            if mode == "async":
                 asyncio.run(demo_interactive_async_updates())
-            elif mode == 'context':
+            elif mode == "context":
                 asyncio.run(demo_context_manager())
             else:
                 print(f"Unknown mode: {mode}")

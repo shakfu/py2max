@@ -5,6 +5,7 @@ py2max now includes SVG export functionality that enables offline visual validat
 ## Overview
 
 The SVG preview feature converts Max/MSP patch layouts to high-quality, scalable SVG graphics that can be:
+
 - Viewed in any web browser
 - Shared with collaborators
 - Embedded in documentation
@@ -102,6 +103,7 @@ print(svg_content)
 ### Layout Support
 
 SVG export works with all py2max layout managers:
+
 - Horizontal grid
 - Vertical grid
 - Unified grid with clustering
@@ -112,6 +114,7 @@ SVG export works with all py2max layout managers:
 ## Examples
 
 See `tests/examples/preview/svg_preview_demo.py` for comprehensive examples including:
+
 - Basic synth patches
 - Complex multi-voice systems
 - Layout comparisons
@@ -132,6 +135,7 @@ See `tests/examples/preview/svg_preview_demo.py` for comprehensive examples incl
 ### Port Detection
 
 Inlet/outlet information is automatically obtained from:
+
 1. Box `get_inlet_count()` and `get_outlet_count()` methods (when available)
 2. MaxRef metadata (for known Max objects)
 3. Fallback to private attributes
@@ -166,6 +170,7 @@ export_svg(p, 'docs/images/example.svg', title="Example Patch")
 ### Version Control
 
 SVG files are text-based and work well with git:
+
 - Easy to diff
 - Reviewable in PR interfaces
 - Viewable directly on GitHub/GitLab
@@ -182,6 +187,7 @@ SVG files are text-based and work well with git:
 ## Future Enhancements
 
 Potential improvements:
+
 - Interactive SVG with hover states
 - Subpatcher expansion/collapse
 - Export to other formats (PNG, PDF)

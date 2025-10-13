@@ -8,13 +8,14 @@ This document describes the integration of SVG.js and WebCola libraries into the
 
 **Description**: A lightweight library for manipulating and animating SVG elements.
 
-**Homepage**: https://svgjs.dev/
+**Homepage**: <https://svgjs.dev/>
 
 **Size**: 78KB (minified)
 
 **Location**: `py2max/static/svg.min.js`
 
 **Potential Uses**:
+
 - Simplified SVG manipulation API
 - Built-in animation support for smooth transitions
 - Easier creation and modification of SVG elements
@@ -22,9 +23,10 @@ This document describes the integration of SVG.js and WebCola libraries into the
 - Path manipulation and morphing
 - SVG filters and effects
 
-**Current Status**: ✅ **Active** - Fully integrated throughout the interactive editor.
+**Current Status**: [x] **Active** - Fully integrated throughout the interactive editor.
 
 **Implementation**:
+
 - SVG creation and initialization
 - All box rendering (rectangles, text, clipping)
 - All connection line rendering
@@ -36,13 +38,14 @@ This document describes the integration of SVG.js and WebCola libraries into the
 
 **Description**: A force-directed graph layout engine with constraint-based positioning.
 
-**Homepage**: https://ialab.it.monash.edu/webcola/
+**Homepage**: <https://ialab.it.monash.edu/webcola/>
 
 **Size**: 78KB (minified)
 
 **Location**: `py2max/static/cola.min.js`
 
 **Features**:
+
 - Force-directed graph layout
 - Constraint-based positioning
 - Automatic overlap avoidance
@@ -50,7 +53,7 @@ This document describes the integration of SVG.js and WebCola libraries into the
 - Handles disconnected components
 - Multiple layout algorithms
 
-**Current Implementation**: ✅ **Active**
+**Current Implementation**: [x] **Active**
 
 The auto-layout feature using WebCola is now implemented in the interactive editor.
 
@@ -59,11 +62,12 @@ The auto-layout feature using WebCola is now implemented in the interactive edit
 ### Usage
 
 1. **Load a patch** with the interactive editor:
+
    ```bash
    py2max serve your-patch.maxpat
    ```
 
-2. **Click the "🔄 Auto-Layout" button** in the toolbar
+2. **Click the " Auto-Layout" button** in the toolbar
 
 3. **Adjust parameters** using the interactive controls panel:
    - **Link Distance** (50-300): Desired distance between connected objects
@@ -121,18 +125,22 @@ const layout = cola.d3adaptor(d3)
 ### Interactive Parameter Tuning
 
 **Link Distance** (50-300) controls the natural length of connections:
+
 - Lower values (50-100): Compact layouts, tighter clustering
 - Higher values (150-300): Spread out layouts, more space between objects
 
 **Iterations** (10-200) controls layout quality and convergence:
+
 - Lower values (10-30): Faster but less optimal positioning
 - Higher values (100-200): Slower but better convergence to ideal positions
 
 **Canvas Size** (400-1600 × 300-1200) affects the available layout space:
+
 - Adjust to match your patch complexity
 - Larger canvas = more spread out objects
 
 **Avoid Overlaps** (checkbox) ensures boxes don't overlap:
+
 - Checked: Clean, readable layouts (recommended)
 - Unchecked: Faster computation, allows overlaps
 
@@ -179,6 +187,7 @@ WebCola's constraint system uses **alignment constraints** to enforce structure:
 ```
 
 The constraint generation algorithm:
+
 1. Analyzes current object positions
 2. Groups objects within proximity threshold (50px)
 3. Creates alignment constraints for each group
@@ -189,12 +198,14 @@ The constraint generation algorithm:
 Two demo scripts showcase the auto-layout feature:
 
 #### 1. Complex Synthesizer Demo
+
 ```bash
 python examples/auto_layout_demo.py
 py2max serve outputs/auto_layout_demo.maxpat
 ```
 
 Creates a complex synthesizer patch with:
+
 - 13 objects (oscillators, filters, effects)
 - 16 connections
 - Random initial positions (messy!)
@@ -202,11 +213,13 @@ Creates a complex synthesizer patch with:
 Click Auto-Layout to see WebCola organize it into a clean, readable layout.
 
 #### 2. Hierarchical Layout Demo
+
 ```bash
 py2max serve outputs/auto_layout_hierarchical.maxpat
 ```
 
 Creates a hierarchical signal processing chain:
+
 - 4 source oscillators
 - 2 layers of processors
 - Mixer and output
@@ -219,13 +232,14 @@ Demonstrates WebCola's ability to create hierarchical layouts that respect signa
 ### File Modifications
 
 **HTML** (`interactive.html`):
+
 ```html
 <!-- External libraries -->
 <script src="svg.min.js"></script>
 <script src="cola.min.js"></script>
 
 <!-- Auto-Layout button -->
-<button id="auto-layout-btn" title="Auto-arrange objects">🔄 Auto-Layout</button>
+<button id="auto-layout-btn" title="Auto-arrange objects"> Auto-Layout</button>
 ```
 
 **JavaScript** (`interactive.js`):
@@ -290,6 +304,7 @@ createLine(srcBox, dstBox, line) {
 ```
 
 Auto-layout with WebCola and SVG.js animations (lines 806-915):
+
 ```javascript
 autoLayout() {
     // 1. Prepare nodes and links for WebCola
@@ -329,14 +344,16 @@ autoLayout() {
 ### WebCola Auto-Layout
 
 **Pros**:
-- ✅ Instant organization of messy patches
-- ✅ Professional-looking layouts
-- ✅ Respects signal flow and connections
-- ✅ Avoids overlaps automatically
-- ✅ Handles complex graphs gracefully
-- ✅ Works with any patch size
+
+- [x] Instant organization of messy patches
+- [x] Professional-looking layouts
+- [x] Respects signal flow and connections
+- [x] Avoids overlaps automatically
+- [x] Handles complex graphs gracefully
+- [x] Works with any patch size
 
 **Use Cases**:
+
 - Organizing imported/generated patches
 - Cleaning up manually created patches
 - Initial layout for new patches
@@ -346,13 +363,15 @@ autoLayout() {
 ### SVG.js Integration
 
 **Current Benefits**:
-- ✅ Smoother animations (auto-layout transitions)
-- ✅ Cleaner code for SVG manipulation
-- ✅ Easier maintenance and readability
-- ✅ Better transform handling
-- ✅ Declarative API for all SVG elements
+
+- [x] Smoother animations (auto-layout transitions)
+- [x] Cleaner code for SVG manipulation
+- [x] Easier maintenance and readability
+- [x] Better transform handling
+- [x] Declarative API for all SVG elements
 
 **Implemented Features**:
+
 1. **SVG Initialization**: All SVG elements created via SVG.js
 2. **Box Rendering**: Rectangles, text, clipping paths
 3. **Connection Rendering**: Lines with hitboxes for interaction
@@ -360,6 +379,7 @@ autoLayout() {
 5. **Animations**: Smooth auto-layout transitions with easing
 
 **Future Enhancement Ideas**:
+
 1. **Animated dragging**: Smooth transitions when moving boxes manually
 2. **Connection animations**: Animated line drawing from outlet to inlet
 3. **Visual feedback**: Pulse effects, glow on hover
@@ -387,6 +407,7 @@ The layout algorithm runs in the browser, so it doesn't block the server or othe
 ### Automated Tests
 
 All existing tests still pass with the libraries included:
+
 ```bash
 make test
 # 326 passed, 14 skipped
@@ -418,6 +439,7 @@ py2max serve outputs/auto_layout_hierarchical.maxpat
 ```
 
 **Expected behavior:**
+
 - All SVG elements render cleanly with proper styling
 - Auto-layout produces smooth, animated transitions (500ms ease-in-out)
 - Objects automatically arrange to avoid overlaps
@@ -428,7 +450,8 @@ py2max serve outputs/auto_layout_hierarchical.maxpat
 - No console errors
 
 **Interactive Testing:**
-1. Click "🔄 Auto-Layout" to show controls panel
+
+1. Click " Auto-Layout" to show controls panel
 2. Adjust **Link Distance** slider - watch layout spread/compress
 3. Adjust **Iterations** slider - see convergence quality change
 4. Adjust **Canvas Size** sliders - control available space
@@ -442,6 +465,7 @@ py2max serve outputs/auto_layout_hierarchical.maxpat
 8. Click "Hide" to collapse the controls panel
 
 **Constraint Preset Comparison:**
+
 ```bash
 # Good test patch for constraints
 py2max serve outputs/auto_layout_demo.maxpat
@@ -456,18 +480,21 @@ py2max serve outputs/auto_layout_demo.maxpat
 ## Future Enhancements
 
 ### Short-term
+
 - [ ] Add layout presets (hierarchical, circular, tree)
 - [ ] Allow users to select layout algorithm
 - [ ] Add undo/redo for layout changes
 - [ ] Preserve aspect ratios during layout
 
 ### Medium-term
+
 - [ ] Use SVG.js for smooth drag animations
 - [ ] Animated connection drawing
 - [ ] Visual effects for feedback (selection, hover)
 - [ ] Export layouts as reusable templates
 
 ### Long-term
+
 - [ ] Custom constraint specification (user-defined)
 - [ ] Layout groups/clusters separately
 - [ ] Integration with Python-side layout managers
@@ -483,13 +510,15 @@ The py2max interactive editor now features complete integration of three powerfu
 
 ### What's Working Now
 
-**SVG.js Integration** (✅ Complete):
+**SVG.js Integration** ([x] Complete):
+
 - All SVG elements created via SVG.js declarative API
 - Cleaner, more maintainable rendering code
 - Smooth animations for auto-layout transitions
 - Better transform and styling handling
 
-**WebCola Auto-Layout** (✅ Active):
+**WebCola Auto-Layout** ([x] Active):
+
 - One-click automatic patch organization with interactive parameter controls
 - Force-directed layout respects connections
 - Real-time parameter adjustment via sliders:
@@ -505,6 +534,7 @@ The py2max interactive editor now features complete integration of three powerfu
 ### Impact
 
 These libraries transform the interactive editor from basic SVG manipulation to a polished, production-ready tool with:
+
 - Professional animated transitions (SVG.js)
 - Intelligent automatic layout (WebCola + D3)
 - Interactive parameter tuning via sliders

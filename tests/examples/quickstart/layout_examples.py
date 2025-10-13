@@ -15,12 +15,12 @@ from py2max import Patcher
 def grid_layout_example():
     """Grid layout with automatic clustering."""
     # Horizontal grid with automatic clustering
-    p = Patcher('grid-example.maxpat', layout="grid", flow_direction="horizontal")
+    p = Patcher("grid-example.maxpat", layout="grid", flow_direction="horizontal")
 
     # Add several objects
     objects = []
     for i in range(5):
-        obj = p.add_textbox(f'cycle~ {440 + i * 110}')
+        obj = p.add_textbox(f"cycle~ {440 + i * 110}")
         objects.append(obj)
 
     # Connect them in sequence
@@ -37,14 +37,14 @@ def grid_layout_example():
 def flow_layout_example():
     """Signal flow-based layout."""
     # Signal flow-based layout
-    p = Patcher('flow-example.maxpat', layout="flow", flow_direction="vertical")
+    p = Patcher("flow-example.maxpat", layout="flow", flow_direction="vertical")
 
     # Create a signal processing chain
-    input_obj = p.add_textbox('adc~')
-    eq = p.add_textbox('filtergraph~')
-    delay = p.add_textbox('delay~ 500')
-    reverb = p.add_textbox('freeverb~')
-    output = p.add_textbox('dac~')
+    input_obj = p.add_textbox("adc~")
+    eq = p.add_textbox("filtergraph~")
+    delay = p.add_textbox("delay~ 500")
+    reverb = p.add_textbox("freeverb~")
+    output = p.add_textbox("dac~")
 
     # Connect in signal flow order
     p.add_line(input_obj, eq)
@@ -61,18 +61,18 @@ def flow_layout_example():
 
 def object_help_example():
     """Getting object help."""
-    p = Patcher('help-example.maxpat')
+    p = Patcher("help-example.maxpat")
 
     # Add an object
-    umenu = p.add_textbox('umenu')
+    umenu = p.add_textbox("umenu")
 
     # Get formatted help (returns string, don't print in example)
     help_text = umenu.help()
 
     # Get detailed object information
     info = umenu.get_info()
-    methods_count = len(info.get('methods', [])) if info else 0
-    attributes_count = len(info.get('attributes', [])) if info else 0
+    methods_count = len(info.get("methods", [])) if info else 0
+    attributes_count = len(info.get("attributes", [])) if info else 0
     inlets = umenu.get_inlet_count()
     outlets = umenu.get_outlet_count()
 
@@ -86,10 +86,10 @@ def connection_validation_example():
     from py2max import InvalidConnectionError
 
     # Enable validation (default)
-    p = Patcher('validation-example.maxpat', validate_connections=True)
+    p = Patcher("validation-example.maxpat", validate_connections=True)
 
-    osc = p.add_textbox('cycle~ 440')
-    gain = p.add_textbox('gain~')
+    osc = p.add_textbox("cycle~ 440")
+    gain = p.add_textbox("gain~")
 
     # Valid connection
     p.add_line(osc, gain)
@@ -107,7 +107,7 @@ def connection_validation_example():
     return p, error_occurred
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run all examples
     print("Creating grid layout example...")
     grid_patch = grid_layout_example()
@@ -119,7 +119,9 @@ if __name__ == '__main__':
 
     print("\nTesting object help...")
     help_patch, help_text, methods, attrs, inlets, outlets = object_help_example()
-    print(f"umenu object: {methods} methods, {attrs} attributes, {inlets} inlets, {outlets} outlets")
+    print(
+        f"umenu object: {methods} methods, {attrs} attributes, {inlets} inlets, {outlets} outlets"
+    )
 
     print("\nTesting connection validation...")
     val_patch, error_occurred = connection_validation_example()

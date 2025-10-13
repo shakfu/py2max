@@ -10,6 +10,7 @@ Features:
     - Drag-and-drop object repositioning
     - Connection drawing
     - Object creation from browser
+    - Token-based authentication for WebSocket connections
 
 Example:
     >>> from py2max import Patcher
@@ -21,10 +22,11 @@ Example:
 from __future__ import annotations
 
 import asyncio
-import json
-import webbrowser
 import http.server
+import json
+import secrets
 import threading
+import webbrowser
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Set
 
@@ -41,7 +43,7 @@ if TYPE_CHECKING:
     from .core import Patcher
 
 
-def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
+def get_patcher_state_json(patcher: Optional["Patcher"]) -> dict:
     """Convert patcher to JSON state for browser.
 
     Args:
@@ -51,33 +53,43 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
         Dictionary with boxes and lines data
     """
     if not patcher:
-        return {'type': 'update', 'boxes': [], 'lines': [], 'patcher_path': [], 'patcher_title': 'Untitled'}
+        return {
+            "type": "update",
+            "boxes": [],
+            "lines": [],
+            "patcher_path": [],
+            "patcher_title": "Untitled",
+        }
 
     boxes = []
     for box in patcher._boxes:
         box_data = {
-            'id': getattr(box, 'id', ''),
-            'text': getattr(box, 'text', ''),
-            'maxclass': getattr(box, 'maxclass', 'newobj'),
-            'patching_rect': {
-                'x': 0, 'y': 0, 'w': 100, 'h': 22
-            }
+            "id": getattr(box, "id", ""),
+            "text": getattr(box, "text", ""),
+            "maxclass": getattr(box, "maxclass", "newobj"),
+            "patching_rect": {"x": 0, "y": 0, "w": 100, "h": 22},
         }
 
         # Check if box has a subpatcher
-        has_patcher = hasattr(box, 'subpatcher') and box.subpatcher is not None
-        box_data['has_subpatcher'] = has_patcher
+        has_patcher = hasattr(box, "subpatcher") and box.subpatcher is not None
+        box_data["has_subpatcher"] = has_patcher
 
         # Get patching_rect
-        rect = getattr(box, 'patching_rect', None)
+        rect = getattr(box, "patching_rect", None)
         if rect:
-            if hasattr(rect, 'x'):
-                box_data['patching_rect'] = {
-                    'x': rect.x, 'y': rect.y, 'w': rect.w, 'h': rect.h
+            if hasattr(rect, "x"):
+                box_data["patching_rect"] = {
+                    "x": rect.x,
+                    "y": rect.y,
+                    "w": rect.w,
+                    "h": rect.h,
                 }
             elif isinstance(rect, (list, tuple)) and len(rect) >= 4:
-                box_data['patching_rect'] = {
-                    'x': rect[0], 'y': rect[1], 'w': rect[2], 'h': rect[3]
+                box_data["patching_rect"] = {
+                    "x": rect[0],
+                    "y": rect[1],
+                    "w": rect[2],
+                    "h": rect[3],
                 }
 
         # Get inlet/outlet counts
@@ -85,49 +97,49 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
         outlet_count = 0
 
         # Try get_inlet_count() method first
-        if hasattr(box, 'get_inlet_count'):
+        if hasattr(box, "get_inlet_count"):
             try:
                 inlet_count = box.get_inlet_count()
             except Exception:
                 pass
 
         # If get_inlet_count() returned None, try numinlets attribute (from loaded files)
-        if inlet_count is None and hasattr(box, 'numinlets'):
-            inlet_count = getattr(box, 'numinlets', 0)
+        if inlet_count is None and hasattr(box, "numinlets"):
+            inlet_count = getattr(box, "numinlets", 0)
 
-        box_data['inlet_count'] = inlet_count or 0
+        box_data["inlet_count"] = inlet_count or 0
 
         # Try get_outlet_count() method first
-        if hasattr(box, 'get_outlet_count'):
+        if hasattr(box, "get_outlet_count"):
             try:
                 outlet_count = box.get_outlet_count()
             except Exception:
                 pass
 
         # If get_outlet_count() returned None, try numoutlets attribute (from loaded files)
-        if outlet_count is None and hasattr(box, 'numoutlets'):
-            outlet_count = getattr(box, 'numoutlets', 0)
+        if outlet_count is None and hasattr(box, "numoutlets"):
+            outlet_count = getattr(box, "numoutlets", 0)
 
-        box_data['outlet_count'] = outlet_count or 0
+        box_data["outlet_count"] = outlet_count or 0
 
         boxes.append(box_data)
 
     lines = []
     for line in patcher._lines:
         line_data = {
-            'src': getattr(line, 'src', ''),
-            'dst': getattr(line, 'dst', ''),
-            'src_outlet': 0,
-            'dst_inlet': 0
+            "src": getattr(line, "src", ""),
+            "dst": getattr(line, "dst", ""),
+            "src_outlet": 0,
+            "dst_inlet": 0,
         }
 
-        source = getattr(line, 'source', None)
+        source = getattr(line, "source", None)
         if source and len(source) > 1:
-            line_data['src_outlet'] = source[1]
+            line_data["src_outlet"] = source[1]
 
-        destination = getattr(line, 'destination', None)
+        destination = getattr(line, "destination", None)
         if destination and len(destination) > 1:
-            line_data['dst_inlet'] = destination[1]
+            line_data["dst_inlet"] = destination[1]
 
         lines.append(line_data)
 
@@ -135,46 +147,68 @@ def get_patcher_state_json(patcher: Optional['Patcher']) -> dict:
     patcher_path = []
     current = patcher
     while current:
-        title = getattr(current, 'title', None) or 'Main'
+        title = getattr(current, "title", None) or "Main"
         patcher_path.insert(0, title)
-        current = getattr(current, '_parent', None)
+        current = getattr(current, "_parent", None)
 
     # Get current patcher title
-    patcher_title = getattr(patcher, 'title', None) or getattr(patcher, '_path', 'Untitled')
-    if patcher_title and hasattr(patcher_title, 'name'):
+    patcher_title = getattr(patcher, "title", None) or getattr(
+        patcher, "_path", "Untitled"
+    )
+    if patcher_title and hasattr(patcher_title, "name"):
         patcher_title = patcher_title.name
 
     return {
-        'type': 'update',
-        'boxes': boxes,
-        'lines': lines,
-        'patcher_path': patcher_path,
-        'patcher_title': str(patcher_title)
+        "type": "update",
+        "boxes": boxes,
+        "lines": lines,
+        "patcher_path": patcher_path,
+        "patcher_title": str(patcher_title),
     }
 
 
 class InteractiveHTTPHandler(http.server.SimpleHTTPRequestHandler):
-    """HTTP handler for serving static files."""
+    """HTTP handler for serving static files with token injection."""
+
+    # Class variable to store the session token
+    session_token: Optional[str] = None
 
     def __init__(self, *args, **kwargs):
-        static_dir = Path(__file__).parent / 'static'
+        static_dir = Path(__file__).parent / "static"
         super().__init__(*args, directory=str(static_dir), **kwargs)
 
     def do_GET(self):
         """Handle GET requests."""
-        if self.path == '/' or self.path == '/index.html':
+        if self.path == "/" or self.path == "/index.html":
             self.serve_interactive_html()
         else:
             super().do_GET()
 
     def serve_interactive_html(self):
-        """Serve the interactive editor HTML."""
-        html_file = Path(__file__).parent / 'static' / 'interactive.html'
+        """Serve the interactive editor HTML with injected session token."""
+        html_file = Path(__file__).parent / "static" / "interactive.html"
         if html_file.exists():
+            html_content = html_file.read_text(encoding="utf-8")
+
+            # Inject session token into HTML
+            if self.session_token:
+                token_script = f'<script>window.PY2MAX_SESSION_TOKEN = "{self.session_token}";</script>'
+                # Inject before </head> or at the beginning of <body>
+                if "</head>" in html_content:
+                    html_content = html_content.replace(
+                        "</head>", f"{token_script}\n</head>"
+                    )
+                else:
+                    html_content = token_script + html_content
+
             self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            # Add security headers
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("X-XSS-Protection", "1; mode=block")
             self.end_headers()
-            self.wfile.write(html_file.read_bytes())
+            self.wfile.write(html_content.encode("utf-8"))
         else:
             self.send_error(404, "interactive.html not found")
 
@@ -184,15 +218,32 @@ class InteractiveHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
 
 class InteractiveWebSocketHandler:
-    """WebSocket handler for interactive patcher editing."""
+    """WebSocket handler for interactive patcher editing with authentication."""
 
-    def __init__(self, patcher: Optional['Patcher'], auto_save: bool = False):
+    def __init__(self, patcher: Optional["Patcher"], auto_save: bool = False):
         self.root_patcher = patcher  # Keep reference to root patcher
         self.patcher = patcher  # Current patcher being viewed
         self.clients: Set[ServerConnection] = set()
         self._lock = asyncio.Lock()
         self._save_task = None  # Track pending save task for debouncing
         self.auto_save = auto_save  # Auto-save configuration
+        # Generate a secure session token
+        self.session_token = secrets.token_urlsafe(32)
+        print(f"WebSocket session token: {self.session_token}")
+
+    def verify_token(self, token: str) -> bool:
+        """Verify authentication token using constant-time comparison.
+
+        Args:
+            token: The token to verify
+
+        Returns:
+            True if token is valid, False otherwise
+        """
+        if not token or not self.session_token:
+            return False
+        # Use constant-time comparison to prevent timing attacks
+        return secrets.compare_digest(token, self.session_token)
 
     async def register(self, websocket: ServerConnection):
         """Register a new client connection."""
@@ -216,14 +267,48 @@ class InteractiveWebSocketHandler:
             # Send to all clients concurrently
             await asyncio.gather(
                 *[client.send(message_str) for client in self.clients],
-                return_exceptions=True
+                return_exceptions=True,
             )
 
     async def handle_client(self, websocket: ServerConnection):
-        """Handle a client WebSocket connection."""
-        await self.register(websocket)
-
+        """Handle a client WebSocket connection with authentication."""
         try:
+            # First message must be authentication token
+            auth_message = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+            auth_str = (
+                auth_message.decode("utf-8")
+                if isinstance(auth_message, bytes)
+                else auth_message
+            )
+
+            try:
+                auth_data = json.loads(auth_str)
+                if auth_data.get("type") != "auth" or not self.verify_token(
+                    auth_data.get("token", "")
+                ):
+                    await websocket.send(
+                        json.dumps(
+                            {"type": "error", "message": "Authentication failed"}
+                        )
+                    )
+                    await websocket.close(1008, "Unauthorized")
+                    print("Client authentication failed")
+                    return
+            except (json.JSONDecodeError, KeyError):
+                await websocket.send(
+                    json.dumps(
+                        {"type": "error", "message": "Invalid authentication message"}
+                    )
+                )
+                await websocket.close(1008, "Invalid auth format")
+                print("Client sent invalid authentication message")
+                return
+
+            # Authentication successful
+            await self.register(websocket)
+            await websocket.send(json.dumps({"type": "auth_success"}))
+            print("Client authenticated successfully")
+
             # Send initial state
             if self.patcher:
                 state = get_patcher_state_json(self.patcher)
@@ -231,9 +316,14 @@ class InteractiveWebSocketHandler:
 
             # Listen for messages from client
             async for message in websocket:
-                msg_str = message.decode('utf-8') if isinstance(message, bytes) else message
+                msg_str = (
+                    message.decode("utf-8") if isinstance(message, bytes) else message
+                )
                 await self.handle_message(websocket, msg_str)
 
+        except asyncio.TimeoutError:
+            print("Client authentication timeout")
+            await websocket.close(1008, "Authentication timeout")
         except websockets.exceptions.ConnectionClosed:
             pass
         finally:
@@ -243,25 +333,25 @@ class InteractiveWebSocketHandler:
         """Handle incoming message from client."""
         try:
             data = json.loads(message)
-            message_type = data.get('type')
+            message_type = data.get("type")
 
-            if message_type == 'update_position':
+            if message_type == "update_position":
                 await self.handle_update_position(data)
-            elif message_type == 'create_object':
+            elif message_type == "create_object":
                 await self.handle_create_object(data)
-            elif message_type == 'create_connection':
+            elif message_type == "create_connection":
                 await self.handle_create_connection(data)
-            elif message_type == 'delete_object':
+            elif message_type == "delete_object":
                 await self.handle_delete_object(data)
-            elif message_type == 'delete_connection':
+            elif message_type == "delete_connection":
                 await self.handle_delete_connection(data)
-            elif message_type == 'save':
+            elif message_type == "save":
                 await self.handle_save()
-            elif message_type == 'navigate_to_subpatcher':
+            elif message_type == "navigate_to_subpatcher":
                 await self.handle_navigate_to_subpatcher(data)
-            elif message_type == 'navigate_to_parent':
+            elif message_type == "navigate_to_parent":
                 await self.handle_navigate_to_parent()
-            elif message_type == 'navigate_to_root':
+            elif message_type == "navigate_to_root":
                 await self.handle_navigate_to_root()
             else:
                 print(f"Unknown message type: {message_type}")
@@ -276,22 +366,26 @@ class InteractiveWebSocketHandler:
         if not self.patcher:
             return
 
-        box_id = data.get('box_id')
-        x = data.get('x')
-        y = data.get('y')
+        box_id = data.get("box_id")
+        x = data.get("x")
+        y = data.get("y")
 
         # Find box and update position
         for box in self.patcher._boxes:
             if box.id == box_id:
                 # Update position
-                if hasattr(box, 'patching_rect'):
+                if hasattr(box, "patching_rect"):
                     rect = box.patching_rect
-                    if hasattr(rect, 'x'):
+                    if hasattr(rect, "x"):
                         # Rect is a NamedTuple (immutable), create new one
                         from .common import Rect
-                        box.patching_rect = Rect(float(x) if x is not None else 0.0,
-                                                  float(y) if y is not None else 0.0,
-                                                  rect.w, rect.h)
+
+                        box.patching_rect = Rect(
+                            float(x) if x is not None else 0.0,
+                            float(y) if y is not None else 0.0,
+                            rect.w,
+                            rect.h,
+                        )
                     elif isinstance(rect, list):
                         rect[0] = x
                         rect[1] = y
@@ -320,7 +414,11 @@ class InteractiveWebSocketHandler:
         """Save patch after delay (debounced)."""
         try:
             await asyncio.sleep(2.0)  # Wait 2 seconds
-            if self.patcher and hasattr(self.patcher, 'filepath') and self.patcher.filepath:
+            if (
+                self.patcher
+                and hasattr(self.patcher, "filepath")
+                and self.patcher.filepath
+            ):
                 self.patcher.save()
                 print(f"Auto-saved: {self.patcher.filepath}")
         except asyncio.CancelledError:
@@ -334,19 +432,20 @@ class InteractiveWebSocketHandler:
         if not self.patcher:
             return
 
-        text = data.get('text', 'newobj')
-        x = data.get('x', 100)
-        y = data.get('y', 100)
+        text = data.get("text", "newobj")
+        x = data.get("x", 100)
+        y = data.get("y", 100)
 
         # Create new object
         box = self.patcher.add_textbox(text)
 
         # Set position
-        if hasattr(box, 'patching_rect'):
+        if hasattr(box, "patching_rect"):
             rect = box.patching_rect
-            if hasattr(rect, 'x'):
+            if hasattr(rect, "x"):
                 # Rect is a NamedTuple (immutable), create new one
                 from .common import Rect
+
                 box.patching_rect = Rect(x, y, rect.w, rect.h)
             elif isinstance(rect, list):
                 rect[0] = x
@@ -364,10 +463,10 @@ class InteractiveWebSocketHandler:
         if not self.patcher:
             return
 
-        src_id = data.get('src_id')
-        dst_id = data.get('dst_id')
-        src_outlet = data.get('src_outlet', 0)
-        dst_inlet = data.get('dst_inlet', 0)
+        src_id = data.get("src_id")
+        dst_id = data.get("dst_id")
+        src_outlet = data.get("src_outlet", 0)
+        dst_inlet = data.get("dst_inlet", 0)
 
         # Find source and destination boxes
         src_box = None
@@ -395,7 +494,7 @@ class InteractiveWebSocketHandler:
         if not self.patcher:
             return
 
-        box_id = data.get('box_id')
+        box_id = data.get("box_id")
 
         # Find and remove box
         for i, box in enumerate(self.patcher._boxes):
@@ -404,7 +503,8 @@ class InteractiveWebSocketHandler:
 
                 # Also remove any connected lines
                 self.patcher._lines = [
-                    line for line in self.patcher._lines
+                    line
+                    for line in self.patcher._lines
                     if line.src != box_id and line.dst != box_id
                 ]
 
@@ -421,15 +521,19 @@ class InteractiveWebSocketHandler:
         if not self.patcher:
             return
 
-        src_id = data.get('src_id')
-        dst_id = data.get('dst_id')
-        src_outlet = data.get('src_outlet', 0)
-        dst_inlet = data.get('dst_inlet', 0)
+        src_id = data.get("src_id")
+        dst_id = data.get("dst_id")
+        src_outlet = data.get("src_outlet", 0)
+        dst_inlet = data.get("dst_inlet", 0)
 
         # Find and remove matching line
         for i, line in enumerate(self.patcher._lines):
-            if (line.src == src_id and line.dst == dst_id and
-                line.source[1] == src_outlet and line.destination[1] == dst_inlet):  # type: ignore[attr-defined]
+            if (
+                line.src == src_id
+                and line.dst == dst_id
+                and line.source[1] == src_outlet
+                and line.destination[1] == dst_inlet
+            ):  # type: ignore[attr-defined]
                 self.patcher._lines.pop(i)
 
                 # Broadcast update to all clients
@@ -446,34 +550,32 @@ class InteractiveWebSocketHandler:
             return
 
         try:
-            if hasattr(self.root_patcher, 'filepath') and self.root_patcher.filepath:
+            if hasattr(self.root_patcher, "filepath") and self.root_patcher.filepath:
                 self.root_patcher.save()
                 print(f"Saved: {self.root_patcher.filepath}")
 
                 # Notify clients that save completed
-                await self.broadcast({
-                    'type': 'save_complete',
-                    'filepath': str(self.root_patcher.filepath)
-                })
+                await self.broadcast(
+                    {
+                        "type": "save_complete",
+                        "filepath": str(self.root_patcher.filepath),
+                    }
+                )
             else:
                 print("Warning: No filepath set, cannot save")
-                await self.broadcast({
-                    'type': 'save_error',
-                    'message': 'No filepath set'
-                })
+                await self.broadcast(
+                    {"type": "save_error", "message": "No filepath set"}
+                )
         except Exception as e:
             print(f"Error saving: {e}")
-            await self.broadcast({
-                'type': 'save_error',
-                'message': str(e)
-            })
+            await self.broadcast({"type": "save_error", "message": str(e)})
 
     async def handle_navigate_to_subpatcher(self, data: dict):
         """Handle navigation to a subpatcher."""
         if not self.patcher:
             return
 
-        box_id = data.get('box_id')
+        box_id = data.get("box_id")
         if not box_id:
             return
 
@@ -481,7 +583,7 @@ class InteractiveWebSocketHandler:
         for box in self.patcher._boxes:
             if box.id == box_id:
                 # Check if box has a subpatcher
-                if hasattr(box, 'subpatcher') and box.subpatcher is not None:
+                if hasattr(box, "subpatcher") and box.subpatcher is not None:
                     # Navigate to subpatcher
                     self.patcher = box.subpatcher
                     print(f"Navigated to subpatcher: {box.text}")
@@ -497,10 +599,10 @@ class InteractiveWebSocketHandler:
             return
 
         # Get parent patcher
-        parent = getattr(self.patcher, '_parent', None)
+        parent = getattr(self.patcher, "_parent", None)
         if parent:
             self.patcher = parent
-            print(f"Navigated to parent patcher")
+            print("Navigated to parent patcher")
 
             # Send updated state to all clients
             state = get_patcher_state_json(self.patcher)
@@ -514,7 +616,7 @@ class InteractiveWebSocketHandler:
             return
 
         self.patcher = self.root_patcher
-        print(f"Navigated to root patcher")
+        print("Navigated to root patcher")
 
         # Send updated state to all clients
         state = get_patcher_state_json(self.patcher)
@@ -537,7 +639,13 @@ class InteractivePatcherServer:
         # Server automatically stopped
     """
 
-    def __init__(self, patcher: 'Patcher', port: int = 8000, auto_open: bool = True, auto_save: bool = False):
+    def __init__(
+        self,
+        patcher: "Patcher",
+        port: int = 8000,
+        auto_open: bool = True,
+        auto_save: bool = False,
+    ):
         """Initialize the interactive server.
 
         Args:
@@ -566,22 +674,21 @@ class InteractivePatcherServer:
             print("Server already running")
             return self
 
+        # Set the session token in the HTTP handler class
+        InteractiveHTTPHandler.session_token = self.handler.session_token
+
         # Start HTTP server in background thread
         self.http_server = http.server.HTTPServer(
-            ('localhost', self.port),
-            InteractiveHTTPHandler
+            ("localhost", self.port), InteractiveHTTPHandler
         )
         self.http_thread = threading.Thread(
-            target=self.http_server.serve_forever,
-            daemon=True
+            target=self.http_server.serve_forever, daemon=True
         )
         self.http_thread.start()
 
         # Start WebSocket server
         self.ws_server = await serve(
-            self.handler.handle_client,
-            'localhost',
-            self.ws_port
+            self.handler.handle_client, "localhost", self.ws_port
         )
         self._running = True
 
@@ -637,10 +744,10 @@ class InteractivePatcherServer:
 
 
 async def serve_interactive(
-    patcher: 'Patcher',
+    patcher: "Patcher",
     port: int = 8000,
     auto_open: bool = True,
-    auto_save: bool = False
+    auto_save: bool = False,
 ) -> InteractivePatcherServer:
     """Start an interactive WebSocket server for a patcher.
 
@@ -671,7 +778,7 @@ async def serve_interactive(
 
 
 __all__ = [
-    'InteractiveWebSocketHandler',
-    'InteractivePatcherServer',
-    'serve_interactive',
+    "InteractiveWebSocketHandler",
+    "InteractivePatcherServer",
+    "serve_interactive",
 ]

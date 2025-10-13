@@ -36,15 +36,54 @@ class InteractiveEditor {
         const wsUrl = `${protocol}//${window.location.hostname}:${wsPort}/ws`;
 
         this.ws = new WebSocket(wsUrl);
+        this.authenticated = false;
 
         this.ws.onopen = () => {
-            this.updateStatus('Connected', 'connected');
-            console.log('WebSocket connection opened');
+            this.updateStatus('Authenticating...', 'disconnected');
+            console.log('WebSocket connection opened, sending authentication...');
+
+            // Send authentication token
+            const token = window.PY2MAX_SESSION_TOKEN || '';
+            if (!token) {
+                console.error('No session token found');
+                this.updateStatus('No Auth Token', 'disconnected');
+                this.ws.close();
+                return;
+            }
+
+            this.ws.send(JSON.stringify({
+                type: 'auth',
+                token: token
+            }));
         };
 
         this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            this.handleUpdate(data);
+            try {
+                const data = JSON.parse(event.data);
+
+                // Handle authentication response
+                if (data.type === 'auth_success') {
+                    this.authenticated = true;
+                    this.updateStatus('Connected', 'connected');
+                    console.log('Authentication successful');
+                    return;
+                }
+
+                if (data.type === 'error') {
+                    this.updateStatus(`Error: ${data.message}`, 'disconnected');
+                    console.error('Server error:', data.message);
+                    this.ws.close();
+                    return;
+                }
+
+                // Only process other messages if authenticated
+                if (this.authenticated) {
+                    this.handleUpdate(data);
+                }
+            } catch (e) {
+                console.error('Failed to parse WebSocket message:', e);
+                this.updateStatus('Parse Error', 'disconnected');
+            }
         };
 
         this.ws.onerror = (error) => {
@@ -52,7 +91,16 @@ class InteractiveEditor {
             console.error('WebSocket error:', error);
         };
 
-        this.ws.onclose = () => {
+        this.ws.onclose = (event) => {
+            this.authenticated = false;
+
+            if (event.code === 1008) {
+                // Authentication failure - don't reconnect
+                this.updateStatus('Authentication Failed', 'disconnected');
+                console.error('Authentication failed, not reconnecting');
+                return;
+            }
+
             this.updateStatus('Disconnected', 'disconnected');
             console.log('WebSocket connection closed');
 

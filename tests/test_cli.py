@@ -25,16 +25,18 @@ class DummyCache:
 
 def test_cli_new_creates_patch(tmp_path: Path):
     target = tmp_path / "demo.maxpat"
-    exit_code = run_cli([
-        "new",
-        str(target),
-        "--template",
-        "stereo",
-        "--layout",
-        "vertical",
-        "--title",
-        "Demo",
-    ])
+    exit_code = run_cli(
+        [
+            "new",
+            str(target),
+            "--template",
+            "stereo",
+            "--layout",
+            "vertical",
+            "--title",
+            "Demo",
+        ]
+    )
 
     assert exit_code == 0
     assert target.exists()
@@ -70,16 +72,18 @@ def test_cli_optimize_writes_output(tmp_path: Path):
     patcher.link(gain, dac, inlet=1)
     patcher.save()
 
-    exit_code = run_cli([
-        "optimize",
-        str(source),
-        "--layout",
-        "matrix",
-        "--flow-direction",
-        "horizontal",
-        "-o",
-        str(dest),
-    ])
+    exit_code = run_cli(
+        [
+            "optimize",
+            str(source),
+            "--layout",
+            "matrix",
+            "--flow-direction",
+            "horizontal",
+            "-o",
+            str(dest),
+        ]
+    )
 
     assert exit_code == 0
     assert dest.exists()
@@ -137,8 +141,8 @@ def test_cli_maxref_json(monkeypatch, capsys):
     out = capsys.readouterr().out
 
     assert exit_code == 0
-    assert "\"digest\": \"Adjust signal gain\"" in out
-    assert "\"float\"" in out
+    assert '"digest": "Adjust signal gain"' in out
+    assert '"float"' in out
 
 
 def test_cli_maxref_test_output(monkeypatch, tmp_path, capsys):
@@ -162,7 +166,7 @@ def test_cli_maxref_test_output(monkeypatch, tmp_path, capsys):
     assert target.exists()
     contents = target.read_text()
     assert "def test_ezdac_maxref():" in contents
-    assert "len(data.get(\"inlets\"" in contents
+    assert 'len(data.get("inlets"' in contents
     assert "Wrote test skeleton" in out
 
 
@@ -186,16 +190,18 @@ def test_cli_transform_chain(tmp_path: Path):
     patcher.save()
 
     dest = tmp_path / "pipeline_out.maxpat"
-    exit_code = run_cli([
-        "transform",
-        str(source),
-        "--output",
-        str(dest),
-        "--apply",
-        "set-font-size=24",
-        "--apply",
-        "add-comment=CLI",
-    ])
+    exit_code = run_cli(
+        [
+            "transform",
+            str(source),
+            "--output",
+            str(dest),
+            "--apply",
+            "set-font-size=24",
+            "--apply",
+            "add-comment=CLI",
+        ]
+    )
 
     assert exit_code == 0
     transformed = Patcher.from_file(dest)
@@ -217,19 +223,22 @@ def test_cli_db_create(tmp_path: Path):
     """Test creating a new MaxRefDB database"""
     db_path = tmp_path / "test.db"
 
-    exit_code = run_cli([
-        "db",
-        "create",
-        str(db_path),
-        "--category",
-        "msp",
-    ])
+    exit_code = run_cli(
+        [
+            "db",
+            "create",
+            str(db_path),
+            "--category",
+            "msp",
+        ]
+    )
 
     assert exit_code == 0
     assert db_path.exists()
 
     # Verify database was populated
     from py2max.db import MaxRefDB
+
     db = MaxRefDB(db_path, auto_populate=False)
     assert db.count > 0
 
@@ -238,17 +247,20 @@ def test_cli_db_create_empty(tmp_path: Path):
     """Test creating an empty MaxRefDB database"""
     db_path = tmp_path / "empty.db"
 
-    exit_code = run_cli([
-        "db",
-        "create",
-        str(db_path),
-        "--empty",
-    ])
+    exit_code = run_cli(
+        [
+            "db",
+            "create",
+            str(db_path),
+            "--empty",
+        ]
+    )
 
     assert exit_code == 0
     assert db_path.exists()
 
     from py2max.db import MaxRefDB
+
     db = MaxRefDB(db_path, auto_populate=False)
     assert db.count == 0
 
@@ -261,22 +273,25 @@ def test_cli_db_populate(tmp_path: Path):
     run_cli(["db", "create", str(db_path), "--empty"])
 
     # Populate with specific objects
-    exit_code = run_cli([
-        "db",
-        "populate",
-        str(db_path),
-        "--objects",
-        "cycle~",
-        "gain~",
-    ])
+    exit_code = run_cli(
+        [
+            "db",
+            "populate",
+            str(db_path),
+            "--objects",
+            "cycle~",
+            "gain~",
+        ]
+    )
 
     assert exit_code == 0
 
     from py2max.db import MaxRefDB
+
     db = MaxRefDB(db_path, auto_populate=False)
     assert db.count == 2
-    assert 'cycle~' in db
-    assert 'gain~' in db
+    assert "cycle~" in db
+    assert "gain~" in db
 
 
 def test_cli_db_info(tmp_path: Path, capsys):
@@ -285,15 +300,18 @@ def test_cli_db_info(tmp_path: Path, capsys):
 
     # Create database with specific objects
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path, auto_populate=False)
-    db.populate(['cycle~', 'gain~'])
 
-    exit_code = run_cli([
-        "db",
-        "info",
-        str(db_path),
-        "--summary",
-    ])
+    db = MaxRefDB(db_path, auto_populate=False)
+    db.populate(["cycle~", "gain~"])
+
+    exit_code = run_cli(
+        [
+            "db",
+            "info",
+            str(db_path),
+            "--summary",
+        ]
+    )
 
     captured = capsys.readouterr()
     assert exit_code == 0
@@ -307,15 +325,18 @@ def test_cli_db_search(tmp_path: Path, capsys):
 
     # Create database with specific objects
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path, auto_populate=False)
-    db.populate(['cycle~', 'gain~', 'dac~'])
 
-    exit_code = run_cli([
-        "db",
-        "search",
-        str(db_path),
-        "cycle",
-    ])
+    db = MaxRefDB(db_path, auto_populate=False)
+    db.populate(["cycle~", "gain~", "dac~"])
+
+    exit_code = run_cli(
+        [
+            "db",
+            "search",
+            str(db_path),
+            "cycle",
+        ]
+    )
 
     captured = capsys.readouterr()
     assert exit_code == 0
@@ -328,15 +349,18 @@ def test_cli_db_query(tmp_path: Path, capsys):
 
     # Create database with specific objects
     from py2max.db import MaxRefDB
-    db = MaxRefDB(db_path, auto_populate=False)
-    db.populate(['cycle~'])
 
-    exit_code = run_cli([
-        "db",
-        "query",
-        str(db_path),
-        "cycle~",
-    ])
+    db = MaxRefDB(db_path, auto_populate=False)
+    db.populate(["cycle~"])
+
+    exit_code = run_cli(
+        [
+            "db",
+            "query",
+            str(db_path),
+            "cycle~",
+        ]
+    )
 
     captured = capsys.readouterr()
     assert exit_code == 0
@@ -352,29 +376,34 @@ def test_cli_db_export_import(tmp_path: Path):
 
     # Create database
     from py2max.db import MaxRefDB
+
     db = MaxRefDB(db_path, auto_populate=False)
-    db.populate(['cycle~', 'gain~'])
+    db.populate(["cycle~", "gain~"])
 
     # Export to JSON
-    exit_code = run_cli([
-        "db",
-        "export",
-        str(db_path),
-        str(json_path),
-    ])
+    exit_code = run_cli(
+        [
+            "db",
+            "export",
+            str(db_path),
+            str(json_path),
+        ]
+    )
     assert exit_code == 0
     assert json_path.exists()
 
     # Create new database and import
     run_cli(["db", "create", str(db_path2), "--empty"])
-    exit_code = run_cli([
-        "db",
-        "import",
-        str(db_path2),
-        str(json_path),
-    ])
+    exit_code = run_cli(
+        [
+            "db",
+            "import",
+            str(db_path2),
+            str(json_path),
+        ]
+    )
 
     assert exit_code == 0
     db2 = MaxRefDB(db_path2, auto_populate=False)
     assert db2.count == 2
-    assert 'cycle~' in db2
+    assert "cycle~" in db2

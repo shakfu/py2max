@@ -13,23 +13,27 @@ Thank you for your interest in contributing to py2max! This document provides gu
 ### Development Setup
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/shakfu/py2max.git
    cd py2max
    ```
 
 2. **Install uv** (if not already installed):
+
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
 3. **Set up development environment**:
+
    ```bash
    uv sync
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 4. **Verify installation**:
+
    ```bash
    make test
    ```
@@ -45,6 +49,7 @@ Thank you for your interest in contributing to py2max! This document provides gu
 ### Making Changes
 
 1. **Create a feature branch**:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -52,17 +57,20 @@ Thank you for your interest in contributing to py2max! This document provides gu
 2. **Make your changes** following our coding standards (see below)
 
 3. **Run quality checks**:
+
    ```bash
    make quality  # Runs linting and type checking
    ```
 
 4. **Run tests**:
+
    ```bash
    make test  # Run all tests
    make coverage  # Generate coverage report
    ```
 
 5. **Commit your changes**:
+
    ```bash
    git add .
    git commit -m "Add concise commit message"
@@ -167,6 +175,7 @@ Before submitting a pull request, ensure:
 ### Submitting
 
 1. **Push your branch**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -187,7 +196,7 @@ Before submitting a pull request, ensure:
 
 ### Format
 
-```
+```text
 <type>: <subject>
 
 <body>
@@ -207,7 +216,7 @@ Before submitting a pull request, ensure:
 
 ### Examples
 
-```
+```text
 feat: add find_by_text method for searching boxes
 
 Adds case-insensitive text search across all boxes in a patcher.
@@ -216,7 +225,7 @@ Includes comprehensive test coverage.
 Closes #123
 ```
 
-```
+```text
 fix: resolve type error in db.py
 
 Fixed incompatible types in db_path assignment by adding Union type.
@@ -224,7 +233,7 @@ Fixed incompatible types in db_path assignment by adding Union type.
 
 ## Project Structure
 
-```
+```text
 py2max/
 ├── py2max/                # Main package
 │   ├── core.py           # Core classes (Patcher, Box, Patchline)
@@ -290,6 +299,7 @@ By contributing to py2max, you agree that your contributions will be licensed un
 ## Recognition
 
 Contributors will be recognized in:
+
 - CHANGELOG.md (for significant contributions)
 - GitHub contributors page
 - Project documentation (for major features)
@@ -297,8 +307,9 @@ Contributors will be recognized in:
 ## Questions?
 
 If you have questions about contributing, please:
+
 1. Check existing issues and documentation
 2. Open a GitHub Discussion
 3. Reach out to maintainers
 
-Thank you for contributing to py2max! 🎵
+Thank you for contributing to py2max!

@@ -4,9 +4,10 @@
 
 Implemented full deletion capabilities for both **objects** and **connections** in the interactive editor, matching Max/MSP's workflow: click to select, then press Delete or Backspace.
 
-## Features Implemented ✅
+## Features Implemented [x]
 
 ### 1. Connection (Patchline) Deletion
+
 - **Click a connection line** to select it
 - Selected line highlights in **orange** with thicker stroke
 - Info bar shows: "Selected connection: cycle~[0] → gain~[0] (Press Delete/Backspace to remove)"
@@ -14,18 +15,21 @@ Implemented full deletion capabilities for both **objects** and **connections** 
 - Connection disappears immediately and syncs to Python
 
 ### 2. Object (Box) Deletion
+
 - **Click an object** to select it (while not dragging)
 - Selected object highlights with **orange border**
 - Press **Delete** or **Backspace** to remove
 - Object disappears immediately and syncs to Python
 
 ### 3. Selection Management
+
 - **Click empty canvas** - deselects everything
 - **Click different object/line** - switches selection
 - **Escape/Cancel** - click canvas to deselect
 - Only one item can be selected at a time (object OR connection)
 
 ### 4. Visual Feedback
+
 - **Selected connection**: Orange stroke (#ff8040), width 3px
 - **Selected object**: Orange border (#ff8040), width 2px
 - **Hover feedback**: Cursor changes to pointer over clickable items
@@ -36,12 +40,14 @@ Implemented full deletion capabilities for both **objects** and **connections** 
 ### JavaScript Changes (`py2max/static/interactive.js`)
 
 **Added State Tracking**:
+
 ```javascript
 this.selectedBox = null;     // Track selected object
 this.selectedLine = null;    // Track selected connection
 ```
 
 **Clickable Patchlines**:
+
 ```javascript
 createLine(srcBox, dstBox, line) {
     // Visible line
@@ -62,6 +68,7 @@ createLine(srcBox, dstBox, line) {
 ```
 
 **Keyboard Handler**:
+
 ```javascript
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -72,6 +79,7 @@ document.addEventListener('keydown', (e) => {
 ```
 
 **Delete Logic**:
+
 ```javascript
 handleDelete() {
     if (this.selectedLine) {
@@ -96,6 +104,7 @@ handleDelete() {
 ```
 
 **Visual Highlighting**:
+
 ```javascript
 render() {
     // Highlight selected connection
@@ -115,6 +124,7 @@ render() {
 ### HTML Changes (`py2max/static/interactive.html`)
 
 **Updated Help Text**:
+
 ```html
 <span class="help-text">
     Click to select | Delete/Backspace to remove | Double-click to create
@@ -127,14 +137,16 @@ No changes needed - the WebSocket handlers for `delete_connection` and `delete_o
 
 ## User Workflow
 
-### Deleting a Connection:
+### Deleting a Connection
+
 1. **Click on a patchline** (connection between objects)
 2. Line turns orange and info bar shows selection
 3. Press **Delete** or **Backspace**
 4. Connection disappears
 5. Python patch updated automatically
 
-### Deleting an Object:
+### Deleting an Object
+
 1. **Click on an object box** (not while dragging)
 2. Box gets orange border
 3. Press **Delete** or **Backspace**
@@ -142,7 +154,8 @@ No changes needed - the WebSocket handlers for `delete_connection` and `delete_o
 5. Python patch updated automatically
 6. **Note**: Any connections to/from the object are also removed
 
-### Canceling Selection:
+### Canceling Selection
+
 - Click on **empty canvas** to deselect
 - Or click a **different item** to select it instead
 
@@ -162,36 +175,42 @@ No changes needed - the WebSocket handlers for `delete_connection` and `delete_o
 
 ## Visual Design
 
-### Selected Connection:
+### Selected Connection
+
 - **Color**: Orange (#ff8040)
 - **Width**: 3px (thicker than normal 2px)
 - **Cursor**: Pointer on hover
 - **Hitbox**: 10px wide invisible stroke for easy clicking
 
-### Selected Object:
+### Selected Object
+
 - **Border**: Orange (#ff8040)
 - **Width**: 2px border
 - **Cursor**: Move (for dragging)
 
-### Info Bar Messages:
+### Info Bar Messages
+
 - **Connection selected**: "Selected connection: cycle~[0] → gain~[0] (Press Delete/Backspace to remove)"
 - **Deleted**: "Connection deleted" or "Deleted: cycle~"
 - **Nothing selected**: "Nothing selected to delete"
 
 ## Testing
 
-### All Tests Pass ✅
+### All Tests Pass [x]
+
 ```bash
 uv run pytest tests/
 # 312 passed, 14 skipped
 ```
 
-### Manual Testing:
+### Manual Testing
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 ```
 
 **Test deletion:**
+
 1. Click any connection line → Press Delete
 2. Click any object → Press Delete
 3. Click canvas → Selection clears
@@ -216,26 +235,27 @@ uv run python tests/examples/interactive_demo.py
 
 | Feature | Max/MSP | py2max Interactive Editor |
 |---------|---------|---------------------------|
-| Select connection | Click line | ✅ Click line |
-| Delete connection | Press Delete/Backspace | ✅ Press Delete/Backspace |
-| Select object | Click object | ✅ Click object |
-| Delete object | Press Delete/Backspace | ✅ Press Delete/Backspace |
-| Visual feedback | Highlight selection | ✅ Orange highlight |
-| Deselect | Click empty space | ✅ Click canvas |
+| Select connection | Click line | [x] Click line |
+| Delete connection | Press Delete/Backspace | [x] Press Delete/Backspace |
+| Select object | Click object | [x] Click object |
+| Delete object | Press Delete/Backspace | [x] Press Delete/Backspace |
+| Visual feedback | Highlight selection | [x] Orange highlight |
+| Deselect | Click empty space | [x] Click canvas |
 
 ## Summary
 
 The deletion feature provides a **complete Max-like editing experience**:
 
-- ✅ Click to select (objects or connections)
-- ✅ Delete/Backspace to remove
-- ✅ Visual highlighting (orange)
-- ✅ Info bar feedback
-- ✅ Wide hitbox for easy line clicking
-- ✅ Immediate sync to Python
-- ✅ All tests passing
+- [x] Click to select (objects or connections)
+- [x] Delete/Backspace to remove
+- [x] Visual highlighting (orange)
+- [x] Info bar feedback
+- [x] Wide hitbox for easy line clicking
+- [x] Immediate sync to Python
+- [x] All tests passing
 
 Users can now fully edit patches in the browser:
+
 1. **Create** - Double-click canvas or drag from palette
 2. **Connect** - Click outlet → inlet (or inlet → outlet)
 3. **Move** - Drag objects

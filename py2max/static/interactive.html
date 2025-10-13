@@ -4,7 +4,12 @@
     <title>py2max Interactive Editor</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* wss://localhost:*; img-src 'self' data:;">
     <style>
+        :root {
+            --header-height: 120px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -26,6 +31,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-height: var(--header-height);
         }
 
         h1 {
@@ -102,9 +108,14 @@
         #canvas {
             padding: 20px;
             overflow: auto;
-            height: calc(100vh - 100px);
+            height: calc(100vh - var(--header-height));
             background: #252525;
             cursor: crosshair;
+        }
+
+        /* Adjust canvas height when horizontal panel is visible (non-sidebar mode) */
+        body:not(.sidebar-mode) #layout-controls.visible ~ #canvas {
+            height: calc(100vh - var(--header-height) - 100px); /* header + panel */
         }
 
         svg {
@@ -238,7 +249,7 @@
         /* Sidebar mode styles */
         body.sidebar-mode #layout-controls {
             position: fixed;
-            top: 72px;
+            top: var(--header-height);
             right: -280px;
             bottom: 0;
             width: 280px;
@@ -250,6 +261,8 @@
             box-shadow: -2px 0 8px rgba(0,0,0,0.3);
             z-index: 100;
             transition: right 0.3s ease;
+            padding: 12px 20px;
+            gap: 20px;
         }
 
         body.sidebar-mode #layout-controls.visible {
@@ -257,7 +270,7 @@
         }
 
         body.sidebar-mode #canvas {
-            padding-right: 0;
+            padding-right: 20px;
             transition: padding-right 0.3s ease;
         }
 
@@ -278,11 +291,11 @@
         body.sidebar-mode::after {
             content: '';
             position: fixed;
-            top: 72px;
+            top: var(--header-height);
             right: 0;
             bottom: 0;
-            width: 3px;
-            background: linear-gradient(to bottom, #4080ff, #5090ff);
+            width: 1px;
+            background: rgba(64, 128, 255, 0.3);
             z-index: 99;
             transition: opacity 0.3s ease;
         }

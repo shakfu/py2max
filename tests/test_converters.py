@@ -97,7 +97,9 @@ def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     # MaxRefCache was removed, patch maxref module directly
     # Patch maxref module functions used by MaxRefDB
     monkeypatch.setattr(maxref, "get_object_info", dummy.get_object_data)
-    monkeypatch.setattr(maxref, "get_available_objects", lambda: list(dummy._data.keys()))
+    monkeypatch.setattr(
+        maxref, "get_available_objects", lambda: list(dummy._data.keys())
+    )
     # Also patch in db module which imports them
     monkeypatch.setattr(db, "get_object_info", dummy.get_object_data)
     monkeypatch.setattr(db, "get_available_objects", lambda: list(dummy._data.keys()))
@@ -110,14 +112,14 @@ def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     # Use MaxRefDB to query the database
     database = MaxRefDB(db_path)
     assert database.count == len(dummy._data)
-    assert 'cycle~' in database
-    assert 'ezdac~' in database
+    assert "cycle~" in database
+    assert "ezdac~" in database
 
     # Verify data integrity
-    cycle = database['cycle~']
-    assert cycle['digest'] == "Sinusoidal oscillator"
+    cycle = database["cycle~"]
+    assert cycle["digest"] == "Sinusoidal oscillator"
     # Category comes from the actual XML data, not our test data
-    assert 'cycle' in cycle['name'].lower()
+    assert "cycle" in cycle["name"].lower()
 
 
 def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
@@ -147,14 +149,14 @@ def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     # Use MaxRefDB to query the database
     db = MaxRefDB(db_path)
     assert db.count == 2
-    assert 'cycle~' in db
-    assert 'ezdac~' in db
+    assert "cycle~" in db
+    assert "ezdac~" in db
 
     # Verify objects have expected data
-    cycle = db['cycle~']
-    assert cycle['digest'] == "Sinusoidal oscillator"
-    ezdac = db['ezdac~']
-    assert ezdac['digest'] == "Audio output and on/off button"
+    cycle = db["cycle~"]
+    assert cycle["digest"] == "Sinusoidal oscillator"
+    ezdac = db["ezdac~"]
+    assert ezdac["digest"] == "Audio output and on/off button"
 
 
 def test_maxpat_to_python_with_subpatcher(tmp_path: Path):

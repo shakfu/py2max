@@ -43,7 +43,7 @@ class TestMaxRefParsing:
 
     def test_clean_text(self, cache):
         """Test text cleaning for XML parsing."""
-        text = '<m>int</m> and <i>float</i> with <g>symbol</g> &quot;quoted&quot;'
+        text = "<m>int</m> and <i>float</i> with <g>symbol</g> &quot;quoted&quot;"
         result = cache._clean_text(text)
         expected = "`int` and `float` with `symbol` `quoted`"
         assert result == expected
@@ -92,9 +92,14 @@ class TestMaxRefParsing:
         assert len(outlets) == 3
         assert outlets[0]["id"] == "0"
         # The digest is actually empty in the XML, it uses the text content
-        assert outlets[0]["digest"] == "" or outlets[0]["digest"] == "Item Number Chosen"
+        assert (
+            outlets[0]["digest"] == "" or outlets[0]["digest"] == "Item Number Chosen"
+        )
         assert outlets[1]["id"] == "1"
-        assert outlets[1]["digest"] == "" or outlets[1]["digest"] == "Menu Item Text Evaluated as a Message"
+        assert (
+            outlets[1]["digest"] == ""
+            or outlets[1]["digest"] == "Menu Item Text Evaluated as a Message"
+        )
         assert outlets[2]["id"] == "2"
         assert outlets[2]["digest"] == "" or outlets[2]["digest"] == "Dumpout"
 
@@ -141,7 +146,9 @@ class TestMaxRefParsing:
         # Test bang method (no arguments)
         bang_method = methods["bang"]
         assert bang_method["digest"] == "Output current selection"
-        assert "Sends out the currently displayed menu item" in bang_method["description"]
+        assert (
+            "Sends out the currently displayed menu item" in bang_method["description"]
+        )
         # The parser always creates an args list, even if empty
         assert "args" in bang_method
         assert bang_method["args"] == []
@@ -277,11 +284,11 @@ class TestBoxHelpMethod:
         """Test Box.help() method with umenu object."""
         # Create a Box with umenu maxclass
         box = Box(maxclass="umenu")
-        
+
         # Test that help method returns a string
         help_text = box.help_text()
         assert isinstance(help_text, str)
-        
+
         # If umenu is available in MAXCLASS_DEFAULTS, test specific content
         if "umenu" in MAXCLASS_DEFAULTS:
             assert "UMENU" in help_text
@@ -309,7 +316,7 @@ class TestBoxHelpMethod:
         """Test Box.get_info() method."""
         box = Box(maxclass="umenu")
         info = box.get_info()
-        
+
         if info is not None:
             assert isinstance(info, dict)
             assert "name" in info
@@ -322,10 +329,10 @@ class TestBoxHelpMethod:
         """Test Box.help() method when used in a Patcher."""
         patcher = Patcher()
         box = patcher.add_textbox("umenu")
-        
+
         help_text = box.help_text()
         assert isinstance(help_text, str)
-        
+
         # Test that the help method works on objects created by patcher
         # The add_textbox method creates a generic "newobj" by default
         assert "No help available for 'newobj'" in help_text
@@ -350,13 +357,13 @@ class TestMaxRefCache:
     def test_get_object_data_caching(self):
         """Test that get_object_data caches results."""
         cache = MaxRefCache()
-        
+
         # First call should populate cache
         result1 = cache.get_object_data("umenu")
-        
+
         # Second call should use cache
         result2 = cache.get_object_data("umenu")
-        
+
         # Results should be identical
         assert result1 is result2
 
@@ -372,7 +379,7 @@ class TestMaxRefCache:
         empty_xml = "<c74object></c74object>"
         root = ElementTree.fromstring(empty_xml)
         data = cache._parse_maxref(root)
-        
+
         # Should return empty structure
         assert data["methods"] == {}
         assert data["attributes"] == {}
@@ -388,7 +395,7 @@ class TestErrorHandling:
     def test_parse_invalid_xml(self):
         """Test handling of invalid XML."""
         cache = MaxRefCache()
-        
+
         # This should not raise an exception, but return None
         result = cache.get_object_data("invalid_xml_object")
         assert result is None
@@ -396,7 +403,7 @@ class TestErrorHandling:
     def test_missing_file(self):
         """Test handling of missing .maxref.xml file."""
         cache = MaxRefCache()
-        
+
         # Mock a missing file scenario
         cache._refdict = {"missing": Path("/nonexistent/path/missing.maxref.xml")}
         result = cache.get_object_data("missing")
@@ -405,10 +412,10 @@ class TestErrorHandling:
     def test_corrupted_xml_content(self):
         """Test handling of corrupted XML content."""
         cache = MaxRefCache()
-        
+
         # Mock corrupted content
         cache._refdict = {"corrupted": Path("/tmp/corrupted.maxref.xml")}
-        
+
         # This should not raise an exception, but return None
         result = cache.get_object_data("corrupted")
         assert result is None
@@ -422,11 +429,11 @@ class TestIntegration:
         # Create a patcher and add a umenu
         patcher = Patcher()
         box = patcher.add_textbox("umenu")
-        
+
         # Test that we can get help
         help_text = box.help_text()
         assert isinstance(help_text, str)
-        
+
         # Test that we can get info
         info = box.get_info()
         if info is not None:
@@ -436,12 +443,12 @@ class TestIntegration:
     def test_multiple_objects_help(self):
         """Test help method on multiple different objects."""
         patcher = Patcher()
-        
+
         # Add various objects
         umenu = patcher.add_textbox("umenu")
         message = patcher.add_textbox("message")
         comment = patcher.add_textbox("comment")
-        
+
         # Test help on all objects
         for obj in [umenu, message, comment]:
             help_text = obj.help_text()
@@ -453,10 +460,10 @@ class TestIntegration:
         patcher = Patcher()
         box = patcher.add_textbox("umenu")
         help_text = box.help_text()
-        
+
         # If help is available, it should have consistent format
         if "No help available" not in help_text:
-            lines = help_text.split('\n')
+            lines = help_text.split("\n")
             assert len(lines) > 0
             # First line should be object name in caps
             assert lines[0].startswith("===")

@@ -8,7 +8,22 @@ Main Classes:
     Patcher: Core class for creating and managing Max patches
     Box: Represents individual Max objects (oscillators, effects, etc.)
     Patchline: Represents connections between objects
+    MaxRefDB: SQLite database for Max object reference data
+
+Exceptions:
+    Py2MaxError: Base exception for all py2max errors
     InvalidConnectionError: Exception raised for invalid connections
+    InvalidObjectError: Exception raised for invalid object configuration
+    InvalidPatchError: Exception raised for invalid patcher state
+    PatcherIOError: Exception raised for file I/O errors
+    MaxRefError: Exception raised for MaxRef XML parsing errors
+    LayoutError: Exception raised for layout manager errors
+    DatabaseError: Exception raised for database errors
+
+Logging:
+    get_logger: Get a configured logger for a module
+    log_exception: Log an exception with full traceback
+    log_operation: Context manager for logging operations
 
 Example:
     >>> from py2max import Patcher
@@ -21,16 +36,41 @@ Example:
     >>> p.save()
 """
 
-from .core import Patcher, Box, Patchline, InvalidConnectionError
+from .core import Box, Patcher, Patchline
 from .db import MaxRefDB
+from .exceptions import (
+    DatabaseError,
+    InvalidConnectionError,
+    InvalidObjectError,
+    InvalidPatchError,
+    LayoutError,
+    MaxRefError,
+    PatcherIOError,
+    Py2MaxError,
+)
+from .log import get_logger, log_exception, log_operation
 from .svg import export_svg, export_svg_string
 
 __all__ = [
+    # Core classes
     "Patcher",
     "Box",
     "Patchline",
-    "InvalidConnectionError",
     "MaxRefDB",
+    # SVG export
     "export_svg",
     "export_svg_string",
+    # Exceptions
+    "Py2MaxError",
+    "InvalidConnectionError",
+    "InvalidObjectError",
+    "InvalidPatchError",
+    "PatcherIOError",
+    "MaxRefError",
+    "LayoutError",
+    "DatabaseError",
+    # Logging utilities
+    "get_logger",
+    "log_exception",
+    "log_operation",
 ]

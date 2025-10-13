@@ -4,9 +4,14 @@ import platform
 from pathlib import Path
 from textwrap import fill
 from xml.etree import ElementTree
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from .common import Rect
+from .exceptions import MaxRefError
+from .log import get_logger, log_exception, log_warning_once
+
+# Module logger
+logger = get_logger(__name__)
 
 
 def replace_tags(text: str, sub: str, *tags: str) -> str:
@@ -39,13 +44,20 @@ class MaxRefCache:
         return self._category_map
 
     def _get_refpages(self) -> Optional[Path]:
-        """Find Max refpages directory"""
+        """Find Max refpages directory with logging"""
         if platform.system() == "Darwin":
+            logger.debug("Searching for Max installation on macOS")
             for p in Path("/Applications").glob("**/Max.app"):
                 if "Ableton" not in str(p):
                     refpages_path = p / "Contents/Resources/C74/docs/refpages"
                     if refpages_path.exists():
+                        logger.debug(f"Found Max refpages at: {refpages_path}")
                         return refpages_path
+            logger.warning("Max installation not found in /Applications")
+        else:
+            logger.debug(
+                f"Max refpages lookup not implemented for platform: {platform.system()}"
+            )
         return None
 
     def _get_refdict(self) -> tuple[Dict[str, Path], Dict[str, str]]:
@@ -72,24 +84,47 @@ class MaxRefCache:
         )
 
     def get_object_data(self, name: str) -> Optional[Dict[str, Any]]:
-        """Get parsed data for Max object by name"""
+        """Get parsed data for Max object by name with improved error handling"""
+        # Check cache first
         if name in self._cache:
+            logger.debug(f"Retrieved {name} from cache")
             return self._cache[name]
 
+        # Check if object exists in refdict
         if name not in self.refdict:
+            logger.debug(f"Object '{name}' not found in MaxRef database")
             return None
 
         try:
             # Parse the .maxref.xml file
             filename = self.refdict[name]
+            logger.debug(f"Parsing MaxRef XML for '{name}' from {filename}")
+
             cleaned = self._clean_text(filename.read_text())
             root = ElementTree.fromstring(cleaned)
 
             data = self._parse_maxref(root)
             self._cache[name] = data
+            logger.debug(f"Successfully parsed and cached data for '{name}'")
             return data
-        except Exception:
-            # If parsing fails, return None
+
+        except ElementTree.ParseError as e:
+            # XML parsing error - log for debugging (only once per object)
+            log_warning_once(
+                logger, f"xml_parse_{name}", f"Failed to parse XML for '{name}': {e}"
+            )
+            return None
+
+        except IOError as e:
+            # File I/O error - log with details
+            log_exception(logger, e, f"Failed to read MaxRef file for '{name}'")
+            return None
+
+        except Exception as e:
+            # Other unexpected errors - log for debugging
+            log_exception(
+                logger, e, f"Unexpected error loading maxref data for '{name}'"
+            )
             return None
 
     def _parse_maxref(self, root: ElementTree.Element) -> Dict[str, Any]:
@@ -432,30 +467,29 @@ def get_objects_by_category(category: str) -> List[str]:
     Returns:
         Sorted list of object names in that category
     """
-    return sorted([
-        name for name, cat in _maxref_cache.category_map.items()
-        if cat == category
-    ])
+    return sorted(
+        [name for name, cat in _maxref_cache.category_map.items() if cat == category]
+    )
 
 
 def get_all_max_objects() -> List[str]:
     """Get list of all Max objects (max-ref category)"""
-    return get_objects_by_category('max')
+    return get_objects_by_category("max")
 
 
 def get_all_jit_objects() -> List[str]:
     """Get list of all Jitter objects (jit-ref category)"""
-    return get_objects_by_category('jit')
+    return get_objects_by_category("jit")
 
 
 def get_all_msp_objects() -> List[str]:
     """Get list of all MSP objects (msp-ref category)"""
-    return get_objects_by_category('msp')
+    return get_objects_by_category("msp")
 
 
 def get_all_m4l_objects() -> List[str]:
     """Get list of all Max for Live objects (m4l-ref category)"""
-    return get_objects_by_category('m4l')
+    return get_objects_by_category("m4l")
 
 
 # Legacy compatibility - generate defaults from .maxref.xml when available

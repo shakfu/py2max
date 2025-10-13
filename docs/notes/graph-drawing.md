@@ -15,6 +15,7 @@
 ### Topology-Shaped-Metric
 
 - see [A Generic Framework for the Topology-Shape-Metrics Based Layout by
+
 Paul Klose](https://rtsys.informatik.uni-kiel.de/~biblio/downloads/theses/pkl-mt.pdf)
 
 - [tsmpy](https://github.com/uknfire/tsmpy)

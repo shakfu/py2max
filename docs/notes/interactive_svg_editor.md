@@ -12,7 +12,7 @@ Transform the static SVG preview into a live, interactive web-based Max/MSP patc
 
 ## Architecture Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Python REPL                              │
 │  >>> from py2max import Patcher                                 │
@@ -327,7 +327,7 @@ class PatcherEditor {
 
         this.ws.onopen = () => {
             document.getElementById('connection-status').textContent =
-                'Connected ✓';
+                'Connected [x]';
             document.getElementById('connection-status').style.color = '#0f0';
         };
 
@@ -338,7 +338,7 @@ class PatcherEditor {
 
         this.ws.onerror = () => {
             document.getElementById('connection-status').textContent =
-                'Connection error ✗';
+                'Connection error ';
             document.getElementById('connection-status').style.color = '#f00';
         };
     }
@@ -500,37 +500,43 @@ function exportPatch() {
 ## Implementation Phases
 
 ### Phase 1: Basic Server & Viewer (MVP)
-- ✅ Static SVG export (already done)
+
+- [x] Static SVG export (already done)
 - [ ] Simple HTTP server serving static HTML
 - [ ] WebSocket server for live updates
 - [ ] Basic real-time viewer (read-only)
 - [ ] REPL integration: `patcher.serve()`
 
 ### Phase 2: Interactive Editing
+
 - [ ] Drag-and-drop object repositioning
 - [ ] Click-to-select objects
 - [ ] Bidirectional position sync
 - [ ] Save positions back to .maxpat
 
 ### Phase 3: Object Creation
+
 - [ ] Object palette sidebar
 - [ ] Drag from palette to canvas
 - [ ] Double-click to create object
 - [ ] Text input for object names
 
 ### Phase 4: Connection Drawing
+
 - [ ] Shift+click to start connection
 - [ ] Visual connection preview
 - [ ] Snap to inlets/outlets
 - [ ] Create patchlines in Python
 
 ### Phase 5: Layout Algorithms
+
 - [ ] Interactive layout switching
 - [ ] JavaScript layout implementations
 - [ ] Force-directed layout
 - [ ] Grid snapping
 
 ### Phase 6: Advanced Features
+
 - [ ] Undo/redo
 - [ ] Copy/paste
 - [ ] Multi-select
@@ -582,22 +588,26 @@ p.link(osc, gain)          # Connection drawn live
 ## Technical Considerations
 
 ### WebSocket vs Server-Sent Events
+
 - **WebSocket**: Bidirectional, better for interactive editing
 - **SSE**: Simpler, sufficient for read-only live preview
 
 ### State Management
+
 - Python holds authoritative state
 - Browser displays current state
 - Optimistic updates for responsiveness
 - Conflict resolution for concurrent edits
 
 ### Performance
+
 - SVG can handle ~100s of objects efficiently
 - Virtualization for large patches
 - Incremental updates (diff-based)
 - Debouncing for drag operations
 
 ### Dependencies
+
 - `websockets` or `aiohttp` for async server
 - Standard library `http.server` for static files
 - No frontend framework required (vanilla JS)

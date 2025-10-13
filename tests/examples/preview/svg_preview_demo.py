@@ -19,11 +19,11 @@ def demo_basic_preview():
     """Basic SVG preview example."""
     print("Creating basic synth patch with SVG preview...")
 
-    p = Patcher('basic_synth.maxpat', layout='grid')
-    metro = p.add_textbox('metro 500')
-    osc = p.add_textbox('cycle~ 440')
-    gain = p.add_textbox('gain~ 0.5')
-    dac = p.add_textbox('ezdac~')
+    p = Patcher("basic_synth.maxpat", layout="grid")
+    metro = p.add_textbox("metro 500")
+    osc = p.add_textbox("cycle~ 440")
+    gain = p.add_textbox("gain~ 0.5")
+    dac = p.add_textbox("ezdac~")
 
     p.add_line(metro, osc)
     p.add_line(osc, gain)
@@ -34,7 +34,7 @@ def demo_basic_preview():
     p.save()
 
     # Export to SVG for preview
-    svg_path = Path('basic_synth.svg')
+    svg_path = Path("basic_synth.svg")
     export_svg(p, svg_path, title="Basic Synth Patch")
     print(f"  Saved SVG preview to: {svg_path}")
     print(f"  Open in browser: file://{svg_path.absolute()}")
@@ -44,25 +44,25 @@ def demo_complex_preview():
     """Complex patch with multiple signal paths."""
     print("\nCreating complex multi-voice patch with SVG preview...")
 
-    p = Patcher('complex_synth.maxpat', layout='flow', flow_direction='vertical')
+    p = Patcher("complex_synth.maxpat", layout="flow", flow_direction="vertical")
 
     # Control section
-    metro = p.add_textbox('metro 250')
-    button = p.add_textbox('button')
+    metro = p.add_textbox("metro 250")
+    button = p.add_textbox("button")
 
     # Voice 1
-    osc1 = p.add_textbox('cycle~ 440')
-    filter1 = p.add_textbox('lores~ 1000')
+    osc1 = p.add_textbox("cycle~ 440")
+    filter1 = p.add_textbox("lores~ 1000")
 
     # Voice 2
-    osc2 = p.add_textbox('saw~ 220')
-    filter2 = p.add_textbox('lores~ 500')
+    osc2 = p.add_textbox("saw~ 220")
+    filter2 = p.add_textbox("lores~ 500")
 
     # Mix and output
-    mix = p.add_textbox('+~')
-    gain = p.add_textbox('gain~ 0.5')
-    reverb = p.add_textbox('reverb~')
-    dac = p.add_textbox('ezdac~')
+    mix = p.add_textbox("+~")
+    gain = p.add_textbox("gain~ 0.5")
+    reverb = p.add_textbox("reverb~")
+    dac = p.add_textbox("ezdac~")
 
     # Connections
     p.add_line(metro, osc1)
@@ -81,7 +81,7 @@ def demo_complex_preview():
     p.save()
 
     # Export to SVG
-    svg_path = Path('complex_synth.svg')
+    svg_path = Path("complex_synth.svg")
     export_svg(p, svg_path, title="Complex Multi-Voice Synth", show_ports=True)
     print(f"  Saved SVG preview to: {svg_path}")
 
@@ -90,29 +90,29 @@ def demo_layout_comparison():
     """Compare different layout strategies via SVG."""
     print("\nComparing different layout strategies...")
 
-    layouts = ['horizontal', 'vertical', 'grid', 'flow']
+    layouts = ["horizontal", "vertical", "grid", "flow"]
 
     for layout_type in layouts:
-        p = Patcher(f'{layout_type}_layout.maxpat', layout=layout_type)
+        p = Patcher(f"{layout_type}_layout.maxpat", layout=layout_type)
 
-        metro = p.add_textbox('metro 500')
-        osc = p.add_textbox('cycle~ 440')
-        filter = p.add_textbox('lores~ 1000')
-        gain = p.add_textbox('gain~ 0.5')
-        dac = p.add_textbox('ezdac~')
+        metro = p.add_textbox("metro 500")
+        osc = p.add_textbox("cycle~ 440")
+        filter = p.add_textbox("lores~ 1000")
+        gain = p.add_textbox("gain~ 0.5")
+        dac = p.add_textbox("ezdac~")
 
         p.add_line(metro, osc)
         p.add_line(osc, filter)
         p.add_line(filter, gain)
         p.add_line(gain, dac)
 
-        if layout_type in ['grid', 'flow']:
+        if layout_type in ["grid", "flow"]:
             p.optimize_layout()
 
         p.save()
 
         # Export to SVG
-        svg_path = Path(f'{layout_type}_layout.svg')
+        svg_path = Path(f"{layout_type}_layout.svg")
         export_svg(p, svg_path, title=f"{layout_type.capitalize()} Layout")
         print(f"  {layout_type}: {svg_path}")
 
@@ -121,25 +121,25 @@ def demo_custom_styling():
     """Demonstrate SVG export with different options."""
     print("\nDemonstrating custom SVG options...")
 
-    p = Patcher('styled_patch.maxpat')
-    comment = p.add_comment('This is a comment - should be yellow')
-    msg = p.add_message('bang')
-    osc = p.add_textbox('cycle~ 440')
+    p = Patcher("styled_patch.maxpat")
+    comment = p.add_comment("This is a comment - should be yellow")
+    msg = p.add_message("bang")
+    osc = p.add_textbox("cycle~ 440")
 
     p.save()
 
     # Export with ports
-    svg_with_ports = Path('styled_with_ports.svg')
+    svg_with_ports = Path("styled_with_ports.svg")
     export_svg(p, svg_with_ports, show_ports=True, title="With Inlet/Outlet Ports")
     print(f"  With ports: {svg_with_ports}")
 
     # Export without ports
-    svg_no_ports = Path('styled_no_ports.svg')
+    svg_no_ports = Path("styled_no_ports.svg")
     export_svg(p, svg_no_ports, show_ports=False, title="Without Ports")
     print(f"  Without ports: {svg_no_ports}")
 
     # Export without title
-    svg_no_title = Path('styled_no_title.svg')
+    svg_no_title = Path("styled_no_title.svg")
     export_svg(p, svg_no_title, show_ports=True, title=None)
     print(f"  Without title: {svg_no_title}")
 
@@ -179,13 +179,13 @@ def demo_programmatic_workflow():
 
     # Step 1: Create patch
     print("\n1. Creating patch...")
-    p = Patcher('workflow_demo.maxpat', layout='grid')
-    metro = p.add_textbox('metro 1000')
-    random = p.add_textbox('random 127')
-    mtof = p.add_textbox('mtof')
-    osc = p.add_textbox('cycle~')
-    gain = p.add_textbox('gain~ 0.3')
-    dac = p.add_textbox('ezdac~')
+    p = Patcher("workflow_demo.maxpat", layout="grid")
+    metro = p.add_textbox("metro 1000")
+    random = p.add_textbox("random 127")
+    mtof = p.add_textbox("mtof")
+    osc = p.add_textbox("cycle~")
+    gain = p.add_textbox("gain~ 0.3")
+    dac = p.add_textbox("ezdac~")
 
     p.add_line(metro, random)
     p.add_line(random, mtof)
@@ -202,7 +202,7 @@ def demo_programmatic_workflow():
 
     # Step 3: Generate SVG preview
     print("3. Generating SVG preview...")
-    svg_path = Path('workflow_demo.svg')
+    svg_path = Path("workflow_demo.svg")
     export_svg(p, svg_path, title="Random Note Generator")
 
     print(f"\nDone! Files created:")
@@ -216,11 +216,11 @@ def demo_temp_preview():
     """Show how to use temporary files for quick previews."""
     print("\nQuick preview using temporary file...")
 
-    p = Patcher('temp_test.maxpat')
-    osc1 = p.add_textbox('cycle~ 440')
-    osc2 = p.add_textbox('saw~ 220')
-    mix = p.add_textbox('+~')
-    dac = p.add_textbox('ezdac~')
+    p = Patcher("temp_test.maxpat")
+    osc1 = p.add_textbox("cycle~ 440")
+    osc2 = p.add_textbox("saw~ 220")
+    mix = p.add_textbox("+~")
+    dac = p.add_textbox("ezdac~")
 
     p.add_line(osc1, mix)
     p.add_line(osc2, mix, inlet=1)
@@ -228,14 +228,14 @@ def demo_temp_preview():
 
     # Use temporary directory
     temp_dir = Path(tempfile.gettempdir())
-    svg_path = temp_dir / 'quick_preview.svg'
+    svg_path = temp_dir / "quick_preview.svg"
 
     export_svg(p, svg_path, title="Quick Preview")
     print(f"  Preview saved to: {svg_path}")
     print(f"  This file will be cleaned up by the OS")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("py2max SVG Preview Demonstration")
     print("=" * 60)
 

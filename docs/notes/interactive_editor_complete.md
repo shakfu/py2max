@@ -6,9 +6,10 @@ The py2max interactive editor is now **fully functional** with complete bidirect
 
 ## Key Achievement
 
-**✅ Web-based patch edits are persisted to .maxpat JSON files that Max/MSP can read**
+**[x] Web-based patch edits are persisted to .maxpat JSON files that Max/MSP can read**
 
 This is the critical outcome - users can:
+
 1. Create/edit patches in the browser
 2. Save changes to .maxpat files
 3. Open those files in Max/MSP
@@ -16,41 +17,47 @@ This is the critical outcome - users can:
 
 ## Complete Feature Set
 
-### 1. Visual Feedback ✅
+### 1. Visual Feedback [x]
+
 - **Object selection** - Orange outline (3px) on selected objects
 - **Object hover** - Blue outline (2px) on hover (box body only)
 - **Port hover** - Port brightens, box stays normal
 - **Connection selection** - Orange thick line for selected connections
 - **Clear visual hierarchy** - Selection > port > hover > normal
 
-### 2. Object Interaction ✅
+### 2. Object Interaction [x]
+
 - **Click to select** - Click object body to select
 - **Drag to move** - 5px drag threshold prevents accidental moves
 - **Delete** - Press Delete/Backspace to remove selected object
 - **Double-click create** - Double-click canvas to create new object
 - **Immediate feedback** - Orange selection appears on mousedown
 
-### 3. Connection Creation ✅
+### 3. Connection Creation [x]
+
 - **Bidirectional** - Click outlet→inlet OR inlet→outlet
 - **Visual guidance** - Yellow highlight on first click
 - **Info bar help** - "Connecting from [box] [type] [index]... Click [opposite]"
 - **Wide hitbox** - 10px wide for easy clicking
 - **Port independence** - No box hover interference
 
-### 4. Connection Deletion ✅
+### 4. Connection Deletion [x]
+
 - **Click to select** - Click connection line to select
 - **Delete** - Press Delete/Backspace to remove
 - **Orange highlight** - Selected connection shows thick orange line
 - **Orphan cleanup** - Deleting object removes its connections
 
-### 5. Save Functionality ✅
-- **Manual save** - Click 💾 Save button (default)
+### 5. Save Functionality [x]
+
+- **Manual save** - Click  Save button (default)
 - **Auto-save** - Optional 2-second debounced save
-- **Visual feedback** - "Saving..." → "✅ Saved to [filepath]"
-- **Error handling** - "❌ Save error: [message]"
+- **Visual feedback** - "Saving..." → "[x] Saved to [filepath]"
+- **Error handling** - "[X] Save error: [message]"
 - **Max/MSP compatible** - Standard .maxpat format
 
-### 6. Real-time Sync ✅
+### 6. Real-time Sync [x]
+
 - **WebSocket** - Bidirectional communication
 - **State broadcast** - All clients see updates
 - **Auto-reconnect** - Reconnects after disconnect
@@ -67,6 +74,7 @@ This is the critical outcome - users can:
 - **serve_interactive()** - Convenience function
 
 **Message Types**:
+
 - `update_position` - Move object
 - `create_object` - Create new object
 - `create_connection` - Create patchline
@@ -75,6 +83,7 @@ This is the critical outcome - users can:
 - `save` - Save to .maxpat file
 
 **State Management**:
+
 - Updates `patcher._boxes` and `patcher._lines`
 - Broadcasts state to all clients
 - Saves to .maxpat file
@@ -138,25 +147,25 @@ Proper specificity ensures correct visual feedback:
 
 ### Port Click (No Interference)
 
-```
+```text
 1. Mousedown on port
-   → handleBoxMouseDown() checks target → is port → returns early ✅
+   → handleBoxMouseDown() checks target → is port → returns early [x]
    → Event bubbles to canvas
-   → handleCanvasMouseDown() checks target → is port → returns early ✅
+   → handleCanvasMouseDown() checks target → is port → returns early [x]
 
 2. Click on port
-   → handlePortClick() executes ✅
+   → handlePortClick() executes [x]
    → Sets connectionStart or creates connection
    → render() highlights selected port
 ```
 
 ### Box Selection (Works Correctly)
 
-```
+```text
 1. Mousedown on box (not port)
-   → handleBoxMouseDown() checks target → not port → continues ✅
+   → handleBoxMouseDown() checks target → not port → continues [x]
    → Sets selectedBox, prepares for drag
-   → render() shows orange selection ✅
+   → render() shows orange selection [x]
 
 2. Mousemove (if >5px)
    → dragStarted = true
@@ -182,7 +191,7 @@ p.save()
 await p.serve_interactive()
 
 # User edits in browser
-# User clicks 💾 Save button
+# User clicks  Save button
 # .maxpat file updated
 ```
 
@@ -229,11 +238,11 @@ with open('patch.maxpat') as f:
 
 # 4. Open in Max/MSP
 # File → Open → patch.maxpat
-# ✅ All edits visible!
+# [x] All edits visible!
 
 # 5. Reload in py2max
 p2 = Patcher.from_file('patch.maxpat')
-# ✅ All edits preserved!
+# [x] All edits preserved!
 ```
 
 ## Documentation
@@ -257,7 +266,7 @@ p2 = Patcher.from_file('patch.maxpat')
 ### Tests
 
 1. **tests/test_websocket.py** - WebSocket server tests (312 passed)
-2. All existing tests pass ✅
+2. All existing tests pass [x]
 
 ## Testing
 
@@ -275,6 +284,7 @@ uv run python examples/interactive_save_demo.py auto
 ```
 
 **Test checklist**:
+
 - [ ] Hover port → Only port brightens (box stays normal)
 - [ ] Click port → Yellow highlight appears
 - [ ] Click second port → Connection created
@@ -283,7 +293,7 @@ uv run python examples/interactive_save_demo.py auto
 - [ ] Drag box → Moves smoothly
 - [ ] Click connection → Orange thick line
 - [ ] Press Delete → Removes selected item
-- [ ] Click Save → "✅ Saved to [filepath]"
+- [ ] Click Save → "[x] Saved to [filepath]"
 - [ ] Reload .maxpat in Max/MSP → Edits visible
 
 ### Automated Testing
@@ -297,18 +307,20 @@ uv run pytest tests/ -v
 
 ## Known Issues & Limitations
 
-### None! ✅
+### None! [x]
 
 All identified issues have been resolved:
-- ✅ Selection feedback delay → Fixed
-- ✅ Hover covering selection → Fixed
-- ✅ Port clicks interfering with box → Fixed
-- ✅ Canvas clearing connection state → Fixed
-- ✅ No save functionality → Fixed
+
+- [x] Selection feedback delay → Fixed
+- [x] Hover covering selection → Fixed
+- [x] Port clicks interfering with box → Fixed
+- [x] Canvas clearing connection state → Fixed
+- [x] No save functionality → Fixed
 
 ## Browser Compatibility
 
 **CSS `:has()` pseudo-class** (for port hover isolation):
+
 - Chrome 105+ (August 2022)
 - Firefox 121+ (December 2023)
 - Safari 15.4+ (March 2022)
@@ -353,6 +365,7 @@ await server.shutdown()
 ### WebSocket Messages
 
 **Browser → Python**:
+
 ```javascript
 // Move object
 { type: 'update_position', box_id: 'obj-1', x: 100, y: 50 }
@@ -376,6 +389,7 @@ await server.shutdown()
 ```
 
 **Python → Browser**:
+
 ```javascript
 // State update
 { type: 'update', title: 'patch.maxpat',
@@ -392,14 +406,14 @@ await server.shutdown()
 
 The interactive editor is **production-ready**:
 
-✅ **Complete UX** - Selection, hover, drag, delete, create
-✅ **Port interactions** - Independent from box, clear visual feedback
-✅ **Connection creation** - Bidirectional, visual guidance
-✅ **Save functionality** - Manual (default) or auto-save
-✅ **Max/MSP compatible** - Perfect .maxpat roundtrip
-✅ **Real-time sync** - WebSocket bidirectional communication
-✅ **Error handling** - Clear messages, auto-reconnect
-✅ **Well tested** - 312 tests pass
-✅ **Documented** - Complete docs and examples
+[x] **Complete UX** - Selection, hover, drag, delete, create
+[x] **Port interactions** - Independent from box, clear visual feedback
+[x] **Connection creation** - Bidirectional, visual guidance
+[x] **Save functionality** - Manual (default) or auto-save
+[x] **Max/MSP compatible** - Perfect .maxpat roundtrip
+[x] **Real-time sync** - WebSocket bidirectional communication
+[x] **Error handling** - Clear messages, auto-reconnect
+[x] **Well tested** - 312 tests pass
+[x] **Documented** - Complete docs and examples
 
 **Key outcome achieved**: Web-based patch edits are reliably persisted to .maxpat files that Max/MSP can read!

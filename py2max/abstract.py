@@ -5,8 +5,8 @@ between core.py and layout.py modules.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union, Callable, Any
 from pathlib import Path
+from typing import Any, Callable, Optional, Union
 
 from .common import Rect
 

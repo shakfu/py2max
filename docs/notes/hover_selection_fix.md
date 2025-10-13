@@ -17,6 +17,7 @@ Added CSS rule to ensure selected objects maintain their orange outline even whe
 ### Implementation
 
 **1. Added CSS override rule** (`interactive.html:132-135`):
+
 ```css
 /* Disable hover when selected - selection takes priority */
 .box.selected:hover rect {
@@ -28,6 +29,7 @@ Added CSS rule to ensure selected objects maintain their orange outline even whe
 This rule has higher specificity than `.box:hover rect` because it includes the `.selected` class, ensuring the orange selection color persists even when hovering.
 
 **2. Added selected class in JavaScript** (`interactive.js:195`):
+
 ```javascript
 // Highlight if selected
 if (this.selectedBox && this.selectedBox.id === box.id) {
@@ -45,17 +47,18 @@ Also increased selection stroke width from `2` to `3` for better visual distinct
 
 ## How It Works Now
 
-### Selection Flow:
+### Selection Flow
 
 1. **Mouse down on object** → Object selected
 2. `render()` called → Adds `selected` class to box element
 3. **Hover state** → CSS rule `.box.selected:hover rect` applies (orange, not blue)
 4. **Visual feedback** → Orange outline visible immediately, even while hovering
 
-### User Experience:
+### User Experience
 
 **Before (confusing):**
-```
+
+```text
 1. Click object → Blue outline (hover state)
 2. Hold click → Still blue
 3. Move mouse away → Orange appears (finally shows selection)
@@ -63,7 +66,8 @@ Also increased selection stroke width from `2` to `3` for better visual distinct
 ```
 
 **After (clear):**
-```
+
+```text
 1. Click object → Orange outline appears immediately!
 2. Hold click → Stays orange
 3. Move mouse → Still orange (selected state maintained)
@@ -73,6 +77,7 @@ Also increased selection stroke width from `2` to `3` for better visual distinct
 ## CSS Specificity Details
 
 **Specificity hierarchy:**
+
 1. `.box:hover rect` - specificity: 0-2-1 (1 class + 1 pseudo-class + 1 element)
 2. `.box.selected:hover rect` - specificity: 0-3-1 (2 classes + 1 pseudo-class + 1 element)
 
@@ -81,38 +86,44 @@ The selected rule wins because it has higher specificity (3 classes/pseudo-class
 ## Visual States
 
 **Normal (unselected, not hovering):**
+
 - Stroke: black (`#000`)
 - Stroke width: 1px
 
 **Hover (unselected):**
+
 - Stroke: blue (`#4080ff`)
 - Stroke width: 2px
 
 **Selected:**
+
 - Stroke: orange (`#ff8040`)
 - Stroke width: 3px
 - Maintains orange even when hovering
 
 **Selected + Hovering:**
+
 - Stroke: orange (`#ff8040`) - maintained!
 - Stroke width: 3px
 - No blue outline interference
 
 ## Testing
 
-### Manual Test:
+### Manual Test
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 ```
 
 **Test instant selection feedback:**
+
 1. Hover over object → Blue outline appears
 2. Click object → **Orange outline appears immediately** (not blue!)
 3. Keep mouse on object → Orange stays (doesn't revert to blue)
 4. Move mouse away → Orange persists (object still selected)
 5. Click empty canvas → Deselects, orange disappears
 
-### Edge Cases:
+### Edge Cases
 
 1. **Rapid click-hover**: Orange appears instantly, no blue flash
 2. **Click and hold**: Orange stays visible throughout
@@ -123,14 +134,17 @@ uv run python tests/examples/interactive_demo.py
 
 After the initial fix, there was a secondary issue: **port clicks were being intercepted by the box mousedown handler**, preventing inlet/outlet connections from being created.
 
-### Problem:
+### Problem
+
 When clicking a port (inlet/outlet):
+
 1. **Mousedown** event fires on port → bubbles to box → `handleBoxMouseDown()` runs
 2. Box gets selected and `render()` is called
 3. **Click** event fires on port → `handlePortClick()` runs
 4. But box selection interfered with connection creation
 
-### Solution:
+### Solution
+
 Added check in `handleBoxMouseDown()` to ignore mousedown events on ports:
 
 ```javascript
@@ -151,10 +165,12 @@ This ensures port clicks are handled exclusively by the port click handlers, not
 
 A third issue emerged: **when hovering over ports (inlets/outlets), the box would show a blue outline** as if the entire box was being hovered. This was confusing because the user was trying to interact with the port, not the box.
 
-### Problem:
+### Problem
+
 The CSS rule `.box:hover rect` was applying whenever the mouse was over any child element of the box, including ports. Since ports are children of the box SVG group, hovering over a port triggered the box hover state.
 
-### Solution:
+### Solution
+
 Used the CSS `:has()` pseudo-class to disable box hover styling when hovering over ports:
 
 ```css
@@ -171,7 +187,8 @@ Used the CSS `:has()` pseudo-class to disable box hover styling when hovering ov
 }
 ```
 
-### How it works:
+### How it works
+
 - `.box:has(.port:hover)` - Selects a box that contains a hovered port
 - When hovering a port, box outline returns to normal (black, 1px)
 - Ports have their own hover effects (lighter color, thicker stroke)
@@ -183,15 +200,18 @@ This creates clear visual separation: **port hover affects only the port**, not 
 
 A fourth issue was discovered: **port clicks weren't registering for connections**. When you clicked a port to start a connection, nothing happened.
 
-### Problem:
+### Problem
+
 The event flow was:
+
 1. **Mousedown** on port → `handleBoxMouseDown()` returns early → event bubbles to canvas
 2. **Canvas mousedown handler** runs → clears `this.connectionStart = null` (line 636)
 3. **Click** on port → `handlePortClick()` runs, but `connectionStart` already cleared!
 
 The canvas mousedown handler was canceling pending connections before the port click handler could execute.
 
-### Solution:
+### Solution
+
 Added port check to `handleCanvasMouseDown()` to prevent it from clearing connection state when clicking ports:
 
 ```javascript
@@ -215,12 +235,14 @@ Now when clicking a port, **both** `handleBoxMouseDown()` and `handleCanvasMouse
 ## Files Modified
 
 **`py2max/static/interactive.html`**:
+
 - Added CSS rule for `.box.selected:hover rect` (lines 138-141) - Selection overrides hover
 - Added CSS rule for `.box:has(.port:hover) rect` (lines 132-135) - Disable box hover when hovering ports
 - Added CSS rule for `.box.selected:has(.port:hover) rect` (lines 144-147) - Keep selection visible when hovering ports
 - Ensures proper visual hierarchy: selection > port hover > box hover
 
 **`py2max/static/interactive.js`**:
+
 - Added `boxEl.classList.add('selected')` when rendering selected boxes (line 195)
 - Increased selection stroke width from 2 to 3 (line 199)
 - **Added port click check** in `handleBoxMouseDown()` (lines 465-470) - Prevents box drag handler from interfering
@@ -260,17 +282,18 @@ The complete CSS specificity hierarchy ensures proper visual feedback:
 
 Visual feedback is now **crystal clear** with proper separation of concerns:
 
-✅ **Object selection** - Orange outline appears instantly on mousedown
-✅ **Object hover** - Blue outline only when hovering box body (not ports)
-✅ **Port hover** - Only port changes appearance, box stays normal
-✅ **Port clicks work** - No interference from box mousedown handler
-✅ **Selection persists** - Orange visible even when hovering or hovering ports
-✅ **Clear visual hierarchy** - Selection > port interaction > box hover > normal
+[x] **Object selection** - Orange outline appears instantly on mousedown
+[x] **Object hover** - Blue outline only when hovering box body (not ports)
+[x] **Port hover** - Only port changes appearance, box stays normal
+[x] **Port clicks work** - No interference from box mousedown handler
+[x] **Selection persists** - Orange visible even when hovering or hovering ports
+[x] **Clear visual hierarchy** - Selection > port interaction > box hover > normal
 
 Four-part fix that creates perfect visual separation:
+
 1. **CSS `:has()` selector** - Disable box hover when hovering ports
 2. **CSS specificity** - Selection overrides all hover states
 3. **Event target check in `handleBoxMouseDown()`** - Box drag handler ignores port clicks
 4. **Event target check in `handleCanvasMouseDown()`** - Canvas handler doesn't cancel connections on port clicks
 
-All visual feedback and interaction issues are now resolved! ✅
+All visual feedback and interaction issues are now resolved! [x]

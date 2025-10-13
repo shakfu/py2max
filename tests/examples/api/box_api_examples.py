@@ -14,14 +14,14 @@ from py2max import Patcher
 
 def demonstrate_object_help():
     """Demonstrate object help and documentation system."""
-    p = Patcher('help-demo.maxpat')
+    p = Patcher("help-demo.maxpat")
 
     # Create various Max objects
-    cycle = p.add_textbox('cycle~ 440')
-    umenu = p.add_textbox('umenu')
-    biquad = p.add_textbox('biquad~')
-    metro = p.add_textbox('metro 500')
-    select = p.add_textbox('select 0 1 2 3')
+    cycle = p.add_textbox("cycle~ 440")
+    umenu = p.add_textbox("umenu")
+    biquad = p.add_textbox("biquad~")
+    metro = p.add_textbox("metro 500")
+    select = p.add_textbox("select 0 1 2 3")
 
     # Get formatted help for objects
     print("=== cycle~ Help ===")
@@ -37,10 +37,10 @@ def demonstrate_object_help():
     cycle_info = cycle.get_info()
     umenu_info = umenu.get_info()
 
-    cycle_methods = len(cycle_info.get('methods', [])) if cycle_info else 0
-    cycle_attrs = len(cycle_info.get('attributes', [])) if cycle_info else 0
-    umenu_methods = len(umenu_info.get('methods', [])) if umenu_info else 0
-    umenu_attrs = len(umenu_info.get('attributes', [])) if umenu_info else 0
+    cycle_methods = len(cycle_info.get("methods", [])) if cycle_info else 0
+    cycle_attrs = len(cycle_info.get("attributes", [])) if cycle_info else 0
+    umenu_methods = len(umenu_info.get("methods", [])) if umenu_info else 0
+    umenu_attrs = len(umenu_info.get("attributes", [])) if umenu_info else 0
 
     print(f"\ncycle~ - Methods: {cycle_methods}, Attributes: {cycle_attrs}")
     print(f"umenu - Methods: {umenu_methods}, Attributes: {umenu_attrs}")
@@ -51,17 +51,17 @@ def demonstrate_object_help():
 
 def demonstrate_inlet_outlet_introspection():
     """Demonstrate inlet/outlet introspection capabilities."""
-    p = Patcher('io-introspection.maxpat')
+    p = Patcher("io-introspection.maxpat")
 
     # Create objects with different I/O configurations
     objects = [
-        ('cycle~', p.add_textbox('cycle~ 440')),
-        ('biquad~', p.add_textbox('biquad~')),
-        ('select', p.add_textbox('select 0 1 2 3 4')),
-        ('gate', p.add_textbox('gate 4')),
-        ('umenu', p.add_textbox('umenu')),
-        ('flonum', p.add_floatbox(0.5)),
-        ('metro', p.add_textbox('metro 500'))
+        ("cycle~", p.add_textbox("cycle~ 440")),
+        ("biquad~", p.add_textbox("biquad~")),
+        ("select", p.add_textbox("select 0 1 2 3 4")),
+        ("gate", p.add_textbox("gate 4")),
+        ("umenu", p.add_textbox("umenu")),
+        ("flonum", p.add_floatbox(0.5)),
+        ("metro", p.add_textbox("metro 500")),
     ]
 
     print("Object I/O Information:")
@@ -84,12 +84,12 @@ def demonstrate_inlet_outlet_introspection():
 
 def demonstrate_object_properties():
     """Demonstrate object property access and modification."""
-    p = Patcher('properties-demo.maxpat')
+    p = Patcher("properties-demo.maxpat")
 
     # Create objects
-    osc = p.add_textbox('cycle~ 440')
-    gain = p.add_floatbox(0.5, name='gain_control')
-    comment = p.add_comment('Signal processing chain')
+    osc = p.add_textbox("cycle~ 440")
+    gain = p.add_floatbox(0.5, name="gain_control")
+    comment = p.add_comment("Signal processing chain")
 
     # Access object properties
     print("Object Properties:")
@@ -120,12 +120,12 @@ def demonstrate_object_validation():
     """Demonstrate object validation and error handling."""
     from py2max import InvalidConnectionError
 
-    p = Patcher('validation-demo.maxpat', validate_connections=True)
+    p = Patcher("validation-demo.maxpat", validate_connections=True)
 
     # Create objects
-    cycle = p.add_textbox('cycle~ 440')
-    gain = p.add_textbox('gain~')
-    select = p.add_textbox('select 0 1 2')
+    cycle = p.add_textbox("cycle~ 440")
+    gain = p.add_textbox("gain~")
+    select = p.add_textbox("select 0 1 2")
 
     print("Connection Validation Tests:")
     print("=" * 40)
@@ -153,9 +153,15 @@ def demonstrate_object_validation():
 
     # Check object capabilities
     print(f"\nObject capabilities:")
-    print(f"cycle~ - Inlets: {cycle.get_inlet_count()}, Outlets: {cycle.get_outlet_count()}")
-    print(f"gain~ - Inlets: {gain.get_inlet_count()}, Outlets: {gain.get_outlet_count()}")
-    print(f"select - Inlets: {select.get_inlet_count()}, Outlets: {select.get_outlet_count()}")
+    print(
+        f"cycle~ - Inlets: {cycle.get_inlet_count()}, Outlets: {cycle.get_outlet_count()}"
+    )
+    print(
+        f"gain~ - Inlets: {gain.get_inlet_count()}, Outlets: {gain.get_outlet_count()}"
+    )
+    print(
+        f"select - Inlets: {select.get_inlet_count()}, Outlets: {select.get_outlet_count()}"
+    )
 
     p.save()
     return p
@@ -163,38 +169,38 @@ def demonstrate_object_validation():
 
 def demonstrate_object_types():
     """Demonstrate different object types and their characteristics."""
-    p = Patcher('object-types.maxpat')
+    p = Patcher("object-types.maxpat")
 
     # Signal objects (MSP)
     signal_objects = [
-        ('cycle~', p.add_textbox('cycle~ 440')),
-        ('biquad~', p.add_textbox('biquad~ 1000 0.707')),
-        ('delay~', p.add_textbox('delay~ 500')),
-        ('*~', p.add_textbox('*~')),
-        ('dac~', p.add_textbox('dac~'))
+        ("cycle~", p.add_textbox("cycle~ 440")),
+        ("biquad~", p.add_textbox("biquad~ 1000 0.707")),
+        ("delay~", p.add_textbox("delay~ 500")),
+        ("*~", p.add_textbox("*~")),
+        ("dac~", p.add_textbox("dac~")),
     ]
 
     # Control objects (Max)
     control_objects = [
-        ('metro', p.add_textbox('metro 500')),
-        ('counter', p.add_textbox('counter 0 7')),
-        ('select', p.add_textbox('select 0 1 2 3')),
-        ('route', p.add_textbox('route note vel')),
-        ('pack', p.add_textbox('pack i i'))
+        ("metro", p.add_textbox("metro 500")),
+        ("counter", p.add_textbox("counter 0 7")),
+        ("select", p.add_textbox("select 0 1 2 3")),
+        ("route", p.add_textbox("route note vel")),
+        ("pack", p.add_textbox("pack i i")),
     ]
 
     # UI objects
     ui_objects = [
-        ('flonum', p.add_floatbox(440.0)),
-        ('button', p.add_message('bang')),
-        ('comment', p.add_comment('Interface'))
+        ("flonum", p.add_floatbox(440.0)),
+        ("button", p.add_message("bang")),
+        ("comment", p.add_comment("Interface")),
     ]
 
     # Data objects
     data_objects = [
-        ('table', p.add_table('wavetable')),
-        ('coll', p.add_coll('sequence')),
-        ('dict', p.add_dict('patch_data'))
+        ("table", p.add_table("wavetable")),
+        ("coll", p.add_coll("sequence")),
+        ("dict", p.add_dict("patch_data")),
     ]
 
     print("Object Type Analysis:")
@@ -221,7 +227,7 @@ def demonstrate_object_types():
     return p
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Demonstrate object help
     help_patch = demonstrate_object_help()
     print(f"Created help demo with {len(help_patch._boxes)} objects")

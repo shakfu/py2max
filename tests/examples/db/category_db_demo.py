@@ -17,6 +17,7 @@ from py2max.maxref import (
     get_objects_by_category,
 )
 
+
 def main():
     print("=== Max Object Category Database Demo ===\n")
 
@@ -31,7 +32,9 @@ def main():
     print(f"   Jitter objects (jit-ref): {len(jit_objects)}")
     print(f"   MSP objects (msp-ref):    {len(msp_objects)}")
     print(f"   M4L objects (m4l-ref):    {len(m4l_objects)}")
-    print(f"   Total objects:            {len(max_objects) + len(jit_objects) + len(msp_objects) + len(m4l_objects)}\n")
+    print(
+        f"   Total objects:            {len(max_objects) + len(jit_objects) + len(msp_objects) + len(m4l_objects)}\n"
+    )
 
     # Example 2: Show sample objects from each category
     print("2. Sample objects from each category:")
@@ -73,14 +76,14 @@ def main():
     print("5. Querying specific objects from category databases:")
 
     # Query cycle~ from MSP database
-    cycle = db_msp.get_object('cycle~')
+    cycle = db_msp.get_object("cycle~")
     if cycle:
         print(f"   cycle~ (MSP): {cycle.get('digest', 'N/A')}")
         print(f"     - Inlets: {len(cycle.get('inlets', []))}")
         print(f"     - Outlets: {len(cycle.get('outlets', []))}")
 
     # Query metro from Max database
-    metro = db_max.get_object('metro')
+    metro = db_max.get_object("metro")
     if metro:
         print(f"   metro (Max): {metro.get('digest', 'N/A')}")
         print(f"     - Methods: {len(metro.get('methods', {}))}")
@@ -94,10 +97,10 @@ def main():
 
     # Create file-based databases for each category
     categories = {
-        'max': db_max,
-        'msp': db_msp,
-        'jit': db_jit,
-        'm4l': db_m4l,
+        "max": db_max,
+        "msp": db_msp,
+        "jit": db_jit,
+        "m4l": db_m4l,
     }
 
     for category, db_instance in categories.items():
@@ -106,13 +109,13 @@ def main():
         file_db = MaxRefDB(db_path)
 
         # Use the appropriate populate method
-        if category == 'max':
+        if category == "max":
             file_db.populate_all_max_objects()
-        elif category == 'msp':
+        elif category == "msp":
             file_db.populate_all_msp_objects()
-        elif category == 'jit':
+        elif category == "jit":
             file_db.populate_all_jit_objects()
-        elif category == 'm4l':
+        elif category == "m4l":
             file_db.populate_all_m4l_objects()
 
         print(f"   Created {db_path.name}: {file_db.get_object_count()} objects")
@@ -121,12 +124,13 @@ def main():
 
     # Example 7: Generic category query
     print("7. Using generic get_objects_by_category function:")
-    for category in ['max', 'msp', 'jit', 'm4l']:
+    for category in ["max", "msp", "jit", "m4l"]:
         objects = get_objects_by_category(category)
         print(f"   {category}: {len(objects)} objects (e.g., {', '.join(objects[:3])})")
 
     print("\nDemo complete!")
     print(f"\nCategory database files created in: {output_dir}")
+
 
 if __name__ == "__main__":
     main()

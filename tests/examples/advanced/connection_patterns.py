@@ -14,21 +14,21 @@ from py2max import Patcher
 
 def create_fan_out_example():
     """Create a fan-out connection pattern."""
-    p = Patcher('fan-out.maxpat', layout="flow")
+    p = Patcher("fan-out.maxpat", layout="flow")
 
-    source = p.add_textbox('cycle~ 440')
+    source = p.add_textbox("cycle~ 440")
 
     # Connect one source to multiple destinations
     destinations = []
     for i in range(6):
-        dest = p.add_textbox(f'biquad~ {200 + i * 300} 0.707')
+        dest = p.add_textbox(f"biquad~ {200 + i * 300} 0.707")
         destinations.append(dest)
 
         # Fan out from source
         p.add_line(source, dest)
 
     # Collect all processed signals
-    collector = p.add_textbox('+~')
+    collector = p.add_textbox("+~")
     for dest in destinations:
         p.add_line(dest, collector)
 
@@ -39,16 +39,16 @@ def create_fan_out_example():
 
 def create_feedback_delay():
     """Create a feedback delay system."""
-    p = Patcher('feedback-delay.maxpat')
+    p = Patcher("feedback-delay.maxpat")
 
     # Input
-    input_obj = p.add_textbox('adc~')
+    input_obj = p.add_textbox("adc~")
 
     # Delay line with feedback
-    delay = p.add_textbox('delay~ 500')
-    feedback_gain = p.add_floatbox(0.3, name='feedback')
-    feedback_mult = p.add_textbox('*~')
-    input_mix = p.add_textbox('+~')
+    delay = p.add_textbox("delay~ 500")
+    feedback_gain = p.add_floatbox(0.3, name="feedback")
+    feedback_mult = p.add_textbox("*~")
+    input_mix = p.add_textbox("+~")
 
     # Create feedback loop
     p.add_line(input_obj, input_mix)
@@ -58,7 +58,7 @@ def create_feedback_delay():
     p.add_line(feedback_mult, input_mix, outlet=0, inlet=1)  # Feedback
 
     # Output
-    output = p.add_textbox('dac~')
+    output = p.add_textbox("dac~")
     p.add_line(delay, output)
 
     p.save()
@@ -67,7 +67,7 @@ def create_feedback_delay():
 
 def create_matrix_mixer():
     """Create a 4x4 matrix mixer."""
-    p = Patcher('matrix-mixer.maxpat', layout="grid")
+    p = Patcher("matrix-mixer.maxpat", layout="grid")
 
     # Create 4x4 matrix mixer
     sources = []
@@ -75,12 +75,12 @@ def create_matrix_mixer():
 
     # Create sources
     for i in range(4):
-        source = p.add_textbox(f'cycle~ {220 * (i + 1)}')
+        source = p.add_textbox(f"cycle~ {220 * (i + 1)}")
         sources.append(source)
 
     # Create destinations
     for i in range(4):
-        dest = p.add_textbox(f'dac~ {i + 1}')
+        dest = p.add_textbox(f"dac~ {i + 1}")
         destinations.append(dest)
 
     # Create matrix of gain controls
@@ -88,11 +88,11 @@ def create_matrix_mixer():
     for src_idx in range(4):
         for dst_idx in range(4):
             # Gain control
-            gain = p.add_floatbox(0.0, name=f'gain_{src_idx}_{dst_idx}')
-            mult = p.add_textbox('*~')
+            gain = p.add_floatbox(0.0, name=f"gain_{src_idx}_{dst_idx}")
+            mult = p.add_textbox("*~")
 
             # Store for routing
-            matrix[(src_idx, dst_idx)] = {'gain': gain, 'mult': mult}
+            matrix[(src_idx, dst_idx)] = {"gain": gain, "mult": mult}
 
             # Connect source to multiplier
             p.add_line(sources[src_idx], mult)
@@ -100,11 +100,11 @@ def create_matrix_mixer():
 
     # Create summing for each destination
     for dst_idx in range(4):
-        summer = p.add_textbox('+~')
+        summer = p.add_textbox("+~")
 
         # Sum all sources for this destination
         for src_idx in range(4):
-            p.add_line(matrix[(src_idx, dst_idx)]['mult'], summer)
+            p.add_line(matrix[(src_idx, dst_idx)]["mult"], summer)
 
         # Connect to destination
         p.add_line(summer, destinations[dst_idx])
@@ -114,7 +114,7 @@ def create_matrix_mixer():
     return p
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create fan-out example
     fanout_patch = create_fan_out_example()
     print(f"Created fan-out example with {len(fanout_patch._boxes)} objects")

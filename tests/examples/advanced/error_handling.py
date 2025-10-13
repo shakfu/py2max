@@ -27,13 +27,13 @@ def create_robust_patch(filename):
 
         try:
             # Create objects with error checking
-            osc = p.add_textbox('cycle~ 440')
+            osc = p.add_textbox("cycle~ 440")
             created_objects.append(osc)
 
-            gain = p.add_textbox('gain~')
+            gain = p.add_textbox("gain~")
             created_objects.append(gain)
 
-            output = p.add_textbox('ezdac~')
+            output = p.add_textbox("ezdac~")
             created_objects.append(output)
 
             # Attempt connections with validation
@@ -100,10 +100,10 @@ def validate_patch_structure(patcher):
                 src_outlets = src_obj.get_outlet_count()
                 dst_inlets = dst_obj.get_inlet_count()
 
-                if hasattr(line, 'outlet') and line.outlet >= src_outlets:
+                if hasattr(line, "outlet") and line.outlet >= src_outlets:
                     errors.append(f"Invalid outlet {line.outlet} on {src_obj.maxclass}")
 
-                if hasattr(line, 'inlet') and line.inlet >= dst_inlets:
+                if hasattr(line, "inlet") and line.inlet >= dst_inlets:
                     errors.append(f"Invalid inlet {line.inlet} on {dst_obj.maxclass}")
 
         except Exception as e:
@@ -116,11 +116,11 @@ def demonstrate_connection_validation():
     """Demonstrate connection validation features."""
     from py2max import InvalidConnectionError
 
-    p = Patcher('validation-demo.maxpat', validate_connections=True)
+    p = Patcher("validation-demo.maxpat", validate_connections=True)
 
     try:
-        osc = p.add_textbox('cycle~ 440')
-        gain = p.add_textbox('gain~')
+        osc = p.add_textbox("cycle~ 440")
+        gain = p.add_textbox("gain~")
 
         # This connection is valid
         p.add_line(osc, gain)
@@ -151,9 +151,9 @@ def demonstrate_connection_validation():
     return p
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create robust patch
-    robust_patch = create_robust_patch('robust-patch.maxpat')
+    robust_patch = create_robust_patch("robust-patch.maxpat")
     if robust_patch:
         print(f"Created robust patch with {len(robust_patch._boxes)} objects")
 

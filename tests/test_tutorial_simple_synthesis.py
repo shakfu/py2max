@@ -24,7 +24,7 @@ for i in range(3):
     # Connect parama and oscillator to gain_mult
     p.add_line(gain_param, gain_mult)
     p.add_line(oscillators[i], gain_mult, inlet=1)
-    
+
 
 # Add master volume and output
 master_vol = p.add_floatparam("master", inital=0.5)

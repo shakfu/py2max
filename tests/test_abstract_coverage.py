@@ -16,6 +16,7 @@ class TestAbstractLayoutManager:
 
     def test_get_rect_from_maxclass_abstract(self):
         """Test that get_rect_from_maxclass is abstract and raises NotImplementedError."""
+
         class ConcreteLayoutManager(AbstractLayoutManager):
             box_height = 22.0
 
@@ -35,13 +36,14 @@ class TestAbstractLayoutManager:
                 return rect
 
         manager = ConcreteLayoutManager()
-        
+
         # This should raise NotImplementedError when called
         with pytest.raises(NotImplementedError):
             manager.get_rect_from_maxclass("test")
 
     def test_get_relative_pos_abstract(self):
         """Test that get_relative_pos is abstract and raises NotImplementedError."""
+
         class ConcreteLayoutManager(AbstractLayoutManager):
             box_height = 22.0
 
@@ -61,13 +63,14 @@ class TestAbstractLayoutManager:
                 return rect
 
         manager = ConcreteLayoutManager()
-        
+
         # This should raise NotImplementedError when called
         with pytest.raises(NotImplementedError):
             manager.get_relative_pos(Rect(0, 0, 100, 100))
 
     def test_get_absolute_pos_abstract(self):
         """Test that get_absolute_pos is abstract and raises NotImplementedError."""
+
         class ConcreteLayoutManager(AbstractLayoutManager):
             box_height = 22.0
 
@@ -87,13 +90,14 @@ class TestAbstractLayoutManager:
                 return rect
 
         manager = ConcreteLayoutManager()
-        
+
         # This should raise NotImplementedError when called
         with pytest.raises(NotImplementedError):
             manager.get_absolute_pos(Rect(0, 0, 100, 100))
 
     def test_get_pos_abstract(self):
         """Test that get_pos is abstract and raises NotImplementedError."""
+
         class ConcreteLayoutManager(AbstractLayoutManager):
             box_height = 22.0
 
@@ -113,7 +117,7 @@ class TestAbstractLayoutManager:
                 return rect
 
         manager = ConcreteLayoutManager()
-        
+
         # This should raise NotImplementedError when called
         with pytest.raises(NotImplementedError):
             manager.get_pos("test")
@@ -124,6 +128,7 @@ class TestAbstractBox:
 
     def test_render_abstract(self):
         """Test that render is abstract and raises NotImplementedError."""
+
         class ConcreteBox(AbstractBox):
             def __init__(self):
                 self.id = "test"
@@ -141,13 +146,14 @@ class TestAbstractBox:
                 yield self
 
         box = ConcreteBox()
-        
+
         # This should raise NotImplementedError when called
         with pytest.raises(NotImplementedError):
             box.render()
 
     def test_to_dict_abstract(self):
         """Test that to_dict is abstract and raises NotImplementedError."""
+
         class ConcreteBox(AbstractBox):
             def __init__(self):
                 self.id = "test"
@@ -165,7 +171,7 @@ class TestAbstractBox:
                 yield self
 
         box = ConcreteBox()
-        
+
         # This should raise NotImplementedError when called
         with pytest.raises(NotImplementedError):
             box.to_dict()
@@ -176,6 +182,7 @@ class TestAbstractPatchline:
 
     def test_to_dict_abstract(self):
         """Test that to_dict is abstract and raises NotImplementedError."""
+
         class ConcretePatchline(AbstractPatchline):
             def __init__(self):
                 self._src = "source"
@@ -193,7 +200,7 @@ class TestAbstractPatchline:
                 raise NotImplementedError("Abstract method")
 
         patchline = ConcretePatchline()
-        
+
         # This should raise NotImplementedError when called
         with pytest.raises(NotImplementedError):
             patchline.to_dict()
@@ -204,6 +211,7 @@ class TestAbstractPatcher:
 
     def test_width_property_abstract(self):
         """Test that width property is abstract and raises NotImplementedError."""
+
         class ConcretePatcher(AbstractPatcher):
             def __init__(self):
                 self.rect = Rect(0, 0, 100, 100)
@@ -224,23 +232,24 @@ class TestAbstractPatcher:
                 self._auto_hints = False
                 self._validate_connections = False
                 self._maxclass_methods = {}
-            
+
             @property
             def width(self) -> float:
                 raise NotImplementedError("Abstract method")
-            
+
             @property
             def height(self) -> float:
                 return 100.0
 
         patcher = ConcretePatcher()
-        
+
         # This should raise NotImplementedError when accessed
         with pytest.raises(NotImplementedError):
             _ = patcher.width
 
     def test_height_property_abstract(self):
         """Test that height property is abstract and raises NotImplementedError."""
+
         class ConcretePatcher(AbstractPatcher):
             def __init__(self):
                 self.rect = Rect(0, 0, 100, 100)
@@ -261,17 +270,17 @@ class TestAbstractPatcher:
                 self._auto_hints = False
                 self._validate_connections = False
                 self._maxclass_methods = {}
-            
+
             @property
             def width(self) -> float:
                 return 100.0
-            
+
             @property
             def height(self) -> float:
                 raise NotImplementedError("Abstract method")
 
         patcher = ConcretePatcher()
-        
+
         # This should raise NotImplementedError when accessed
         with pytest.raises(NotImplementedError):
             _ = patcher.height

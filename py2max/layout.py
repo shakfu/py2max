@@ -8,14 +8,12 @@ Max objects in patches:
 - FlowLayoutManager: Signal flow-based hierarchical layout
 """
 
-from typing import Optional, Dict, List, Any, Set
+from typing import Any, Dict, List, Optional, Set
 
-from .abstract import AbstractLayoutManager, AbstractPatcher
-from .maxref import MAXCLASS_DEFAULTS
-from .common import Rect
 from . import category
-
-
+from .abstract import AbstractLayoutManager, AbstractPatcher
+from .common import Rect
+from .maxref import MAXCLASS_DEFAULTS
 
 # ---------------------------------------------------------------------------
 # Layout Classes
@@ -838,9 +836,15 @@ class MatrixLayoutManager(LayoutManager):
         self.num_rows = num_dimensions
 
         # Layout-specific properties
-        self._signal_chains: List[List[str]] = []  # Each inner list is a connected signal chain (used in row mode)
-        self._chain_assignments: Dict[str, int] = {}  # object_id -> chain_index (used in row mode)
-        self._column_assignments: Dict[str, int] = {}  # object_id -> column/category assignment (used in both modes)
+        self._signal_chains: List[
+            List[str]
+        ] = []  # Each inner list is a connected signal chain (used in row mode)
+        self._chain_assignments: Dict[
+            str, int
+        ] = {}  # object_id -> chain_index (used in row mode)
+        self._column_assignments: Dict[
+            str, int
+        ] = {}  # object_id -> column/category assignment (used in both modes)
 
     @property
     def column_spacing(self) -> float:
@@ -870,7 +874,9 @@ class MatrixLayoutManager(LayoutManager):
         """
         # Build directed connection graph
         connections: Dict[str, List[str]] = {}  # obj_id -> [connected_obj_ids]
-        reverse_connections: Dict[str, List[str]] = {}  # obj_id -> [objects_connecting_to_this]
+        reverse_connections: Dict[
+            str, List[str]
+        ] = {}  # obj_id -> [objects_connecting_to_this]
 
         for obj_id in self.parent._objects:
             connections[obj_id] = []
@@ -909,7 +915,9 @@ class MatrixLayoutManager(LayoutManager):
                     next_current: Optional[str] = None
                     for next_obj in next_objects:
                         if next_obj in self.parent._objects:
-                            next_obj_category = self._classify_object(self.parent._objects[next_obj])
+                            next_obj_category = self._classify_object(
+                                self.parent._objects[next_obj]
+                            )
                             if next_obj_category >= 2:  # Processors or outputs
                                 next_current = next_obj
                                 break
@@ -920,12 +928,17 @@ class MatrixLayoutManager(LayoutManager):
             return chain
 
         # Start from objects with no inputs (sources) or minimal inputs
-        sources = [obj_id for obj_id, inputs in reverse_connections.items() if len(inputs) <= 1]
+        sources = [
+            obj_id for obj_id, inputs in reverse_connections.items() if len(inputs) <= 1
+        ]
 
         # If no clear sources, start from input/control objects
         if not sources:
-            sources = [obj_id for obj_id, obj in self.parent._objects.items()
-                      if self._classify_object(obj) == 0]  # Input/Control objects
+            sources = [
+                obj_id
+                for obj_id, obj in self.parent._objects.items()
+                if self._classify_object(obj) == 0
+            ]  # Input/Control objects
 
         # Trace chains from sources
         for source in sources:
@@ -959,7 +972,9 @@ class MatrixLayoutManager(LayoutManager):
         # Group objects by signal chain and category
         for chain_idx, chain in enumerate(self._signal_chains):
             # Within each chain, group by category (row)
-            chain_by_category: Dict[int, List[str]] = {i: [] for i in range(self.num_rows)}
+            chain_by_category: Dict[int, List[str]] = {
+                i: [] for i in range(self.num_rows)
+            }
 
             for obj_id in chain:
                 if obj_id in self.parent._objects:
@@ -973,7 +988,9 @@ class MatrixLayoutManager(LayoutManager):
             for category, obj_ids in chain_by_category.items():
                 for i, obj_id in enumerate(obj_ids):
                     # If multiple objects of same category in one chain, spread them slightly
-                    col_offset = chain_idx + (i * 0.1)  # Small offset for multiple objects
+                    col_offset = chain_idx + (
+                        i * 0.1
+                    )  # Small offset for multiple objects
                     positions[obj_id] = (category, col_offset)
 
         return positions
@@ -992,7 +1009,11 @@ class MatrixLayoutManager(LayoutManager):
             row = num_created // self.num_dimensions
 
             # Calculate column-based position
-            column_width = (self.parent.width - self.pad * 2 - self.dimension_spacing * (self.num_dimensions - 1)) / self.num_dimensions
+            column_width = (
+                self.parent.width
+                - self.pad * 2
+                - self.dimension_spacing * (self.num_dimensions - 1)
+            ) / self.num_dimensions
             x = self.pad + column * (column_width + self.dimension_spacing)
             y = self.pad + row * (self.box_height + self.pad // 2)
         else:
@@ -1084,7 +1105,9 @@ class MatrixLayoutManager(LayoutManager):
 
                 # Ensure bounds
                 x = min(max(x, self.pad), self.parent.width - self.box_width - self.pad)
-                y = min(max(y, self.pad), self.parent.height - self.box_height - self.pad)
+                y = min(
+                    max(y, self.pad), self.parent.height - self.box_height - self.pad
+                )
 
                 obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
 
@@ -1104,14 +1127,20 @@ class MatrixLayoutManager(LayoutManager):
     def _apply_columnar_layout(self):
         """Apply the columnar layout to all objects."""
         # Group objects by column
-        column_objects: Dict[int, List[str]] = {i: [] for i in range(self.num_dimensions)}
+        column_objects: Dict[int, List[str]] = {
+            i: [] for i in range(self.num_dimensions)
+        }
 
         for obj_id, column in self._column_assignments.items():
             column = min(column, self.num_dimensions - 1)  # Ensure valid column
             column_objects[column].append(obj_id)
 
         # Calculate column dimensions
-        column_width = (self.parent.width - self.pad * 2 - self.dimension_spacing * (self.num_dimensions - 1)) / self.num_dimensions
+        column_width = (
+            self.parent.width
+            - self.pad * 2
+            - self.dimension_spacing * (self.num_dimensions - 1)
+        ) / self.num_dimensions
 
         # Position objects within each column
         for column_idx in range(self.num_dimensions):
@@ -1126,7 +1155,13 @@ class MatrixLayoutManager(LayoutManager):
             objects_in_column = self._sort_objects_in_column(objects_in_column)
 
             # Handle horizontal replication if column has too many objects
-            objects_per_column = max(1, int((self.parent.height - 2 * self.pad) / (self.box_height + self.pad // 2)))
+            objects_per_column = max(
+                1,
+                int(
+                    (self.parent.height - 2 * self.pad)
+                    / (self.box_height + self.pad // 2)
+                ),
+            )
 
             for i, obj_id in enumerate(objects_in_column):
                 if obj_id in self.parent._objects:
@@ -1137,15 +1172,22 @@ class MatrixLayoutManager(LayoutManager):
                     row_in_sub_column = i % objects_per_column
 
                     # Calculate x position (with horizontal replication)
-                    sub_column_width = column_width / max(1, (len(objects_in_column) - 1) // objects_per_column + 1)
+                    sub_column_width = column_width / max(
+                        1, (len(objects_in_column) - 1) // objects_per_column + 1
+                    )
                     x = column_x + sub_column * sub_column_width
 
                     # Calculate y position (top-down flow)
                     y = self.pad + row_in_sub_column * (self.box_height + self.pad // 2)
 
                     # Ensure bounds
-                    x = min(max(x, self.pad), self.parent.width - self.box_width - self.pad)
-                    y = min(max(y, self.pad), self.parent.height - self.box_height - self.pad)
+                    x = min(
+                        max(x, self.pad), self.parent.width - self.box_width - self.pad
+                    )
+                    y = min(
+                        max(y, self.pad),
+                        self.parent.height - self.box_height - self.pad,
+                    )
 
                     obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
 
@@ -1188,8 +1230,13 @@ class MatrixLayoutManager(LayoutManager):
             result.append(obj_id)
 
         # Start DFS from objects with no incoming connections (sources)
-        sources = [obj_id for obj_id in obj_ids
-                  if not any(obj_id in connections.get(other_id, set()) for other_id in obj_ids)]
+        sources = [
+            obj_id
+            for obj_id in obj_ids
+            if not any(
+                obj_id in connections.get(other_id, set()) for other_id in obj_ids
+            )
+        ]
 
         if not sources:
             sources = obj_ids  # If no clear sources, use all objects
@@ -1252,25 +1299,44 @@ class MatrixLayoutManager(LayoutManager):
         # Check specific patterns first (regardless of ~ suffix)
 
         # Output-like patterns (check first because they can end with ~)
-        if any(out_word in object_name.lower() for out_word in
-               ['out', 'dac', 'record', 'write', 'send', 'print', 'meter']):
+        if any(
+            out_word in object_name.lower()
+            for out_word in ["out", "dac", "record", "write", "send", "print", "meter"]
+        ):
             return 3  # Outputs
 
         # Input-like patterns
-        if any(input_word in object_name.lower() for input_word in
-               ['adc', 'in', 'inlet', 'receive', 'midiin', 'notein', 'ctlin', 'bendin', 'pgmin', 'touchin']):
+        if any(
+            input_word in object_name.lower()
+            for input_word in [
+                "adc",
+                "in",
+                "inlet",
+                "receive",
+                "midiin",
+                "notein",
+                "ctlin",
+                "bendin",
+                "pgmin",
+                "touchin",
+            ]
+        ):
             return 0  # Inputs/Controls
 
         # UI/control-like patterns
-        if any(ctrl_word in object_name.lower() for ctrl_word in
-               ['button', 'slider', 'dial', 'knob', 'fader', 'param']):
+        if any(
+            ctrl_word in object_name.lower()
+            for ctrl_word in ["button", "slider", "dial", "knob", "fader", "param"]
+        ):
             return 0  # Controls
 
         # Audio objects (end with ~) are likely processors unless clearly generators
-        if object_name.endswith('~'):
+        if object_name.endswith("~"):
             # Look for generator patterns
-            if any(gen_word in object_name.lower() for gen_word in
-                   ['osc', 'cycle', 'saw', 'noise', 'play', 'sample']):
+            if any(
+                gen_word in object_name.lower()
+                for gen_word in ["osc", "cycle", "saw", "noise", "play", "sample"]
+            ):
                 return 1  # Generators
             else:
                 return 2  # Processors (default for audio objects)

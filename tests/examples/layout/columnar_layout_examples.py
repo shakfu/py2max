@@ -17,28 +17,32 @@ def create_typical_synth_patch():
     """Create a typical Max synthesizer patch using columnar layout."""
 
     # Create patcher with columnar layout
-    p = Patcher('columnar_synth_demo.maxpat', layout="columnar")
+    p = Patcher("columnar_synth_demo.maxpat", layout="columnar")
 
     # Add control objects (Column 1: Controls)
-    metro = p.add_textbox('metro 500', comment="Tempo", comment_pos="above")
+    metro = p.add_textbox("metro 500", comment="Tempo", comment_pos="above")
     freq_control = p.add_floatbox(comment="Frequency", comment_pos="above")
     filter_freq = p.add_floatbox(comment="Filter Cutoff", comment_pos="above")
     volume = p.add_floatbox(comment="Volume", comment_pos="above")
 
     # Add generator objects (Column 2: Generators)
-    osc1 = p.add_textbox('cycle~ 440', comment="Oscillator 1", comment_pos="above")
-    osc2 = p.add_textbox('saw~ 220', comment="Oscillator 2", comment_pos="above")
-    noise = p.add_textbox('noise~', comment="Noise Source", comment_pos="above")
+    osc1 = p.add_textbox("cycle~ 440", comment="Oscillator 1", comment_pos="above")
+    osc2 = p.add_textbox("saw~ 220", comment="Oscillator 2", comment_pos="above")
+    noise = p.add_textbox("noise~", comment="Noise Source", comment_pos="above")
 
     # Add processor objects (Column 3: Processors)
-    mixer = p.add_textbox('gain~ 0.5', comment="Mixer", comment_pos="above")
-    lowpass = p.add_textbox('lores~ 1000', comment="Low Pass Filter", comment_pos="above")
-    delay_fx = p.add_textbox('delay~ 500', comment="Delay Effect", comment_pos="above")
-    master_gain = p.add_textbox('gain~ 0.7', comment="Master Volume", comment_pos="above")
+    mixer = p.add_textbox("gain~ 0.5", comment="Mixer", comment_pos="above")
+    lowpass = p.add_textbox(
+        "lores~ 1000", comment="Low Pass Filter", comment_pos="above"
+    )
+    delay_fx = p.add_textbox("delay~ 500", comment="Delay Effect", comment_pos="above")
+    master_gain = p.add_textbox(
+        "gain~ 0.7", comment="Master Volume", comment_pos="above"
+    )
 
     # Add output objects (Column 4: Outputs)
-    dac = p.add_textbox('ezdac~', comment="Audio Output", comment_pos="above")
-    scope = p.add_textbox('scope~', comment="Waveform Display", comment_pos="above")
+    dac = p.add_textbox("ezdac~", comment="Audio Output", comment_pos="above")
+    scope = p.add_textbox("scope~", comment="Waveform Display", comment_pos="above")
 
     # Create typical Max signal chain connections
 
@@ -80,36 +84,36 @@ def create_typical_synth_patch():
 def create_multi_voice_patch():
     """Create a more complex multi-voice patch demonstrating horizontal replication."""
 
-    p = Patcher('columnar_multivoice_demo.maxpat', layout="columnar")
+    p = Patcher("columnar_multivoice_demo.maxpat", layout="columnar")
 
     # Controls for multiple voices
-    metro1 = p.add_textbox('metro 250')
-    metro2 = p.add_textbox('metro 333')
-    metro3 = p.add_textbox('metro 500')
+    metro1 = p.add_textbox("metro 250")
+    metro2 = p.add_textbox("metro 333")
+    metro3 = p.add_textbox("metro 500")
     freq1 = p.add_floatbox()
     freq2 = p.add_floatbox()
     freq3 = p.add_floatbox()
 
     # Multiple voice generators
-    voice1_osc = p.add_textbox('cycle~ 220')
-    voice2_osc = p.add_textbox('saw~ 330')
-    voice3_osc = p.add_textbox('tri~ 440')
-    voice1_env = p.add_textbox('adsr~ 10 100 0.7 500')
-    voice2_env = p.add_textbox('adsr~ 5 50 0.5 300')
-    voice3_env = p.add_textbox('adsr~ 20 200 0.9 800')
+    voice1_osc = p.add_textbox("cycle~ 220")
+    voice2_osc = p.add_textbox("saw~ 330")
+    voice3_osc = p.add_textbox("tri~ 440")
+    voice1_env = p.add_textbox("adsr~ 10 100 0.7 500")
+    voice2_env = p.add_textbox("adsr~ 5 50 0.5 300")
+    voice3_env = p.add_textbox("adsr~ 20 200 0.9 800")
 
     # Processing for each voice
-    voice1_gain = p.add_textbox('gain~ 0.33')
-    voice2_gain = p.add_textbox('gain~ 0.33')
-    voice3_gain = p.add_textbox('gain~ 0.33')
-    voice1_filter = p.add_textbox('lores~ 1000')
-    voice2_filter = p.add_textbox('lores~ 1500')
-    voice3_filter = p.add_textbox('lores~ 800')
-    final_mix = p.add_textbox('gain~ 0.8')
+    voice1_gain = p.add_textbox("gain~ 0.33")
+    voice2_gain = p.add_textbox("gain~ 0.33")
+    voice3_gain = p.add_textbox("gain~ 0.33")
+    voice1_filter = p.add_textbox("lores~ 1000")
+    voice2_filter = p.add_textbox("lores~ 1500")
+    voice3_filter = p.add_textbox("lores~ 800")
+    final_mix = p.add_textbox("gain~ 0.8")
 
     # Outputs
-    dac = p.add_textbox('ezdac~')
-    meter = p.add_textbox('meter~')
+    dac = p.add_textbox("ezdac~")
+    meter = p.add_textbox("meter~")
 
     # Connect the three-voice patch
     # Voice 1 chain

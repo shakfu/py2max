@@ -44,6 +44,7 @@ The legacy SSE (Server-Sent Events) server has been removed from py2max. The Web
 ### 1. CLI Command Changes
 
 #### Before
+
 ```bash
 # Read-only preview
 py2max serve patch.maxpat
@@ -53,6 +54,7 @@ py2max serve-interactive patch.maxpat
 ```
 
 #### After
+
 ```bash
 # Single command - always interactive
 py2max serve patch.maxpat
@@ -63,6 +65,7 @@ py2max serve patch.maxpat
 ### 2. Python API Changes
 
 #### Before
+
 ```python
 # SSE server (removed)
 server = patcher.serve()
@@ -72,23 +75,27 @@ server = await patcher.serve_interactive()
 ```
 
 #### After
+
 ```python
 # WebSocket server only
 server = await patcher.serve()
 ```
 
 **Migration**:
+
 - Replace `serve_interactive()` with `serve()`
 - Ensure you're using `await` (async required)
 
 ### 3. Dependencies
 
 #### Before
+
 ```toml
 dependencies = []  # websockets optional
 ```
 
 #### After
+
 ```toml
 dependencies = [
     "websockets>=12.0",  # Now required
@@ -96,6 +103,7 @@ dependencies = [
 ```
 
 **Migration**: Install websockets
+
 ```bash
 pip install websockets
 ```
@@ -107,11 +115,13 @@ pip install websockets
 ### For CLI Users
 
 **Old code:**
+
 ```bash
 py2max serve-interactive my-patch.maxpat
 ```
 
 **New code:**
+
 ```bash
 py2max serve my-patch.maxpat
 ```
@@ -119,6 +129,7 @@ py2max serve my-patch.maxpat
 ### For Python API Users
 
 **Old code:**
+
 ```python
 import asyncio
 from py2max import Patcher
@@ -133,6 +144,7 @@ asyncio.run(main())
 ```
 
 **New code:**
+
 ```python
 import asyncio
 from py2max import Patcher
@@ -151,11 +163,13 @@ asyncio.run(main())
 If your code referenced the old SSE server:
 
 **Old code:**
+
 ```python
 from py2max.server import serve_patcher, PatcherServer  # ← Removed
 ```
 
 **New code:**
+
 ```python
 from py2max.websocket_server import serve_interactive, InteractivePatcherServer
 ```
@@ -177,10 +191,10 @@ from py2max.websocket_server import serve_interactive, InteractivePatcherServer
 | Feature | SSE (removed) | WebSocket (kept) |
 |---------|---------------|------------------|
 | Direction | Python → Browser | Python ↔ Browser |
-| Drag objects | ❌ No | ✅ Yes |
-| Draw connections | ❌ No | ✅ Yes |
-| Auto-save | ❌ No | ✅ Yes |
-| Live updates | ✅ Yes | ✅ Yes |
+| Drag objects | [X] No | [x] Yes |
+| Draw connections | [X] No | [x] Yes |
+| Auto-save | [X] No | [x] Yes |
+| Live updates | [x] Yes | [x] Yes |
 | Dependencies | None | websockets |
 
 WebSocket provides strictly more functionality.
@@ -200,6 +214,7 @@ WebSocket provides strictly more functionality.
 ### Q: My CI/CD uses `py2max serve`
 
 **A**: It still works! Just ensure `websockets` is installed:
+
 ```yaml
 - run: pip install websockets
 - run: py2max serve patch.maxpat --no-open
@@ -216,6 +231,7 @@ WebSocket provides strictly more functionality.
 ### Q: What if I was using serve() sync method?
 
 **A**: That method was removed. You must now use async:
+
 ```python
 # Old (removed)
 server = patcher.serve()  # sync
@@ -279,22 +295,22 @@ The following was moved:
 
 Everything the SSE server could do, WebSocket can do:
 
-✅ Live preview in browser
-✅ Real-time updates from Python
-✅ SVG rendering
-✅ Works with REPL
-✅ Custom ports
-✅ Auto-open browser
+[x] Live preview in browser
+[x] Real-time updates from Python
+[x] SVG rendering
+[x] Works with REPL
+[x] Custom ports
+[x] Auto-open browser
 
 ### What You're Gaining
 
 New features with WebSocket only:
 
-✅ Drag-and-drop repositioning
-✅ Visual connection drawing
-✅ Bidirectional sync
-✅ Auto-save changes
-✅ Browser-based editing
+[x] Drag-and-drop repositioning
+[x] Visual connection drawing
+[x] Bidirectional sync
+[x] Auto-save changes
+[x] Browser-based editing
 
 ---
 
@@ -352,6 +368,7 @@ asyncio.run(main())
 ```
 
 **Key differences:**
+
 1. `async def main()` - Now async
 2. `await p.serve()` - Await required
 3. `await asyncio.sleep(1)` - Async sleep

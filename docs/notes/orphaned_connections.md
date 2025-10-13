@@ -32,6 +32,7 @@ async def handle_delete_object(self, data: dict):
 ```
 
 **Key Logic** (lines 276-279):
+
 - Filters out any line where `src == box_id` (outgoing connections)
 - Filters out any line where `dst == box_id` (incoming connections)
 - Result: All connections involving the deleted object are removed
@@ -41,18 +42,21 @@ async def handle_delete_object(self, data: dict):
 ### Example 1: Delete Middle Object
 
 **Before deletion:**
-```
+
+```text
 cycle~ → gain~ → dac~
 ```
 
 **Delete gain~:**
+
 - Object removed: `gain~`
 - Connections removed:
   - `cycle~ → gain~` (incoming)
   - `gain~ → dac~` (outgoing)
 
 **After deletion:**
-```
+
+```text
 cycle~    dac~
 (no connections)
 ```
@@ -60,17 +64,20 @@ cycle~    dac~
 ### Example 2: Delete Source Object
 
 **Before deletion:**
-```
+
+```text
 metro → random → print
 ```
 
 **Delete metro:**
+
 - Object removed: `metro`
 - Connections removed:
   - `metro → random` (outgoing)
 
 **After deletion:**
-```
+
+```text
 random → print
 (one connection remains)
 ```
@@ -78,13 +85,15 @@ random → print
 ### Example 3: Object with Multiple Connections
 
 **Before deletion:**
-```
+
+```text
     ┌─→ osc1
 metro─┼─→ osc2
     └─→ osc3
 ```
 
 **Delete metro:**
+
 - Object removed: `metro`
 - Connections removed:
   - `metro → osc1` (outgoing)
@@ -92,7 +101,8 @@ metro─┼─→ osc2
   - `metro → osc3` (outgoing)
 
 **After deletion:**
-```
+
+```text
 osc1
 osc2
 osc3
@@ -168,21 +178,22 @@ await handler.handle_delete_object({'box_id': gain.id})
 print(f'After: {len(p._boxes)} boxes, {len(p._lines)} lines')
 # After: 2 boxes, 0 lines
 
-# ✓ Both connections removed automatically!
+# [x] Both connections removed automatically!
 ```
 
 ## Comparison to Max/MSP
 
 | Scenario | Max/MSP | py2max Interactive |
 |----------|---------|-------------------|
-| Delete connected object | Removes object + connections | ✅ Same behavior |
-| Visual feedback | Instant disappearance | ✅ Same behavior |
-| Orphaned connections | Never created | ✅ Never created |
-| Undo capability | Can undo deletion | ❌ Not yet implemented |
+| Delete connected object | Removes object + connections | [x] Same behavior |
+| Visual feedback | Instant disappearance | [x] Same behavior |
+| Orphaned connections | Never created | [x] Never created |
+| Undo capability | Can undo deletion | [X] Not yet implemented |
 
 ## Edge Cases Handled
 
 ### 1. Object with No Connections
+
 ```python
 # Object has no connections
 await handler.handle_delete_object({'box_id': isolated_box.id})
@@ -190,6 +201,7 @@ await handler.handle_delete_object({'box_id': isolated_box.id})
 ```
 
 ### 2. Object with Only Incoming Connections
+
 ```python
 # metro → box (box has 1 incoming, 0 outgoing)
 await handler.handle_delete_object({'box_id': box.id})
@@ -197,6 +209,7 @@ await handler.handle_delete_object({'box_id': box.id})
 ```
 
 ### 3. Object with Only Outgoing Connections
+
 ```python
 # box → print (box has 0 incoming, 1 outgoing)
 await handler.handle_delete_object({'box_id': box.id})
@@ -204,6 +217,7 @@ await handler.handle_delete_object({'box_id': box.id})
 ```
 
 ### 4. Hub Object (Many Connections)
+
 ```python
 # Multiple objects connected to/from hub
 await handler.handle_delete_object({'box_id': hub.id})
@@ -215,6 +229,7 @@ await handler.handle_delete_object({'box_id': hub.id})
 ### Why This Works
 
 The connection removal uses a **list comprehension** that:
+
 1. Iterates through all connections
 2. Keeps only those where NEITHER endpoint is the deleted object
 3. Replaces the entire `_lines` list
@@ -224,6 +239,7 @@ This is **O(n)** where n = number of connections, which is efficient.
 ### Alternative Approaches Considered
 
 **Approach 1: Individual removal (rejected)**
+
 ```python
 # Slower - multiple list operations
 for line in list(patcher._lines):
@@ -232,12 +248,14 @@ for line in list(patcher._lines):
 ```
 
 **Approach 2: Filter in place (rejected)**
+
 ```python
 # More complex, no performance benefit
 patcher._lines[:] = filter(lambda line: ..., patcher._lines)
 ```
 
 **Current approach (chosen)**:
+
 - Simple and clear
 - Single pass through connections
 - Creates new list (avoids modification-during-iteration)
@@ -247,12 +265,12 @@ patcher._lines[:] = filter(lambda line: ..., patcher._lines)
 
 Orphaned connection handling is **fully implemented and tested**:
 
-- ✅ Deleting an object removes ALL connections to/from it
-- ✅ Works for incoming, outgoing, and bidirectional connections
-- ✅ Happens atomically (all at once)
-- ✅ Visual feedback matches Max/MSP
-- ✅ No orphaned dangling connections ever created
-- ✅ Efficient O(n) implementation
-- ✅ All tests pass
+- [x] Deleting an object removes ALL connections to/from it
+- [x] Works for incoming, outgoing, and bidirectional connections
+- [x] Happens atomically (all at once)
+- [x] Visual feedback matches Max/MSP
+- [x] No orphaned dangling connections ever created
+- [x] Efficient O(n) implementation
+- [x] All tests pass
 
 Users can confidently delete objects knowing that the patch will remain clean with no orphaned connections.

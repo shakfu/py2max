@@ -9,6 +9,7 @@ Clicking on connections (patchlines) wasn't working - they couldn't be selected 
 The `handleCanvasMouseDown()` handler was clearing all selections (`this.selectedLine = null`) on EVERY mousedown event on the canvas, including when clicking on lines.
 
 **Event sequence:**
+
 1. **Mouse down** on line → `handleCanvasMouseDown()` fires → clears `selectedLine = null`
 2. **Mouse up** on line → `click` event fires → `handleLineClick()` sets `selectedLine`
 3. **But** the line's `e.stopPropagation()` only stops the `click` event, not the `mousedown` event
@@ -21,6 +22,7 @@ Check if the mousedown target is a line element before clearing selections.
 ### Implementation
 
 **Before (broken):**
+
 ```javascript
 handleCanvasMouseDown(event) {
     // Always clears selection, even when clicking lines!
@@ -31,6 +33,7 @@ handleCanvasMouseDown(event) {
 ```
 
 **After (fixed):**
+
 ```javascript
 handleCanvasMouseDown(event) {
     // Check if clicking on a line - if so, don't deselect
@@ -97,7 +100,7 @@ Ensured proper comparison with default values:
 
 ## How It Works Now
 
-### Selecting a Connection:
+### Selecting a Connection
 
 1. **Click line** → `mousedown` fires
 2. `handleCanvasMouseDown` checks target → finds line class → returns early (doesn't clear)
@@ -106,7 +109,7 @@ Ensured proper comparison with default values:
 5. `render()` shows orange highlight
 6. Info bar: "Selected connection: cycle~[0] → gain~[0] (Press Delete/Backspace to remove)"
 
-### Deleting Connection:
+### Deleting Connection
 
 1. Connection selected (orange thick line)
 2. Press **Delete** or **Backspace**
@@ -116,19 +119,22 @@ Ensured proper comparison with default values:
 
 ## Testing
 
-### Manual Test:
+### Manual Test
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 ```
 
 **Test steps:**
+
 1. Click a connection line → Orange thick line appears
 2. Info bar shows: "Selected connection: ..."
 3. Press Delete → Connection removed
 4. Click another connection → Selects it
 5. Click empty canvas → Deselects
 
-### All Tests Pass ✅:
+### All Tests Pass [x]
+
 ```bash
 uv run pytest tests/
 # 312 passed, 14 skipped
@@ -139,17 +145,20 @@ uv run pytest tests/
 ### Why `stopPropagation()` Alone Wasn't Enough
 
 **stopPropagation():**
+
 - Stops event from bubbling UP the DOM tree
 - Only affects the CURRENT event type (e.g., `click`)
 - Doesn't affect OTHER event types (e.g., `mousedown`)
 
 **The problem:**
+
 - Line's `click` handler calls `e.stopPropagation()` on the click event
 - But `mousedown` event still bubbles to canvas
 - Canvas `mousedown` handler clears selections
 - By the time `click` fires, selection is already cleared
 
 **The solution:**
+
 - Check target in `mousedown` handler
 - If target is a line, return early
 - Don't clear selections when clicking lines
@@ -168,6 +177,7 @@ uv run pytest tests/
 ## Browser Compatibility
 
 `closest()` is supported in all modern browsers:
+
 - Chrome 41+
 - Firefox 35+
 - Safari 9+
@@ -176,13 +186,15 @@ uv run pytest tests/
 ## Visual Feedback
 
 **Selected connection:**
+
 - **Color**: Orange (#ff8040)
 - **Width**: 3px (thicker)
 - **Hitbox**: 10px wide (easier to click)
 - **Cursor**: Pointer
 
 **Info bar shows:**
-```
+
+```text
 Selected connection: cycle~[0] → gain~[0] (Press Delete/Backspace to remove)
 ```
 
@@ -190,11 +202,11 @@ Selected connection: cycle~[0] → gain~[0] (Press Delete/Backspace to remove)
 
 Connection deletion now works perfectly:
 
-✅ **Click line** → Orange highlight appears
-✅ **Info bar** → Shows connection details
-✅ **Press Delete** → Connection removed
-✅ **Wide hitbox** → Easy to click (10px)
-✅ **No interference** → Boxes and canvas clicks still work
-✅ **All tests pass** → 312 passed
+[x] **Click line** → Orange highlight appears
+[x] **Info bar** → Shows connection details
+[x] **Press Delete** → Connection removed
+[x] **Wide hitbox** → Easy to click (10px)
+[x] **No interference** → Boxes and canvas clicks still work
+[x] **All tests pass** → 312 passed
 
 The fix was simple: check if clicking a line before clearing selections in `handleCanvasMouseDown()`. This allows the line's click handler to execute without interference.

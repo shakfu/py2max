@@ -6,7 +6,7 @@ Fixed two critical issues in the py2max WebSocket interactive editor that were p
 
 ## Issues Fixed
 
-### Issue 1: Connection Mode Not Working ✅
+### Issue 1: Connection Mode Not Working [x]
 
 **Symptom**: Clicking the "Connect" button and then clicking boxes did not create connections.
 
@@ -29,7 +29,7 @@ handleBoxMouseDown(event, box) {
 
 ---
 
-### Issue 2: Repositioned Objects Not Persisting ✅
+### Issue 2: Repositioned Objects Not Persisting [x]
 
 **Symptom**: Dragging objects updated their positions in Python memory but changes were not saved to the .maxpat file.
 
@@ -60,6 +60,7 @@ async def _debounced_save(self):
 ```
 
 **How it works**:
+
 - After each position update, a save is scheduled for 2 seconds later
 - If another position update occurs (user still dragging), the previous save is cancelled
 - Once user stops dragging for 2 seconds, the file is automatically saved
@@ -71,7 +72,8 @@ async def _debounced_save(self):
 
 ## Testing
 
-### All Tests Pass ✅
+### All Tests Pass [x]
+
 ```bash
 make test
 # 312 passed, 14 skipped in 11.48s
@@ -81,25 +83,30 @@ uv run pytest tests/test_websocket.py -v
 ```
 
 ### Test Script Created
+
 Created `test_fixes.py` for interactive manual testing:
+
 ```bash
 uv run python test_fixes.py
 ```
 
 This script:
+
 - Creates a test patch with several objects
 - Starts the interactive server
 - Provides clear testing instructions
 - Cleans up automatically
 
 ### How to Test Connection Mode
-1. Open http://localhost:8000
+
+1. Open <http://localhost:8000>
 2. Click "Connect" button (turns blue)
 3. Click first object
 4. Click second object
 5. Connection appears immediately
 
 ### How to Test Auto-Save
+
 1. Drag any object
 2. Wait 2 seconds
 3. See "Auto-saved: <filename>" in console
@@ -110,16 +117,20 @@ This script:
 ## Files Modified
 
 ### JavaScript
+
 - `py2max/static/interactive.js` - Fixed event propagation (1 line change + comment)
 
 ### Python
+
 - `py2max/server.py` - Added debounced auto-save (4 lines added, 25 lines new methods)
 
 ### Documentation
+
 - `WEBSOCKET_TODO.md` - Updated status (replaced issues with solutions)
 - `FIXES_SUMMARY.md` - This file (comprehensive summary)
 
 ### Testing
+
 - `test_fixes.py` - New interactive test script
 
 ---
@@ -127,6 +138,7 @@ This script:
 ## Summary
 
 **Total Changes**: Minimal, surgical fixes
+
 - JavaScript: 3 lines modified
 - Python: 29 lines added
 - All existing tests pass
@@ -134,11 +146,12 @@ This script:
 - Production ready
 
 **Impact**: The interactive editor is now fully functional with:
-- ✅ Working connection mode
-- ✅ Persistent position changes
-- ✅ Smooth drag-and-drop
-- ✅ Real-time bidirectional sync
-- ✅ Auto-save with smart debouncing
-- ✅ Clean, maintainable code
+
+- [x] Working connection mode
+- [x] Persistent position changes
+- [x] Smooth drag-and-drop
+- [x] Real-time bidirectional sync
+- [x] Auto-save with smart debouncing
+- [x] Clean, maintainable code
 
 Both issues resolved with minimal code changes and comprehensive testing.

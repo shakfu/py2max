@@ -22,13 +22,17 @@ Example:
 
 import json
 from pathlib import Path
-from typing import Optional, Union, Tuple, List, cast
+from typing import List, Optional, Tuple, Union, cast
 
-from . import abstract
-from . import layout
-from . import maxref
+from . import abstract, layout, maxref
 from .common import Rect
-
+from .exceptions import (
+    InvalidConnectionError,
+    InvalidObjectError,
+    InvalidPatchError,
+    PatcherIOError,
+)
+from .log import get_logger, log_exception, log_operation
 
 # ---------------------------------------------------------------------------
 # CONSTANTS
@@ -37,17 +41,8 @@ MAX_VER_MAJOR = 8
 MAX_VER_MINOR = 5
 MAX_VER_REVISION = 5
 
-# ---------------------------------------------------------------------------
-# Exceptions
-
-
-class InvalidConnectionError(Exception):
-    """Raised when attempting to create an invalid patchline connection.
-
-    This exception is raised when validation is enabled and an invalid
-    connection is attempted, such as connecting to a non-existent inlet
-    or outlet.
-    """
+# Module logger
+logger = get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +116,10 @@ class Patcher(abstract.AbstractPatcher):
         dimension_spacing: float = 100.0,
         semantic_ids: bool = False,
     ):
+        logger.debug(
+            f"Initializing Patcher: path={path}, layout={layout}, "
+            f"validate_connections={validate_connections}, semantic_ids={semantic_ids}"
+        )
         self._path = path
         self._parent = parent
         self._node_ids: list[str] = []  # ids by order of creation
@@ -145,7 +144,9 @@ class Patcher(abstract.AbstractPatcher):
         self._layout_mgr: abstract.AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
-        self._pending_comments: list[tuple[str, str, Optional[str]]] = []  # [(box_id, comment_text, comment_pos), ...]
+        self._pending_comments: list[
+            tuple[str, str, Optional[str]]
+        ] = []  # [(box_id, comment_text, comment_pos), ...]
         self._maxclass_methods = {
             # specialized methods
             "m": self.add_message,  # custom -- like keyboard shortcut
@@ -212,7 +213,7 @@ class Patcher(abstract.AbstractPatcher):
         for box in self._boxes:
             yield from iter(box)
 
-    def find_by_id(self, box_id: str) -> Optional['Box']:
+    def find_by_id(self, box_id: str) -> Optional["Box"]:
         """Find a box by its ID.
 
         Args:
@@ -229,7 +230,7 @@ class Patcher(abstract.AbstractPatcher):
         """
         return self._objects.get(box_id)
 
-    def find_by_type(self, maxclass: str) -> List['Box']:
+    def find_by_type(self, maxclass: str) -> List["Box"]:
         """Find all boxes of a specific Max object type.
 
         Args:
@@ -247,9 +248,11 @@ class Patcher(abstract.AbstractPatcher):
             ...                if 'cycle~' in b.text or 'saw~' in b.text]
             >>> assert len(oscillators) == 2
         """
-        return [box for box in self._boxes if getattr(box, 'maxclass', None) == maxclass]
+        return [
+            box for box in self._boxes if getattr(box, "maxclass", None) == maxclass
+        ]
 
-    def find_by_text(self, pattern: str, case_sensitive: bool = False) -> List['Box']:
+    def find_by_text(self, pattern: str, case_sensitive: bool = False) -> List["Box"]:
         """Find all boxes whose text matches a pattern.
 
         Args:
@@ -271,7 +274,7 @@ class Patcher(abstract.AbstractPatcher):
         """
         results = []
         for box in self._boxes:
-            text = getattr(box, 'text', '') or ''
+            text = getattr(box, "text", "") or ""
             if not case_sensitive:
                 if pattern.lower() in text.lower():
                     results.append(box)
@@ -315,7 +318,7 @@ class Patcher(abstract.AbstractPatcher):
             patcher._boxes.append(b)
 
             # Set parent reference for nested subpatchers
-            if hasattr(b, '_patcher') and b._patcher is not None:
+            if hasattr(b, "_patcher") and b._patcher is not None:
                 b._patcher._parent = patcher
 
         for line_dict in patcher.lines:
@@ -408,20 +411,82 @@ class Patcher(abstract.AbstractPatcher):
         self.lines = [line.to_dict() for line in self._lines]
 
     def save_as(self, path: Union[str, Path]) -> None:
-        """Save the patch to a specified file path.
+        """Save the patch to a specified file path with security validation.
 
         Renders all objects and connections, then saves the patch as a
         .maxpat JSON file that can be opened in Max/MSP.
 
         Args:
             path: File path where the patch should be saved.
+
+        Raises:
+            PatcherIOError: If file cannot be written or path is invalid.
         """
+        logger.debug(f"Saving patcher to: {path}")
         path = Path(path)
-        if path.parent:
-            path.parent.mkdir(parents=True, exist_ok=True)
-        self.render()
-        with open(path, "w", encoding="utf8") as f:
-            json.dump(self.to_dict(), f, indent=4)
+
+        # Security: Validate path to prevent path traversal attacks
+        try:
+            # Check for suspicious path components BEFORE resolving
+            path_str = str(path)
+            if (
+                ".." in path.parts
+                or path_str.startswith("/etc")
+                or path_str.startswith("/sys")
+            ):
+                raise PatcherIOError(
+                    f"Invalid path detected (potential path traversal): {path}",
+                    file_path=str(path),
+                    operation="validate",
+                )
+
+            # Resolve path to absolute and normalize it
+            resolved_path = path.resolve()
+
+            # Check for path traversal attempts
+            # Ensure the resolved path is within the current working directory or user-specified location
+            # This prevents attacks like ../../etc/passwd
+            if not resolved_path.is_absolute():
+                raise PatcherIOError(
+                    f"Path must resolve to absolute path: {path}",
+                    file_path=str(path),
+                    operation="validate",
+                )
+
+        except PatcherIOError:
+            # Re-raise PatcherIOError exceptions as-is
+            raise
+        except (OSError, RuntimeError) as e:
+            raise PatcherIOError(
+                f"Invalid file path: {path}", file_path=str(path), operation="validate"
+            ) from e
+
+        try:
+            # Create parent directories if needed
+            if resolved_path.parent:
+                resolved_path.parent.mkdir(parents=True, exist_ok=True)
+                logger.debug(f"Created parent directories: {resolved_path.parent}")
+
+            with log_operation(
+                logger, "render patcher", boxes=len(self._boxes), lines=len(self._lines)
+            ):
+                self.render()
+
+            # Use resolved path for writing
+            with open(resolved_path, "w", encoding="utf8") as f:
+                json.dump(self.to_dict(), f, indent=4)
+
+            logger.info(
+                f"Saved patcher to: {resolved_path} ({len(self._boxes)} objects, {len(self._lines)} connections)"
+            )
+
+        except IOError as e:
+            logger.error(f"Failed to write patcher to: {resolved_path}")
+            raise PatcherIOError(
+                f"Failed to write patcher file",
+                file_path=str(resolved_path),
+                operation="write",
+            ) from e
 
     def save(self) -> None:
         """Save the patch to the default file path.
@@ -436,8 +501,6 @@ class Patcher(abstract.AbstractPatcher):
 
         if self._path:
             self.save_as(self._path)
-
-
 
     async def serve(self, port: int = 8000, auto_open: bool = True):
         """Start an interactive WebSocket server for this patcher.
@@ -480,15 +543,16 @@ class Patcher(abstract.AbstractPatcher):
         """
         if self._semantic_ids and object_name:
             # Sanitize object name (remove ~, spaces, special chars)
-            clean_name = (object_name
-                         .replace('~', '')
-                         .replace(' ', '_')
-                         .replace('.', '_')
-                         .replace('-', '_')
-                         .replace('[', '')
-                         .replace(']', '')
-                         .replace('(', '')
-                         .replace(')', ''))
+            clean_name = (
+                object_name.replace("~", "")
+                .replace(" ", "_")
+                .replace(".", "_")
+                .replace("-", "_")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("(", "")
+                .replace(")", "")
+            )
 
             # Get or increment counter for this object type
             count = self._semantic_counters.get(clean_name, 0) + 1
@@ -504,7 +568,7 @@ class Patcher(abstract.AbstractPatcher):
         if name == "horizontal":
             return layout.HorizontalLayoutManager(self)
         elif name == "vertical":
-            return layout.VerticalLayoutManager(self)            
+            return layout.VerticalLayoutManager(self)
         elif name == "flow":
             return layout.FlowLayoutManager(self, flow_direction=self._flow_direction)
         elif name == "grid":
@@ -619,7 +683,9 @@ class Patcher(abstract.AbstractPatcher):
             if h != self._layout_mgr.box_height:
                 if box.maxclass in maxref.MAXCLASS_DEFAULTS:
                     dh: float = 0.0
-                    _, _, _, dh = maxref.MAXCLASS_DEFAULTS[box.maxclass]["patching_rect"]
+                    _, _, _, dh = maxref.MAXCLASS_DEFAULTS[box.maxclass][
+                        "patching_rect"
+                    ]
                     rect = Rect(x, y, w, dh)
                 else:
                     h = self._layout_mgr.box_height
@@ -653,25 +719,65 @@ class Patcher(abstract.AbstractPatcher):
     def add_patchline(
         self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int
     ) -> "Patchline":
-        """primary patchline creation method"""
+        """Primary patchline creation method with validation and logging.
+
+        Args:
+            src_id: Source object ID.
+            src_outlet: Source outlet index.
+            dst_id: Destination object ID.
+            dst_inlet: Destination inlet index.
+
+        Returns:
+            Created Patchline object.
+
+        Raises:
+            InvalidConnectionError: If connection validation fails.
+        """
+        logger.debug(
+            f"Adding patchline: {src_id}[{src_outlet}] -> {dst_id}[{dst_inlet}]"
+        )
 
         # Validate connection if validation is enabled
         if self._validate_connections:
             src_obj = self._objects.get(src_id)
             dst_obj = self._objects.get(dst_id)
 
-            if src_obj and dst_obj:
-                # Get the actual object names for validation
-                src_name = self._get_object_name(src_obj)
-                dst_name = self._get_object_name(dst_obj)
-
-                is_valid, error_msg = maxref.validate_connection(
-                    src_name, src_outlet, dst_name, dst_inlet
+            if not src_obj:
+                raise InvalidConnectionError(
+                    f"Source object not found: {src_id}",
+                    src=src_id,
+                    dst=dst_id,
+                    outlet=src_outlet,
+                    inlet=dst_inlet,
                 )
-                if not is_valid:
-                    raise InvalidConnectionError(
-                        f"Invalid connection from {src_name}[{src_outlet}] to {dst_name}[{dst_inlet}]: {error_msg}"
-                    )
+
+            if not dst_obj:
+                raise InvalidConnectionError(
+                    f"Destination object not found: {dst_id}",
+                    src=src_id,
+                    dst=dst_id,
+                    outlet=src_outlet,
+                    inlet=dst_inlet,
+                )
+
+            # Get the actual object names for validation
+            src_name = self._get_object_name(src_obj)
+            dst_name = self._get_object_name(dst_obj)
+
+            is_valid, error_msg = maxref.validate_connection(
+                src_name, src_outlet, dst_name, dst_inlet
+            )
+            if not is_valid:
+                logger.warning(
+                    f"Connection validation failed: {src_name}[{src_outlet}] -> {dst_name}[{dst_inlet}]: {error_msg}"
+                )
+                raise InvalidConnectionError(
+                    f"Invalid connection from {src_name}[{src_outlet}] to {dst_name}[{dst_inlet}]: {error_msg}",
+                    src=src_id,
+                    dst=dst_id,
+                    outlet=src_outlet,
+                    inlet=dst_inlet,
+                )
 
         # get order of lines between same pair of objects
         if (src_id, dst_id) == self._last_link:
@@ -685,6 +791,10 @@ class Patcher(abstract.AbstractPatcher):
         patchline = Patchline(source=src, destination=dst, order=order)
         self._lines.append(patchline)
         self._edge_ids.append((src_id, dst_id))
+
+        logger.debug(
+            f"Created patchline (order={order}): {src_id}[{src_outlet}] -> {dst_id}[{dst_inlet}]"
+        )
         return patchline
 
     def add_line(
@@ -779,7 +889,9 @@ class Patcher(abstract.AbstractPatcher):
         layout_rect = self.get_pos(maxclass) if maxclass else self.get_pos()
         if patching_rect is None and defaults and defaults.get("patching_rect"):
             default_rect = defaults["patching_rect"]
-            patching_rect = Rect(layout_rect.x, layout_rect.y, default_rect.w, default_rect.h)
+            patching_rect = Rect(
+                layout_rect.x, layout_rect.y, default_rect.w, default_rect.h
+            )
         elif patching_rect is None:
             patching_rect = layout_rect
 
@@ -1601,8 +1713,8 @@ class Box(abstract.AbstractBox):
     def text(self):
         """Get the text content of the box."""
         # Check if text is stored as a direct attribute (from file loading)
-        if 'text' in self.__dict__:
-            return self.__dict__['text']
+        if "text" in self.__dict__:
+            return self.__dict__["text"]
         # Otherwise get from _kwds (from programmatic creation)
         return self._kwds.get("text", "")
 

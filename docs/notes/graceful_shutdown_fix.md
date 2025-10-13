@@ -4,7 +4,7 @@
 
 When pressing Ctrl+C to stop the interactive demo, an ugly traceback was displayed:
 
-```
+```text
 ^C
 Traceback (most recent call last):
   File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
@@ -20,13 +20,14 @@ Traceback (most recent call last):
 KeyboardInterrupt
 ```
 
-## Fix Applied ✅
+## Fix Applied [x]
 
 Updated the demo scripts to handle shutdown gracefully with clean exit messages.
 
 ## Implementation
 
-### Before:
+### Before
+
 ```python
 # Keep server running
 try:
@@ -38,7 +39,8 @@ except KeyboardInterrupt:
 
 **Problem**: The `asyncio.sleep(1)` raises `CancelledError` when interrupted, which propagates up and shows a traceback.
 
-### After:
+### After
+
 ```python
 # Keep server running until Ctrl+C
 try:
@@ -52,6 +54,7 @@ except (KeyboardInterrupt, asyncio.CancelledError):
 ```
 
 **Plus** top-level exception handler:
+
 ```python
 if __name__ == '__main__':
     try:
@@ -70,8 +73,9 @@ if __name__ == '__main__':
 
 ## Result
 
-### Before (ugly):
-```
+### Before (ugly)
+
+```text
 ^CClient disconnected. Total clients: 0
 Interactive server stopped
 Traceback (most recent call last):
@@ -79,8 +83,9 @@ Traceback (most recent call last):
 KeyboardInterrupt
 ```
 
-### After (clean):
-```
+### After (clean)
+
+```text
 ^C
 
 Stopping server...
@@ -95,20 +100,23 @@ Interactive server stopped
 ## Files Modified
 
 **`tests/examples/interactive_demo.py`**:
+
 - Updated `demo_interactive()` - main demo function
 - Updated `demo_interactive_async_updates()` - async updates demo
 - Added top-level `KeyboardInterrupt` handler in `if __name__ == '__main__'`
 
 ## Testing
 
-### Manual Test:
+### Manual Test
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 # Press Ctrl+C
 # Should see clean shutdown with no traceback
 ```
 
-### All Tests Pass ✅:
+### All Tests Pass [x]
+
 ```bash
 uv run pytest tests/
 # 312 passed, 14 skipped
@@ -124,8 +132,9 @@ uv run pytest tests/
 ## Summary
 
 Shutdown is now graceful and user-friendly:
-- ✅ No Python tracebacks
-- ✅ Clean "Goodbye!" message
-- ✅ Server properly closed
-- ✅ All cleanup completed
-- ✅ Professional appearance
+
+- [x] No Python tracebacks
+- [x] Clean "Goodbye!" message
+- [x] Server properly closed
+- [x] All cleanup completed
+- [x] Professional appearance

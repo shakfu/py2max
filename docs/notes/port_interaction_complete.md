@@ -7,15 +7,19 @@ This document consolidates all the fixes required to make port (inlet/outlet) in
 ## Problems Encountered
 
 ### Problem 1: Box Hover Overrides Port Hover
+
 When hovering over a port, the entire box showed a blue outline, making it unclear that the port was the interactive element.
 
 ### Problem 2: Box Selection Prevents Port Clicks
+
 When clicking a port, the box's `mousedown` handler was selecting the box instead of letting the port's click handler execute.
 
 ### Problem 3: Canvas Handler Cancels Connections
+
 When clicking a port, the canvas's `mousedown` handler was clearing `connectionStart`, preventing the connection from being created.
 
 ### Problem 4: Selected Box Hover Overrides Selection Color
+
 When a box was selected, hovering over it showed blue outline instead of maintaining the orange selection color.
 
 ## Complete Solution
@@ -51,6 +55,7 @@ When a box was selected, hovering over it showed blue outline instead of maintai
 ```
 
 **How it works:**
+
 - `.box:has(.port:hover)` - Selects a box that contains a hovered port
 - When hovering port → box returns to normal (black, 1px)
 - If box is selected → orange persists even when hovering ports
@@ -91,6 +96,7 @@ handleBoxMouseDown(event, box) {
 ```
 
 **How it works:**
+
 - Check if `event.target` is a port
 - If yes → return early, don't select box or start drag
 - Allows port's click handler to execute without interference
@@ -136,6 +142,7 @@ handleCanvasMouseDown(event) {
 ```
 
 **How it works:**
+
 - Check if clicking port → return early
 - Prevents clearing `connectionStart` when clicking ports
 - Allows connection creation to proceed normally
@@ -165,6 +172,7 @@ this.boxes.forEach(box => {
 ```
 
 **How it works:**
+
 - Adds `selected` class when box is selected
 - Enables CSS `.selected` rules to override hover states
 - Increases stroke width to 3px for better visibility
@@ -172,7 +180,8 @@ this.boxes.forEach(box => {
 ## Event Flow
 
 ### Port Click Flow (Working)
-```
+
+```text
 1. Mousedown on port
    → handleBoxMouseDown() checks target → is port → returns early
    → Event bubbles to canvas
@@ -185,7 +194,8 @@ this.boxes.forEach(box => {
 ```
 
 ### Box Click Flow (Working)
-```
+
+```text
 1. Mousedown on box (not port)
    → handleBoxMouseDown() checks target → not port → continues
    → Sets selectedBox, prepares for drag
@@ -200,7 +210,8 @@ this.boxes.forEach(box => {
 ```
 
 ### Canvas Click Flow (Working)
-```
+
+```text
 1. Mousedown on empty canvas
    → handleCanvasMouseDown() checks target → not port/line → continues
    → Clears selections
@@ -233,6 +244,7 @@ this.boxes.forEach(box => {
    - Black outline, 1px width
 
 The specificity hierarchy ensures:
+
 - Selection always visible (orange)
 - Port hover doesn't trigger box hover (stays black)
 - Box hover only when hovering box body (blue)
@@ -240,33 +252,38 @@ The specificity hierarchy ensures:
 ## User Experience
 
 ### Hovering Ports
-✅ Port brightens (lighter blue for inlet, lighter orange for outlet)
-✅ Box outline stays **normal** (black, 1px) - no blue
-✅ Cursor changes to pointer
-✅ Clear visual feedback: only port is interactive
+
+[x] Port brightens (lighter blue for inlet, lighter orange for outlet)
+[x] Box outline stays **normal** (black, 1px) - no blue
+[x] Cursor changes to pointer
+[x] Clear visual feedback: only port is interactive
 
 ### Clicking Ports for Connection
-✅ First click → Port highlighted with yellow glow
-✅ Info bar: "Connecting from [box] [type] [index]... Click [opposite type]"
-✅ Second click → Connection created
-✅ No box selection interference
-✅ No canvas clearing interference
+
+[x] First click → Port highlighted with yellow glow
+[x] Info bar: "Connecting from [box] [type] [index]... Click [opposite type]"
+[x] Second click → Connection created
+[x] No box selection interference
+[x] No canvas clearing interference
 
 ### Selecting Boxes
-✅ Click box body → Orange outline appears **immediately**
-✅ Orange persists during hover (no blue override)
-✅ Can drag box after selection
-✅ Delete key removes selected box
+
+[x] Click box body → Orange outline appears **immediately**
+[x] Orange persists during hover (no blue override)
+[x] Can drag box after selection
+[x] Delete key removes selected box
 
 ### Combined Interactions
-✅ Selected box + hover port → Orange stays, port brightens
-✅ Selected box + hover box → Orange stays (no blue)
-✅ Port connection + box selection → Independent, no conflicts
-✅ Click empty canvas → Deselects, cancels connections
+
+[x] Selected box + hover port → Orange stays, port brightens
+[x] Selected box + hover box → Orange stays (no blue)
+[x] Port connection + box selection → Independent, no conflicts
+[x] Click empty canvas → Deselects, cancels connections
 
 ## Browser Compatibility
 
 **CSS `:has()` pseudo-class:**
+
 - Chrome 105+ (August 2022)
 - Firefox 121+ (December 2023)
 - Safari 15.4+ (March 2022)
@@ -277,21 +294,24 @@ Modern browsers fully supported. For older browsers, fallback would be JavaScrip
 ## Testing
 
 ### Manual Test
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 # Open http://localhost:8765/interactive in browser
 ```
 
 **Test scenarios:**
-1. Hover port → Only port changes (box stays normal) ✅
-2. Click port → Yellow highlight, connection starts ✅
-3. Click second port → Connection created ✅
-4. Click box → Orange selection appears ✅
-5. Hover selected box → Orange persists ✅
-6. Hover port on selected box → Orange + port brightens ✅
-7. Click canvas → Deselects everything ✅
+
+1. Hover port → Only port changes (box stays normal) [x]
+2. Click port → Yellow highlight, connection starts [x]
+3. Click second port → Connection created [x]
+4. Click box → Orange selection appears [x]
+5. Hover selected box → Orange persists [x]
+6. Hover port on selected box → Orange + port brightens [x]
+7. Click canvas → Deselects everything [x]
 
 ### Automated Tests
+
 ```bash
 uv run pytest tests/
 # 312 passed, 14 skipped in 11.42s
@@ -303,13 +323,14 @@ All tests pass with no regressions.
 
 Port interactions now work **perfectly** with complete separation from box interactions:
 
-✅ **Visual Isolation** - Ports have independent hover states
-✅ **Event Isolation** - Port clicks don't trigger box handlers
-✅ **State Preservation** - Port connections not cancelled by canvas handler
-✅ **Clear Hierarchy** - Selection > port > box hover
-✅ **Max/MSP Parity** - Matches expected behavior
+[x] **Visual Isolation** - Ports have independent hover states
+[x] **Event Isolation** - Port clicks don't trigger box handlers
+[x] **State Preservation** - Port connections not cancelled by canvas handler
+[x] **Clear Hierarchy** - Selection > port > box hover
+[x] **Max/MSP Parity** - Matches expected behavior
 
 **Four-part solution:**
+
 1. CSS `:has()` selector - Visual isolation
 2. Box mousedown check - Prevent drag interference
 3. Canvas mousedown check - Prevent connection cancellation

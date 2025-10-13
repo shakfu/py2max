@@ -21,15 +21,15 @@ async def manual_save_demo():
     print()
 
     # Create temporary file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.maxpat', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".maxpat", delete=False) as f:
         temp_path = Path(f.name)
 
     try:
         # Create initial patch
         p = Patcher(str(temp_path))
-        osc = p.add_textbox('cycle~ 440')
-        gain = p.add_textbox('gain~ 0.5')
-        dac = p.add_textbox('ezdac~')
+        osc = p.add_textbox("cycle~ 440")
+        gain = p.add_textbox("gain~ 0.5")
+        dac = p.add_textbox("ezdac~")
         p.add_line(osc, gain)
         p.add_line(gain, dac)
         p.save()
@@ -72,7 +72,9 @@ async def manual_save_demo():
 
             # Show that Max/MSP can read it
             p2 = Patcher.from_file(str(temp_path))
-            print(f"Max/MSP can load: {len(p2._boxes)} objects, {len(p2._lines)} connections")
+            print(
+                f"Max/MSP can load: {len(p2._boxes)} objects, {len(p2._lines)} connections"
+            )
             print()
 
     finally:
@@ -90,14 +92,14 @@ async def auto_save_demo():
     print()
 
     # Create temporary file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.maxpat', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".maxpat", delete=False) as f:
         temp_path = Path(f.name)
 
     try:
         # Create initial patch
         p = Patcher(str(temp_path))
-        osc = p.add_textbox('cycle~ 440')
-        gain = p.add_textbox('gain~ 0.5')
+        osc = p.add_textbox("cycle~ 440")
+        gain = p.add_textbox("gain~ 0.5")
         p.save()
 
         print(f"Created patch: {temp_path}")
@@ -144,13 +146,13 @@ async def main():
 
     import sys
 
-    if len(sys.argv) > 1 and sys.argv[1] == 'auto':
+    if len(sys.argv) > 1 and sys.argv[1] == "auto":
         await auto_save_demo()
     else:
         await manual_save_demo()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print()
     print("Interactive Save Demo")
     print()

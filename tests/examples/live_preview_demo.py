@@ -29,7 +29,7 @@ def demo_basic_live_preview():
 
     # Create a patcher and start live server
     print("1. Creating patcher and starting live preview server...")
-    p = Patcher('live_demo.maxpat', layout='grid')
+    p = Patcher("live_demo.maxpat", layout="grid")
 
     # Start server (opens browser automatically)
     server = p.serve(port=8000)
@@ -44,22 +44,22 @@ def demo_basic_live_preview():
     print("2. Adding objects (watch the browser update in real-time)...")
 
     print("   Adding metro...")
-    metro = p.add_textbox('metro 500')
+    metro = p.add_textbox("metro 500")
     p.save()  # Triggers update
     time.sleep(1)
 
     print("   Adding cycle~...")
-    osc = p.add_textbox('cycle~ 440')
+    osc = p.add_textbox("cycle~ 440")
     p.save()
     time.sleep(1)
 
     print("   Adding gain~...")
-    gain = p.add_textbox('gain~ 0.5')
+    gain = p.add_textbox("gain~ 0.5")
     p.save()
     time.sleep(1)
 
     print("   Adding ezdac~...")
-    dac = p.add_textbox('ezdac~')
+    dac = p.add_textbox("ezdac~")
     p.save()
     time.sleep(1)
 
@@ -121,12 +121,12 @@ def demo_interactive_repl():
     print()
 
     # Create patcher and start server
-    p = Patcher('interactive_demo.maxpat', layout='flow', flow_direction='vertical')
+    p = Patcher("interactive_demo.maxpat", layout="flow", flow_direction="vertical")
     server = p.serve(port=8001)
 
     # Add initial objects
-    metro = p.add_textbox('metro 1000')
-    random_obj = p.add_textbox('random 127')
+    metro = p.add_textbox("metro 1000")
+    random_obj = p.add_textbox("random 127")
     p.add_line(metro, random_obj)
     p.save()
 
@@ -148,14 +148,10 @@ def demo_interactive_repl():
 
     # Keep server running and make objects available
     import code
+
     code.interact(
         banner="",
-        local={
-            'p': p,
-            'server': server,
-            'metro': metro,
-            'random_obj': random_obj
-        }
+        local={"p": p, "server": server, "metro": metro, "random_obj": random_obj},
     )
 
 
@@ -169,7 +165,7 @@ def demo_context_manager():
     print("for automatic cleanup when the context exits.")
     print()
 
-    p = Patcher('context_demo.maxpat', layout='grid')
+    p = Patcher("context_demo.maxpat", layout="grid")
 
     print("1. Using context manager for automatic cleanup...")
     print()
@@ -181,15 +177,15 @@ def demo_context_manager():
         time.sleep(0.2)
 
         # Build a simple patch
-        osc = p.add_textbox('cycle~ 440')
+        osc = p.add_textbox("cycle~ 440")
         p.save()
         time.sleep(0.2)
 
-        gain = p.add_textbox('gain~ 0.5')
+        gain = p.add_textbox("gain~ 0.5")
         p.save()
         time.sleep(0.2)
 
-        dac = p.add_textbox('ezdac~')
+        dac = p.add_textbox("ezdac~")
         p.save()
         time.sleep(0.2)
 
@@ -213,14 +209,14 @@ def demo_context_manager():
     print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1:
         mode = sys.argv[1]
-        if mode == 'interactive':
+        if mode == "interactive":
             demo_interactive_repl()
-        elif mode == 'context':
+        elif mode == "context":
             demo_context_manager()
         else:
             print(f"Unknown mode: {mode}")

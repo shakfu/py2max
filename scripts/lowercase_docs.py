@@ -29,7 +29,9 @@ def lowercase_name(path: Path) -> Path:
     return path.parent / path.name.lower()
 
 
-def rename_to_lowercase(root_dir: Path, dry_run: bool = False, verbose: bool = False) -> tuple[int, int, int]:
+def rename_to_lowercase(
+    root_dir: Path, dry_run: bool = False, verbose: bool = False
+) -> tuple[int, int, int]:
     """Recursively rename files and directories to lowercase.
 
     Args:
@@ -78,7 +80,9 @@ def rename_to_lowercase(root_dir: Path, dry_run: bool = False, verbose: bool = F
                     # Only remove empty directories
                     path.rmdir()
                 else:
-                    print(f"  ⚠ Warning: Directory not empty, skipping: {path.relative_to(root_dir)}")
+                    print(
+                        f"  ⚠ Warning: Directory not empty, skipping: {path.relative_to(root_dir)}"
+                    )
                     continue
             duplicates_removed += 1
             continue
@@ -153,9 +157,7 @@ def main() -> int:
 
     # Perform rename
     files_renamed, dirs_renamed, duplicates_removed = rename_to_lowercase(
-        docs_dir,
-        dry_run=args.dry_run,
-        verbose=args.verbose
+        docs_dir, dry_run=args.dry_run, verbose=args.verbose
     )
 
     # Summary

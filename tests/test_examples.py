@@ -38,7 +38,7 @@ class TestQuickstartExamples:
         assert patch is not None
         assert len(patch._boxes) == 3  # osc, gain, dac
         assert len(patch._lines) == 2  # two connections
-        assert patch._path == 'my-first-patch.maxpat'
+        assert patch._path == "my-first-patch.maxpat"
 
     def test_layout_examples(self):
         """Test layout examples."""
@@ -46,7 +46,7 @@ class TestQuickstartExamples:
             grid_layout_example,
             flow_layout_example,
             object_help_example,
-            connection_validation_example
+            connection_validation_example,
         )
 
         # Test grid layout
@@ -64,7 +64,7 @@ class TestQuickstartExamples:
         assert help_patch is not None
         # help_text can be None if no help is available
         assert methods >= 0  # Allow 0 if no methods found
-        assert attrs >= 0    # Allow 0 if no attributes found
+        assert attrs >= 0  # Allow 0 if no attributes found
         assert inlets > 0
         assert outlets > 0
 
@@ -147,7 +147,7 @@ class TestLayoutExamples:
             create_basic_grid_vertical,
             create_clustered_grid,
             create_mixed_layout,
-            create_large_clustered_patch
+            create_large_clustered_patch,
         )
 
         # Test horizontal grid
@@ -178,7 +178,7 @@ class TestLayoutExamples:
             create_vertical_flow,
             create_complex_flow,
             create_parallel_processing,
-            create_feedback_flow
+            create_feedback_flow,
         )
 
         # Test horizontal flow
@@ -222,7 +222,10 @@ class TestAdvancedExamples:
 
     def test_subpatchers(self):
         """Test subpatcher examples."""
-        from advanced.subpatchers import create_basic_subpatcher, create_nested_subpatchers
+        from advanced.subpatchers import (
+            create_basic_subpatcher,
+            create_nested_subpatchers,
+        )
 
         # Test basic subpatcher
         basic_patch = create_basic_subpatcher()
@@ -239,7 +242,7 @@ class TestAdvancedExamples:
         from advanced.data_containers import (
             create_wavetable_synth,
             create_sequencer,
-            create_state_management
+            create_state_management,
         )
 
         # Test wavetable synth
@@ -262,7 +265,7 @@ class TestAdvancedExamples:
         from advanced.connection_patterns import (
             create_fan_out_example,
             create_feedback_delay,
-            create_matrix_mixer
+            create_matrix_mixer,
         )
 
         # Test fan-out
@@ -284,11 +287,11 @@ class TestAdvancedExamples:
         """Test error handling examples."""
         from advanced.error_handling import (
             create_robust_patch,
-            demonstrate_connection_validation
+            demonstrate_connection_validation,
         )
 
         # Test robust patch creation
-        robust_patch = create_robust_patch('robust-test.maxpat')
+        robust_patch = create_robust_patch("robust-test.maxpat")
         assert robust_patch is not None
         assert len(robust_patch._boxes) >= 3
 
@@ -302,7 +305,7 @@ class TestAdvancedExamples:
         from advanced.performance_optimization import (
             create_large_patch_efficiently,
             process_many_patches,
-            create_optimized_signal_chain
+            create_optimized_signal_chain,
         )
 
         # Test large patch
@@ -312,10 +315,7 @@ class TestAdvancedExamples:
 
         # Test batch processing
         configs = [
-            {
-                'filename': f'test-{i}.maxpat',
-                'objects': [{'text': f'cycle~ {440 + i}'}]
-            }
+            {"filename": f"test-{i}.maxpat", "objects": [{"text": f"cycle~ {440 + i}"}]}
             for i in range(3)
         ]
         results = process_many_patches(configs)
@@ -330,7 +330,7 @@ class TestAdvancedExamples:
         """Test custom extension examples."""
         from advanced.custom_extensions import (
             create_custom_synthesizer,
-            create_modular_system
+            create_modular_system,
         )
 
         # Test custom synthesizer
@@ -365,7 +365,7 @@ class TestAPIExamples:
             demonstrate_connections,
             demonstrate_layout_management,
             demonstrate_file_operations,
-            demonstrate_patch_introspection
+            demonstrate_patch_introspection,
         )
 
         # Test patcher creation
@@ -401,7 +401,7 @@ class TestAPIExamples:
             demonstrate_inlet_outlet_introspection,
             demonstrate_object_properties,
             demonstrate_object_validation,
-            demonstrate_object_types
+            demonstrate_object_types,
         )
 
         # Test object help
@@ -457,13 +457,17 @@ class TestExampleExecution:
                     [sys.executable, str(example_path)],
                     capture_output=True,
                     text=True,
-                    cwd=self.temp_dir
+                    cwd=self.temp_dir,
                 )
 
                 # Check that it ran without errors
-                assert result.returncode == 0, f"Example {example_file} failed with: {result.stderr}"
-                assert len(result.stdout) > 0, f"Example {example_file} produced no output"
+                assert result.returncode == 0, (
+                    f"Example {example_file} failed with: {result.stderr}"
+                )
+                assert len(result.stdout) > 0, (
+                    f"Example {example_file} produced no output"
+                )
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

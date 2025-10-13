@@ -56,7 +56,9 @@ def _format_value(value: object) -> str:
     return repr(value)
 
 
-def _build_subpatch_function(name: str, patcher_dict: dict, ctx: _CodeGenContext) -> str:
+def _build_subpatch_function(
+    name: str, patcher_dict: dict, ctx: _CodeGenContext
+) -> str:
     attr_block, box_block, line_block, _ = _build_patcher_sections(
         patcher_dict, ctx, "sp", f"{name}_obj", "    "
     )
@@ -334,6 +336,8 @@ def maxref_to_sqlite(
         db.populate(list(names))
 
     return db.count
+
+
 _DEFAULT_PUBLIC_ATTRS = {
     name
     for name in vars(Patcher()).keys()

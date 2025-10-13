@@ -10,18 +10,19 @@ This example shows how to:
 from pathlib import Path
 from py2max import MaxRefDB, create_database
 
+
 def main():
     print("=== MaxRefDB Demo ===\n")
 
     # Example 1: Create in-memory database and populate with a few objects
     print("1. Creating in-memory database...")
     db = MaxRefDB()
-    db.populate_from_maxref(['cycle~', 'gain~', 'dac~', 'umenu', 'button'])
+    db.populate_from_maxref(["cycle~", "gain~", "dac~", "umenu", "button"])
     print(f"   Populated with {db.get_object_count()} objects\n")
 
     # Example 2: Query specific object
     print("2. Querying 'cycle~' object...")
-    cycle = db.get_object('cycle~')
+    cycle = db.get_object("cycle~")
     if cycle:
         print(f"   Name: {cycle['name']}")
         print(f"   Digest: {cycle.get('digest', 'N/A')}")
@@ -32,7 +33,7 @@ def main():
 
     # Example 3: Search for objects
     print("3. Searching for objects containing 'signal'...")
-    results = db.search_objects('signal')
+    results = db.search_objects("signal")
     print(f"   Found {len(results)} objects: {', '.join(results[:5])}\n")
 
     # Example 4: Get all categories
@@ -49,12 +50,26 @@ def main():
 
     file_db = create_database(db_path, populate=False)
     # Populate with specific objects for faster demo
-    file_db.populate_from_maxref([
-        'cycle~', 'saw~', 'rect~', 'tri~', 'noise~',  # Generators
-        'gain~', 'lores~', 'reson~', 'delay~',        # Processors
-        'dac~', 'ezdac~', 'meter~',                   # Outputs
-        'umenu', 'button', 'toggle', 'slider',        # UI
-    ])
+    file_db.populate_from_maxref(
+        [
+            "cycle~",
+            "saw~",
+            "rect~",
+            "tri~",
+            "noise~",  # Generators
+            "gain~",
+            "lores~",
+            "reson~",
+            "delay~",  # Processors
+            "dac~",
+            "ezdac~",
+            "meter~",  # Outputs
+            "umenu",
+            "button",
+            "toggle",
+            "slider",  # UI
+        ]
+    )
     print(f"   Created {db_path}")
     print(f"   Populated with {file_db.get_object_count()} objects\n")
 
@@ -67,7 +82,7 @@ def main():
 
     # Example 7: Query by category
     print("7. Querying objects by category...")
-    msp_objects = file_db.get_objects_by_category('MSP')
+    msp_objects = file_db.get_objects_by_category("MSP")
     if msp_objects:
         print(f"   Found {len(msp_objects)} MSP objects")
         print(f"   Examples: {', '.join(msp_objects[:5])}\n")
@@ -80,13 +95,14 @@ def main():
 
     # Example 9: Complex query - find all objects with 'filter' in description
     print("9. Finding objects with 'filter' in description...")
-    filter_objects = file_db.search_objects('filter', fields=['description'])
+    filter_objects = file_db.search_objects("filter", fields=["description"])
     print(f"   Found {len(filter_objects)} objects: {', '.join(filter_objects[:5])}\n")
 
     print("Demo complete!")
     print("\nOutput files created:")
     print(f"  - {db_path}")
     print(f"  - {json_path}")
+
 
 if __name__ == "__main__":
     main()

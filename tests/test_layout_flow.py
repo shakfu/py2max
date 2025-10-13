@@ -47,36 +47,38 @@ def test_layout_flow():
 
 def test_layout_flow2():
     """Test the new FlowLayoutManager with a complex signal chain."""
-    p = Patcher("outputs/test_layout_flow2.maxpat", layout="flow", validate_connections=False)
+    p = Patcher(
+        "outputs/test_layout_flow2.maxpat", layout="flow", validate_connections=False
+    )
 
     # Create a signal processing chain to test flow layout
     # Input section
     freq_control = p.add_floatbox()
     phase_control = p.add_floatbox()
-    
+
     # Oscillator section
     osc1 = p.add_textbox("cycle~ 440")
     osc2 = p.add_textbox("cycle~ 220")
-    
+
     # Processing section
     gain1 = p.add_textbox("gain~")
     gain2 = p.add_textbox("gain~")
     amp_control1 = p.add_floatbox()
     amp_control2 = p.add_floatbox()
-    
+
     # Mixing section
     mixer = p.add_textbox("+~")
-    
+
     # Effects section
     filter_obj = p.add_textbox("lores~")
     cutoff_control = p.add_floatbox()
-    
+
     # Output section
     output_gain = p.add_textbox("gain~")
     master_vol = p.add_floatbox()
     dac = p.add_textbox("ezdac~")
     scope = p.add_textbox("scope~")
-    
+
     # Create patchlines to define signal flow
     # Control connections
     p.add_line(freq_control, osc1)
@@ -85,7 +87,7 @@ def test_layout_flow2():
     p.add_line(amp_control2, gain2)
     p.add_line(cutoff_control, filter_obj, inlet=1)
     p.add_line(master_vol, output_gain)
-    
+
     # Signal flow
     p.add_line(osc1, gain1)
     p.add_line(osc2, gain2)
@@ -96,13 +98,13 @@ def test_layout_flow2():
     p.add_line(output_gain, dac)
     p.add_line(output_gain, dac, inlet=1)  # stereo
     p.add_line(output_gain, scope)
-    
+
     # Test that we can optimize layout after creating connections
     p.optimize_layout()
-    
+
     # Verify layout manager is FlowLayoutManager
     assert isinstance(p._layout_mgr, FlowLayoutManager)
-    
+
     # Verify objects have reasonable positions
     positions = []
     for box in p._boxes:
@@ -111,11 +113,13 @@ def test_layout_flow2():
         # Check that positions are within patcher bounds
         assert 0 <= pos.x <= p.width
         assert 0 <= pos.y <= p.height
-    
+
     # Verify that positions are not all the same (layout actually worked)
     unique_positions = set(positions)
-    assert len(unique_positions) > 1, "Layout should create different positions for objects"
-    
+    assert len(unique_positions) > 1, (
+        "Layout should create different positions for objects"
+    )
+
     p.save()
 
 
@@ -127,23 +131,23 @@ def test_layout_flow_simple():
     osc = p.add_textbox("cycle~ 440")
     gain = p.add_textbox("gain~")
     dac = p.add_textbox("ezdac~")
-    
+
     # Connect them
     p.add_line(osc, gain)
     p.add_line(gain, dac)
-    
+
     # Optimize layout
     p.optimize_layout()
-    
+
     # Verify positions make sense (left-to-right flow)
     osc_x = osc.patching_rect.x
     gain_x = gain.patching_rect.x
     dac_x = dac.patching_rect.x
-    
+
     # Should be roughly left-to-right ordering
     assert osc_x < gain_x, "Oscillator should be left of gain"
     assert gain_x < dac_x, "Gain should be left of DAC"
-    
+
     p.save()
 
 
@@ -155,7 +159,7 @@ def test_layout_flow_fallback():
     obj1 = p.add_textbox("cycle~")
     obj2 = p.add_textbox("gain~")
     obj3 = p.add_textbox("ezdac~")
-    
+
     # Should still work and place objects
     positions = []
     for box in p._boxes:
@@ -163,113 +167,121 @@ def test_layout_flow_fallback():
         positions.append((pos.x, pos.y))
         assert 0 <= pos.x <= p.width
         assert 0 <= pos.y <= p.height
-    
+
     # Should create different positions even without connections
     unique_positions = set(positions)
     assert len(unique_positions) > 1, "Should still layout objects without connections"
-    
+
     p.save()
 
 
 def test_layout_flow_vertical():
     """Test FlowLayoutManager with vertical (top-to-bottom) flow direction."""
-    p = Patcher("outputs/test_layout_flow_vertical.maxpat", layout="flow", flow_direction="vertical")
+    p = Patcher(
+        "outputs/test_layout_flow_vertical.maxpat",
+        layout="flow",
+        flow_direction="vertical",
+    )
 
     # Simple chain: oscillator -> gain -> dac
     osc = p.add_textbox("cycle~ 440")
     gain = p.add_textbox("gain~")
     dac = p.add_textbox("ezdac~")
-    
+
     # Connect them
     p.add_line(osc, gain)
     p.add_line(gain, dac)
-    
+
     # Optimize layout
     p.optimize_layout()
-    
+
     # Verify positions make sense (top-to-bottom flow)
     osc_y = osc.patching_rect.y
     gain_y = gain.patching_rect.y
     dac_y = dac.patching_rect.y
-    
+
     # Should be roughly top-to-bottom ordering
     assert osc_y < gain_y, "Oscillator should be above gain"
     assert gain_y < dac_y, "Gain should be above DAC"
-    
+
     # Verify layout manager has correct flow direction
     assert isinstance(p._layout_mgr, FlowLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
-    
+
     p.save()
 
 
 def test_layout_flow_vertical_complex():
     """Test FlowLayoutManager with vertical flow direction on a complex signal chain."""
-    p = Patcher("outputs/test_layout_flow_vertical_complex.maxpat", layout="flow", flow_direction="vertical")
+    p = Patcher(
+        "outputs/test_layout_flow_vertical_complex.maxpat",
+        layout="flow",
+        flow_direction="vertical",
+    )
 
     # Create a more complex signal processing chain
     # Input section (should be at top)
     freq_control = p.add_floatbox()
-    
+
     # Oscillator section (next level down)
     osc1 = p.add_textbox("cycle~ 440")
     osc2 = p.add_textbox("cycle~ 220")
-    
+
     # Processing section (third level)
     gain1 = p.add_textbox("gain~")
     gain2 = p.add_textbox("gain~")
-    
+
     # Mixing section (fourth level)
     mixer = p.add_textbox("+~")
-    
+
     # Output section (bottom level)
     dac = p.add_textbox("ezdac~")
-    
+
     # Create connections to define signal flow hierarchy
     p.add_line(freq_control, osc1)  # Control to oscillator 1
     p.add_line(freq_control, osc2)  # Control to oscillator 2
-    p.add_line(osc1, gain1)         # Osc1 to gain1
-    p.add_line(osc2, gain2)         # Osc2 to gain2
-    p.add_line(gain1, mixer)        # Gain1 to mixer
+    p.add_line(osc1, gain1)  # Osc1 to gain1
+    p.add_line(osc2, gain2)  # Osc2 to gain2
+    p.add_line(gain1, mixer)  # Gain1 to mixer
     p.add_line(gain2, mixer, inlet=1)  # Gain2 to mixer
-    p.add_line(mixer, dac)          # Mixer to DAC
-    
+    p.add_line(mixer, dac)  # Mixer to DAC
+
     # Optimize layout
     p.optimize_layout()
-    
+
     # Verify vertical flow ordering
     # Control should be at top
     control_y = freq_control.patching_rect.y
-    
+
     # Oscillators should be below controls
     osc1_y = osc1.patching_rect.y
     osc2_y = osc2.patching_rect.y
     assert osc1_y > control_y, "Oscillators should be below controls"
     assert osc2_y > control_y, "Oscillators should be below controls"
-    
+
     # Gains should be below oscillators
     gain1_y = gain1.patching_rect.y
     gain2_y = gain2.patching_rect.y
     assert gain1_y > osc1_y, "Gains should be below oscillators"
     assert gain2_y > osc2_y, "Gains should be below oscillators"
-    
+
     # Mixer should be below gains
     mixer_y = mixer.patching_rect.y
     assert mixer_y > gain1_y, "Mixer should be below gains"
     assert mixer_y > gain2_y, "Mixer should be below gains"
-    
+
     # DAC should be at bottom
     dac_y = dac.patching_rect.y
     assert dac_y > mixer_y, "DAC should be below mixer"
-    
+
     # Verify objects at same level are arranged horizontally (not overlapping)
     # Oscillators should have different x positions but similar y positions
     osc_y_diff = abs(osc1_y - osc2_y)
     osc_x_diff = abs(osc1.patching_rect.x - osc2.patching_rect.x)
     assert osc_x_diff > 0, "Oscillators should have different x positions"
-    
+
     # Gains should also be arranged horizontally
     gain_x_diff = abs(gain1.patching_rect.x - gain2.patching_rect.x)
     assert gain_x_diff > 0, "Gains should have different x positions"
-    
+
     p.save()

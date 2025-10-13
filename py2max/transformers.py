@@ -112,7 +112,8 @@ _TRANSFORMERS: Dict[str, TransformerSpec] = {
         _add_comment_factory, "Attach the supplied comment text above each box"
     ),
     "optimize-layout": TransformerSpec(
-        _optimize_layout_factory, "Run layout optimisation (optionally specify layout name)"
+        _optimize_layout_factory,
+        "Run layout optimisation (optionally specify layout name)",
     ),
     "set-flow-direction": TransformerSpec(
         _set_flow_direction_factory,
@@ -147,7 +148,9 @@ def create_transformer(name: str, argument: Optional[str] = None) -> Transformer
     try:
         return spec.factory(argument)
     except ValueError as exc:  # pragma: no cover - argument parsing failure
-        raise ValueError(f"Invalid argument for transformer '{name}': {argument}") from exc
+        raise ValueError(
+            f"Invalid argument for transformer '{name}': {argument}"
+        ) from exc
 
 
 __all__ = [

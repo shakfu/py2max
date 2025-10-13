@@ -30,11 +30,13 @@ MAX_VER_REVISION = 5
 # ---------------------------------------------------------------------------
 # Utility Classes and functions
 
+
 class Rect(NamedTuple):
     x: float
     y: float
     w: float
     h: float
+
 
 # ---------------------------------------------------------------------------
 # Layout Classes
@@ -183,6 +185,7 @@ class VerticalLayoutManager(LayoutManager):
         x = pad + x_shift
 
         return Rect(x, y, w, h)
+
 
 # ---------------------------------------------------------------------------
 # Primary Classes
@@ -960,7 +963,7 @@ class Patcher:
                 inletInfo: dict[str, list] = {"IOInfo": []}
                 for i in range(kwds["numinlets"]):
                     inletInfo["IOInfo"].append(
-                        dict(comment="", index=i + 1, tag=f"in{i+1}", type="signal")
+                        dict(comment="", index=i + 1, tag=f"in{i + 1}", type="signal")
                     )
                 kwds["inletInfo"] = inletInfo
         if "outletInfo" not in kwds:
@@ -968,7 +971,7 @@ class Patcher:
                 outletInfo: dict[str, list] = {"IOInfo": []}
                 for i in range(kwds["numoutlets"]):
                     outletInfo["IOInfo"].append(
-                        dict(comment="", index=i + 1, tag=f"out{i+1}", type="signal")
+                        dict(comment="", index=i + 1, tag=f"out{i + 1}", type="signal")
                     )
                 kwds["outletInfo"] = outletInfo
 
@@ -1373,41 +1376,42 @@ class Patchline:
         patchline.__dict__.update(obj_dict)
         return patchline
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import argparse
     from maxref import MaxRefParser
 
     def test():
-        p = Patcher('out.maxpat')
+        p = Patcher("out.maxpat")
         p.layout
-        osc1 = p.add_textbox('cycle~ 440')
-        gain = p.add_textbox('gain~')
-        dac = p.add_textbox('ezdac~')
+        osc1 = p.add_textbox("cycle~ 440")
+        gain = p.add_textbox("gain~")
+        dac = p.add_textbox("ezdac~")
         p.add_line(osc1, gain)
         p.add_line(gain, dac)
         p.save()
 
-    def dump_tests(name: str, file_maxpat='out.maxpat'):
+    def dump_tests(name: str, file_maxpat="out.maxpat"):
         parser = MaxRefParser(name)
         parser.parse()
-        p = Patcher(file_maxpat, layout='vertical')
+        p = Patcher(file_maxpat, layout="vertical")
         p._layout_mgr.pad = 24
         p._layout_mgr.x_offset_multiplier = 6
-        sender = p.add_textbox('s to_py')
-        classname = parser.d['name']
-        for name in parser.d['methods']:
-            m = parser.d['methods'][name]
+        sender = p.add_textbox("s to_py")
+        classname = parser.d["name"]
+        for name in parser.d["methods"]:
+            m = parser.d["methods"][name]
             test_name = f"test_{classname}_{name}()"
             msg = p.add_message(test_name)
             p.add_line(msg, sender)
         p.save()
 
     parser = argparse.ArgumentParser(
-        prog='py2max',
-        description='A pure python library to generate .maxpat patcher files.'
+        prog="py2max",
+        description="A pure python library to generate .maxpat patcher files.",
     )
-    parser.add_argument('name', nargs='?', help='enter <name>.maxref.xml name')
-    parser.add_argument('-t', '--test', action='store_true', help="generate tests")
+    parser.add_argument("name", nargs="?", help="enter <name>.maxref.xml name")
+    parser.add_argument("-t", "--test", action="store_true", help="generate tests")
 
     args = parser.parse_args()
     assert args.name, "name in `py2max [options] <name>` must be provided"

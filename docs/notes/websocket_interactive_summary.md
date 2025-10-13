@@ -56,12 +56,14 @@ Successfully implemented a full-featured **interactive WebSocket-based editor** 
 ### 1. Bidirectional WebSocket Communication
 
 **Python → Browser**:
+
 - Real-time patch updates
 - Object additions/modifications
 - Connection changes
 - Layout optimizations
 
 **Browser → Python**:
+
 - Drag-and-drop position updates
 - Object creation
 - Connection drawing
@@ -70,6 +72,7 @@ Successfully implemented a full-featured **interactive WebSocket-based editor** 
 ### 2. Interactive Features
 
 **Drag-and-Drop**:
+
 ```javascript
 // Mouse down on box → start drag
 // Mouse move → update position
@@ -77,7 +80,8 @@ Successfully implemented a full-featured **interactive WebSocket-based editor** 
 ```
 
 **Connection Mode**:
-```
+
+```text
 1. Click "Connect" button
 2. Click source object
 3. Click destination object
@@ -85,7 +89,8 @@ Successfully implemented a full-featured **interactive WebSocket-based editor** 
 ```
 
 **Object Creation**:
-```
+
+```text
 - Double-click canvas → create object dialog
 - Or click "Create Object" button
 - New object created in both browser and Python
@@ -94,10 +99,12 @@ Successfully implemented a full-featured **interactive WebSocket-based editor** 
 ### 3. Server Architecture
 
 **Dual Server Setup**:
+
 - HTTP server (port 8000) - serves static files
 - WebSocket server (port 8001) - handles bidirectional messages
 
 **Message Types**:
+
 ```python
 # Browser → Python
 {
@@ -200,7 +207,8 @@ asyncio.run(main())
 ### WebSocket Protocol
 
 **Connection Flow**:
-```
+
+```text
 1. Browser connects to ws://localhost:8001/ws
 2. Server sends initial patch state
 3. Browser renders SVG
@@ -222,6 +230,7 @@ box.patching_rect = Rect(new_x, new_y, rect.w, rect.h)
 ### Modern WebSockets API
 
 Uses the new `websockets.asyncio.server` API (v12+):
+
 ```python
 from websockets.asyncio.server import ServerConnection, serve
 ```
@@ -231,12 +240,14 @@ Avoids deprecated `websockets.server.WebSocketServerProtocol`.
 ## Test Results
 
 **WebSocket Tests**: 13/13 passed
+
 ```bash
 $ uv run pytest tests/test_websocket.py -v
 ============================== 13 passed in 2.59s ===============================
 ```
 
 **Full Test Suite**: 312/312 passed (14 skipped)
+
 ```bash
 $ make test
 ======================= 312 passed, 14 skipped in 11.24s ========================
@@ -256,12 +267,14 @@ $ make test
 ## Browser UI
 
 **Controls**:
+
 - **Connect Button**: Toggle connection mode
 - **Create Object Button**: Create new object dialog
 - **Status Indicator**: Shows connection state (green = connected, red = disconnected)
 - **Info Bar**: Shows object/connection counts and mode status
 
 **Interactions**:
+
 - **Drag objects**: Click and drag to reposition
 - **Double-click canvas**: Create new object
 - **Connection mode**: Click source, then destination to connect
@@ -277,9 +290,11 @@ $ make test
 ## Dependencies
 
 **Runtime**:
+
 - `websockets>=12.0` - WebSocket server implementation
 
 **Development**:
+
 - `pytest-asyncio>=0.21.0` - Async test support
 
 Both dependencies are minimal with no transitive dependencies.
@@ -313,7 +328,7 @@ python examples/interactive_demo.py context
 
 ## Architecture Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │           Browser (HTML/JS)                 │
 │  - Drag-and-drop objects                    │
@@ -346,6 +361,7 @@ python examples/interactive_demo.py context
 ## Future Enhancements
 
 Potential additions (not yet implemented):
+
 - Undo/redo functionality
 - Multi-select and bulk operations
 - Copy/paste objects
@@ -359,15 +375,15 @@ Potential additions (not yet implemented):
 
 The WebSocket interactive editor is **production-ready** and provides a complete interactive editing experience:
 
-- ✅ Full bidirectional communication
-- ✅ Drag-and-drop repositioning
-- ✅ Connection drawing
-- ✅ Object creation/deletion
-- ✅ Real-time synchronization
-- ✅ Multiple client support
-- ✅ Async context manager
-- ✅ Comprehensive test coverage
-- ✅ Modern WebSocket API
-- ✅ Minimal dependencies
+- [x] Full bidirectional communication
+- [x] Drag-and-drop repositioning
+- [x] Connection drawing
+- [x] Object creation/deletion
+- [x] Real-time synchronization
+- [x] Multiple client support
+- [x] Async context manager
+- [x] Comprehensive test coverage
+- [x] Modern WebSocket API
+- [x] Minimal dependencies
 
 Perfect for interactive patch development workflows, with Python and browser staying perfectly in sync.

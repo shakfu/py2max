@@ -17,6 +17,7 @@ class TestWebSocketServer:
             InteractivePatcherServer,
             serve_interactive,
         )
+
         assert InteractiveWebSocketHandler is not None
         assert InteractivePatcherServer is not None
         assert serve_interactive is not None
@@ -26,7 +27,7 @@ class TestWebSocketServer:
         """Test server initialization."""
         from py2max.server import InteractivePatcherServer
 
-        p = Patcher('test.maxpat')
+        p = Patcher("test.maxpat")
         server = InteractivePatcherServer(p, port=9000, auto_open=False)
 
         assert server.patcher is p
@@ -40,7 +41,7 @@ class TestWebSocketServer:
         """Test starting and stopping server."""
         from py2max.server import InteractivePatcherServer
 
-        p = Patcher('test.maxpat')
+        p = Patcher("test.maxpat")
         server = InteractivePatcherServer(p, port=9002, auto_open=False)
 
         # Start server
@@ -61,7 +62,7 @@ class TestWebSocketServer:
         """Test using server as async context manager."""
         from py2max.server import InteractivePatcherServer
 
-        p = Patcher('test.maxpat')
+        p = Patcher("test.maxpat")
 
         async with InteractivePatcherServer(p, port=9003, auto_open=False) as server:
             await server.start()
@@ -76,7 +77,7 @@ class TestWebSocketServer:
         """Test serve_interactive convenience function."""
         from py2max.server import serve_interactive
 
-        p = Patcher('test.maxpat')
+        p = Patcher("test.maxpat")
         server = await serve_interactive(p, port=9004, auto_open=False)
 
         assert server._running is True
@@ -87,11 +88,11 @@ class TestWebSocketServer:
     @pytest.mark.asyncio
     async def test_patcher_serve(self):
         """Test Patcher.serve() method."""
-        p = Patcher('test.maxpat')
+        p = Patcher("test.maxpat")
         server = await p.serve(port=9005, auto_open=False)
 
         assert server._running is True
-        assert hasattr(p, '_server')
+        assert hasattr(p, "_server")
         assert p._server is server
 
         await server.shutdown()
@@ -101,13 +102,13 @@ class TestWebSocketServer:
         """Test handler broadcast functionality."""
         from py2max.server import InteractiveWebSocketHandler
 
-        p = Patcher('test.maxpat')
-        p.add_textbox('cycle~ 440')
+        p = Patcher("test.maxpat")
+        p.add_textbox("cycle~ 440")
 
         handler = InteractiveWebSocketHandler(p)
 
         # Should not raise error with no clients
-        await handler.broadcast({'type': 'update', 'boxes': [], 'lines': []})
+        await handler.broadcast({"type": "update", "boxes": [], "lines": []})
 
         assert len(handler.clients) == 0
 
@@ -116,12 +117,12 @@ class TestWebSocketServer:
         """Test notify_update sends updates."""
         from py2max.server import InteractivePatcherServer
 
-        p = Patcher('test.maxpat')
+        p = Patcher("test.maxpat")
         server = InteractivePatcherServer(p, port=9006, auto_open=False)
         await server.start()
 
         # Add objects
-        p.add_textbox('cycle~ 440')
+        p.add_textbox("cycle~ 440")
 
         # Should not raise error even with no clients
         await server.notify_update()
@@ -137,17 +138,13 @@ class TestWebSocketHandler:
         """Test handling position update message."""
         from py2max.server import InteractiveWebSocketHandler
 
-        p = Patcher('test.maxpat')
-        box = p.add_textbox('cycle~ 440')
+        p = Patcher("test.maxpat")
+        box = p.add_textbox("cycle~ 440")
 
         handler = InteractiveWebSocketHandler(p)
 
         # Update position
-        await handler.handle_update_position({
-            'box_id': box.id,
-            'x': 100,
-            'y': 200
-        })
+        await handler.handle_update_position({"box_id": box.id, "x": 100, "y": 200})
 
         # Check position was updated
         assert box.patching_rect.x == 100
@@ -158,22 +155,18 @@ class TestWebSocketHandler:
         """Test handling object creation message."""
         from py2max.server import InteractiveWebSocketHandler
 
-        p = Patcher('test.maxpat')
+        p = Patcher("test.maxpat")
         handler = InteractiveWebSocketHandler(p)
 
         initial_count = len(p._boxes)
 
         # Create object
-        await handler.handle_create_object({
-            'text': 'gain~',
-            'x': 150,
-            'y': 250
-        })
+        await handler.handle_create_object({"text": "gain~", "x": 150, "y": 250})
 
         # Check object was created
         assert len(p._boxes) == initial_count + 1
         new_box = p._boxes[-1]
-        assert new_box.text == 'gain~'
+        assert new_box.text == "gain~"
         assert new_box.patching_rect.x == 150
         assert new_box.patching_rect.y == 250
 
@@ -182,21 +175,18 @@ class TestWebSocketHandler:
         """Test handling connection creation message."""
         from py2max.server import InteractiveWebSocketHandler
 
-        p = Patcher('test.maxpat')
-        box1 = p.add_textbox('cycle~ 440')
-        box2 = p.add_textbox('gain~')
+        p = Patcher("test.maxpat")
+        box1 = p.add_textbox("cycle~ 440")
+        box2 = p.add_textbox("gain~")
 
         handler = InteractiveWebSocketHandler(p)
 
         initial_count = len(p._lines)
 
         # Create connection
-        await handler.handle_create_connection({
-            'src_id': box1.id,
-            'dst_id': box2.id,
-            'src_outlet': 0,
-            'dst_inlet': 0
-        })
+        await handler.handle_create_connection(
+            {"src_id": box1.id, "dst_id": box2.id, "src_outlet": 0, "dst_inlet": 0}
+        )
 
         # Check connection was created
         assert len(p._lines) == initial_count + 1
@@ -209,16 +199,14 @@ class TestWebSocketHandler:
         """Test handling object deletion message."""
         from py2max.server import InteractiveWebSocketHandler
 
-        p = Patcher('test.maxpat')
-        box = p.add_textbox('cycle~ 440')
+        p = Patcher("test.maxpat")
+        box = p.add_textbox("cycle~ 440")
         box_id = box.id
 
         handler = InteractiveWebSocketHandler(p)
 
         # Delete object
-        await handler.handle_delete_object({
-            'box_id': box_id
-        })
+        await handler.handle_delete_object({"box_id": box_id})
 
         # Check object was deleted
         assert len(p._boxes) == 0
@@ -228,20 +216,17 @@ class TestWebSocketHandler:
         """Test handling connection deletion message."""
         from py2max.server import InteractiveWebSocketHandler
 
-        p = Patcher('test.maxpat')
-        box1 = p.add_textbox('cycle~ 440')
-        box2 = p.add_textbox('gain~')
+        p = Patcher("test.maxpat")
+        box1 = p.add_textbox("cycle~ 440")
+        box2 = p.add_textbox("gain~")
         p.add_line(box1, box2)
 
         handler = InteractiveWebSocketHandler(p)
 
         # Delete connection
-        await handler.handle_delete_connection({
-            'src_id': box1.id,
-            'dst_id': box2.id,
-            'src_outlet': 0,
-            'dst_inlet': 0
-        })
+        await handler.handle_delete_connection(
+            {"src_id": box1.id, "dst_id": box2.id, "src_outlet": 0, "dst_inlet": 0}
+        )
 
         # Check connection was deleted
         assert len(p._lines) == 0

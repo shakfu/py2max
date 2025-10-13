@@ -4,7 +4,7 @@
 
 Initial implementation only allowed connections to start from **outlets** (orange) and end at **inlets** (blue). This was inconsistent with Max/MSP, which allows you to start from either port type.
 
-## Fix Applied ✅
+## Fix Applied [x]
 
 Updated the connection logic to work **exactly like Max** - you can start from either an inlet or an outlet, as long as the second click is the opposite type.
 
@@ -13,6 +13,7 @@ Updated the connection logic to work **exactly like Max** - you can start from e
 ### JavaScript Changes (`py2max/static/interactive.js`)
 
 **Before**:
+
 ```javascript
 handlePortClick(box, portIndex, isOutlet) {
     if (!this.connectionStart) {
@@ -34,6 +35,7 @@ handlePortClick(box, portIndex, isOutlet) {
 ```
 
 **After**:
+
 ```javascript
 handlePortClick(box, portIndex, isOutlet) {
     if (!this.connectionStart) {
@@ -90,18 +92,21 @@ handlePortClick(box, portIndex, isOutlet) {
 ## How It Works Now
 
 ### Scenario 1: Start from Outlet (traditional)
-```
+
+```text
 1. Click outlet on "cycle~"  → Info: "Connecting from cycle~ outlet 0... Click inlet"
 2. Click inlet on "gain~"    → Connection created: cycle~[0] → gain~[0]
 ```
 
 ### Scenario 2: Start from Inlet (new!)
-```
+
+```text
 1. Click inlet on "gain~"    → Info: "Connecting from gain~ inlet 0... Click outlet"
 2. Click outlet on "cycle~"  → Connection created: cycle~[0] → gain~[0]
 ```
 
 ### Result
+
 Same connection is created regardless of which port you click first!
 
 ## User Benefits
@@ -114,22 +119,25 @@ Same connection is created regardless of which port you click first!
 
 ## Testing
 
-### All Tests Pass ✅
+### All Tests Pass [x]
+
 ```bash
 uv run pytest tests/
 # 312 passed, 14 skipped
 ```
 
 ### Interactive Test
+
 ```bash
 uv run python tests/examples/interactive_demo.py
 ```
 
 Try:
-- Click outlet → inlet ✅
-- Click inlet → outlet ✅
-- Click outlet → outlet ❌ (shows error: "Click an inlet, not another outlet")
-- Click inlet → inlet ❌ (shows error: "Click an outlet, not another inlet")
+
+- Click outlet → inlet [x]
+- Click inlet → outlet [x]
+- Click outlet → outlet [X] (shows error: "Click an inlet, not another outlet")
+- Click inlet → inlet [X] (shows error: "Click an outlet, not another inlet")
 
 ## Files Modified
 
@@ -147,9 +155,9 @@ Try:
 
 The connection system now works **exactly like Max/MSP**:
 
-✅ Click outlet → inlet (works)
-✅ Click inlet → outlet (works)
-❌ Click outlet → outlet (error)
-❌ Click inlet → inlet (error)
+[x] Click outlet → inlet (works)
+[x] Click inlet → outlet (works)
+[X] Click outlet → outlet (error)
+[X] Click inlet → inlet (error)
 
 This provides maximum flexibility and matches user expectations from Max itself.

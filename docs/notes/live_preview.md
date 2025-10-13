@@ -47,7 +47,7 @@ py2max serve my-patch.maxpat --no-open
 
 ### How It Works
 
-```
+```text
 ┌──────────────┐                    ┌──────────────┐
 │ Python REPL  │                    │   Browser    │
 │              │                    │              │
@@ -62,6 +62,7 @@ py2max serve my-patch.maxpat --no-open
 ```
 
 **Server-Sent Events (SSE):**
+
 - One-way communication: Python → Browser
 - Automatic reconnection on disconnect
 - Keepalive mechanism
@@ -165,13 +166,16 @@ def serve(self, port: int = 8000, auto_open: bool = True) -> PatcherServer
 ```
 
 **Args:**
+
 - `port` (int): HTTP server port (default: 8000)
 - `auto_open` (bool): Auto-open browser (default: True)
 
 **Returns:**
+
 - `PatcherServer`: Server instance
 
 **Example:**
+
 ```python
 server = p.serve(port=8080, auto_open=False)
 ```
@@ -244,6 +248,7 @@ The live preview browser interface shows:
 - **Automatic reconnection** on disconnect
 
 **Keyboard shortcuts:**
+
 - `Ctrl+R` - Refresh view
 - `F11` - Fullscreen
 

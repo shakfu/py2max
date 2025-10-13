@@ -16,7 +16,7 @@ Successfully implemented a complete SVG export feature for py2max that enables o
 
 2. **`tests/test_svg.py`** (320 lines)
    - 17 comprehensive test cases
-   - All tests passing ✓
+   - All tests passing [x]
    - Covers CLI, API, edge cases
 
 3. **`tests/examples/preview/svg_preview_demo.py`** (330 lines)
@@ -57,14 +57,14 @@ Successfully implemented a complete SVG export feature for py2max that enables o
 
 ### Core Functionality
 
-✅ SVG rendering for Max patches
-✅ Box rendering with type-specific styling
-✅ Patchline rendering with connection points
-✅ Inlet/outlet port visualization
-✅ Automatic port detection from MaxRef
-✅ Text escaping for special characters
-✅ Automatic viewBox calculation
-✅ Support for Rect objects and list/tuple coordinates
+[x] SVG rendering for Max patches
+[x] Box rendering with type-specific styling
+[x] Patchline rendering with connection points
+[x] Inlet/outlet port visualization
+[x] Automatic port detection from MaxRef
+[x] Text escaping for special characters
+[x] Automatic viewBox calculation
+[x] Support for Rect objects and list/tuple coordinates
 
 ### CLI Command
 
@@ -73,6 +73,7 @@ py2max preview <input.maxpat> [OPTIONS]
 ```
 
 **Options:**
+
 - `-o, --output` - Custom output path
 - `--title` - Custom SVG title
 - `--no-title` - Disable title
@@ -103,7 +104,7 @@ svg_content = export_svg_string(patcher, show_ports=False)
 ## Test Results
 
 **Total:** 291 tests
-**Passed:** 277 ✓
+**Passed:** 277 [x]
 **Skipped:** 14 (optional dependencies)
 **SVG-specific:** 17 tests (all passing)
 
@@ -160,6 +161,7 @@ export_svg(p, 'synth.svg', title="Simple Synth")
 ## Files Generated
 
 Example SVG output:
+
 - Clean, well-formatted XML
 - Includes title, boxes, patchlines, ports
 - Scalable and browser-ready
@@ -168,17 +170,19 @@ Example SVG output:
 ## Integration
 
 The feature is fully integrated into the py2max ecosystem:
-- ✅ CLI command registered
-- ✅ Python API exported
-- ✅ Documentation complete
-- ✅ Tests comprehensive
-- ✅ Examples provided
-- ✅ CHANGELOG updated
-- ✅ README updated
+
+- [x] CLI command registered
+- [x] Python API exported
+- [x] Documentation complete
+- [x] Tests comprehensive
+- [x] Examples provided
+- [x] CHANGELOG updated
+- [x] README updated
 
 ## Next Steps (Future Enhancements)
 
 Potential improvements for future versions:
+
 - Interactive SVG with hover states
 - Subpatcher expansion/collapse
 - Export to PNG/PDF formats

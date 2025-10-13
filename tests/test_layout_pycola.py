@@ -9,6 +9,7 @@ import pytest
 
 try:
     from pycola.layout import Layout
+
     # from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
     HAS_PYCOLA = True
 except ImportError:
@@ -20,7 +21,6 @@ from py2max.common import Rect
 
 class ColaPatcher(Patcher):
     def reposition(self):
-
         # add nodes
         nodes = []
         id_to_index = {}
@@ -28,11 +28,11 @@ class ColaPatcher(Patcher):
             x, y, h, w = box.patching_rect
 
             node = {
-              'id': box.id,
-              'x': x,
-              'y': y,
-              'width': w,   # Add this
-              'height': h   # Add this
+                "id": box.id,
+                "x": x,
+                "y": y,
+                "width": w,  # Add this
+                "height": h,  # Add this
             }
             nodes.append(node)
             id_to_index[box.id] = i  # Map ID to index
@@ -40,11 +40,11 @@ class ColaPatcher(Patcher):
         # Build edges using indices
         edges = []
         for line in self._lines:
-          edge = {
-              'source': id_to_index[line.src],  # Use index, not ID
-              'target': id_to_index[line.dst]   # Use index, not ID
-          }
-          edges.append(edge)
+            edge = {
+                "source": id_to_index[line.src],  # Use index, not ID
+                "target": id_to_index[line.dst],  # Use index, not ID
+            }
+            edges.append(edge)
 
         layout = Layout()
         layout.nodes(nodes)
@@ -55,7 +55,7 @@ class ColaPatcher(Patcher):
         scale = 1
         repos = []
         for node in nodes:
-            repos.append((node['x'] * scale, node['y'] * scale))
+            repos.append((node["x"] * scale, node["y"] * scale))
 
         _boxes = []
         for box, xy in zip(self._boxes, repos):
