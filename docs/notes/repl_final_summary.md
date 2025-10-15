@@ -39,7 +39,7 @@ $ py2max serve patch.maxpat  $ py2max repl localhost:8002
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    py2max System Architecture                │
+│                    py2max System Architecture               │
 └─────────────────────────────────────────────────────────────┘
 
 Terminal 1: Server                    Terminal 2: REPL Client
@@ -51,7 +51,7 @@ Terminal 1: Server                    Terminal 2: REPL Client
 │ │ HTTP Server     │  │              │ │ ReplClient    │  │
 │ │ Port: 8000      │  │              │ │               │  │
 │ │ Serves browser  │  │              │ │ Simple input  │  │
-│ │ UI             │  │              │ │ loop          │  │
+│ │ UI              │  │              │ │ loop          │  │
 │ └─────────────────┘  │              │ │               │  │
 │                      │              │ │ (TODO: full   │  │
 │ ┌─────────────────┐  │              │ │ ptpython)     │  │
@@ -77,9 +77,9 @@ Terminal 1: Server                    Terminal 2: REPL Client
 Browser: http://localhost:8000
 ┌────────────────────────┐
 │  Interactive Editor    │
-│  - Drag objects       │
+│  - Drag objects        │
 │  - Create connections  │
-│  - Real-time updates  │
+│  - Real-time updates   │
 └────────────────────────┘
 ```
 
@@ -216,7 +216,7 @@ Connections: 1 lines
 - [x] Command help
 - [x] Graceful error display
 
-###  TODO (Future Enhancements)
+### TODO (Future Enhancements)
 
 **Full ptpython Integration**:
 - [ ] Syntax highlighting
@@ -397,8 +397,8 @@ Conclusion: Very lightweight
 | **Usability** | [X] Poor | [x] Excellent |
 | **Multiple clients** | [X] No | [x] Yes |
 | **Reconnect** | [X] No | [x] Yes |
-| **Terminal setup** | [x] Single | 🟡 Two |
-| **Complexity** | [x] Simple | 🟡 Moderate |
+| **Terminal setup** | [x] Single | [o] Two |
+| **Complexity** | [x] Simple | [o] Moderate |
 
 **Verdict**: Client-server is significantly better for development.
 
@@ -511,19 +511,19 @@ await embed(
 
 ### Implementation Quality
 
-**Code Quality**: ⭐⭐⭐⭐ (4/5)
+**Code Quality**: [*][*][*][*] (4/5)
 - Clean architecture
 - Well documented
 - Error handling
 - TODO: Unit tests
 
-**User Experience**: ⭐⭐⭐⭐ (4/5)
+**User Experience**: [*][*][*][*] (4/5)
 - Solves the problem
 - Easy to use
 - Good error messages
 - TODO: Full ptpython integration
 
-**Documentation**: ⭐⭐⭐⭐⭐ (5/5)
+**Documentation**: [*][*][*][*][*] (5/5)
 - Comprehensive docs
 - Architecture diagrams
 - Usage examples

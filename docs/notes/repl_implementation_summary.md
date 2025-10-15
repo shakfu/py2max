@@ -211,12 +211,13 @@ dependencies = [
 
 | Criterion | ptpython | IPython | Raw prompt-toolkit |
 |-----------|----------|---------|-------------------|
-| Async support | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| Implementation time | ⭐⭐⭐⭐⭐ (1-2d) | ⭐⭐⭐⭐ (2-3d) | ⭐⭐ (4-5d) |
-| Dependencies | ⭐⭐⭐⭐ (~2MB) | ⭐⭐ (~5MB) | ⭐⭐⭐⭐⭐ (minimal) |
-| Features | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| Ease of use | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
-| **Overall** | **⭐⭐⭐⭐⭐** | **⭐⭐⭐** | **⭐⭐** |
+| Async support | [+] | [+] | [+] |
+| Implementation time | [+] (1-2d) | [+] (2-3d) | [+] (4-5d) |
+| Dependencies | [+] (~2MB) | [+] (~5MB) | [+] (minimal) |
+| Features | [+] | [+] | [+] |
+| Ease of use | [+] | [+] | [+] |
+| **Overall** | **[+]** | **[+]** | **[+]** |
+
 
 ### Command Functions vs Magic Commands
 

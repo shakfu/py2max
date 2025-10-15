@@ -257,21 +257,21 @@ $ py2max serve patch.maxpat --repl --log-file server.log
 
 ## Quality Metrics
 
-### Code Quality: ⭐⭐⭐⭐⭐ (5/5)
+### Code Quality: [*][*][*][*][*] (5/5)
 - Clean architecture
 - Well-structured modules
 - Comprehensive error handling
 - Extensive documentation
 - Full test coverage
 
-### User Experience: ⭐⭐⭐⭐⭐ (5/5)
+### User Experience: [*][*][*][*][*] (5/5)
 - Solves the original problem completely
 - Two modes for different use cases
 - Easy to use
 - Clear documentation
 - Good error messages
 
-### Documentation: ⭐⭐⭐⭐⭐ (5/5)
+### Documentation: [*][*][*][*][*] (5/5)
 - 4 comprehensive markdown documents
 - Usage examples
 - Architecture diagrams

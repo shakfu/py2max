@@ -23,7 +23,7 @@ Comparison of three REPL solutions for implementing `py2max serve --repl`:
 | **Syntax Highlighting** | [x] Built-in | [x] Built-in | [x] Via Pygments |
 | **Tab Completion** | [x] Built-in | [x] Built-in |  Implement yourself |
 | **Command History** | [x] Persistent | [x] Persistent |  Implement yourself |
-| **Customization** | 🟡 Moderate | 🟡 Moderate | [x] Complete control |
+| **Customization** | [o] Moderate | [o] Moderate | [x] Complete control |
 | **Dependencies** | Lightweight | Heavy (many deps) | Minimal (2 deps) |
 | **Learning Curve** | Low | Medium | High |
 | **Implementation Time** | 1-2 days | 2-3 days | 4-5 days |
@@ -34,7 +34,7 @@ Comparison of three REPL solutions for implementing `py2max serve --repl`:
 
 ## Detailed Analysis
 
-### 1. ptpython (⭐ RECOMMENDED)
+### 1. ptpython (`[*]` RECOMMENDED)
 
 **Project**: https://github.com/prompt-toolkit/ptpython
 **PyPI**: https://pypi.org/project/ptpython/
@@ -101,12 +101,12 @@ class Box:
 - Would need to implement our own (e.g., `%save`, `%info`)
 - Alternative: Use `ptipython` (hybrid) for IPython magics
 
-**🟡 Limited Customization Compared to Raw**:
+**[o] Limited Customization Compared to Raw**:
 - Can't deeply customize the REPL behavior
 - Configuration via `config.py` but limited scope
 - Less control than building from scratch
 
-**🟡 Config Ignored When Embedding**:
+**[o] Config Ignored When Embedding**:
 - User's `~/.config/ptpython/config.py` not loaded in embedded mode
 - Need to configure programmatically
 
@@ -262,12 +262,12 @@ ipshell()
 - Default fake coroutine runner may not work well with our WebSocket server
 - `%autoawait` feature may not work when embedding
 
-**🟡 Overkill for py2max**:
+**[o] Overkill for py2max**:
 - Most IPython features not needed (matplotlib, widgets, etc.)
 - We only need: REPL + async + magic commands
 - Brings unnecessary complexity
 
-**🟡 Configuration Complexity**:
+**[o] Configuration Complexity**:
 - Powerful but complex configuration system (traitlets)
 - Harder to customize for specific needs
 
@@ -337,7 +337,7 @@ async def start_repl(patcher, server):
 - Slower startup
 - Autoawait issues when embedded
 
-**Recommendation**: 🟡 **Possible for Phase 2, but ptpython better**
+**Recommendation**: [o] **Possible for Phase 2, but ptpython better**
 
 ---
 
@@ -415,7 +415,7 @@ async def main():
 - Need comprehensive tests
 - Ongoing maintenance burden
 
-**🟡 Steeper Learning Curve**:
+**[o] Steeper Learning Curve**:
 - Need to understand prompt-toolkit internals
 - More complex than using ptpython
 - Documentation is good but requires study
@@ -568,8 +568,8 @@ async def start_repl(patcher, server):
 | Feature | ptpython | IPython | Raw prompt-toolkit |
 |---------|----------|---------|-------------------|
 | Top-level await | [x] Native | [x] Autoawait | [x] Custom |
-| Background tasks | [x] Perfect | 🟡 Complex | [x] Perfect |
-| Event loop integration | [x] Seamless | 🟡 Tricky when embedded | [x] Full control |
+| Background tasks | [x] Perfect | [o] Complex | [x] Perfect |
+| Event loop integration | [x] Seamless | [o] Tricky when embedded | [x] Full control |
 | Implementation complexity | Low | Medium-High | Medium |
 
 **Winner**: ptpython (seamless async with minimal code)
@@ -578,7 +578,7 @@ async def start_repl(patcher, server):
 
 | Feature | ptpython | IPython | Raw prompt-toolkit |
 |---------|----------|---------|-------------------|
-| Ease of embedding | [x] Very simple | 🟡 Moderate | [X] Build yourself |
+| Ease of embedding | [x] Very simple | [o] Moderate | [X] Build yourself |
 | Code required | 5-10 lines | 20-30 lines | 100+ lines |
 | Namespace injection | [x] Simple dict | [x] Simple dict | [x] Simple dict |
 | Configuration | Programmatic | Complex (traitlets) | Full control |
@@ -678,13 +678,13 @@ await embed(globals=namespace)
 - Different syntax than IPython (`save()` vs `%save`)
 - Less discoverable
 
-**Verdict**: ⭐ **Best approach for py2max**
+**Verdict**: `[*]` **Best approach for py2max**
 
 ---
 
 ## Final Recommendation
 
-### ⭐ Winner: ptpython + Custom Commands
+### `[*]` Winner: ptpython + Custom Commands
 
 **Rationale**:
 
@@ -827,14 +827,14 @@ py2max[demo.maxpat]>>> save()
 
 | Criterion | ptpython | IPython | Raw |
 |-----------|----------|---------|-----|
-| **Async support** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Ease of use** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
-| **Implementation time** | ⭐⭐⭐⭐⭐ (1-2d) | ⭐⭐⭐⭐ (2-3d) | ⭐⭐ (4-5d) |
-| **Dependencies** | ⭐⭐⭐⭐ (light) | ⭐⭐ (heavy) | ⭐⭐⭐⭐⭐ (minimal) |
-| **Features** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Customization** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Maintenance** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
-| **Overall** | **⭐⭐⭐⭐⭐** | **⭐⭐⭐** | **⭐⭐** |
+| **Async support** | [*][*][*][*][*] | [*][*][*] | [*][*][*][*][*] |
+| **Ease of use** | [*][*][*][*][*] | [*][*][*][*] | [*][*] |
+| **Implementation time** | [*][*][*][*][*] (1-2d) | [*][*][*][*] (2-3d) | [*][*] (4-5d) |
+| **Dependencies** | [*][*][*][*] (light) | [*][*] (heavy) | [*][*][*][*][*] (minimal) |
+| **Features** | [*][*][*][*] | [*][*][*][*][*] | [*][*][*] |
+| **Customization** | [*][*][*] | [*][*][*] | [*][*][*][*][*] |
+| **Maintenance** | [*][*][*][*][*] | [*][*][*][*] | [*][*] |
+| **Overall** | **[*][*][*][*][*]** | **[*][*][*]** | **[*][*]** |
 
 ---
 

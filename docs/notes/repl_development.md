@@ -96,7 +96,7 @@ py2max already has substantial infrastructure for this feature:
 
 ## Technical Requirements
 
-### Architecture Option 1: AsyncIO-Based REPL ⭐ **RECOMMENDED**
+### Architecture Option 1: AsyncIO-Based REPL `[*]` **RECOMMENDED**
 
 ```python
 # Conceptual structure
@@ -468,7 +468,7 @@ py2max serve patch.maxpat --watch script.py --repl
 
 ## Recommendations
 
-### 1. Start with Option 1 (AsyncIO-Based REPL) ⭐
+### 1. Start with Option 1 (AsyncIO-Based REPL) `[*]`
 
 **Rationale**:
 - Builds on existing infrastructure (WebSocket server)
@@ -571,7 +571,7 @@ The biggest challenge is Max/MSP's lack of native auto-reload for `.maxpat` file
 | Option | Pros | Cons | Recommendation |
 |--------|------|------|----------------|
 | **A. Document manual reload** | Simple, no code changes | User must reload manually | [x] Phase 1 |
-| **B. OSC/UDP trigger** | Automated reload possible | Requires Max helper patch | ⭐ Phase 3 |
+| **B. OSC/UDP trigger** | Automated reload possible | Requires Max helper patch | `[*]` Phase 3 |
 | **C. AppleScript/AutoHotkey** | Platform automation | Fragile, platform-specific | [X] Avoid |
 | **D. Browser-only workflow** | Already works perfectly | Can't test in Max directly | [x] Recommend |
 
