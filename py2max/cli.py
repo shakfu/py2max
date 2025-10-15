@@ -656,6 +656,15 @@ def cmd_serve(args: argparse.Namespace) -> int:
         print("Install with: pip install websockets", file=sys.stderr)
         return 1
 
+    # Check if ptpython is installed (if --repl requested)
+    if args.repl:
+        try:
+            import ptpython
+        except ImportError:
+            print("Error: ptpython package required for REPL.", file=sys.stderr)
+            print("Install with: pip install ptpython or uv add ptpython", file=sys.stderr)
+            return 1
+
     # Load patcher
     patcher = Patcher.from_file(input_path)
     _coerce_rect(patcher)
@@ -668,16 +677,54 @@ def cmd_serve(args: argparse.Namespace) -> int:
         print("Interactive editing enabled - changes sync bidirectionally")
         if not args.no_save:
             print(f"Auto-save enabled: changes will be saved to {input_path}")
+        if args.repl:
+            print("REPL mode enabled - type 'commands()' for help")
         print("Press Ctrl+C to stop")
 
         async def run_server():
+            # Check if using single-terminal mode (Option 2b)
+            if args.repl and args.log_file:
+                # Option 2b: Single terminal with log redirection
+                from .repl_inline import start_background_server_repl
+
+                log_file_path = Path(args.log_file)
+                await start_background_server_repl(
+                    patcher, port=args.port, log_file=log_file_path
+                )
+                return
+
+            # Option 2a: Client-server mode (default)
             server = await patcher.serve(port=args.port, auto_open=not args.no_open)
-            # Keep running
+
+            # Start REPL server (always running, can connect remotely)
+            from .repl_server import start_repl_server
+
+            repl_port = args.port + 2  # HTTP=8000, WS=8001, REPL=8002
+            repl_server = await start_repl_server(patcher, server, port=repl_port)
+
+            print()
+            print("=" * 70)
+            print("REPL server started")
+            print(f"Connect with: py2max repl localhost:{repl_port}")
+            print("=" * 70)
+            print()
+
+            if args.repl:
+                # Show deprecation warning if --repl used without --log-file
+                print("WARNING: --repl flag without --log-file is deprecated.")
+                print(f"For single-terminal mode, use: --repl --log-file server.log")
+                print(f"For client-server mode (recommended), in a separate terminal run:")
+                print(f"  py2max repl localhost:{repl_port}")
+                print()
+
+            # Keep running until interrupted
             try:
                 while True:
                     await asyncio.sleep(1)
             except KeyboardInterrupt:
                 print("\nStopping server...")
+                repl_server.close()
+                await repl_server.wait_closed()
                 await server.stop()
 
         asyncio.run(run_server())
@@ -737,6 +784,53 @@ def cmd_preview(args: argparse.Namespace) -> int:
 
     except Exception as e:
         print(f"Error generating SVG preview: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_repl(args: argparse.Namespace) -> int:
+    """Connect to remote REPL server."""
+    import asyncio
+
+    # Parse server address
+    server = args.server
+    if ":" in server:
+        host, port_str = server.rsplit(":", 1)
+        try:
+            port = int(port_str)
+        except ValueError:
+            print(f"Invalid port number: {port_str}", file=sys.stderr)
+            return 1
+    else:
+        host = server
+        port = 9000
+
+    # Check if websockets is installed
+    try:
+        import websockets
+    except ImportError:
+        print("Error: websockets package required for REPL client.", file=sys.stderr)
+        print("Install with: pip install websockets", file=sys.stderr)
+        return 1
+
+    # Check if ptpython is installed
+    try:
+        import ptpython
+    except ImportError:
+        print("Error: ptpython package required for REPL.", file=sys.stderr)
+        print("Install with: pip install ptpython or uv add ptpython", file=sys.stderr)
+        return 1
+
+    # Start REPL client
+    try:
+        from .repl_client import start_repl_client
+
+        return asyncio.run(start_repl_client(host, port))
+
+    except KeyboardInterrupt:
+        print("\nDisconnected.")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
         return 1
 
 
@@ -883,6 +977,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     serve_parser.add_argument(
         "--no-save", action="store_true", help="Disable auto-save on changes"
+    )
+    serve_parser.add_argument(
+        "--repl", action="store_true", help="Start interactive REPL for live patch editing"
+    )
+    serve_parser.add_argument(
+        "--log-file",
+        help="Redirect server logs to file (enables single-terminal REPL mode when used with --repl)",
     )
     serve_parser.set_defaults(func=cmd_serve)
 
@@ -1116,6 +1217,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--force", action="store_true", help="Skip confirmation prompt"
     )
     cache_clear.set_defaults(func=cmd_db)
+
+    # REPL client command
+    repl_parser = subparsers.add_parser(
+        "repl", help="Connect to remote REPL server"
+    )
+    repl_parser.add_argument(
+        "server",
+        nargs="?",
+        default="localhost:9000",
+        help="Server address (default: localhost:9000)",
+    )
+    repl_parser.set_defaults(func=cmd_repl)
 
     return parser
 

@@ -1673,6 +1673,40 @@ class Box(abstract.AbstractBox):
     def __repr__(self):
         return f"{self.__class__.__name__}(id='{self.id}', maxclass='{self.maxclass}')"
 
+    def __pt_repr__(self):
+        """Custom representation for ptpython REPL.
+
+        Provides rich colored output when displaying objects in the ptpython REPL.
+        Shows object type, ID, position, and text content in a readable format.
+        """
+        from prompt_toolkit.formatted_text import HTML
+
+        # Get object details
+        obj_type = self.maxclass or "newobj"
+        obj_id = self.id or "unknown"
+        text = getattr(self, "text", None) or ""
+
+        # Get position
+        rect = self.patching_rect
+        if rect:
+            pos = f"[{rect.x:.0f}, {rect.y:.0f}]"
+        else:
+            pos = "[?, ?]"
+
+        # Build colored representation
+        if text:
+            return HTML(
+                f"<ansigreen>{obj_type}</ansigreen> "
+                f"<ansicyan>{obj_id}</ansicyan> "
+                f"at {pos}: <ansiyellow>'{text}'</ansiyellow>"
+            )
+        else:
+            return HTML(
+                f"<ansigreen>{obj_type}</ansigreen> "
+                f"<ansicyan>{obj_id}</ansicyan> "
+                f"at {pos}"
+            )
+
     def render(self):
         """convert self and children to dictionary."""
         if self._patcher:
