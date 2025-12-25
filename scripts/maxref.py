@@ -24,10 +24,11 @@ from pprint import pprint
 from xml.etree import ElementTree
 from keyword import iskeyword
 import json
+from typing import Any
 
 try:
     HAVE_YAML = True
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 except ImportError:
     HAVE_YAML = False
 
@@ -41,14 +42,14 @@ PLATFORM = platform.system()
 # helper functions
 
 
-def replace_tags(text, sub, *tags):
+def replace_tags(text: str, sub: str, *tags: str) -> str:
     for tag in tags:
         text = text.replace(f"<{tag}>", sub).replace(f"</{tag}>", sub)
     return text
 
 
-def to_pascal_case(s):
-    return "".join(x for x in s.title() if not x in ["_", "-", " ", "."])
+def to_pascal_case(s: str) -> str:
+    return "".join(x for x in s.title() if x not in ["_", "-", " ", "."])
 
 
 # -----------------------------------------------------------------------------
@@ -56,18 +57,21 @@ def to_pascal_case(s):
 
 
 class MaxRefDatabase:
-    def __init__(self):
+    def __init__(self) -> None:
         self.suffix = ".maxref.xml"
-        self.db = {}
+        self.db: dict[str, "MaxRefParser"] = {}
 
-    def _get_refpages(self) -> Path:
+    def _get_refpages(self) -> Path | None:
         if PLATFORM == "Darwin":
             for p in Path("/Applications").glob("**/Max.app"):
-                if not "Ableton" in str(p):
+                if "Ableton" not in str(p):
                     return p / "Contents/Resources/C74/docs/refpages"
+        return None
 
-    def collect(self) -> dict[str, Path]:
+    def collect(self) -> None:
         refpages = self._get_refpages()
+        if refpages is None:
+            return
         # for prefix in ['jit', 'max', 'msp', 'm4l']:
         for prefix in ["msp"]:
             ref_dir = refpages / f"{prefix}-ref"
@@ -75,7 +79,7 @@ class MaxRefDatabase:
                 name = f.name.replace(self.suffix, "")
                 self.db[name] = MaxRefParser(name)
 
-    def names(self):
+    def names(self) -> list[str]:
         return list(self.db.keys())
 
 
@@ -83,11 +87,12 @@ class MaxRefParser:
     OBJECT_SUPER_CLASS = "Object"
     TRIPLE_QUOTE = '"""'
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.suffix = ".maxref.xml"
         self.refdict = self.get_refdict()
-        self.d = {
+        self.root: ElementTree.Element | None = None
+        self.d: dict[str, Any] = {
             "methods": {},
             "attributes": {},
             "metadata": {},
@@ -99,19 +104,22 @@ class MaxRefParser:
             "misc": {},
         }
 
-    def check_exists(self):
+    def check_exists(self) -> None:
         if self.name not in self.refdict:
             raise KeyError(f"cannot find '{self.name}' maxref")
 
-    def _get_refpages(self) -> Path:
+    def _get_refpages(self) -> Path | None:
         if PLATFORM == "Darwin":
             for p in Path("/Applications").glob("**/Max.app"):
-                if not "Ableton" in str(p):
+                if "Ableton" not in str(p):
                     return p / "Contents/Resources/C74/docs/refpages"
+        return None
 
     def get_refdict(self) -> dict[str, Path]:
-        refdict = {}
+        refdict: dict[str, Path] = {}
         refpages = self._get_refpages()
+        if refpages is None:
+            return refdict
         for prefix in ["jit", "max", "msp", "m4l"]:
             ref_dir = refpages / f"{prefix}-ref"
             for f in ref_dir.iterdir():
@@ -125,12 +133,12 @@ class MaxRefParser:
             "&quot;", backtick
         )
 
-    def load(self) -> ElementTree.Element:
+    def load(self) -> None:
         filename = self.refdict[self.name]
         cleaned = self._clean_text(filename.read_text())
         self.root = ElementTree.fromstring(cleaned)
 
-    def parse(self):
+    def parse(self) -> None:
         self.check_exists()
         self.load()
         self.extract_basic_info()
@@ -145,10 +153,12 @@ class MaxRefParser:
         self.extract_seealso()
         self.extract_misc()
 
-    def extract_basic_info(self):
+    def extract_basic_info(self) -> None:
         """Extract basic object information"""
+        if self.root is None:
+            return
         root = self.root
-        self.d.update(self.root.attrib)
+        self.d.update(root.attrib)
 
         digest_elem = root.find("digest")
         if digest_elem is not None and digest_elem.text:
@@ -158,8 +168,10 @@ class MaxRefParser:
         if desc_elem is not None and desc_elem.text:
             self.d["description"] = desc_elem.text.strip()
 
-    def extract_metadata(self):
+    def extract_metadata(self) -> None:
         """Extract metadata information"""
+        if self.root is None:
+            return
         metadatalist = self.root.find("metadatalist")
         if metadatalist is not None:
             for metadata in metadatalist.findall("metadata"):
@@ -173,13 +185,15 @@ class MaxRefParser:
                     else:
                         self.d["metadata"][name] = metadata.text.strip()
 
-    def extract_inlets_outlets(self):
+    def extract_inlets_outlets(self) -> None:
         """Extract inlet and outlet information"""
+        if self.root is None:
+            return
         self.d["inlets"] = []
         inletlist = self.root.find("inletlist")
         if inletlist is not None:
             for inlet in inletlist.findall("inlet"):
-                inlet_data = dict(inlet.attrib)
+                inlet_data: dict[str, Any] = dict(inlet.attrib)
                 digest_elem = inlet.find("digest")
                 if digest_elem is not None and digest_elem.text:
                     inlet_data["digest"] = digest_elem.text.strip()
@@ -192,7 +206,7 @@ class MaxRefParser:
         outletlist = self.root.find("outletlist")
         if outletlist is not None:
             for outlet in outletlist.findall("outlet"):
-                outlet_data = dict(outlet.attrib)
+                outlet_data: dict[str, Any] = dict(outlet.attrib)
                 digest_elem = outlet.find("digest")
                 if digest_elem is not None and digest_elem.text:
                     outlet_data["digest"] = digest_elem.text.strip()
@@ -201,18 +215,22 @@ class MaxRefParser:
                     outlet_data["description"] = desc_elem.text.strip()
                 self.d["outlets"].append(outlet_data)
 
-    def extract_palette(self):
+    def extract_palette(self) -> None:
         """Extract palette information"""
+        if self.root is None:
+            return
         palette = self.root.find("palette")
         if palette is not None:
             self.d["palette"] = dict(palette.attrib)
 
-    def extract_objargs(self):
+    def extract_objargs(self) -> None:
         """Extract object arguments"""
+        if self.root is None:
+            return
         objarglist = self.root.find("objarglist")
         if objarglist is not None:
             for objarg in objarglist.findall("objarg"):
-                arg_data = dict(objarg.attrib)
+                arg_data: dict[str, Any] = dict(objarg.attrib)
                 digest_elem = objarg.find("digest")
                 if digest_elem is not None and digest_elem.text:
                     arg_data["digest"] = digest_elem.text.strip()
@@ -221,21 +239,27 @@ class MaxRefParser:
                     arg_data["description"] = desc_elem.text.strip()
                 self.d["objargs"].append(arg_data)
 
-    def extract_parameter(self):
+    def extract_parameter(self) -> None:
         """Extract parameter information"""
+        if self.root is None:
+            return
         parameter = self.root.find("parameter")
         if parameter is not None:
             self.d["parameter"] = dict(parameter.attrib)
 
-    def extract_examples(self):
+    def extract_examples(self) -> None:
         """Extract example information"""
+        if self.root is None:
+            return
         examplelist = self.root.find("examplelist")
         if examplelist is not None:
             for example in examplelist.findall("example"):
                 self.d["examples"].append(dict(example.attrib))
 
-    def extract_seealso(self):
+    def extract_seealso(self) -> None:
         """Extract see also references"""
+        if self.root is None:
+            return
         seealsolist = self.root.find("seealsolist")
         if seealsolist is not None:
             for seealso in seealsolist.findall("seealso"):
@@ -243,8 +267,10 @@ class MaxRefParser:
                 if name:
                     self.d["seealso"].append(name)
 
-    def extract_misc(self):
+    def extract_misc(self) -> None:
         """Extract misc information like Output and Connections"""
+        if self.root is None:
+            return
         for misc in self.root.findall("misc"):
             misc_name = misc.get("name")
             if misc_name:
@@ -258,15 +284,17 @@ class MaxRefParser:
                                 desc_elem.text.strip()
                             )
 
-    def extract_attributes(self):
+    def extract_attributes(self) -> None:
         """Extract attribute information with full nested structure"""
+        if self.root is None:
+            return
         self.d["attributes"] = {}
         attributelist = self.root.find("attributelist")
         if attributelist is not None:
             for attr in attributelist.findall("attribute"):
                 name = attr.get("name")
                 if name:
-                    attr_data = dict(attr.attrib)
+                    attr_data: dict[str, Any] = dict(attr.attrib)
 
                     # Extract digest
                     digest_elem = attr.find("digest")
@@ -293,7 +321,7 @@ class MaxRefParser:
                     if enumlist is not None:
                         attr_data["enumlist"] = []
                         for enum in enumlist.findall("enum"):
-                            enum_data = dict(enum.attrib)
+                            enum_data: dict[str, Any] = dict(enum.attrib)
                             digest_elem = enum.find("digest")
                             if digest_elem is not None and digest_elem.text:
                                 enum_data["digest"] = digest_elem.text.strip()
@@ -304,15 +332,17 @@ class MaxRefParser:
 
                     self.d["attributes"][name] = attr_data
 
-    def extract_methods(self):
+    def extract_methods(self) -> None:
         """Extract method information with full argument and attribute support"""
+        if self.root is None:
+            return
         self.d["methods"] = {}
         methodlist = self.root.find("methodlist")
         if methodlist is not None:
             for method in methodlist.findall("method"):
                 name = method.get("name")
                 if name:
-                    method_data = dict(method.attrib)
+                    method_data: dict[str, Any] = dict(method.attrib)
 
                     # Extract arguments
                     arglist = method.find("arglist")
@@ -351,15 +381,15 @@ class MaxRefParser:
 
                     self.d["methods"][name] = method_data
 
-    def dump_dict(self):
+    def dump_dict(self) -> None:
         pprint(self.d)
 
-    def dump_json(self):
+    def dump_json(self) -> None:
         json.dump(self.d, fp=sys.stdout)
 
     def __get_method_args(self, args: list[str]) -> list[str]:
-        _args = []
-        for i, arg in enumerate(args):
+        _args: list[str] = []
+        for arg in args:
             if "?" in arg:
                 arg = arg.replace("?", "")
             if "symbol" in arg:
@@ -384,7 +414,7 @@ class MaxRefParser:
         return name
 
     def __get_call(self, method_name: str, method_args: list[str]) -> str:
-        _args = []
+        _args: list[str] = []
         for arg in method_args:
             if "*" in arg:
                 arg = arg.replace("*", "")
@@ -398,32 +428,29 @@ class MaxRefParser:
             params = ", ".join(_args)
             return f'self.call("{method_name}", {params})'
 
-    def dump_code(self):
+    def dump_code(self) -> None:
         tq = self.TRIPLE_QUOTE
         superclass = self.OBJECT_SUPER_CLASS
         spacer = " " * 4
         classname = to_pascal_case(self.name)
         print(f"cdef class {classname}({superclass}):")
-        print(
-            "{spacer}{tq}{digest}".format(spacer=spacer, tq=tq, digest=self.d["digest"])
-        )
+        digest = self.d.get("digest", "")
+        print(f"{spacer}{tq}{digest}")
         print()
-        print(
-            "{spacer}{desc}".format(
-                spacer=spacer,
-                desc=fill(self.d["description"], subsequent_indent=spacer),
-            )
-        )
+        description = self.d.get("description", "")
+        print(f"{spacer}{fill(str(description), subsequent_indent=spacer)}")
         print(f"{spacer}{tq}")
         print()
-        method_args = []
-        for name in self.d["methods"]:
-            m = self.d["methods"][name]
-            # method_name = str(name)
-            if "(" in name and ")" in name:
+        method_args: list[str] = []
+        methods: dict[str, Any] = self.d.get("methods", {})
+        for name in methods:
+            m = methods[name]
+            if "(" in str(name) and ")" in str(name):
                 continue
 
-            sig = None
+            sig: str | None = None
+            args: list[str] = []
+            sig_selfless = ""
             if "args" in m:
                 args = []
                 for arg in m["args"]:
@@ -434,60 +461,51 @@ class MaxRefParser:
 
                 method_args = self.__get_method_args(args)
                 sig = "{name}({self}{args}):".format(
-                    name=self.__check_iskeyword(name),
+                    name=self.__check_iskeyword(str(name)),
                     self="self, " if args else "self",
                     args=", ".join(method_args),
                 )
-                sig_selfless = "{name}({args})".format(name=name, args=", ".join(args))
+                sig_selfless = "{name}({args})".format(
+                    name=name, args=", ".join(args)
+                )
             else:
-                sig = "{name}(self):".format(name=self.__check_iskeyword(name))
+                sig = "{name}(self):".format(name=self.__check_iskeyword(str(name)))
             print(f"{spacer}def {sig}")
 
             if "digest" in m:
-                print(
-                    "{spacer}{tq}{digest}".format(
-                        spacer=spacer * 2, tq=tq, digest=m["digest"]
-                    )
-                )
+                print(f"{spacer * 2}{tq}{m['digest']}")
             if args:
                 print()
-                print("{spacer}{sig}".format(spacer=spacer * 2, sig=sig_selfless))
+                print(f"{spacer * 2}{sig_selfless}")
             if "description" in m:
                 if m["description"] and "TEXT_HERE" not in m["description"]:
                     print()
                     print(
-                        "{spacer}{desc}".format(
-                            spacer=spacer * 2,
-                            desc=fill(m["description"], subsequent_indent=spacer * 2),
-                        )
+                        f"{spacer * 2}{fill(m['description'], subsequent_indent=spacer * 2)}"
                     )
-            print("{spacer}{tq}".format(spacer=spacer * 2, tq=tq))
-            print(
-                "{spacer}{call}".format(
-                    spacer=spacer * 2, call=self.__get_call(name, method_args)
-                )
-            )
+            print(f"{spacer * 2}{tq}")
+            print(f"{spacer * 2}{self.__get_call(str(name), method_args)}")
             print()
 
-    def dump_tests(self):
+    def dump_tests(self) -> None:
         spacer = " " * 4
-        classname = self.d["name"]
+        classname = self.d.get("name", "unknown")
         tq = self.TRIPLE_QUOTE
 
-        for name in self.d["methods"]:
-            m = self.d["methods"][name]
+        methods: dict[str, Any] = self.d.get("methods", {})
+        for name in methods:
+            m = methods[name]
             print(f"def test_{classname}_{name}():")
-            print(f"{spacer}{tq}{m['digest']}{tq}")
+            print(f"{spacer}{tq}{m.get('digest', '')}{tq}")
             print()
 
     if HAVE_YAML:
 
-        def dump_yaml(self):
+        def dump_yaml(self) -> None:
             print(yaml.dump(self.d, Dumper=yaml.Dumper))
 
 
 if __name__ == "__main__":
-    from pprint import pprint
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -525,16 +543,13 @@ if __name__ == "__main__":
     elif args.info:
         _db = MaxRefDatabase()
         _db.collect()
-        res = {}
+        res: dict[str, Any] = {}
         for name, refobj in _db.db.items():
-            # print(name)
             try:
                 refobj.parse()
                 res[name] = refobj.d["digest"]
-            except:
+            except Exception:
                 pass
-                # print((name, refobj))
-        # print(res)
         with open("objects-msp.py", "w") as f:
             pprint(res, stream=f)
         sys.exit(0)

@@ -348,7 +348,16 @@ If you insist on diving into the rabbit hole, and want to run all tests you will
 
 - [matplotlib](<https://matplotlib.org>): `pip install matplotlib`
 
-- [pygraphviz](https://github.com/pygraphviz/pygraphviz): Pygraphviz requires installing the development library of graphviz: <https://www.graphviz.org/> (On macOS this can be done via `brew install graphviz`) -- then you can `pip install pygraphviz`
+- [pygraphviz](https://github.com/pygraphviz/pygraphviz): Pygraphviz requires installing the development library of graphviz: <https://www.graphviz.org/> 
+    - On macOS this can be done via:
+    ```sh
+    brew install graphviz
+    pip install pygraphviz
+    ```
+    - If there are errors, try:
+    ```sh
+    CFLAGS="-I$(brew --prefix)/include" LDFLAGS="-L$(brew --prefix)/lib" pip install pygraphviz
+    ```
 
 - [adaptagrams](https://github.com/mjwybrow/adaptagrams): First build the adaptagrams c++ libs and then build the swig-based python wrapper.
 

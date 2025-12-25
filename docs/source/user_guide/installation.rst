@@ -6,7 +6,7 @@ Requirements
 
 py2max requires:
 
-* Python 3.7 or later
+* Python 3.9 or later
 * No runtime dependencies (pure Python)
 
 The library is designed to work without any external dependencies, making it easy to integrate into existing projects.
@@ -34,15 +34,7 @@ To install from source, clone the repository and install using pip:
 Development Installation
 ------------------------
 
-For development, install in editable mode with development dependencies:
-
-.. code-block:: bash
-
-   git clone https://github.com/shakfu/py2max.git
-   cd py2max
-   pip install -e ".[dev]"
-
-Or using uv (recommended for development):
+For development, use uv (recommended):
 
 .. code-block:: bash
 
@@ -69,11 +61,21 @@ To verify the installation works correctly:
 Optional Dependencies
 ---------------------
 
-For enhanced layout algorithms, you can install optional dependencies:
+For the interactive server and REPL features:
 
 .. code-block:: bash
 
-   pip install networkx pygraphviz
+   pip install py2max[server]
+
+This installs ``websockets`` and ``ptpython`` for the live editing server and interactive REPL.
+
+For enhanced layout algorithms, you can optionally install:
+
+.. code-block:: bash
+
+   pip install networkx matplotlib
+   pip install hola-graph      # HOLA orthogonal layout
+   pip install graph-layout    # COLA constraint-based layout
 
 These are only required for advanced graph-based layout algorithms and are not needed for basic usage.
 

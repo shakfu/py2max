@@ -10,9 +10,12 @@ Features
 * **Round-trip conversion** between JSON .maxpat files and corresponding Python objects
 * **Dynamic Max object help system** using .maxref.xml files with 1157+ Max objects
 * **Connection validation** to prevent invalid patchline connections
-* **Intelligent layout algorithms** including grid and flow layouts with clustering
+* **Intelligent layout algorithms** including grid, flow, columnar, and matrix layouts
+* **SQLite database** for Max object metadata with automatic caching
+* **SVG preview generation** for offline visual validation
+* **Interactive server** with WebSocket-based live editing
 * **Comprehensive API** with specialized methods for Max objects
-* **High test coverage** (~97%) ensuring reliability
+* **High test coverage** (~99%) with 400+ tests
 
 Quick Start
 -----------

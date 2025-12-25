@@ -6,7 +6,7 @@ The py2max package has been reorganized from a flat module structure (22 Python 
 
 ## New Package Structure
 
-```
+```sh
 py2max/
 ├── __init__.py          # Public API (re-exports from subpackages)
 ├── __main__.py          # Entry point (unchanged)
@@ -56,6 +56,7 @@ py2max/
 ## Import Patterns
 
 ### Public API (recommended)
+
 ```python
 from py2max import Patcher, Box, Patchline
 from py2max import MaxRefDB
@@ -63,6 +64,7 @@ from py2max import export_svg, export_svg_string
 ```
 
 ### Subpackage imports (for direct module access)
+
 ```python
 from py2max.core import Patcher, Box, Patchline
 from py2max.core.patcher import Patcher

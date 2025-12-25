@@ -1,14 +1,16 @@
 # Changelog
 
-## 0.2.x
+## [Unreleased]
+
+## [0.2.0]
 
 ### Updated: Optional Layout Dependencies
 
-- Updated `pycola` dependency to `graph-layout` package (https://github.com/shakfu/graph-layout)
+- Updated `pycola` dependency to `graph-layout` package (<https://github.com/shakfu/graph-layout>)
   - Renamed test file from `test_layout_pycola.py` to `test_layout_graph_layout.py`
   - Updated API to use `ColaLayoutAdapter` from `graph_layout` module
 
-- Updated `pyhola` dependency to `hola-graph` package (https://github.com/shakfu/hola-graph)
+- Updated `pyhola` dependency to `hola-graph` package (<https://github.com/shakfu/hola-graph>)
   - Renamed test file from `test_layout_pyhola.py` to `test_layout_hola_graph.py`
   - Updated imports to use `hola_graph._core` module
 
@@ -21,8 +23,6 @@
   - Removed `repl` and `all` options
   - `server` now includes both `websockets` and `ptpython`
   - Install with: `pip install py2max[server]`
-
-## 0.2.0
 
 ### New: Interactive Editor - Advanced Layout with SVG.js, WebCola, and D3.js
 
@@ -54,6 +54,7 @@
 - Added visual feedback showing active parameters and constraint count
 
 **SVG.js Implementation:**
+
 - Refactored all SVG rendering to use SVG.js declarative API instead of native DOM manipulation
 - `initializeSVG()`: Creates SVG canvas and layer groups using SVG.js
 - `createBox()`: Renders boxes with rectangles, text, and clipping paths using SVG.js
@@ -62,6 +63,7 @@
 - `autoLayout()`: Animates box movements using SVG.js transforms
 
 **WebCola Integration:**
+
 - Force-directed graph layout with configurable parameters
 - Constraint-based positioning using alignment constraints
 - Automatic overlap avoidance with adjustable node dimensions
@@ -69,6 +71,7 @@
 - Jaccard link lengths for natural connection spacing
 
 **Constraint System:**
+
 - Automatic constraint generation based on object proximity (50px threshold)
 - Alignment constraints for horizontal rows (Y-axis alignment)
 - Alignment constraints for vertical columns (X-axis alignment)
@@ -76,6 +79,7 @@
 - Real-time constraint application with visual feedback
 
 **Documentation:**
+
 - Added comprehensive `docs/LIBRARIES_INTEGRATION.md` (518 lines)
 - Detailed parameter descriptions and effects
 - Constraint preset usage examples
@@ -84,10 +88,12 @@
 - Performance considerations for different patch sizes
 
 **Demo Scripts:**
+
 - Added `examples/auto_layout_demo.py`: Complex synthesizer with randomized positions (13 objects, 16 connections)
 - Hierarchical layout demo: Tree structure with multiple processing layers (12 objects)
 
 **Benefits:**
+
 - Professional animated transitions for all layout operations
 - Interactive experimentation with layout parameters
 - Structured layouts matching typical Max patch patterns
@@ -103,7 +109,7 @@
 py2max serve outputs/auto_layout_demo.maxpat
 
 # In browser:
-# 1. Click "🔄 Auto-Layout" to show controls
+# 1. Click "Auto-Layout" to show controls
 # 2. Adjust Link Distance slider (50-300)
 # 3. Select Constraint Preset (Grid/Horizontal/Vertical/None)
 # 4. Adjust Iterations for convergence quality
@@ -115,7 +121,7 @@ py2max serve outputs/auto_layout_demo.maxpat
 
 - Added full nested patcher (subpatcher) navigation support in interactive editor
 - Double-click on subpatcher boxes (blue dashed border) to navigate into them
-- Navigate back using "⬆️ Parent" button or ESC key
+- Navigate back using "Parent" button or ESC key
 - Breadcrumb navigation displays current location (e.g., "Main / Oscillator / Envelope")
 - Subpatcher boxes are fully interactive: draggable, connectable, deletable
 - Visual distinction: subpatcher boxes have blue dashed borders and bold blue text
@@ -123,12 +129,14 @@ py2max serve outputs/auto_layout_demo.maxpat
 - Automatic parent reference restoration when loading patches from files
 
 **Server-Side Changes:**
+
 - Modified `get_patcher_state_json()` to include `has_subpatcher` flag and `patcher_path` breadcrumb
 - Added `handle_navigate_to_subpatcher()`, `handle_navigate_to_parent()`, `handle_navigate_to_root()` handlers
 - Fixed inlet/outlet count detection to use `numinlets`/`numoutlets` attributes from loaded files
 - Handler now tracks both `root_patcher` (for saving) and `patcher` (current view)
 
 **Client-Side Changes:**
+
 - Added breadcrumb UI showing patcher hierarchy
 - Implemented event delegation for double-click handling on dynamically created boxes
 - Fixed object positioning by flattening `patching_rect` into `x`, `y`, `width`, `height`
@@ -136,14 +144,17 @@ py2max serve outputs/auto_layout_demo.maxpat
 - ESC key navigation support
 
 **Core Changes:**
+
 - Modified `Patcher.from_dict()` to set `_parent` references for nested subpatchers when loading from files
 - Ensures bidirectional parent-child relationships for proper navigation
 
 **Tests:**
+
 - Added 14 comprehensive tests in `tests/test_nested_patchers.py`
 - All tests passing (326 passed, 14 skipped)
 
 **Demo:**
+
 - Added `examples/nested_patcher_demo.py` with three demonstration patches:
   - Synthesizer with nested envelope subpatcher
   - Effects chain with parallel subpatchers
@@ -319,26 +330,31 @@ py2max db cache clear
 **Platform-Specific Cache:**
 
 MaxRefDB now automatically creates and populates a cache database on first use:
+
 - **macOS**: `~/Library/Caches/py2max/maxref.db`
 - **Linux**: `~/.cache/py2max/maxref.db`
 - **Windows**: `~/AppData/Local/py2max/Cache/maxref.db`
 
 **Benefits:**
+
 - One-time population of all 1157 Max objects
 - Instant access on subsequent use
 - No manual setup required
 - Platform-appropriate cache location
 
 **New Static Methods:**
+
 - `MaxRefDB.get_cache_dir()` - Get platform-specific cache directory
 - `MaxRefDB.get_default_db_path()` - Get default database path
 
 **Updated API:**
+
 - `MaxRefDB()` - Now uses cache by default
 - `MaxRefDB(db_path, auto_populate=True)` - Control auto-population
 - `MaxRefDB(':memory:')` - In-memory database (no caching)
 
 **New CLI Commands:**
+
 - `py2max db cache location` - Show cache location and status
 - `py2max db cache init` - Manually initialize cache
 - `py2max db cache clear` - Clear cache database
@@ -355,7 +371,7 @@ print(f"Objects: {len(db)}")  # 1157
 print(f"Cache: {MaxRefDB.get_default_db_path()}")
 ```
 
-## 0.1.2
+## [0.1.2]
 
 ### Improvements in Type Safety
 
@@ -397,7 +413,7 @@ print(f"Cache: {MaxRefDB.get_default_db_path()}")
 
 - Converted to [uv](https://github.com/astral-sh/uv) for project and dependency management.
 
-## 0.1.1
+## [0.1.1]
 
 - Added `Makefile` frontend
 
@@ -433,7 +449,7 @@ print(f"Cache: {MaxRefDB.get_default_db_path()}")
 
 - Added preliminary support for `rnbo~` include rnbo codebox
 
-## 0.1
+## [0.1.0]
 
 - Added a generic `.add` method to `Patcher` objects which include some logic to to figure out to which specialized method to dispatch to. See: `tests/test_add.py` for examples of this.
 

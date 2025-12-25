@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.abspath("../../"))
 project = "py2max"
 copyright = "2025, Shakeeb Alireza"
 author = "Shakeeb Alireza"
-release = "0.1.2"
-version = "0.1.2"
+release = "0.2.0"
+version = "0.2.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
