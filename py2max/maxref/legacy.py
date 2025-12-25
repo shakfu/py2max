@@ -8,7 +8,7 @@ up-to-date object information.
 
 from typing import Any, Dict
 
-from py2max.common import Rect
+from ..core.common import Rect
 
 MAXCLASS_DEFAULTS: Dict[str, Dict[str, Any]] = {
     "button": {

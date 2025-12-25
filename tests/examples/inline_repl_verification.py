@@ -14,7 +14,7 @@ from pathlib import Path
 async def test_inline_repl():
     """Test inline REPL startup and basic functionality."""
     from py2max import Patcher
-    from py2max.repl_inline import BackgroundServerREPL
+    from py2max.server.inline import BackgroundServerREPL
 
     # Create test patch
     output_dir = Path("outputs")
@@ -36,13 +36,13 @@ async def test_inline_repl():
     print(f"  ✓ Port: {repl.port}")
 
     print("\nTest 2: Verify log file setup functions exist")
-    from py2max.repl_inline import setup_file_logging, restore_console_logging
+    from py2max.server.inline import setup_file_logging, restore_console_logging
 
     print(f"  ✓ setup_file_logging: {setup_file_logging}")
     print(f"  ✓ restore_console_logging: {restore_console_logging}")
 
     print("\nTest 3: Verify start_background_server_repl function exists")
-    from py2max.repl_inline import start_background_server_repl
+    from py2max.server.inline import start_background_server_repl
 
     print(f"  ✓ start_background_server_repl: {start_background_server_repl}")
 

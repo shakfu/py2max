@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import Mock, patch
 from py2max.core import Patcher, Box
 from py2max.layout import LayoutManager, GridLayoutManager, FlowLayoutManager
-from py2max.common import Rect
+from py2max.core.common import Rect
 
 
 class TestLayoutCoverage:

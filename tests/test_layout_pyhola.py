@@ -22,7 +22,7 @@ except ImportError:
     HAS_PYHOLA = False
 
 from py2max import Patcher
-from py2max.common import Rect
+from py2max.core.common import Rect
 
 
 def dump(g, prefix):

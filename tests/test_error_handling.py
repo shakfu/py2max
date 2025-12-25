@@ -16,10 +16,8 @@ from py2max import (
     Patcher,
     PatcherIOError,
     Py2MaxError,
-    get_logger,
-    log_exception,
-    log_operation,
 )
+from py2max.log import get_logger, log_exception, log_operation
 
 
 class TestExceptionHierarchy:

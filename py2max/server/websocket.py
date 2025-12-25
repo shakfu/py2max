@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, Optional, Set
 
 try:
     import websockets
-    from websockets.asyncio.server import ServerConnection, serve
+    from websockets.asyncio.server import Server, ServerConnection, serve
 except ImportError:
     raise ImportError(
         "websockets package required for interactive server. "
@@ -225,7 +225,7 @@ class InteractiveWebSocketHandler:
         self.patcher = patcher  # Current patcher being viewed
         self.clients: Set[ServerConnection] = set()
         self._lock = asyncio.Lock()
-        self._save_task = None  # Track pending save task for debouncing
+        self._save_task: Optional[asyncio.Task[Any]] = None  # Track pending save task
         self.auto_save = auto_save  # Auto-save configuration
         # Generate a secure session token
         self.session_token = secrets.token_urlsafe(32)
@@ -662,9 +662,9 @@ class InteractivePatcherServer:
         self.ws_port = port + 1  # WebSocket on different port
         self.auto_open = auto_open
         self.handler = InteractiveWebSocketHandler(patcher, auto_save=auto_save)
-        self.ws_server = None
-        self.http_server = None
-        self.http_thread = None
+        self.ws_server: Optional[Server] = None
+        self.http_server: Optional[http.server.HTTPServer] = None
+        self.http_thread: Optional[threading.Thread] = None
         self._running = False
 
     async def start(self):

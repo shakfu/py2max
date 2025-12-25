@@ -235,20 +235,49 @@ Fixed incompatible types in db_path assignment by adding Union type.
 
 ```text
 py2max/
-├── py2max/                # Main package
-│   ├── core.py           # Core classes (Patcher, Box, Patchline)
-│   ├── layout.py         # Layout managers
-│   ├── maxref.py         # Max object reference system
-│   ├── db.py             # SQLite database for maxref
-│   ├── svg.py            # SVG export
-│   ├── server.py         # Interactive WebSocket server
-│   ├── cli.py            # Command-line interface
-│   └── ...
-├── tests/                 # Test suite
-├── docs/                  # Documentation
-├── .github/workflows/     # CI/CD configuration
-├── Makefile              # Development commands
-└── pyproject.toml        # Project configuration
+├── py2max/                    # Main package
+│   ├── __init__.py            # Public API exports
+│   ├── cli.py                 # Command-line interface
+│   ├── exceptions.py          # Exception hierarchy
+│   ├── log.py                 # Logging utilities
+│   ├── utils.py               # Utility functions
+│   ├── transformers.py        # Patch transformers
+│   │
+│   ├── core/                  # Core patcher functionality
+│   │   ├── patcher.py         # Patcher class
+│   │   ├── box.py             # Box class
+│   │   ├── patchline.py       # Patchline class
+│   │   ├── abstract.py        # Abstract base classes
+│   │   └── common.py          # Rect class
+│   │
+│   ├── maxref/                # Max object reference system
+│   │   ├── parser.py          # XML parsing
+│   │   ├── db.py              # SQLite database
+│   │   ├── category.py        # Object categorization
+│   │   └── legacy.py          # MAXCLASS_DEFAULTS
+│   │
+│   ├── layout/                # Layout managers
+│   │   ├── base.py            # LayoutManager base class
+│   │   ├── grid.py            # GridLayoutManager
+│   │   ├── flow.py            # FlowLayoutManager
+│   │   └── matrix.py          # MatrixLayoutManager
+│   │
+│   ├── server/                # Interactive server & REPL
+│   │   ├── websocket.py       # WebSocket server
+│   │   ├── repl.py            # REPL core
+│   │   ├── client.py          # REPL client
+│   │   ├── inline.py          # Inline REPL
+│   │   └── rpc.py             # RPC server
+│   │
+│   └── export/                # Export functionality
+│       ├── svg.py             # SVG export
+│       └── converters.py      # Format converters
+│
+├── tests/                     # Test suite
+├── docs/                      # Documentation
+├── .github/workflows/         # CI/CD configuration
+├── Makefile                   # Development commands
+└── pyproject.toml             # Project configuration
 ```
 
 ## Common Tasks
@@ -260,8 +289,7 @@ py2max/
 make quality
 
 # Individual checks
-make lint          # Code linting
-make lint-fix      # Auto-fix lint issues
+make lint          # Code linting with auto-fix
 make typecheck     # Type checking
 ```
 

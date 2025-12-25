@@ -225,7 +225,9 @@ class MatrixLayoutManager(LayoutManager):
                 if obj_id in self.parent._objects:
                     obj = self.parent._objects[obj_id]
                     obj_category = self._classify_object(obj)
-                    obj_category = min(obj_category, self.num_rows - 1)  # Ensure valid row
+                    obj_category = min(
+                        obj_category, self.num_rows - 1
+                    )  # Ensure valid row
                     chain_by_category[obj_category].append(obj_id)
                     self._chain_assignments[obj_id] = chain_idx
 
@@ -369,7 +371,7 @@ class MatrixLayoutManager(LayoutManager):
             "matrix_size": (self.num_rows, len(self._signal_chains)),
         }
 
-    def _apply_columnar_layout(self):
+    def _apply_columnar_layout(self) -> None:
         """Apply the columnar layout to all objects."""
         # Group objects by column
         column_objects: Dict[int, List[str]] = {

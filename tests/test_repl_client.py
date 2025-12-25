@@ -12,17 +12,17 @@ class TestReplClientImport:
 
     def test_import_repl_client(self):
         """Test that repl_client module can be imported."""
-        from py2max.repl_client import ReplClient, start_repl_client
+        from py2max.server.client import ReplClient, start_repl_client
 
         assert ReplClient is not None
         assert start_repl_client is not None
 
     def test_import_all_exports(self):
         """Test __all__ exports."""
-        from py2max import repl_client
+        from py2max.server import client
 
-        assert "ReplClient" in repl_client.__all__
-        assert "start_repl_client" in repl_client.__all__
+        assert "ReplClient" in client.__all__
+        assert "start_repl_client" in client.__all__
 
 
 class TestReplClient:
@@ -30,7 +30,7 @@ class TestReplClient:
 
     def test_init_defaults(self):
         """Test ReplClient initialization with defaults."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
 
@@ -42,7 +42,7 @@ class TestReplClient:
 
     def test_init_custom(self):
         """Test ReplClient initialization with custom values."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient(host="192.168.1.1", port=8888)
 
@@ -52,7 +52,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_execute_not_connected(self, capsys):
         """Test execute when not connected."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         result = await client.execute("1 + 1")
@@ -64,7 +64,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_execute_with_result(self):
         """Test execute with successful result."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         client.connected = True
@@ -89,7 +89,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_execute_with_display(self, capsys):
         """Test execute with display output."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         client.connected = True
@@ -112,7 +112,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_execute_with_error(self, capsys):
         """Test execute with error response."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         client.connected = True
@@ -141,7 +141,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_execute_unknown_response(self, capsys):
         """Test execute with unknown response type."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         client.connected = True
@@ -163,7 +163,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_execute_exception(self, capsys):
         """Test execute when exception occurs."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         client.connected = True
@@ -182,7 +182,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_disconnect(self):
         """Test disconnect method."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         client.connected = True
@@ -200,7 +200,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_disconnect_no_connection(self):
         """Test disconnect when no connection."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
 
@@ -211,7 +211,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_connect_success(self, capsys):
         """Test successful connection."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
 
@@ -250,7 +250,7 @@ class TestReplClient:
     @pytest.mark.asyncio
     async def test_connect_failure(self, capsys):
         """Test connection failure."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
 
@@ -271,7 +271,7 @@ class TestStartReplClient:
     @pytest.mark.asyncio
     async def test_start_repl_client_connection_error(self, capsys):
         """Test start_repl_client with connection error."""
-        from py2max.repl_client import start_repl_client
+        from py2max.server.client import start_repl_client
 
         with patch(
             "py2max.server.client.connect", side_effect=Exception("Connection refused")
@@ -285,7 +285,7 @@ class TestStartReplClient:
     @pytest.mark.asyncio
     async def test_start_repl_client_success(self):
         """Test start_repl_client successful run."""
-        from py2max.repl_client import start_repl_client
+        from py2max.server.client import start_repl_client
 
         # Mock connect and run_repl
         mock_ws = AsyncMock()
@@ -322,7 +322,7 @@ class TestRemoteEvaluator:
     @pytest.mark.asyncio
     async def test_remote_evaluator_empty_code(self):
         """Test RemoteEvaluator with empty code."""
-        from py2max.repl_client import ReplClient
+        from py2max.server.client import ReplClient
 
         client = ReplClient()
         client.connected = True

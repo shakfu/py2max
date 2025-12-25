@@ -3,8 +3,8 @@
 import pytest
 from py2max import Patcher
 from py2max.layout import MatrixLayoutManager
-from py2max.common import Rect
-import py2max.category as category
+from py2max.core.common import Rect
+import py2max.maxref.category as category
 
 
 def test_layout_matrix_basic():

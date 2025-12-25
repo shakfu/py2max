@@ -237,7 +237,7 @@ def test_cli_db_create(tmp_path: Path):
     assert db_path.exists()
 
     # Verify database was populated
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
 
     db = MaxRefDB(db_path, auto_populate=False)
     assert db.count > 0
@@ -259,7 +259,7 @@ def test_cli_db_create_empty(tmp_path: Path):
     assert exit_code == 0
     assert db_path.exists()
 
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
 
     db = MaxRefDB(db_path, auto_populate=False)
     assert db.count == 0
@@ -286,7 +286,7 @@ def test_cli_db_populate(tmp_path: Path):
 
     assert exit_code == 0
 
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
 
     db = MaxRefDB(db_path, auto_populate=False)
     assert db.count == 2
@@ -299,7 +299,7 @@ def test_cli_db_info(tmp_path: Path, capsys):
     db_path = tmp_path / "info.db"
 
     # Create database with specific objects
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
 
     db = MaxRefDB(db_path, auto_populate=False)
     db.populate(["cycle~", "gain~"])
@@ -324,7 +324,7 @@ def test_cli_db_search(tmp_path: Path, capsys):
     db_path = tmp_path / "search.db"
 
     # Create database with specific objects
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
 
     db = MaxRefDB(db_path, auto_populate=False)
     db.populate(["cycle~", "gain~", "dac~"])
@@ -348,7 +348,7 @@ def test_cli_db_query(tmp_path: Path, capsys):
     db_path = tmp_path / "query.db"
 
     # Create database with specific objects
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
 
     db = MaxRefDB(db_path, auto_populate=False)
     db.populate(["cycle~"])
@@ -375,7 +375,7 @@ def test_cli_db_export_import(tmp_path: Path):
     db_path2 = tmp_path / "import.db"
 
     # Create database
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
 
     db = MaxRefDB(db_path, auto_populate=False)
     db.populate(["cycle~", "gain~"])

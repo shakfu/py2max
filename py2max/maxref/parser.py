@@ -6,8 +6,8 @@ from textwrap import fill
 from xml.etree import ElementTree
 from typing import Any, Dict, List, Optional
 
-from py2max.common import Rect
-from py2max.log import get_logger, log_exception, log_warning_once
+from ..core.common import Rect
+from ..log import get_logger, log_exception, log_warning_once
 
 # Module logger
 logger = get_logger(__name__)
@@ -23,7 +23,7 @@ def replace_tags(text: str, sub: str, *tags: str) -> str:
 class MaxRefCache:
     """Cache for parsed MaxRef data"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache: Dict[str, Dict[str, Any]] = {}
         self._refdict: Optional[Dict[str, Path]] = None
         self._category_map: Optional[Dict[str, str]] = None

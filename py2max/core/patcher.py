@@ -22,7 +22,12 @@ from py2max import maxref
 from py2max.exceptions import InvalidConnectionError, PatcherIOError
 from py2max.log import get_logger, log_operation
 
-from .abstract import AbstractBox, AbstractLayoutManager, AbstractPatcher, AbstractPatchline
+from .abstract import (
+    AbstractBox,
+    AbstractLayoutManager,
+    AbstractPatcher,
+    AbstractPatchline,
+)
 from .box import Box
 from .common import Rect
 from .patchline import Patchline
@@ -115,7 +120,9 @@ class Patcher(AbstractPatcher):
         self._objects: dict[str, AbstractBox] = {}  # dict of objects by id
         self._boxes: list[AbstractBox] = []  # store child objects (boxes, etc.)
         self._lines: list[AbstractPatchline] = []  # store patchline objects
-        self._edge_ids: list[tuple[str, str]] = []  # store edge-ids by order of creation
+        self._edge_ids: list[
+            tuple[str, str]
+        ] = []  # store edge-ids by order of creation
         self._id_counter = 0
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
@@ -488,6 +495,53 @@ class Patcher(AbstractPatcher):
         if self._path:
             self.save_as(self._path)
 
+    def to_svg(
+        self,
+        output_path: Union[str, Path],
+        show_ports: bool = True,
+        title: Optional[str] = None,
+    ) -> None:
+        """Export this patcher to SVG format.
+
+        Args:
+            output_path: Output file path for the SVG.
+            show_ports: Whether to show inlet/outlet ports on boxes.
+            title: Optional title to display at top of SVG.
+
+        Example:
+            >>> p = Patcher('my-patch.maxpat')
+            >>> osc = p.add_textbox('cycle~ 440')
+            >>> dac = p.add_textbox('ezdac~')
+            >>> p.add_line(osc, dac)
+            >>> p.to_svg('/tmp/my-patch.svg')
+        """
+        from ..export.svg import export_svg
+
+        export_svg(self, output_path, show_ports=show_ports, title=title)
+
+    def to_svg_string(
+        self,
+        show_ports: bool = True,
+        title: Optional[str] = None,
+    ) -> str:
+        """Export this patcher to SVG format as a string.
+
+        Args:
+            show_ports: Whether to show inlet/outlet ports on boxes.
+            title: Optional title to display at top of SVG.
+
+        Returns:
+            SVG content as a string.
+
+        Example:
+            >>> p = Patcher('my-patch.maxpat')
+            >>> osc = p.add_textbox('cycle~ 440')
+            >>> svg_content = p.to_svg_string()
+        """
+        from ..export.svg import export_svg_string
+
+        return export_svg_string(self, show_ports=show_ports, title=title)
+
     async def serve(self, port: int = 8000, auto_open: bool = True):
         """Start an interactive WebSocket server for this patcher.
 
@@ -556,7 +610,9 @@ class Patcher(AbstractPatcher):
         elif name == "vertical":
             return layout_module.VerticalLayoutManager(self)
         elif name == "flow":
-            return layout_module.FlowLayoutManager(self, flow_direction=self._flow_direction)
+            return layout_module.FlowLayoutManager(
+                self, flow_direction=self._flow_direction
+            )
         elif name == "grid":
             return layout_module.GridLayoutManager(
                 self,
@@ -651,7 +707,7 @@ class Patcher(AbstractPatcher):
             raise AssertionError("associated comment requires box with id")
         self._pending_comments.append((box.id, comment, comment_pos))
 
-    def _process_pending_comments(self):
+    def _process_pending_comments(self) -> None:
         """Process all pending comment associations and position comments relative to their boxes.
 
         This method is called during layout optimization and save operations to ensure

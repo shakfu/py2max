@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from py2max import Patcher, export_svg, export_svg_string
+from py2max import Patcher
 
 
 def test_svg_export_basic():
@@ -19,7 +19,7 @@ def test_svg_export_basic():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path)
+        p.to_svg(output_path)
 
         assert output_path.exists()
         content = output_path.read_text()
@@ -38,7 +38,7 @@ def test_svg_export_with_title():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path, title="Test Patch")
+        p.to_svg(output_path, title="Test Patch")
 
         content = output_path.read_text()
         assert "Test Patch" in content
@@ -51,7 +51,7 @@ def test_svg_export_without_ports():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path, show_ports=False)
+        p.to_svg(output_path, show_ports=False)
 
         content = output_path.read_text()
         # Should not contain port circles
@@ -65,7 +65,7 @@ def test_svg_export_with_ports():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path, show_ports=True)
+        p.to_svg(output_path, show_ports=True)
 
         content = output_path.read_text()
         # Should contain port circles
@@ -79,7 +79,7 @@ def test_svg_export_string():
     gain = p.add_textbox("gain~")
     p.add_line(osc, gain)
 
-    svg_content = export_svg_string(p)
+    svg_content = p.to_svg_string()
 
     assert isinstance(svg_content, str)
     assert '<?xml version="1.0" encoding="UTF-8"?>' in svg_content
@@ -95,7 +95,7 @@ def test_svg_export_empty_patch():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path)
+        p.to_svg(output_path)
 
         assert output_path.exists()
         content = output_path.read_text()
@@ -110,7 +110,7 @@ def test_svg_export_comments():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path)
+        p.to_svg(output_path)
 
         content = output_path.read_text()
         assert "This is a comment" in content
@@ -125,7 +125,7 @@ def test_svg_export_messages():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path)
+        p.to_svg(output_path)
 
         content = output_path.read_text()
         assert "bang" in content
@@ -142,7 +142,7 @@ def test_svg_export_patchlines():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path)
+        p.to_svg(output_path)
 
         content = output_path.read_text()
         # Should contain line elements
@@ -170,7 +170,7 @@ def test_svg_export_complex_patch():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path, title="Complex Synth Patch")
+        p.to_svg(output_path, title="Complex Synth Patch")
 
         assert output_path.exists()
         content = output_path.read_text()
@@ -198,7 +198,7 @@ def test_svg_export_different_layouts():
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / f"test_{layout}.svg"
-            export_svg(p, output_path)
+            p.to_svg(output_path)
 
             assert output_path.exists()
             content = output_path.read_text()
@@ -215,7 +215,7 @@ def test_svg_text_escaping():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path)
+        p.to_svg(output_path)
 
         content = output_path.read_text()
         # Should be escaped in SVG
@@ -230,7 +230,7 @@ def test_svg_viewbox_calculation():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
-        export_svg(p, output_path)
+        p.to_svg(output_path)
 
         content = output_path.read_text()
         # Should have viewBox attribute

@@ -2,13 +2,13 @@
 
 import pytest
 from unittest.mock import Mock, patch
-from py2max.abstract import (
+from py2max.core.abstract import (
     AbstractLayoutManager,
     AbstractBox,
     AbstractPatchline,
     AbstractPatcher,
 )
-from py2max.common import Rect
+from py2max.core.common import Rect
 
 
 class TestAbstractLayoutManager:

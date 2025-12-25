@@ -2,7 +2,7 @@
 
 ## Overview
 
-The py2max package has been reorganized from a flat module structure (22 Python files) into logical subpackages while maintaining 100% backward compatibility. All 418 tests pass after the restructuring.
+The py2max package has been reorganized from a flat module structure (22 Python files) into logical subpackages. All 418 tests pass after the restructuring.
 
 ## New Package Structure
 
@@ -47,37 +47,13 @@ py2max/
 │   ├── inline.py        # Inline REPL (was repl_inline.py)
 │   └── rpc.py           # RPC server (was repl_server.py)
 │
-├── export/              # Export functionality
-│   ├── __init__.py      # Exports: export_svg, converters
-│   ├── svg.py           # SVG export
-│   └── converters.py    # Format converters
-│
-└── [shim modules]       # Backward compatibility shims (see below)
+└── export/              # Export functionality
+    ├── __init__.py      # Exports: export_svg, converters
+    ├── svg.py           # SVG export
+    └── converters.py    # Format converters
 ```
 
-## Backward Compatibility Shims
-
-The following shim modules exist at the top level to maintain backward compatibility with existing code:
-
-| Shim Module | Re-exports From | Exports |
-|-------------|-----------------|---------|
-| `abstract.py` | `core.abstract` | `AbstractBox`, `AbstractLayoutManager`, `AbstractPatcher`, `AbstractPatchline` |
-| `category.py` | `maxref.category` | `CONTROL_OBJECTS`, `GENERATOR_OBJECTS`, `INPUT_OBJECTS`, `OUTPUT_OBJECTS`, `PROCESSOR_OBJECTS` |
-| `common.py` | `core.common` | `Rect` |
-| `converters.py` | `export.converters` | `maxpat_to_python`, `maxref_to_sqlite` |
-| `db.py` | `maxref.db`, `maxref` | `MaxRefDB`, `get_object_info`, `get_available_objects`, `get_all_*_objects` |
-| `maxclassdb.py` | `maxref.legacy` | `MAXCLASS_DEFAULTS` |
-| `repl.py` | `server.repl` | `AutoSyncWrapper`, `ReplCommands`, `start_repl`, `start_repl_with_refresh`, `embed` |
-| `repl_client.py` | `server.client` | `ReplClient`, `start_repl_client`, `connect` |
-| `repl_inline.py` | `server.inline` | `BackgroundServerREPL`, `start_inline_repl`, `start_background_server_repl`, `setup_file_logging`, `restore_console_logging` |
-| `repl_server.py` | `server.rpc` | `ReplServer`, `start_repl_server` |
-| `svg.py` | `export.svg` | `export_svg`, `export_svg_string` |
-
-**Note:** The `core/`, `maxref/`, `layout/`, `server/`, and `export/` directories are Python packages. The original module names (e.g., `core.py`, `server.py`) were removed since packages take precedence over same-named modules.
-
 ## Import Patterns
-
-All of the following import patterns work:
 
 ### Public API (recommended)
 ```python
@@ -86,23 +62,22 @@ from py2max import MaxRefDB
 from py2max import export_svg, export_svg_string
 ```
 
-### Subpackage imports (new, preferred for internal use)
+### Subpackage imports (for direct module access)
 ```python
 from py2max.core import Patcher, Box, Patchline
 from py2max.core.patcher import Patcher
+from py2max.core.common import Rect
 from py2max.maxref import MaxRefDB, get_object_info
+from py2max.maxref.category import CONTROL_OBJECTS, GENERATOR_OBJECTS
+from py2max.maxref.legacy import MAXCLASS_DEFAULTS
 from py2max.layout import FlowLayoutManager, GridLayoutManager
 from py2max.server import InteractivePatcherServer
+from py2max.server.repl import ReplCommands, start_repl
+from py2max.server.client import ReplClient, start_repl_client
+from py2max.server.inline import start_inline_repl, BackgroundServerREPL
+from py2max.server.rpc import ReplServer, start_repl_server
 from py2max.export import export_svg
-```
-
-### Legacy imports (still work via shims)
-```python
-from py2max.common import Rect
-from py2max.db import MaxRefDB
-from py2max.maxclassdb import MAXCLASS_DEFAULTS
-from py2max.repl import start_repl
-from py2max.svg import export_svg
+from py2max.export.converters import maxpat_to_python, maxref_to_sqlite
 ```
 
 ## Internal Import Style
@@ -120,15 +95,25 @@ from ..core import Patcher
 from ..maxref.db import MaxRefDB
 ```
 
-## Test Updates
+## Module Mapping
 
-Some tests that used monkey-patching were updated to patch at the new module locations:
-
-| Old Patch Target | New Patch Target |
-|------------------|------------------|
-| `py2max.repl.embed` | `py2max.server.repl.embed` |
-| `py2max.repl_client.connect` | `py2max.server.client.connect` |
-| `py2max.db.get_object_info` | `py2max.maxref.db.get_object_info` |
+| Old Location | New Location |
+|--------------|--------------|
+| `py2max.core` (class) | `py2max.core.patcher` |
+| `py2max.abstract` | `py2max.core.abstract` |
+| `py2max.common` | `py2max.core.common` |
+| `py2max.maxref` | `py2max.maxref.parser` |
+| `py2max.db` | `py2max.maxref.db` |
+| `py2max.category` | `py2max.maxref.category` |
+| `py2max.maxclassdb` | `py2max.maxref.legacy` |
+| `py2max.layout` | `py2max.layout` (split into base/grid/flow/matrix) |
+| `py2max.server` | `py2max.server.websocket` |
+| `py2max.repl` | `py2max.server.repl` |
+| `py2max.repl_client` | `py2max.server.client` |
+| `py2max.repl_inline` | `py2max.server.inline` |
+| `py2max.repl_server` | `py2max.server.rpc` |
+| `py2max.svg` | `py2max.export.svg` |
+| `py2max.converters` | `py2max.export.converters` |
 
 ## Files Unchanged
 
@@ -146,6 +131,5 @@ The following files remain at the top level and were not moved:
 ## Summary
 
 - **Before:** 22 flat Python modules
-- **After:** 5 subpackages + 7 top-level modules + 11 shim modules
+- **After:** 5 subpackages + 7 top-level modules
 - **Tests:** 418 passed, 14 skipped
-- **Backward Compatibility:** 100% maintained via shim modules

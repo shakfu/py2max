@@ -1,5 +1,5 @@
 from py2max import Patcher
-from py2max.common import Rect
+from py2max.core.common import Rect
 from py2max.maxref import MAXCLASS_DEFAULTS
 
 

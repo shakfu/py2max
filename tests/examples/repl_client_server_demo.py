@@ -71,7 +71,7 @@ async def run_server():
     server = await p.serve(port=8000, auto_open=True)
 
     # Start REPL server
-    from py2max.repl_server import start_repl_server
+    from py2max.server.rpc import start_repl_server
 
     repl_server = await start_repl_server(p, server, port=8002)
 
@@ -107,7 +107,7 @@ async def run_server():
 
 async def run_client():
     """Run the REPL client (Terminal 2)."""
-    from py2max.repl_client import start_repl_client
+    from py2max.server.client import start_repl_client
 
     # Connect to server
     await start_repl_client("localhost", 8002)

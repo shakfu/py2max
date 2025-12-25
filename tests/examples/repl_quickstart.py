@@ -60,7 +60,7 @@ async def main():
     server = await p.serve(port=8000, auto_open=True)
 
     # Start REPL
-    from py2max.repl import start_repl
+    from py2max.server.repl import start_repl
 
     print("Starting REPL...")
     print()

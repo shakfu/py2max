@@ -10,7 +10,7 @@ This example is used in:
 """
 
 from py2max import Patcher
-from py2max.common import Rect
+from py2max.core.common import Rect
 
 
 def demonstrate_patcher_creation():

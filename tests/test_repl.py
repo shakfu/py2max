@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from py2max import Patcher
-from py2max.repl import ReplCommands
+from py2max.server.repl import ReplCommands
 
 
 @pytest.fixture
@@ -247,7 +247,7 @@ class TestReplIntegration:
         with patch("py2max.server.repl.embed") as mock_embed:
             mock_embed.side_effect = EOFError()
 
-            from py2max.repl import start_repl
+            from py2max.server.repl import start_repl
 
             # This should not raise (EOFError is caught)
             await start_repl(patcher, mock_server)
@@ -277,7 +277,7 @@ class TestReplIntegration:
         with patch("py2max.server.repl.embed") as mock_embed:
             mock_embed.side_effect = EOFError()
 
-            from py2max.repl import start_repl
+            from py2max.server.repl import start_repl
 
             await start_repl(patcher, mock_server, title="Custom Title")
 
@@ -290,13 +290,13 @@ class TestAutoSyncWrapper:
 
     def test_autosync_wrapper_exists(self):
         """Test that AutoSyncWrapper exists."""
-        from py2max.repl import AutoSyncWrapper
+        from py2max.server.repl import AutoSyncWrapper
 
         assert AutoSyncWrapper is not None
 
     def test_autosync_wrapper_basic(self, patcher, mock_server):
         """Test AutoSyncWrapper basic functionality."""
-        from py2max.repl import AutoSyncWrapper
+        from py2max.server.repl import AutoSyncWrapper
 
         wrapper = AutoSyncWrapper(patcher, mock_server)
 

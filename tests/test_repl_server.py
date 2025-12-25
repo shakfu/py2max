@@ -45,17 +45,17 @@ class TestReplServerImport:
 
     def test_import_repl_server(self):
         """Test that repl_server module can be imported."""
-        from py2max.repl_server import ReplServer, start_repl_server
+        from py2max.server.rpc import ReplServer, start_repl_server
 
         assert ReplServer is not None
         assert start_repl_server is not None
 
     def test_import_all_exports(self):
         """Test __all__ exports."""
-        from py2max import repl_server
+        from py2max.server import rpc
 
-        assert "ReplServer" in repl_server.__all__
-        assert "start_repl_server" in repl_server.__all__
+        assert "ReplServer" in rpc.__all__
+        assert "start_repl_server" in rpc.__all__
 
 
 class TestReplServer:
@@ -63,7 +63,7 @@ class TestReplServer:
 
     def test_init(self, patcher, mock_interactive_server):
         """Test ReplServer initialization."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -74,7 +74,7 @@ class TestReplServer:
 
     def test_namespace_contents(self, patcher, mock_interactive_server):
         """Test ReplServer namespace contains expected objects."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -96,7 +96,7 @@ class TestReplServer:
     @pytest.mark.asyncio
     async def test_handle_init(self, patcher, mock_interactive_server, mock_websocket):
         """Test handling init message."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         # Add some objects
         patcher.add_textbox("cycle~ 440")
@@ -120,7 +120,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test evaluating an expression."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -139,7 +139,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test evaluating a statement (exec mode)."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -162,7 +162,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test evaluating code that produces output."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -182,7 +182,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test evaluating empty code."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -200,7 +200,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test evaluating code that raises error."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -212,7 +212,9 @@ class TestReplServer:
         response = json.loads(call_args)
 
         assert response["type"] == "error"
-        assert "ZeroDivisionError" in response["error"] or "division" in response["error"]
+        assert (
+            "ZeroDivisionError" in response["error"] or "division" in response["error"]
+        )
         assert "traceback" in response
 
     @pytest.mark.asyncio
@@ -220,7 +222,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test handle_message with init type."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -237,7 +239,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test handle_message with eval type."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -257,7 +259,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test handle_message with unknown type."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -277,7 +279,7 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test handle_message with invalid JSON."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
@@ -295,14 +297,12 @@ class TestReplServer:
         self, patcher, mock_interactive_server, mock_websocket
     ):
         """Test evaluating async code."""
-        from py2max.repl_server import ReplServer
+        from py2max.server.rpc import ReplServer
 
         server = ReplServer(patcher, mock_interactive_server)
 
         # Add asyncio to namespace for the test
-        await server.handle_eval(
-            mock_websocket, {"code": "asyncio.sleep(0)"}
-        )
+        await server.handle_eval(mock_websocket, {"code": "asyncio.sleep(0)"})
 
         mock_websocket.send.assert_called_once()
         call_args = mock_websocket.send.call_args[0][0]

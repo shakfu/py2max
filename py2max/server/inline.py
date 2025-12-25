@@ -172,9 +172,9 @@ class BackgroundServerREPL:
         self.patcher = patcher
         self.port = port
         self.log_file = log_file or Path("outputs/py2max_server.log")
-        self.server = None
-        self.server_thread = None
-        self.loop = None
+        self.server: Optional[InteractivePatcherServer] = None
+        self.server_thread: Optional[threading.Thread] = None
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.ready_event = threading.Event()
 
     def notify_update_sync(self):
@@ -264,6 +264,7 @@ class BackgroundServerREPL:
             # Start REPL in foreground with refresh() function
             from .repl import start_repl_with_refresh
 
+            assert self.server is not None, "Server failed to start"
             await start_repl_with_refresh(
                 self.patcher, self.server, self.notify_update_sync
             )

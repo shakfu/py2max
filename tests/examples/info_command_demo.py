@@ -59,7 +59,7 @@ def demo_info_command():
         handler = MockHandler()
 
     # Create commands object
-    from py2max.repl import ReplCommands
+    from py2max.server.repl import ReplCommands
 
     commands = ReplCommands(p, MockServer())
 

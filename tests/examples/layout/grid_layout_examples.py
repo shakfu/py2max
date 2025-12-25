@@ -75,7 +75,7 @@ def create_clustered_grid():
 
 def create_mixed_layout():
     """Mixed layout with manual and automatic positioning."""
-    from py2max.common import Rect
+    from py2max.core.common import Rect
 
     p = Patcher("mixed-layout.maxpat", layout="grid")
 

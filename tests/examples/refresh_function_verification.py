@@ -11,7 +11,7 @@ from pathlib import Path
 async def test_refresh():
     """Test that refresh function works with background server."""
     from py2max import Patcher
-    from py2max.repl_inline import BackgroundServerREPL
+    from py2max.server.inline import BackgroundServerREPL
 
     # Create test patch
     output_dir = Path("outputs")

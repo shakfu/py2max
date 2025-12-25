@@ -185,7 +185,7 @@ class ReplClient:
             print()
             print("Exiting REPL...")
 
-    async def _ptpython_repl(self):
+    async def _ptpython_repl(self) -> None:
         """Full-featured ptpython REPL with remote execution.
 
         Uses ptpython for editing features (syntax highlighting, completion)
@@ -199,10 +199,10 @@ class ReplClient:
 
         # Custom evaluator that executes remotely (reserved for future use)
         class RemoteEvaluator:
-            def __init__(self, client):
+            def __init__(self, client: "ReplClient") -> None:
                 self.client = client
 
-            async def __call__(self, code: str):
+            async def __call__(self, code: str) -> Optional[str]:
                 """Execute code on remote server."""
                 if not code.strip():
                     return None
@@ -214,7 +214,7 @@ class ReplClient:
         _evaluator = RemoteEvaluator(self)  # noqa: F841
 
         # Configure ptpython
-        def configure(repl):
+        def configure(repl: Any) -> None:
             """Configure ptpython REPL."""
             # Enable auto-completion
             repl.enable_auto_suggest = True
@@ -238,7 +238,7 @@ class ReplClient:
                 from prompt_toolkit.lexers import PygmentsLexer
                 from pygments.lexers.python import PythonLexer  # type: ignore[import-untyped]
 
-                session = PromptSession(
+                session: PromptSession[str] = PromptSession(
                     message="py2max[remote]>>> ",
                     lexer=PygmentsLexer(PythonLexer),
                     enable_history_search=True,

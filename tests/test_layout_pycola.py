@@ -16,7 +16,7 @@ except ImportError:
     HAS_PYCOLA = False
 
 from py2max import Patcher
-from py2max.common import Rect
+from py2max.core.common import Rect
 
 
 class ColaPatcher(Patcher):

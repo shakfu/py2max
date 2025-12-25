@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 
 from py2max import cli
-from py2max.converters import maxpat_to_python, maxref_to_sqlite
+from py2max.export.converters import maxpat_to_python, maxref_to_sqlite
 from py2max import Patcher
 
 
@@ -90,7 +90,7 @@ class DummyMaxRefCache:
 
 
 def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
     from py2max.maxref import db as maxref_db
 
     dummy = DummyMaxRefCache()
@@ -119,7 +119,7 @@ def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
 
 
 def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
-    from py2max.db import MaxRefDB
+    from py2max.maxref.db import MaxRefDB
     from py2max.maxref import db as maxref_db
 
     dummy = DummyMaxRefCache()

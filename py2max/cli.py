@@ -685,7 +685,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
             # Check if using single-terminal mode (Option 2b)
             if args.repl and args.log_file:
                 # Option 2b: Single terminal with log redirection
-                from .repl_inline import start_background_server_repl
+                from .server.inline import start_background_server_repl
 
                 log_file_path = Path(args.log_file)
                 await start_background_server_repl(
@@ -697,7 +697,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
             server = await patcher.serve(port=args.port, auto_open=not args.no_open)
 
             # Start REPL server (always running, can connect remotely)
-            from .repl_server import start_repl_server
+            from .server.rpc import start_repl_server
 
             repl_port = args.port + 2  # HTTP=8000, WS=8001, REPL=8002
             repl_server = await start_repl_server(patcher, server, port=repl_port)
@@ -822,7 +822,7 @@ def cmd_repl(args: argparse.Namespace) -> int:
 
     # Start REPL client
     try:
-        from .repl_client import start_repl_client
+        from .server.client import start_repl_client
 
         return asyncio.run(start_repl_client(host, port))
 

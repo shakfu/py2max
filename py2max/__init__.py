@@ -20,11 +20,6 @@ Exceptions:
     LayoutError: Exception raised for layout manager errors
     DatabaseError: Exception raised for database errors
 
-Logging:
-    get_logger: Get a configured logger for a module
-    log_exception: Log an exception with full traceback
-    log_operation: Context manager for logging operations
-
 Example:
     >>> from py2max import Patcher
     >>> p = Patcher('my-patch.maxpat')
@@ -33,10 +28,11 @@ Example:
     >>> dac = p.add_textbox('ezdac~')
     >>> p.add_line(osc, gain)
     >>> p.add_line(gain, dac)
+    >>> p.to_svg('/tmp/preview.svg')  # Export to SVG
     >>> p.save()
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 from .core import Box, Patcher, Patchline
 from .maxref import MaxRefDB
@@ -50,8 +46,6 @@ from .exceptions import (
     PatcherIOError,
     Py2MaxError,
 )
-from .log import get_logger, log_exception, log_operation
-from .export import export_svg, export_svg_string
 
 __all__ = [
     # Version
@@ -61,9 +55,6 @@ __all__ = [
     "Box",
     "Patchline",
     "MaxRefDB",
-    # SVG export
-    "export_svg",
-    "export_svg_string",
     # Exceptions
     "Py2MaxError",
     "InvalidConnectionError",
@@ -73,8 +64,4 @@ __all__ = [
     "MaxRefError",
     "LayoutError",
     "DatabaseError",
-    # Logging utilities
-    "get_logger",
-    "log_exception",
-    "log_operation",
 ]

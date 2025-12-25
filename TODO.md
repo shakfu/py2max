@@ -10,7 +10,7 @@
 
 - [ ] Introduce recipe-driven project scaffolding (e.g., `py2max new --from tutorials/basic.yml`) so contributors can spin up teaching or demo patches from structured descriptors.
 
-- [x] Convert maxref files to an sqlite database, would make sense for local caching (retrieval). 
+- [x] Convert maxref files to an sqlite database, would make sense for local caching (retrieval).
 
 - [ ] Implement nested patchers in the interactive patcher editor
 
@@ -57,3 +57,17 @@ Implement more objects: especially containers / objects with state stored in the
 - [ ] `funbuff`
 
 - ...
+
+## CI/CD & Publishing
+
+- [ ] Enable CI on push/PR in `.github/workflows/ci.yml` (currently set to workflow_dispatch only)
+
+- [ ] Update author email in `pyproject.toml` (currently uses placeholder `me@org.me`)
+
+## Documentation
+
+- [ ] Generate and publish API documentation (ReadTheDocs recommended)
+
+## Testing
+
+- [ ] Improve `server.py` test coverage (currently 62%, target 80%+)
