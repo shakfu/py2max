@@ -141,3 +141,6 @@ uv.lock
 .claude
 CLAUDE.md
 AGENTS.md
+
+# pyscn
+.pyscn/
