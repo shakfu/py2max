@@ -1,6 +1,5 @@
 # py2max
 
-[![CI](https://github.com/shakfu/py2max/workflows/CI/badge.svg)](https://github.com/shakfu/py2max/actions)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -10,21 +9,69 @@ If you are looking for python3 externals for Max/MSP check out the [py-js](https
 
 ## Features
 
-- **SVG Preview Generation**: Offline visual validation of Max patches without requiring Max installation - generates high-quality, scalable SVG graphics viewable in any browser
+### Core Capabilities
 
-- Scripted *offline* generation of Max patcher files using Python objects, corresponding, on a one-to-one basis, with Max/MSP objects stored in the `.maxpat` JSON-based file format.
+- **Offline Patch Generation**: Scripted generation of Max patcher files using Python objects, corresponding one-to-one with Max/MSP objects in the `.maxpat` JSON format.
 
-- *Round-trip conversion* between (JSON) `.maxpat` files with arbitrary levels of nesting and corresponding `Patcher`, `Box`, and `Patchline` Python objects.
+- **Round-trip Conversion**: Bidirectional conversion between `.maxpat` files (with arbitrary nesting) and `Patcher`, `Box`, and `Patchline` Python objects.
 
-- Can potentially handle any Max object or maxclass.
+- **Universal Object Support**: Handle any Max object or maxclass with specialized methods for common objects.
 
-- Lots of unit tests, `~99%` coverage.
+- **Extensive Test Coverage**: ~99% test coverage with 400+ tests.
 
-- Analysis and offline scripted modification of Max patches in terms of composition, structure (as graphs of objects), object properties and layout (using graph-drawing algorithms).
+### MaxRef Integration
 
-- Allows precise layout and configuration of Max objects.
+- **Dynamic Help System**: Access documentation for 1157 Max objects via `.maxref.xml` files from your Max installation.
 
-- Provide an object model which mirrors Max's patch organization: `Patcher` objects house `Box` objects and `PatchLine` objects that link them together, with support for nested `Patcher` objects as subpatches.
+- **Object Introspection**: Query inlet/outlet counts, types, methods, and attributes for any Max object.
+
+- **Box Documentation**: Use `Box.help()` and `Box.get_info()` for rich object documentation directly in Python.
+
+```python
+p = Patcher('demo.maxpat')
+cycle = p.add_textbox('cycle~ 440')
+print(cycle.help())  # Complete documentation
+print(f"Inlets: {cycle.get_inlet_count()}, Outlets: {cycle.get_outlet_count()}")
+```
+
+### Connection Validation
+
+- **Automatic Validation**: Optional inlet/outlet validation when creating connections.
+
+- **Detailed Errors**: `InvalidConnectionError` with clear messages for invalid connections.
+
+```python
+p = Patcher('patch.maxpat', validate_connections=True)
+osc = p.add_textbox('cycle~ 440')
+gain = p.add_textbox('gain~')
+p.add_line(osc, gain)  # Valid
+p.add_line(osc, gain, outlet=5)  # Raises InvalidConnectionError
+```
+
+### Layout Managers
+
+- **Grid Layout**: Connection-aware clustering with configurable flow direction.
+- **Flow Layout**: Signal flow-based hierarchical positioning.
+- **Columnar Layout**: Functional column organization (Controls -> Generators -> Processors -> Outputs).
+- **Matrix Layout**: Signal chains in columns, functional categories in rows.
+
+```python
+p = Patcher('patch.maxpat', layout='flow', flow_direction='vertical')
+# or: layout='grid', 'columnar', 'matrix'
+p.optimize_layout()  # Arrange objects after adding connections
+```
+
+### Visualization & Export
+
+- **SVG Preview**: Offline visual validation without Max installation.
+- **Interactive Server**: WebSocket server with browser-based editing and real-time sync.
+- **REPL Mode**: Interactive Python REPL with live patch updates.
+
+### Database Support
+
+- **SQLite Storage**: Store and query Max object metadata in SQLite databases.
+- **Automatic Caching**: Platform-specific cache with all 1157 objects populated on first use.
+- **Category Filtering**: Query by category (Max, MSP, Jitter, M4L).
 
 ## Possible Use Cases
 
@@ -252,7 +299,7 @@ reset: clean
 
 ## Testing
 
-`py2max` has an extensive test suite with tests in the `py2max/tests` folder.
+`py2max` has an extensive test suite with tests in the `tests/` folder.
 
 One can run all tests as follows:
 
@@ -315,17 +362,16 @@ If you insist on diving into the rabbit hole, and want to run all tests you will
 
 ## Caveats
 
-- API Docs are still not available
+- API Docs are still not available (see CLAUDE.md for comprehensive usage documentation)
 
-- The current default layout algorithm is extremely rudimentary, however there are some [promising directions](docs/notes/graph-drawing.md) and you can see also see a [visual comparison](docs/auto-layouts.md) of how well different layout algorithms perform in this context.
+- While py2max now includes multiple layout managers (grid, flow, columnar, matrix), you can also explore [external graph layout algorithms](docs/auto-layouts.md) for specialized needs.
 
-- While generation does not consume the py2max objects, Max does not unfortunately refresh-from-file when it's open, so you will have to keep closing and reopening Max to see the changes to the object tree.
+- Max does not refresh-from-file when open, so you will need to close and reopen patches to see changes. Use `py2max serve` for live editing with browser sync.
 
-- For the few objects which have their own methods, the current implementation differentiates tilde objects from non-tilde objects by providing a different method with a `_tilde` suffix:
+- For objects with tilde variants, use the `_tilde` suffix:
 
     ```python
     gen = p.add_gen()
-
     gen_tilde = p.add_gen_tilde()
     ```
 
@@ -519,7 +565,7 @@ py2max preview synth.maxpat -o synth.svg --title "Synth" --open
 **Python API:**
 
 ```python
-from py2max import Patcher, export_svg, export_svg_string
+from py2max import Patcher
 
 # Create patch and export to SVG
 p = Patcher('synth.maxpat', layout='grid')
@@ -531,11 +577,15 @@ p.add_line(gain, dac)
 p.optimize_layout()
 p.save()
 
-# Export to SVG file
-export_svg(p, 'synth.svg', title="Simple Synth", show_ports=True)
+# Export to SVG file (method on Patcher)
+p.to_svg('synth.svg', title="Simple Synth", show_ports=True)
 
 # Or get SVG as string
-svg_content = export_svg_string(p, show_ports=False)
+svg_content = p.to_svg_string(show_ports=False)
+
+# Alternative: use export module directly
+from py2max.export import export_svg, export_svg_string
+export_svg(p, 'synth.svg', title="Simple Synth")
 ```
 
 **Features:**
@@ -597,41 +647,6 @@ patcher.save()
 ## Examples of Use
 
 - [Generate Max patchers for faust2rnbo](https://github.com/grame-cncm/faust/blob/master-dev/architecture/max-msp/rnbo.py)
-
-## Alternative Branches
-
-### pydantic2 branches
-
-There are two experimental branches which use [pydantic2](https://github.com/pydantic/pydantic) as the underlying object backend:
-
-1. [pydantic-2.5.3](https://github.com/shakfu/py2max/tree/pydantic-2.5.3) - based on version `2.5.3` of pydantic2. This was the initial proof-of-concept which achieved the following:
-
-    - Tracks the main branch
-    - 100% tests pass
-    - More pythonic api
-    - Improved serialization / deserialization
-    - Widespread use of type validation based on type-hints.
-
-2. [pydantic-2.11.7](https://github.com/shakfu/py2max/tree/pydantic-2.11.7) - This branch uses pydantic2 version `2.11.7`, the latest release available. We created this branch after API changes in newer pydantic2 versions required updates from our initial implementation. Like its predecessor, this branch leverages pydantic2's features while serving as a foundation for developing specialized object classes beyond basic boxes.
-
-```python
->>> from py2max import Patcher
->>> p = Patcher(path='outputs/demo.maxpat')
->>> msg = p.add_message('set')
->>> p.boxes
-[Box(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
-```
-
-Another promising direction of this variant is to create specialized classes for objects which have their own unique `maxclass`. So in this case the above would read:
-
-```python
-p.boxes
-[Message(id='obj-1', text='set', maxclass='message', numinlets=2, numoutlets=1, outlettype=[''], patching_rect=Rect(x=48.0, y=48.0, w=66.0, h=22.0), patcher=None)]
-```
-
-### properties branch
-
-There was an early effort to provide property based attribute access and an improved api. It has been supplanted by the `pydantic2` branch and will not be developed further.
 
 ## Contributing
 
