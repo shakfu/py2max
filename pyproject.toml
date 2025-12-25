@@ -30,13 +30,6 @@ dependencies = []
 [project.optional-dependencies]
 server = [
     "websockets>=12.0",
-]
-repl = [
-    "ptpython>=3.0.0",
-    "websockets>=12.0",
-]
-all = [
-    "websockets>=12.0",
     "ptpython>=3.0.0",
 ]
 

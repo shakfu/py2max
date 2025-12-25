@@ -154,8 +154,8 @@ Benefits of semantic IDs:
 py2max provides an interactive WebSocket server for real-time visualization and editing:
 
 ```bash
-# Install websockets dependency
-pip install websockets
+# Install server dependencies (websockets + ptpython for REPL)
+pip install py2max[server]
 
 # Start interactive server
 py2max serve my-patch.maxpat
@@ -305,7 +305,9 @@ If you insist on diving into the rabbit hole, and want to run all tests you will
 
 - [adaptagrams](https://github.com/mjwybrow/adaptagrams): First build the adaptagrams c++ libs and then build the swig-based python wrapper.
 
-- [pyhola](https://github.com/shakfu): a pybind11 wrapper of adaptagrams. Follow build instructions in the README and install from the git repo.
+- [hola-graph](https://github.com/shakfu/hola-graph): a pybind11 wrapper of adaptagrams HOLA algorithm. Install with `pip install hola-graph`.
+
+- [graph-layout](https://github.com/shakfu/graph-layout): constraint-based graph layout including COLA algorithm. Install with `pip install graph-layout`.
 
 - [tsmpy](https://github.com/uknfire/tsmpy): install from git repo
 

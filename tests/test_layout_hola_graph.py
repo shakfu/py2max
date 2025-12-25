@@ -5,21 +5,19 @@ HOLA: Human-like Orthogonal Network Layout
 by Steve Kieffer, Tim Dwyer, Kim Marriott, and Michael Wybrow
 see: https://ialab.it.monash.edu/~dwyer/papers/hola2015.pdf
 
-This implementation, `pyhola`, is created by a sister
-project: https://github.com/shakfu/pyhola
+This uses the hola-graph package (formerly pyhola):
+https://github.com/shakfu/hola-graph
 
 """
 
 import pytest
 
 try:
-    import pyhola
-    from pyhola import Graph, Node, Edge, graph_from_tglf_file, do_hola, HolaOpts
+    from hola_graph._core import Graph, Node, Edge, do_hola, HolaOpts
 
-    # from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
-    HAS_PYHOLA = True
+    HAS_HOLA_GRAPH = True
 except ImportError:
-    HAS_PYHOLA = False
+    HAS_HOLA_GRAPH = False
 
 from py2max import Patcher
 from py2max.core.common import Rect
@@ -53,7 +51,7 @@ class HolaPatcher(Patcher):
         for line in self._lines:
             g.add_edge(nodes[line.src], nodes[line.dst])
 
-        dump(g, "./outputs/test_layout_pyhola_before")
+        dump(g, "./outputs/test_layout_hola_graph_before")
 
         opts = HolaOpts()
 
@@ -63,7 +61,7 @@ class HolaPatcher(Patcher):
         # orthogonal layout
         do_hola(g, opts)
 
-        dump(g, "./outputs/test_layout_pyhola_after")
+        dump(g, "./outputs/test_layout_hola_graph_after")
 
         # scale = self.rect[2]
         scale = 1
@@ -81,9 +79,9 @@ class HolaPatcher(Patcher):
         self.boxes = _boxes
 
 
-@pytest.mark.skipif(not HAS_PYHOLA, reason="requires pyhola")
+@pytest.mark.skipif(not HAS_HOLA_GRAPH, reason="requires hola-graph")
 def test_graph():
-    p = HolaPatcher("outputs/test_layout_pyhola.maxpat")
+    p = HolaPatcher("outputs/test_layout_hola_graph.maxpat")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

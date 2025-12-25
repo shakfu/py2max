@@ -2,6 +2,26 @@
 
 ## 0.2.x
 
+### Updated: Optional Layout Dependencies
+
+- Updated `pycola` dependency to `graph-layout` package (https://github.com/shakfu/graph-layout)
+  - Renamed test file from `test_layout_pycola.py` to `test_layout_graph_layout.py`
+  - Updated API to use `ColaLayoutAdapter` from `graph_layout` module
+
+- Updated `pyhola` dependency to `hola-graph` package (https://github.com/shakfu/hola-graph)
+  - Renamed test file from `test_layout_pyhola.py` to `test_layout_hola_graph.py`
+  - Updated imports to use `hola_graph._core` module
+
+- Fixed `test_layout_networkx2.py` to properly check for `pygraphviz` dependency
+  - Test now correctly skips when pygraphviz is not installed
+
+### Simplified: Optional Dependencies
+
+- Consolidated optional dependencies in `pyproject.toml` to single `server` option
+  - Removed `repl` and `all` options
+  - `server` now includes both `websockets` and `ptpython`
+  - Install with: `pip install py2max[server]`
+
 ## 0.2.0
 
 ### New: Interactive Editor - Advanced Layout with SVG.js, WebCola, and D3.js

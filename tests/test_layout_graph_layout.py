@@ -1,19 +1,18 @@
-"""adaptagrams.org LIBCOLA library, wrapped by pycola
+"""COLA (Constraint-based Layout Algorithm) via graph-layout
 
-This implementation, `pycola`, is created by a sister
-project: https://github.com/shakfu/pycola
+This uses the graph-layout package (formerly pycola):
+https://github.com/shakfu/graph-layout
 
 """
 
 import pytest
 
 try:
-    from pycola.layout import Layout
+    from graph_layout import ColaLayoutAdapter
 
-    # from adaptagrams import Graph, DialectNode, HolaOpts, doHOLA
-    HAS_PYCOLA = True
+    HAS_GRAPH_LAYOUT = True
 except ImportError:
-    HAS_PYCOLA = False
+    HAS_GRAPH_LAYOUT = False
 
 from py2max import Patcher
 from py2max.core.common import Rect
@@ -31,8 +30,8 @@ class ColaPatcher(Patcher):
                 "id": box.id,
                 "x": x,
                 "y": y,
-                "width": w,  # Add this
-                "height": h,  # Add this
+                "width": w,
+                "height": h,
             }
             nodes.append(node)
             id_to_index[box.id] = i  # Map ID to index
@@ -41,21 +40,24 @@ class ColaPatcher(Patcher):
         edges = []
         for line in self._lines:
             edge = {
-                "source": id_to_index[line.src],  # Use index, not ID
-                "target": id_to_index[line.dst],  # Use index, not ID
+                "source": id_to_index[line.src],
+                "target": id_to_index[line.dst],
             }
             edges.append(edge)
 
-        layout = Layout()
-        layout.nodes(nodes)
-        layout.links(edges)
-        layout.start()
+        layout = ColaLayoutAdapter(
+            nodes=nodes,
+            links=edges,
+            avoid_overlaps=True,
+            link_distance=100,
+        )
+        layout.run()
 
-        # scale = self.rect[2]
+        # Extract new positions from layout nodes
         scale = 1
         repos = []
-        for node in nodes:
-            repos.append((node["x"] * scale, node["y"] * scale))
+        for node in layout.nodes:
+            repos.append((node.x * scale, node.y * scale))
 
         _boxes = []
         for box, xy in zip(self._boxes, repos):
@@ -66,9 +68,9 @@ class ColaPatcher(Patcher):
         self.boxes = _boxes
 
 
-@pytest.mark.skipif(not HAS_PYCOLA, reason="requires pycola")
+@pytest.mark.skipif(not HAS_GRAPH_LAYOUT, reason="requires graph-layout")
 def test_graph():
-    p = ColaPatcher("outputs/test_layout_pycola.maxpat")
+    p = ColaPatcher("outputs/test_layout_graph_layout.maxpat")
 
     fbox = p.add_floatbox
     ibox = p.add_intbox

@@ -3,6 +3,7 @@ import pytest
 try:
     import networkx as nx
     import matplotlib.pyplot as plt
+    import pygraphviz  # required for nx.nx_agraph.graphviz_layout
 
     HAS_REQS = True
 except ImportError:
@@ -12,7 +13,7 @@ except ImportError:
 from py2max import Patcher
 
 
-@pytest.mark.skipif(not HAS_REQS, reason="requires networkx, matplotlib")
+@pytest.mark.skipif(not HAS_REQS, reason="requires networkx, matplotlib, pygraphviz")
 def test_graph():
     class OrthogonalPatcher(Patcher):
         def reposition(self):
