@@ -831,7 +831,7 @@ class TestMaxRefDB:
     def test_auto_populate(self, monkeypatch):
         """Test auto-population with cache"""
         import tempfile
-        from py2max import db as db_module
+        from py2max.maxref import db as maxref_db
 
         # Use temp directory for testing
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -846,7 +846,7 @@ class TestMaxRefDB:
                 MaxRefDB, "get_default_db_path", mock_get_default_db_path
             )
 
-            # Also patch maxref functions
+            # Patch at the actual module where the functions are imported/used
             def mock_get_available_objects():
                 return ["cycle~", "gain~"]
 
@@ -870,9 +870,9 @@ class TestMaxRefDB:
                 }
 
             monkeypatch.setattr(
-                db_module, "get_available_objects", mock_get_available_objects
+                maxref_db, "get_available_objects", mock_get_available_objects
             )
-            monkeypatch.setattr(db_module, "get_object_info", mock_get_object_info)
+            monkeypatch.setattr(maxref_db, "get_object_info", mock_get_object_info)
 
             # First call should auto-populate
             db = MaxRefDB(auto_populate=True)

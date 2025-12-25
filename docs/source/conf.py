@@ -7,42 +7,42 @@ import os
 import sys
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath("../../"))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'py2max'
-copyright = '2025, Shakeeb Alireza'
-author = 'Shakeeb Alireza'
-release = '0.1.2'
-version = '0.1.2'
+project = "py2max"
+copyright = "2025, Shakeeb Alireza"
+author = "Shakeeb Alireza"
+release = "0.1.2"
+version = "0.1.2"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.coverage',
-    'sphinx_autodoc_typehints',
-    'myst_parser',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.coverage",
+    "sphinx_autodoc_typehints",
+    "myst_parser",
 ]
 
 # Autodoc settings
 autodoc_default_options = {
-    'members': True,
-    'member-order': 'bysource',
-    'special-members': '__init__',
-    'undoc-members': True,
-    'exclude-members': '__weakref__'
+    "members": True,
+    "member-order": "bysource",
+    "special-members": "__init__",
+    "undoc-members": True,
+    "exclude-members": "__weakref__",
 }
 
-autodoc_typehints = 'description'
-autodoc_typehints_description_target = 'documented'
+autodoc_typehints = "description"
+autodoc_typehints_description_target = "documented"
 
 # Autosummary settings
 autosummary_generate = True
@@ -56,40 +56,40 @@ napoleon_include_private_with_doc = False
 
 # MyST parser settings
 source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
+    ".rst": "restructuredtext",
+    ".md": "markdown",
 }
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
 
-language = 'en'
+language = "en"
 
 # Intersphinx mapping
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
+    "python": ("https://docs.python.org/3", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
 
 html_theme_options = {
-    'canonical_url': '',
-    'analytics_id': '',
-    'logo_only': False,
-    'prev_next_buttons_location': 'bottom',
-    'style_external_links': False,
-    'vcs_pageview_mode': '',
-    'style_nav_header_background': '#343131',
+    "canonical_url": "",
+    "analytics_id": "",
+    "logo_only": False,
+    "prev_next_buttons_location": "bottom",
+    "style_external_links": False,
+    "vcs_pageview_mode": "",
+    "style_nav_header_background": "#343131",
     # Toc options
-    'collapse_navigation': True,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
-    'includehidden': True,
-    'titles_only': False
+    "collapse_navigation": True,
+    "sticky_navigation": True,
+    "navigation_depth": 4,
+    "includehidden": True,
+    "titles_only": False,
 }
 
 html_context = {
@@ -108,8 +108,8 @@ html_favicon = None
 
 # Custom sidebar
 html_sidebars = {
-    '**': [
-        'relations.html',
-        'searchbox.html',
+    "**": [
+        "relations.html",
+        "searchbox.html",
     ]
 }

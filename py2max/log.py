@@ -163,7 +163,7 @@ def config(name: str) -> logging.Logger:
     global _logging_configured
 
     if not _logging_configured:
-        handlers = []
+        handlers: list[logging.Handler] = []
 
         # Console handler with color formatting
         strm_handler = logging.StreamHandler()
@@ -179,7 +179,7 @@ def config(name: str) -> logging.Logger:
             handlers.append(file_handler)
 
         # Get log level from environment or default
-        level = getattr(logging, LOG_LEVEL.upper(), logging.INFO)
+        level = getattr(logging, (LOG_LEVEL or "INFO").upper(), logging.INFO)
 
         logging.basicConfig(
             level=level,
@@ -239,6 +239,10 @@ def log_exception(
     logger.debug(traceback.format_exc())
 
 
+# Module-level set for tracking warned keys
+_warned_keys: set[str] = set()
+
+
 def log_warning_once(logger: logging.Logger, key: str, message: str) -> None:
     """Log a warning message only once per unique key.
 
@@ -252,12 +256,9 @@ def log_warning_once(logger: logging.Logger, key: str, message: str) -> None:
     Example:
         >>> log_warning_once(logger, "deprecated_api", "Method foo() is deprecated")
     """
-    if not hasattr(log_warning_once, "_warned"):
-        log_warning_once._warned = set()
-
-    if key not in log_warning_once._warned:
+    if key not in _warned_keys:
         logger.warning(message)
-        log_warning_once._warned.add(key)
+        _warned_keys.add(key)
 
 
 @contextlib.contextmanager

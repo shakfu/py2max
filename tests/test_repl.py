@@ -102,7 +102,7 @@ class TestReplCommands:
             maxclass="newobj",
             text="metro 500",
             id="test-metro",
-            patching_rect=[100, 200, 60, 22]  # List instead of Rect
+            patching_rect=[100, 200, 60, 22],  # List instead of Rect
         )
         patcher._boxes.append(box)
         patcher._objects["test-metro"] = box
@@ -244,7 +244,7 @@ class TestReplIntegration:
     async def test_start_repl_basic(self, patcher, mock_server):
         """Test basic REPL startup."""
         # Mock embed function to raise EOFError immediately (simulate Ctrl+D)
-        with patch("py2max.repl.embed") as mock_embed:
+        with patch("py2max.server.repl.embed") as mock_embed:
             mock_embed.side_effect = EOFError()
 
             from py2max.repl import start_repl
@@ -274,7 +274,7 @@ class TestReplIntegration:
 
     async def test_start_repl_with_custom_title(self, patcher, mock_server):
         """Test REPL with custom title."""
-        with patch("py2max.repl.embed") as mock_embed:
+        with patch("py2max.server.repl.embed") as mock_embed:
             mock_embed.side_effect = EOFError()
 
             from py2max.repl import start_repl

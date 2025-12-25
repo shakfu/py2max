@@ -15,12 +15,12 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - optional dependency
     yaml = None
 
-from .common import Rect
-from .converters import maxpat_to_python, maxref_to_sqlite
-from .core import InvalidConnectionError, Patcher, Patchline
-from .db import MaxRefDB
-from .maxref import MaxRefCache, validate_connection
-from .svg import export_svg
+from .core import Patcher, Patchline
+from .core.common import Rect
+from .exceptions import InvalidConnectionError
+from .export import export_svg
+from .export.converters import maxpat_to_python, maxref_to_sqlite
+from .maxref import MaxRefCache, MaxRefDB, validate_connection
 from .transformers import available_transformers, create_transformer, run_pipeline
 
 LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
@@ -649,20 +649,20 @@ def cmd_serve(args: argparse.Namespace) -> int:
         return 1
 
     # Check if websockets is installed
-    try:
-        import websockets
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("websockets") is None:
         print("Error: websockets package required for server.", file=sys.stderr)
         print("Install with: pip install websockets", file=sys.stderr)
         return 1
 
     # Check if ptpython is installed (if --repl requested)
     if args.repl:
-        try:
-            import ptpython
-        except ImportError:
+        if importlib.util.find_spec("ptpython") is None:
             print("Error: ptpython package required for REPL.", file=sys.stderr)
-            print("Install with: pip install ptpython or uv add ptpython", file=sys.stderr)
+            print(
+                "Install with: pip install ptpython or uv add ptpython", file=sys.stderr
+            )
             return 1
 
     # Load patcher
@@ -712,8 +712,10 @@ def cmd_serve(args: argparse.Namespace) -> int:
             if args.repl:
                 # Show deprecation warning if --repl used without --log-file
                 print("WARNING: --repl flag without --log-file is deprecated.")
-                print(f"For single-terminal mode, use: --repl --log-file server.log")
-                print(f"For client-server mode (recommended), in a separate terminal run:")
+                print("For single-terminal mode, use: --repl --log-file server.log")
+                print(
+                    "For client-server mode (recommended), in a separate terminal run:"
+                )
                 print(f"  py2max repl localhost:{repl_port}")
                 print()
 
@@ -805,17 +807,15 @@ def cmd_repl(args: argparse.Namespace) -> int:
         port = 9000
 
     # Check if websockets is installed
-    try:
-        import websockets
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("websockets") is None:
         print("Error: websockets package required for REPL client.", file=sys.stderr)
         print("Install with: pip install websockets", file=sys.stderr)
         return 1
 
     # Check if ptpython is installed
-    try:
-        import ptpython
-    except ImportError:
+    if importlib.util.find_spec("ptpython") is None:
         print("Error: ptpython package required for REPL.", file=sys.stderr)
         print("Install with: pip install ptpython or uv add ptpython", file=sys.stderr)
         return 1
@@ -979,7 +979,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-save", action="store_true", help="Disable auto-save on changes"
     )
     serve_parser.add_argument(
-        "--repl", action="store_true", help="Start interactive REPL for live patch editing"
+        "--repl",
+        action="store_true",
+        help="Start interactive REPL for live patch editing",
     )
     serve_parser.add_argument(
         "--log-file",
@@ -1219,9 +1221,7 @@ def build_parser() -> argparse.ArgumentParser:
     cache_clear.set_defaults(func=cmd_db)
 
     # REPL client command
-    repl_parser = subparsers.add_parser(
-        "repl", help="Connect to remote REPL server"
-    )
+    repl_parser = subparsers.add_parser("repl", help="Connect to remote REPL server")
     repl_parser.add_argument(
         "server",
         nargs="?",

@@ -91,18 +91,14 @@ class DummyMaxRefCache:
 
 def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     from py2max.db import MaxRefDB
-    from py2max import maxref, db
+    from py2max.maxref import db as maxref_db
 
     dummy = DummyMaxRefCache()
-    # MaxRefCache was removed, patch maxref module directly
-    # Patch maxref module functions used by MaxRefDB
-    monkeypatch.setattr(maxref, "get_object_info", dummy.get_object_data)
+    # Patch at the actual module where MaxRefDB imports these functions
+    monkeypatch.setattr(maxref_db, "get_object_info", dummy.get_object_data)
     monkeypatch.setattr(
-        maxref, "get_available_objects", lambda: list(dummy._data.keys())
+        maxref_db, "get_available_objects", lambda: list(dummy._data.keys())
     )
-    # Also patch in db module which imports them
-    monkeypatch.setattr(db, "get_object_info", dummy.get_object_data)
-    monkeypatch.setattr(db, "get_available_objects", lambda: list(dummy._data.keys()))
 
     db_path = tmp_path / "cache.db"
     count = maxref_to_sqlite(db_path, overwrite=True)
@@ -124,11 +120,11 @@ def test_maxref_to_sqlite(monkeypatch, tmp_path: Path):
 
 def test_cli_convert_maxref_to_sqlite(monkeypatch, tmp_path: Path):
     from py2max.db import MaxRefDB
-    from py2max import maxref
+    from py2max.maxref import db as maxref_db
 
     dummy = DummyMaxRefCache()
-    # MaxRefCache was removed, patch maxref module directly
-    monkeypatch.setattr(maxref, "get_object_info", dummy.get_object_data)
+    # Patch at the actual module where MaxRefDB imports these functions
+    monkeypatch.setattr(maxref_db, "get_object_info", dummy.get_object_data)
 
     db_path = tmp_path / "cli_cache.db"
     exit_code = cli.main(

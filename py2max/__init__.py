@@ -36,8 +36,10 @@ Example:
     >>> p.save()
 """
 
+__version__ = "0.1.2"
+
 from .core import Box, Patcher, Patchline
-from .db import MaxRefDB
+from .maxref import MaxRefDB
 from .exceptions import (
     DatabaseError,
     InvalidConnectionError,
@@ -49,9 +51,11 @@ from .exceptions import (
     Py2MaxError,
 )
 from .log import get_logger, log_exception, log_operation
-from .svg import export_svg, export_svg_string
+from .export import export_svg, export_svg_string
 
 __all__ = [
+    # Version
+    "__version__",
     # Core classes
     "Patcher",
     "Box",

@@ -107,7 +107,7 @@ class InvalidConnectionError(ValidationError):
             outlet: Source outlet index.
             inlet: Destination inlet index.
         """
-        context = {}
+        context: dict[str, Any] = {}
         if src:
             context["src"] = src
         if dst:

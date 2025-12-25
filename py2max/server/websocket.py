@@ -28,7 +28,7 @@ import secrets
 import threading
 import webbrowser
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Set
+from typing import TYPE_CHECKING, Any, Optional, Set
 
 try:
     import websockets
@@ -40,7 +40,7 @@ except ImportError:
     )
 
 if TYPE_CHECKING:
-    from .core import Patcher
+    from ..core import Patcher
 
 
 def get_patcher_state_json(patcher: Optional["Patcher"]) -> dict:
@@ -144,8 +144,8 @@ def get_patcher_state_json(patcher: Optional["Patcher"]) -> dict:
         lines.append(line_data)
 
     # Build patcher path (breadcrumb trail)
-    patcher_path = []
-    current = patcher
+    patcher_path: list[str] = []
+    current: Any = patcher
     while current:
         title = getattr(current, "title", None) or "Main"
         patcher_path.insert(0, title)
@@ -378,7 +378,7 @@ class InteractiveWebSocketHandler:
                     rect = box.patching_rect
                     if hasattr(rect, "x"):
                         # Rect is a NamedTuple (immutable), create new one
-                        from .common import Rect
+                        from ..core.common import Rect
 
                         box.patching_rect = Rect(
                             float(x) if x is not None else 0.0,
@@ -444,7 +444,7 @@ class InteractiveWebSocketHandler:
             rect = box.patching_rect
             if hasattr(rect, "x"):
                 # Rect is a NamedTuple (immutable), create new one
-                from .common import Rect
+                from ..core.common import Rect
 
                 box.patching_rect = Rect(x, y, rect.w, rect.h)
             elif isinstance(rect, list):
@@ -528,12 +528,14 @@ class InteractiveWebSocketHandler:
 
         # Find and remove matching line
         for i, line in enumerate(self.patcher._lines):
+            source = getattr(line, "source", [None, 0])
+            destination = getattr(line, "destination", [None, 0])
             if (
                 line.src == src_id
                 and line.dst == dst_id
-                and line.source[1] == src_outlet
-                and line.destination[1] == dst_inlet
-            ):  # type: ignore[attr-defined]
+                and source[1] == src_outlet
+                and destination[1] == dst_inlet
+            ):
                 self.patcher._lines.pop(i)
 
                 # Broadcast update to all clients
@@ -586,7 +588,8 @@ class InteractiveWebSocketHandler:
                 if hasattr(box, "subpatcher") and box.subpatcher is not None:
                     # Navigate to subpatcher
                     self.patcher = box.subpatcher
-                    print(f"Navigated to subpatcher: {box.text}")
+                    box_text = getattr(box, "text", box.id)
+                    print(f"Navigated to subpatcher: {box_text}")
 
                     # Send updated state to all clients
                     state = get_patcher_state_json(self.patcher)

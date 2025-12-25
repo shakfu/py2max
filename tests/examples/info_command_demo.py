@@ -60,6 +60,7 @@ def demo_info_command():
 
     # Create commands object
     from py2max.repl import ReplCommands
+
     commands = ReplCommands(p, MockServer())
 
     # Show normal info

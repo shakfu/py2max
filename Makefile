@@ -1,7 +1,9 @@
 
 # Makefile for py2max project
 
-.PHONY: help all build test test-verbose coverage lint lint-fix mypy typecheck quality docs docs-clean docs-serve install dev clean reset ci
+.PHONY: help all build test test-verbose coverage lint \
+		typecheck quality docs docs-clean docs-serve install \
+		dev clean reset ci format
 
 help: ## Show this help message
 	@echo "Available commands:"
@@ -23,19 +25,17 @@ coverage: ## Generate coverage report
 	@uv run pytest --cov-report html:outputs/_covhtml --cov=py2max tests
 
 lint: ## Run code linting
-	@uv run ruff check py2max
-
-lint-fix: ## Run code linting with auto-fix
 	@uv run ruff check py2max --fix
 
-mypy: ## Run type checking (legacy alias)
-	@uv run mypy py2max
+format: ## Run code formatting
+	@uv run ruff format .
 
 typecheck: ## Run type checking
 	@uv run mypy py2max
 
-quality: ## Run all quality checks (lint + typecheck)
+quality: ## Run all quality checks (lint + formatcheck + typecheck)
 	@uv run ruff check py2max
+	@uv run ruff format --check
 	@uv run mypy py2max
 
 docs: ## Build documentation

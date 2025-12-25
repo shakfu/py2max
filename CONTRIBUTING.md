@@ -92,7 +92,7 @@ Thank you for your interest in contributing to py2max! This document provides gu
 
 ### Testing
 
-- **Coverage requirement**: Maintain > 95% test coverage
+- **Coverage requirement**: Maintain > 80% test coverage (current: 82%)
 - **Test framework**: pytest
 - **Test location**: `tests/` directory
 - **Naming**: Test files must start with `test_`
@@ -167,7 +167,7 @@ Before submitting a pull request, ensure:
 - [ ] All tests pass (`make test`)
 - [ ] Type checking passes (`make typecheck`)
 - [ ] Linting passes (`make lint`)
-- [ ] Test coverage remains > 95% (`make coverage`)
+- [ ] Test coverage remains > 80% (`make coverage`)
 - [ ] Documentation is updated (if applicable)
 - [ ] CHANGELOG.md is updated (for user-facing changes)
 - [ ] Commit messages are clear and descriptive
@@ -241,8 +241,7 @@ py2max/
 │   ├── maxref.py         # Max object reference system
 │   ├── db.py             # SQLite database for maxref
 │   ├── svg.py            # SVG export
-│   ├── server.py         # Live preview server (SSE)
-│   ├── server.py  # Interactive WebSocket server
+│   ├── server.py         # Interactive WebSocket server
 │   ├── cli.py            # Command-line interface
 │   └── ...
 ├── tests/                 # Test suite

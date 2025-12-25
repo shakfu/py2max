@@ -141,7 +141,10 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print_usage()
         print("Error: Missing argument", file=sys.stderr)
-        print("Usage: python examples/repl_client_server_demo.py [server|client]", file=sys.stderr)
+        print(
+            "Usage: python examples/repl_client_server_demo.py [server|client]",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     mode = sys.argv[1].lower()
@@ -161,5 +164,8 @@ if __name__ == "__main__":
     else:
         print_usage()
         print(f"Error: Unknown mode: {mode}", file=sys.stderr)
-        print("Usage: python examples/repl_client_server_demo.py [server|client]", file=sys.stderr)
+        print(
+            "Usage: python examples/repl_client_server_demo.py [server|client]",
+            file=sys.stderr,
+        )
         sys.exit(1)

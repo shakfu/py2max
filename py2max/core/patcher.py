@@ -1,14 +1,7 @@
-"""Core classes for py2max: Patcher, Box, and Patchline.
+"""Patcher class for creating and managing Max/MSP patches.
 
-This module contains the main classes for creating and managing Max/MSP patches:
-
-- Patcher: Core class for creating and managing Max patches
-- Box: Represents individual Max objects
-- Patchline: Represents connections between objects
-- InvalidConnectionError: Exception for invalid connections
-
-The Patcher class provides methods for adding various Max objects and connecting
-them together, with automatic layout management and connection validation.
+This module contains the main Patcher class for creating Max/MSP patches
+programmatically with automatic layout management and connection validation.
 
 Example:
     >>> p = Patcher('out.maxpat')
@@ -24,15 +17,15 @@ import json
 from pathlib import Path
 from typing import List, Optional, Tuple, Union, cast
 
-from . import abstract, layout, maxref
+from py2max import layout as layout_module
+from py2max import maxref
+from py2max.exceptions import InvalidConnectionError, PatcherIOError
+from py2max.log import get_logger, log_operation
+
+from .abstract import AbstractBox, AbstractLayoutManager, AbstractPatcher, AbstractPatchline
+from .box import Box
 from .common import Rect
-from .exceptions import (
-    InvalidConnectionError,
-    InvalidObjectError,
-    InvalidPatchError,
-    PatcherIOError,
-)
-from .log import get_logger, log_exception, log_operation
+from .patchline import Patchline
 
 # ---------------------------------------------------------------------------
 # CONSTANTS
@@ -46,14 +39,10 @@ logger = get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Utility Classes and functions
-
-
-# ---------------------------------------------------------------------------
 # Primary Classes
 
 
-class Patcher(abstract.AbstractPatcher):
+class Patcher(AbstractPatcher):
     """Core class for creating and managing Max/MSP patches.
 
     The Patcher class provides a high-level interface for creating Max/MSP patches
@@ -123,14 +112,10 @@ class Patcher(abstract.AbstractPatcher):
         self._path = path
         self._parent = parent
         self._node_ids: list[str] = []  # ids by order of creation
-        self._objects: dict[str, abstract.AbstractBox] = {}  # dict of objects by id
-        self._boxes: list[
-            abstract.AbstractBox
-        ] = []  # store child objects (boxes, etc.)
-        self._lines: list[abstract.AbstractPatchline] = []  # store patchline objects
-        self._edge_ids: list[
-            tuple[str, str]
-        ] = []  # store edge-ids by order of creation
+        self._objects: dict[str, AbstractBox] = {}  # dict of objects by id
+        self._boxes: list[AbstractBox] = []  # store child objects (boxes, etc.)
+        self._lines: list[AbstractPatchline] = []  # store patchline objects
+        self._edge_ids: list[tuple[str, str]] = []  # store edge-ids by order of creation
         self._id_counter = 0
         self._link_counter = 0
         self._last_link: Optional[tuple[str, str]] = None
@@ -141,7 +126,7 @@ class Patcher(abstract.AbstractPatcher):
         self._cluster_connected = cluster_connected
         self._num_dimensions = num_dimensions
         self._dimension_spacing = dimension_spacing
-        self._layout_mgr: abstract.AbstractLayoutManager = self.set_layout_mgr(layout)
+        self._layout_mgr: AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
         self._pending_comments: list[
@@ -228,7 +213,7 @@ class Patcher(abstract.AbstractPatcher):
             >>> found = p.find_by_id(osc.id)
             >>> assert found is osc
         """
-        return self._objects.get(box_id)
+        return cast(Optional["Box"], self._objects.get(box_id))
 
     def find_by_type(self, maxclass: str) -> List["Box"]:
         """Find all boxes of a specific Max object type.
@@ -248,9 +233,10 @@ class Patcher(abstract.AbstractPatcher):
             ...                if 'cycle~' in b.text or 'saw~' in b.text]
             >>> assert len(oscillators) == 2
         """
-        return [
-            box for box in self._boxes if getattr(box, "maxclass", None) == maxclass
-        ]
+        return cast(
+            List["Box"],
+            [box for box in self._boxes if getattr(box, "maxclass", None) == maxclass],
+        )
 
     def find_by_text(self, pattern: str, case_sensitive: bool = False) -> List["Box"]:
         """Find all boxes whose text matches a pattern.
@@ -281,7 +267,7 @@ class Patcher(abstract.AbstractPatcher):
             else:
                 if pattern in text:
                     results.append(box)
-        return results
+        return cast(List["Box"], results)
 
     @property
     def filepath(self) -> Union[str, Path]:
@@ -483,7 +469,7 @@ class Patcher(abstract.AbstractPatcher):
         except IOError as e:
             logger.error(f"Failed to write patcher to: {resolved_path}")
             raise PatcherIOError(
-                f"Failed to write patcher file",
+                "Failed to write patcher file",
                 file_path=str(resolved_path),
                 operation="write",
             ) from e
@@ -525,7 +511,7 @@ class Patcher(abstract.AbstractPatcher):
         Note:
             Requires websockets package: pip install websockets
         """
-        from .server import serve_interactive
+        from py2max.server import serve_interactive
 
         self._server = await serve_interactive(self, port, auto_open)
         return self._server
@@ -563,22 +549,22 @@ class Patcher(abstract.AbstractPatcher):
             self._id_counter += 1
             return f"obj-{self._id_counter}"
 
-    def set_layout_mgr(self, name: str) -> layout.LayoutManager:
+    def set_layout_mgr(self, name: str) -> layout_module.LayoutManager:
         """takes a name and returns an instance of a layout manager"""
         if name == "horizontal":
-            return layout.HorizontalLayoutManager(self)
+            return layout_module.HorizontalLayoutManager(self)
         elif name == "vertical":
-            return layout.VerticalLayoutManager(self)
+            return layout_module.VerticalLayoutManager(self)
         elif name == "flow":
-            return layout.FlowLayoutManager(self, flow_direction=self._flow_direction)
+            return layout_module.FlowLayoutManager(self, flow_direction=self._flow_direction)
         elif name == "grid":
-            return layout.GridLayoutManager(
+            return layout_module.GridLayoutManager(
                 self,
                 flow_direction=self._flow_direction,
                 cluster_connected=self._cluster_connected,
             )
         elif name == "matrix":
-            return layout.MatrixLayoutManager(
+            return layout_module.MatrixLayoutManager(
                 self,
                 flow_direction=self._flow_direction,
                 num_dimensions=self._num_dimensions,
@@ -613,7 +599,7 @@ class Patcher(abstract.AbstractPatcher):
         # Process pending comments after layout optimization
         self._process_pending_comments()
 
-    def _get_object_name(self, obj: abstract.AbstractBox) -> str:
+    def _get_object_name(self, obj: AbstractBox) -> str:
         """Get the actual object name for validation purposes.
 
         For 'newobj' maxclass objects, extract the first word from the text field.
@@ -1614,281 +1600,3 @@ class Patcher(abstract.AbstractPatcher):
 
         _varname = name if ".maxpat" not in name else name.rstrip(".maxpat")
         return self.add_bpatcher(name=name, varname=_varname, extract=1, **kwds)
-
-
-class Box(abstract.AbstractBox):
-    """Represents a Max object in a patch.
-
-    The Box class encapsulates a single Max object with its properties,
-    position, and connections. It provides methods for introspection
-    and help information.
-
-    Args:
-        maxclass: Max object class name (e.g., 'newobj', 'flonum').
-        numinlets: Number of input connections.
-        numoutlets: Number of output connections.
-        id: Unique identifier for the object.
-        patching_rect: Position and size rectangle.
-        **kwds: Additional Max object properties.
-
-    Attributes:
-        id: Unique identifier for the object.
-        maxclass: Max object class name.
-        numinlets: Number of input connections.
-        numoutlets: Number of output connections.
-        patching_rect: Position and size as Rect.
-    """
-
-    def __init__(
-        self,
-        maxclass: Optional[str] = None,
-        numinlets: Optional[int] = None,
-        numoutlets: Optional[int] = None,
-        id: Optional[str] = None,
-        patching_rect: Optional[Rect] = None,
-        **kwds,
-    ):
-        self.id = id
-        self.maxclass = maxclass or "newobj"
-        self.numinlets = numinlets or 0
-        self.numoutlets = numoutlets or 1
-        # self.outlettype = outlettype
-        self.patching_rect = patching_rect or Rect(0, 0, 62, 22)
-
-        self._kwds = self._remove_none_entries(kwds)
-        self._patcher = self._kwds.pop("patcher", None)
-
-    def _remove_none_entries(self, kwds):
-        """removes items in the dict which have None values.
-
-        TODO: make recursive in case of nested dicts.
-        """
-        return {k: v for k, v in kwds.items() if v is not None}
-
-    def __iter__(self):
-        yield self
-        if self._patcher:
-            yield from iter(self._patcher)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(id='{self.id}', maxclass='{self.maxclass}')"
-
-    def __pt_repr__(self):
-        """Custom representation for ptpython REPL.
-
-        Provides rich colored output when displaying objects in the ptpython REPL.
-        Shows object type, ID, position, and text content in a readable format.
-        """
-        from prompt_toolkit.formatted_text import HTML
-
-        # Get object details
-        obj_type = self.maxclass or "newobj"
-        obj_id = self.id or "unknown"
-        text = getattr(self, "text", None) or ""
-
-        # Get position
-        rect = self.patching_rect
-        if rect:
-            pos = f"[{rect.x:.0f}, {rect.y:.0f}]"
-        else:
-            pos = "[?, ?]"
-
-        # Build colored representation
-        if text:
-            return HTML(
-                f"<ansigreen>{obj_type}</ansigreen> "
-                f"<ansicyan>{obj_id}</ansicyan> "
-                f"at {pos}: <ansiyellow>'{text}'</ansiyellow>"
-            )
-        else:
-            return HTML(
-                f"<ansigreen>{obj_type}</ansigreen> "
-                f"<ansicyan>{obj_id}</ansicyan> "
-                f"at {pos}"
-            )
-
-    def render(self):
-        """convert self and children to dictionary."""
-        if self._patcher:
-            self._patcher.render()
-            self.patcher = self._patcher.to_dict()
-
-    def to_dict(self):
-        """create dict from object with extra kwds included"""
-        d = vars(self).copy()
-        to_del = [k for k in d if k.startswith("_")]
-        for k in to_del:
-            del d[k]
-        d.update(self._kwds)
-        return dict(box=d)
-
-    @classmethod
-    def from_dict(cls, obj_dict):
-        """create instance from dict"""
-        box = cls()
-        box.__dict__.update(obj_dict)
-        if hasattr(box, "patcher"):
-            box._patcher = Patcher.from_dict(getattr(box, "patcher"))
-        return box
-
-    @property
-    def oid(self) -> Optional[int]:
-        """numerical part of object id as int"""
-        if self.id:
-            return int(self.id[4:])
-        return None
-
-    @property
-    def subpatcher(self):
-        """synonym for parent patcher object"""
-        return self._patcher
-
-    @property
-    def text(self):
-        """Get the text content of the box."""
-        # Check if text is stored as a direct attribute (from file loading)
-        if "text" in self.__dict__:
-            return self.__dict__["text"]
-        # Otherwise get from _kwds (from programmatic creation)
-        return self._kwds.get("text", "")
-
-    def help_text(self) -> str:
-        """Get formatted help documentation for this Max object.
-
-        Returns:
-            Formatted help string with object documentation from .maxref.xml files.
-        """
-        return maxref.get_object_help(self.maxclass)
-
-    def help(self) -> None:
-        """Print formatted help documentation for this Max object."""
-        print(self.help_text())
-
-    def get_info(self) -> Optional[dict]:
-        """Get complete object information from .maxref.xml files.
-
-        Returns:
-            Dictionary with complete object information or None if not found.
-        """
-        return maxref.get_object_info(self.maxclass)
-
-    def get_inlet_count(self) -> Optional[int]:
-        """Get the number of inlets for this object from maxref data.
-
-        Returns:
-            Number of inlets or None if unknown.
-        """
-        from .maxref import get_inlet_count
-
-        object_name = self._get_object_name()
-        return get_inlet_count(object_name)
-
-    def get_outlet_count(self) -> Optional[int]:
-        """Get the number of outlets for this object from maxref data.
-
-        Returns:
-            Number of outlets or None if unknown.
-        """
-        from .maxref import get_outlet_count
-
-        object_name = self._get_object_name()
-        return get_outlet_count(object_name)
-
-    def get_inlet_types(self) -> List[str]:
-        """Get the inlet types for this object from maxref data
-
-        Returns:
-            List of inlet type strings
-        """
-        from .maxref import get_inlet_types
-
-        object_name = self._get_object_name()
-        return get_inlet_types(object_name)
-
-    def get_outlet_types(self) -> List[str]:
-        """Get the outlet types for this object from maxref data
-
-        Returns:
-            List of outlet type strings
-        """
-        from .maxref import get_outlet_types
-
-        object_name = self._get_object_name()
-        return get_outlet_types(object_name)
-
-    def _get_object_name(self) -> str:
-        """Get the actual object name for this Box.
-
-        For 'newobj' maxclass objects, extract the first word from the text field.
-        For other objects, use the maxclass directly.
-        """
-        if self.maxclass == "newobj":
-            # Text is stored in _kwds for Box objects
-            text = self._kwds.get("text", "")
-            if text:
-                # Extract the first word from text (the object name)
-                return text.split()[0] if text.split() else self.maxclass
-        return self.maxclass
-
-
-class Patchline(abstract.AbstractPatchline):
-    """Represents a connection between two Max objects.
-
-    A Patchline connects an outlet of one object to an inlet of another,
-    enabling signal or message flow between objects in a patch.
-
-    Args:
-        source: Source connection as [object_id, outlet_index].
-        destination: Destination connection as [object_id, inlet_index].
-        **kwds: Additional patchline properties.
-
-    Attributes:
-        source: Source object ID and outlet index.
-        destination: Destination object ID and inlet index.
-    """
-
-    def __init__(
-        self, source: Optional[list] = None, destination: Optional[list] = None, **kwds
-    ):
-        self.source = source or []
-        self.destination = destination or []
-        self._kwds = kwds
-
-    def __repr__(self):
-        return f"Patchline({self.source} -> {self.destination})"
-
-    @property
-    def src(self):
-        """first object from source list"""
-        return self.source[0]
-
-    @property
-    def dst(self):
-        """first object from destination list"""
-        return self.destination[0]
-
-    def to_tuple(self) -> Tuple[str, str, str, str, Union[str, int]]:
-        """Return a tuple describing the patchline."""
-        return (
-            self.source[0],
-            self.source[1],
-            self.destination[0],
-            self.destination[1],
-            self._kwds.get("order", 0),
-        )
-
-    def to_dict(self):
-        """create dict from object with extra kwds included"""
-        d = vars(self).copy()
-        to_del = [k for k in d if k.startswith("_")]
-        for k in to_del:
-            del d[k]
-        d.update(self._kwds)
-        return dict(patchline=d)
-
-    @classmethod
-    def from_dict(cls, obj_dict: dict):
-        """convert to`Patchline` object from dict"""
-        patchline = cls()
-        patchline.__dict__.update(obj_dict)
-        return patchline

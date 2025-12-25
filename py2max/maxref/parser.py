@@ -6,9 +6,8 @@ from textwrap import fill
 from xml.etree import ElementTree
 from typing import Any, Dict, List, Optional
 
-from .common import Rect
-from .exceptions import MaxRefError
-from .log import get_logger, log_exception, log_warning_once
+from py2max.common import Rect
+from py2max.log import get_logger, log_exception, log_warning_once
 
 # Module logger
 logger = get_logger(__name__)
@@ -506,7 +505,7 @@ def get_legacy_defaults(name: str) -> Dict[str, Any]:
     # Only set maxclass to the object name for objects that had explicit
     # maxclass entries in the legacy database. All other objects should
     # use "newobj" as maxclass (handled by fallback in core.py)
-    from .maxclassdb import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
+    from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
     defaults: Dict[str, Any] = {}
     if name in LEGACY_DEFAULTS:
@@ -666,13 +665,13 @@ class MaxClassDefaults:
 
     def __contains__(self, key: str) -> bool:
         """Check if object exists in .maxref.xml files or legacy defaults"""
-        from .maxclassdb import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
+        from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
         return key in LEGACY_DEFAULTS or get_object_info(key) is not None
 
     def __getitem__(self, key: str) -> Dict[str, Any]:
         """Get defaults for an object, preferring legacy, falling back to .maxref.xml"""
-        from .maxclassdb import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
+        from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
         if key in LEGACY_DEFAULTS:
             return LEGACY_DEFAULTS[key]
@@ -693,7 +692,7 @@ class MaxClassDefaults:
 
     def keys(self):
         """Get all available keys"""
-        from .maxclassdb import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
+        from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
         legacy_keys = set(LEGACY_DEFAULTS.keys())
         maxref_keys = set(get_available_objects())
