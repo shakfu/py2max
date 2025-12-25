@@ -440,6 +440,301 @@ class MaxRefDB:
         """Populate database with all Max for Live objects (deprecated: use populate(category='m4l'))"""
         self.populate(category="m4l")
 
+    # -------------------------------------------------------------------------
+    # Insert helpers
+    # -------------------------------------------------------------------------
+
+    def _extract_extra_attrs(
+        self, data: Dict[str, Any], exclude: List[str]
+    ) -> Optional[str]:
+        """Extract extra attributes not in exclude list and JSON-encode them."""
+        extra = {k: v for k, v in data.items() if k not in exclude}
+        return json.dumps(extra) if extra else None
+
+    def _insert_main_object(
+        self, cursor: sqlite3.Cursor, name: str, data: Dict[str, Any]
+    ) -> int:
+        """Insert main object record and return object_id."""
+        known_keys = {
+            "digest",
+            "description",
+            "metadata",
+            "inlets",
+            "outlets",
+            "objargs",
+            "methods",
+            "attributes",
+            "examples",
+            "seealso",
+            "misc",
+            "palette",
+            "parameter",
+            "name",
+            "category",
+            "module_pathname",
+            "autofit",
+        }
+        root_attrs = {k: v for k, v in data.items() if k not in known_keys}
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO objects
+            (name, digest, description, category, module_pathname, autofit, root_attrs)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                name,
+                data.get("digest"),
+                data.get("description"),
+                data.get("category"),
+                data.get("module_pathname"),
+                1 if data.get("autofit") == "1" else 0,
+                json.dumps(root_attrs) if root_attrs else None,
+            ),
+        )
+        return cursor.lastrowid  # type: ignore[return-value]
+
+    def _delete_related_records(self, cursor: sqlite3.Cursor, object_id: int) -> None:
+        """Delete all related records for an object (for REPLACE operations)."""
+        tables = [
+            "metadata",
+            "inlets",
+            "outlets",
+            "objargs",
+            "methods",
+            "attributes",
+            "examples",
+            "seealso",
+            "misc",
+            "palette",
+            "parameter",
+        ]
+        for table in tables:
+            cursor.execute(f"DELETE FROM {table} WHERE object_id = ?", (object_id,))
+
+    def _insert_metadata(
+        self, cursor: sqlite3.Cursor, object_id: int, metadata: Dict[str, Any]
+    ) -> None:
+        """Insert metadata key-value pairs."""
+        for key, value in metadata.items():
+            values = value if isinstance(value, list) else [value]
+            for v in values:
+                cursor.execute(
+                    "INSERT INTO metadata (object_id, key, value) VALUES (?, ?, ?)",
+                    (object_id, key, v),
+                )
+
+    def _insert_inlets_outlets(
+        self, cursor: sqlite3.Cursor, object_id: int, items: List[Dict], table: str
+    ) -> None:
+        """Insert inlet or outlet records."""
+        id_col = "inlet_id" if table == "inlets" else "outlet_id"
+        type_col = "inlet_type" if table == "inlets" else "outlet_type"
+        exclude = ["id", "type", "digest", "description"]
+
+        for item in items:
+            cursor.execute(
+                f"""
+                INSERT INTO {table} (object_id, {id_col}, {type_col}, digest, description, attrs)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    object_id,
+                    item.get("id"),
+                    item.get("type"),
+                    item.get("digest"),
+                    item.get("description"),
+                    self._extract_extra_attrs(item, exclude),
+                ),
+            )
+
+    def _insert_objargs(
+        self, cursor: sqlite3.Cursor, object_id: int, objargs: List[Dict]
+    ) -> None:
+        """Insert object argument records."""
+        exclude = ["name", "optional", "type", "digest", "description"]
+        for objarg in objargs:
+            cursor.execute(
+                """
+                INSERT INTO objargs (object_id, name, optional, arg_type, digest, description, attrs)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    object_id,
+                    objarg.get("name"),
+                    1 if objarg.get("optional") == "1" else 0,
+                    objarg.get("type"),
+                    objarg.get("digest"),
+                    objarg.get("description"),
+                    self._extract_extra_attrs(objarg, exclude),
+                ),
+            )
+
+    def _insert_methods(
+        self, cursor: sqlite3.Cursor, object_id: int, methods: Dict[str, Dict]
+    ) -> None:
+        """Insert method records and their arguments."""
+        method_exclude = ["digest", "description", "args", "attributes"]
+        arg_exclude = ["name", "optional", "type"]
+
+        for method_name, method_data in methods.items():
+            cursor.execute(
+                """
+                INSERT INTO methods (object_id, name, digest, description, attrs)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    object_id,
+                    method_name,
+                    method_data.get("digest"),
+                    method_data.get("description"),
+                    self._extract_extra_attrs(method_data, method_exclude),
+                ),
+            )
+            method_id = cursor.lastrowid
+
+            for arg in method_data.get("args", []):
+                cursor.execute(
+                    """
+                    INSERT INTO method_args (method_id, name, optional, arg_type, attrs)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (
+                        method_id,
+                        arg.get("name"),
+                        1 if arg.get("optional") == "1" else 0,
+                        arg.get("type"),
+                        self._extract_extra_attrs(arg, arg_exclude),
+                    ),
+                )
+
+    def _insert_attributes(
+        self, cursor: sqlite3.Cursor, object_id: int, attributes: Dict[str, Dict]
+    ) -> None:
+        """Insert attribute records and their enum values."""
+        attr_exclude = [
+            "get",
+            "set",
+            "type",
+            "size",
+            "digest",
+            "description",
+            "enumlist",
+            "attributes",
+        ]
+        enum_exclude = ["name", "digest", "description"]
+
+        for attr_name, attr_data in attributes.items():
+            size_val = attr_data.get("size")
+            cursor.execute(
+                """
+                INSERT INTO attributes (object_id, name, can_get, can_set, attr_type, size, digest, description, attrs)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    object_id,
+                    attr_name,
+                    1 if attr_data.get("get") == "1" else 0,
+                    1 if attr_data.get("set") == "1" else 0,
+                    attr_data.get("type"),
+                    int(size_val) if size_val else None,
+                    attr_data.get("digest"),
+                    attr_data.get("description"),
+                    self._extract_extra_attrs(attr_data, attr_exclude),
+                ),
+            )
+            attr_id = cursor.lastrowid
+
+            for enum in attr_data.get("enumlist", []):
+                cursor.execute(
+                    """
+                    INSERT INTO attribute_enums (attribute_id, name, digest, description, attrs)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (
+                        attr_id,
+                        enum.get("name"),
+                        enum.get("digest"),
+                        enum.get("description"),
+                        self._extract_extra_attrs(enum, enum_exclude),
+                    ),
+                )
+
+    def _insert_examples(
+        self, cursor: sqlite3.Cursor, object_id: int, examples: List[Dict]
+    ) -> None:
+        """Insert example records."""
+        exclude = ["name", "caption"]
+        for example in examples:
+            cursor.execute(
+                """
+                INSERT INTO examples (object_id, name, caption, attrs)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    object_id,
+                    example.get("name"),
+                    example.get("caption"),
+                    self._extract_extra_attrs(example, exclude),
+                ),
+            )
+
+    def _insert_seealso(
+        self, cursor: sqlite3.Cursor, object_id: int, refs: List[str]
+    ) -> None:
+        """Insert see-also references."""
+        for ref in refs:
+            cursor.execute(
+                "INSERT INTO seealso (object_id, ref_name) VALUES (?, ?)",
+                (object_id, ref),
+            )
+
+    def _insert_misc(
+        self, cursor: sqlite3.Cursor, object_id: int, misc: Dict[str, Dict[str, str]]
+    ) -> None:
+        """Insert misc entries."""
+        for category, entries in misc.items():
+            for entry_name, description in entries.items():
+                cursor.execute(
+                    """
+                    INSERT INTO misc (object_id, category, entry_name, description)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (object_id, category, entry_name, description),
+                )
+
+    def _insert_palette(
+        self, cursor: sqlite3.Cursor, object_id: int, palette: Dict[str, Any]
+    ) -> None:
+        """Insert palette info."""
+        if not palette:
+            return
+        exclude = ["category", "palette_index"]
+        idx = palette.get("palette_index")
+        cursor.execute(
+            """
+            INSERT INTO palette (object_id, category, palette_index, attrs)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                object_id,
+                palette.get("category"),
+                int(idx) if idx else None,
+                self._extract_extra_attrs(palette, exclude),
+            ),
+        )
+
+    def _insert_parameter(
+        self, cursor: sqlite3.Cursor, object_id: int, parameter: Dict[str, Any]
+    ) -> None:
+        """Insert parameter info."""
+        if not parameter:
+            return
+        cursor.execute(
+            "INSERT INTO parameter (object_id, attrs) VALUES (?, ?)",
+            (object_id, json.dumps(parameter)),
+        )
+
     def insert_object(self, name: str, data: Dict[str, Any]) -> int:
         """Insert object data into database
 
@@ -451,319 +746,117 @@ class MaxRefDB:
             Object ID
         """
         with self._get_cursor() as cursor:
-            # Store root attributes separately
-            root_attrs = {}
-            for key, value in data.items():
-                if key not in [
-                    "digest",
-                    "description",
-                    "metadata",
-                    "inlets",
-                    "outlets",
-                    "objargs",
-                    "methods",
-                    "attributes",
-                    "examples",
-                    "seealso",
-                    "misc",
-                    "palette",
-                    "parameter",
-                    "name",
-                    "category",
-                    "module_pathname",
-                    "autofit",
-                ]:
-                    root_attrs[key] = value
+            object_id = self._insert_main_object(cursor, name, data)
+            self._delete_related_records(cursor, object_id)
 
-            # Insert main object record
-            cursor.execute(
-                """
-                INSERT OR REPLACE INTO objects
-                (name, digest, description, category, module_pathname, autofit, root_attrs)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    name,
-                    data.get("digest"),
-                    data.get("description"),
-                    data.get("category"),
-                    data.get("module_pathname"),
-                    1 if data.get("autofit") == "1" else 0,
-                    json.dumps(root_attrs) if root_attrs else None,
-                ),
+            self._insert_metadata(cursor, object_id, data.get("metadata", {}))
+            self._insert_inlets_outlets(
+                cursor, object_id, data.get("inlets", []), "inlets"
             )
-
-            object_id = cursor.lastrowid
-
-            # Delete existing related records (for REPLACE)
-            cursor.execute("DELETE FROM metadata WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM inlets WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM outlets WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM objargs WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM methods WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM attributes WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM examples WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM seealso WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM misc WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM palette WHERE object_id = ?", (object_id,))
-            cursor.execute("DELETE FROM parameter WHERE object_id = ?", (object_id,))
-
-            # Insert metadata
-            metadata = data.get("metadata", {})
-            for key, value in metadata.items():
-                # Handle lists (e.g., multiple tags)
-                if isinstance(value, list):
-                    for v in value:
-                        cursor.execute(
-                            "INSERT INTO metadata (object_id, key, value) VALUES (?, ?, ?)",
-                            (object_id, key, v),
-                        )
-                else:
-                    cursor.execute(
-                        "INSERT INTO metadata (object_id, key, value) VALUES (?, ?, ?)",
-                        (object_id, key, value),
-                    )
-
-            # Insert inlets
-            for inlet in data.get("inlets", []):
-                extra_attrs = {
-                    k: v
-                    for k, v in inlet.items()
-                    if k not in ["id", "type", "digest", "description"]
-                }
-                cursor.execute(
-                    """
-                    INSERT INTO inlets (object_id, inlet_id, inlet_type, digest, description, attrs)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        object_id,
-                        inlet.get("id"),
-                        inlet.get("type"),
-                        inlet.get("digest"),
-                        inlet.get("description"),
-                        json.dumps(extra_attrs) if extra_attrs else None,
-                    ),
-                )
-
-            # Insert outlets
-            for outlet in data.get("outlets", []):
-                extra_attrs = {
-                    k: v
-                    for k, v in outlet.items()
-                    if k not in ["id", "type", "digest", "description"]
-                }
-                cursor.execute(
-                    """
-                    INSERT INTO outlets (object_id, outlet_id, outlet_type, digest, description, attrs)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        object_id,
-                        outlet.get("id"),
-                        outlet.get("type"),
-                        outlet.get("digest"),
-                        outlet.get("description"),
-                        json.dumps(extra_attrs) if extra_attrs else None,
-                    ),
-                )
-
-            # Insert object arguments
-            for objarg in data.get("objargs", []):
-                extra_attrs = {
-                    k: v
-                    for k, v in objarg.items()
-                    if k not in ["name", "optional", "type", "digest", "description"]
-                }
-                cursor.execute(
-                    """
-                    INSERT INTO objargs (object_id, name, optional, arg_type, digest, description, attrs)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        object_id,
-                        objarg.get("name"),
-                        1 if objarg.get("optional") == "1" else 0,
-                        objarg.get("type"),
-                        objarg.get("digest"),
-                        objarg.get("description"),
-                        json.dumps(extra_attrs) if extra_attrs else None,
-                    ),
-                )
-
-            # Insert methods
-            for method_name, method_data in data.get("methods", {}).items():
-                extra_attrs = {
-                    k: v
-                    for k, v in method_data.items()
-                    if k not in ["digest", "description", "args", "attributes"]
-                }
-                cursor.execute(
-                    """
-                    INSERT INTO methods (object_id, name, digest, description, attrs)
-                    VALUES (?, ?, ?, ?, ?)
-                """,
-                    (
-                        object_id,
-                        method_name,
-                        method_data.get("digest"),
-                        method_data.get("description"),
-                        json.dumps(extra_attrs) if extra_attrs else None,
-                    ),
-                )
-                method_id = cursor.lastrowid
-
-                # Insert method arguments
-                for arg in method_data.get("args", []):
-                    extra_attrs = {
-                        k: v
-                        for k, v in arg.items()
-                        if k not in ["name", "optional", "type"]
-                    }
-                    cursor.execute(
-                        """
-                        INSERT INTO method_args (method_id, name, optional, arg_type, attrs)
-                        VALUES (?, ?, ?, ?, ?)
-                    """,
-                        (
-                            method_id,
-                            arg.get("name"),
-                            1 if arg.get("optional") == "1" else 0,
-                            arg.get("type"),
-                            json.dumps(extra_attrs) if extra_attrs else None,
-                        ),
-                    )
-
-            # Insert attributes
-            for attr_name, attr_data in data.get("attributes", {}).items():
-                extra_attrs = {
-                    k: v
-                    for k, v in attr_data.items()
-                    if k
-                    not in [
-                        "get",
-                        "set",
-                        "type",
-                        "size",
-                        "digest",
-                        "description",
-                        "enumlist",
-                        "attributes",
-                    ]
-                }
-                cursor.execute(
-                    """
-                    INSERT INTO attributes (object_id, name, can_get, can_set, attr_type, size, digest, description, attrs)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        object_id,
-                        attr_name,
-                        1 if attr_data.get("get") == "1" else 0,
-                        1 if attr_data.get("set") == "1" else 0,
-                        attr_data.get("type"),
-                        int(attr_data.get("size", 0))
-                        if attr_data.get("size")
-                        else None,
-                        attr_data.get("digest"),
-                        attr_data.get("description"),
-                        json.dumps(extra_attrs) if extra_attrs else None,
-                    ),
-                )
-                attr_id = cursor.lastrowid
-
-                # Insert enum values
-                for enum in attr_data.get("enumlist", []):
-                    extra_attrs = {
-                        k: v
-                        for k, v in enum.items()
-                        if k not in ["name", "digest", "description"]
-                    }
-                    cursor.execute(
-                        """
-                        INSERT INTO attribute_enums (attribute_id, name, digest, description, attrs)
-                        VALUES (?, ?, ?, ?, ?)
-                    """,
-                        (
-                            attr_id,
-                            enum.get("name"),
-                            enum.get("digest"),
-                            enum.get("description"),
-                            json.dumps(extra_attrs) if extra_attrs else None,
-                        ),
-                    )
-
-            # Insert examples
-            for example in data.get("examples", []):
-                extra_attrs = {
-                    k: v for k, v in example.items() if k not in ["name", "caption"]
-                }
-                cursor.execute(
-                    """
-                    INSERT INTO examples (object_id, name, caption, attrs)
-                    VALUES (?, ?, ?, ?)
-                """,
-                    (
-                        object_id,
-                        example.get("name"),
-                        example.get("caption"),
-                        json.dumps(extra_attrs) if extra_attrs else None,
-                    ),
-                )
-
-            # Insert see also references
-            for ref in data.get("seealso", []):
-                cursor.execute(
-                    "INSERT INTO seealso (object_id, ref_name) VALUES (?, ?)",
-                    (object_id, ref),
-                )
-
-            # Insert misc entries
-            for category, entries in data.get("misc", {}).items():
-                for entry_name, description in entries.items():
-                    cursor.execute(
-                        """
-                        INSERT INTO misc (object_id, category, entry_name, description)
-                        VALUES (?, ?, ?, ?)
-                    """,
-                        (object_id, category, entry_name, description),
-                    )
-
-            # Insert palette info
-            palette = data.get("palette", {})
-            if palette:
-                extra_attrs = {
-                    k: v
-                    for k, v in palette.items()
-                    if k not in ["category", "palette_index"]
-                }
-                cursor.execute(
-                    """
-                    INSERT INTO palette (object_id, category, palette_index, attrs)
-                    VALUES (?, ?, ?, ?)
-                """,
-                    (
-                        object_id,
-                        palette.get("category"),
-                        int(palette.get("palette_index"))
-                        if palette.get("palette_index")
-                        else None,
-                        json.dumps(extra_attrs) if extra_attrs else None,
-                    ),
-                )
-
-            # Insert parameter info
-            parameter = data.get("parameter", {})
-            if parameter:
-                cursor.execute(
-                    """
-                    INSERT INTO parameter (object_id, attrs)
-                    VALUES (?, ?)
-                """,
-                    (object_id, json.dumps(parameter) if parameter else None),
-                )
+            self._insert_inlets_outlets(
+                cursor, object_id, data.get("outlets", []), "outlets"
+            )
+            self._insert_objargs(cursor, object_id, data.get("objargs", []))
+            self._insert_methods(cursor, object_id, data.get("methods", {}))
+            self._insert_attributes(cursor, object_id, data.get("attributes", {}))
+            self._insert_examples(cursor, object_id, data.get("examples", []))
+            self._insert_seealso(cursor, object_id, data.get("seealso", []))
+            self._insert_misc(cursor, object_id, data.get("misc", {}))
+            self._insert_palette(cursor, object_id, data.get("palette", {}))
+            self._insert_parameter(cursor, object_id, data.get("parameter", {}))
 
             return object_id
+
+    # -------------------------------------------------------------------------
+    # Get helpers
+    # -------------------------------------------------------------------------
+
+    def _get_simple_list(
+        self, cursor: sqlite3.Cursor, table: str, object_id: int
+    ) -> List[Dict[str, Any]]:
+        """Fetch all rows from a table as a list of dicts."""
+        cursor.execute(f"SELECT * FROM {table} WHERE object_id = ?", (object_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
+    def _get_metadata(self, cursor: sqlite3.Cursor, object_id: int) -> Dict[str, Any]:
+        """Fetch metadata, collapsing duplicate keys into lists."""
+        cursor.execute(
+            "SELECT key, value FROM metadata WHERE object_id = ?", (object_id,)
+        )
+        metadata: Dict[str, Any] = {}
+        for row in cursor.fetchall():
+            key, value = row["key"], row["value"]
+            if key in metadata:
+                if not isinstance(metadata[key], list):
+                    metadata[key] = [metadata[key]]
+                metadata[key].append(value)
+            else:
+                metadata[key] = value
+        return metadata
+
+    def _get_methods(
+        self, cursor: sqlite3.Cursor, object_id: int
+    ) -> Dict[str, Dict[str, Any]]:
+        """Fetch methods with their arguments."""
+        cursor.execute("SELECT * FROM methods WHERE object_id = ?", (object_id,))
+        methods: Dict[str, Dict[str, Any]] = {}
+        for method_row in cursor.fetchall():
+            method_data = dict(method_row)
+            method_id = method_data["id"]
+            cursor.execute(
+                "SELECT * FROM method_args WHERE method_id = ?", (method_id,)
+            )
+            method_data["args"] = [dict(row) for row in cursor.fetchall()]
+            methods[method_data["name"]] = method_data
+        return methods
+
+    def _get_attributes(
+        self, cursor: sqlite3.Cursor, object_id: int
+    ) -> Dict[str, Dict[str, Any]]:
+        """Fetch attributes with their enum values."""
+        cursor.execute("SELECT * FROM attributes WHERE object_id = ?", (object_id,))
+        attributes: Dict[str, Dict[str, Any]] = {}
+        for attr_row in cursor.fetchall():
+            attr_data = dict(attr_row)
+            attr_id = attr_data["id"]
+            cursor.execute(
+                "SELECT * FROM attribute_enums WHERE attribute_id = ?", (attr_id,)
+            )
+            attr_data["enumlist"] = [dict(row) for row in cursor.fetchall()]
+            attributes[attr_data["name"]] = attr_data
+        return attributes
+
+    def _get_seealso(self, cursor: sqlite3.Cursor, object_id: int) -> List[str]:
+        """Fetch see-also references as a list of names."""
+        cursor.execute("SELECT ref_name FROM seealso WHERE object_id = ?", (object_id,))
+        return [row["ref_name"] for row in cursor.fetchall()]
+
+    def _get_misc(
+        self, cursor: sqlite3.Cursor, object_id: int
+    ) -> Dict[str, Dict[str, str]]:
+        """Fetch misc entries grouped by category."""
+        cursor.execute("SELECT * FROM misc WHERE object_id = ?", (object_id,))
+        misc: Dict[str, Dict[str, str]] = {}
+        for row in cursor.fetchall():
+            category = row["category"]
+            if category not in misc:
+                misc[category] = {}
+            misc[category][row["entry_name"]] = row["description"]
+        return misc
+
+    def _get_palette(self, cursor: sqlite3.Cursor, object_id: int) -> Dict[str, Any]:
+        """Fetch palette info."""
+        cursor.execute("SELECT * FROM palette WHERE object_id = ?", (object_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else {}
+
+    def _get_parameter(self, cursor: sqlite3.Cursor, object_id: int) -> Dict[str, Any]:
+        """Fetch parameter info."""
+        cursor.execute("SELECT attrs FROM parameter WHERE object_id = ?", (object_id,))
+        row = cursor.fetchone()
+        if row and row["attrs"]:
+            return json.loads(row["attrs"])
+        return {}
 
     def get_object(self, name: str) -> Optional[Dict[str, Any]]:
         """Get object data from database
@@ -777,117 +870,29 @@ class MaxRefDB:
         with self._get_cursor() as cursor:
             cursor.execute("SELECT * FROM objects WHERE name = ?", (name,))
             row = cursor.fetchone()
-
             if not row:
                 return None
 
             data = dict(row)
             object_id = data["id"]
 
-            # Parse root_attrs
+            # Parse and merge root_attrs
             if data["root_attrs"]:
-                root_attrs = json.loads(data["root_attrs"])
-                data.update(root_attrs)
+                data.update(json.loads(data["root_attrs"]))
             del data["root_attrs"]
 
-            # Get metadata
-            cursor.execute(
-                "SELECT key, value FROM metadata WHERE object_id = ?", (object_id,)
-            )
-            metadata: Dict[str, Any] = {}
-            for meta_row in cursor.fetchall():
-                key, value = meta_row["key"], meta_row["value"]
-                if key in metadata:
-                    if not isinstance(metadata[key], list):
-                        metadata[key] = [metadata[key]]
-                    metadata[key].append(value)
-                else:
-                    metadata[key] = value
-            data["metadata"] = metadata
-
-            # Get inlets
-            cursor.execute("SELECT * FROM inlets WHERE object_id = ?", (object_id,))
-            data["inlets"] = [dict(row) for row in cursor.fetchall()]
-
-            # Get outlets
-            cursor.execute("SELECT * FROM outlets WHERE object_id = ?", (object_id,))
-            data["outlets"] = [dict(row) for row in cursor.fetchall()]
-
-            # Get objargs
-            cursor.execute("SELECT * FROM objargs WHERE object_id = ?", (object_id,))
-            data["objargs"] = [dict(row) for row in cursor.fetchall()]
-
-            # Get methods
-            cursor.execute("SELECT * FROM methods WHERE object_id = ?", (object_id,))
-            methods = {}
-            for method_row in cursor.fetchall():
-                method_data = dict(method_row)
-                method_id = method_data["id"]
-                method_name = method_data["name"]
-
-                # Get method args
-                cursor.execute(
-                    "SELECT * FROM method_args WHERE method_id = ?", (method_id,)
-                )
-                method_data["args"] = [dict(row) for row in cursor.fetchall()]
-
-                methods[method_name] = method_data
-            data["methods"] = methods
-
-            # Get attributes
-            cursor.execute("SELECT * FROM attributes WHERE object_id = ?", (object_id,))
-            attributes = {}
-            for attr_row in cursor.fetchall():
-                attr_data = dict(attr_row)
-                attr_id = attr_data["id"]
-                attr_name = attr_data["name"]
-
-                # Get enum values
-                cursor.execute(
-                    "SELECT * FROM attribute_enums WHERE attribute_id = ?", (attr_id,)
-                )
-                attr_data["enumlist"] = [dict(row) for row in cursor.fetchall()]
-
-                attributes[attr_name] = attr_data
-            data["attributes"] = attributes
-
-            # Get examples
-            cursor.execute("SELECT * FROM examples WHERE object_id = ?", (object_id,))
-            data["examples"] = [dict(row) for row in cursor.fetchall()]
-
-            # Get seealso
-            cursor.execute(
-                "SELECT ref_name FROM seealso WHERE object_id = ?", (object_id,)
-            )
-            data["seealso"] = [row["ref_name"] for row in cursor.fetchall()]
-
-            # Get misc
-            cursor.execute("SELECT * FROM misc WHERE object_id = ?", (object_id,))
-            misc: Dict[str, Dict[str, str]] = {}
-            for misc_row in cursor.fetchall():
-                category = misc_row["category"]
-                if category not in misc:
-                    misc[category] = {}
-                misc[category][misc_row["entry_name"]] = misc_row["description"]
-            data["misc"] = misc
-
-            # Get palette
-            cursor.execute("SELECT * FROM palette WHERE object_id = ?", (object_id,))
-            palette_row = cursor.fetchone()
-            if palette_row:
-                data["palette"] = dict(palette_row)
-            else:
-                data["palette"] = {}
-
-            # Get parameter
-            cursor.execute(
-                "SELECT attrs FROM parameter WHERE object_id = ?", (object_id,)
-            )
-            param_row = cursor.fetchone()
-            if param_row and param_row["attrs"]:
-                data["parameter"] = json.loads(param_row["attrs"])
-            else:
-                data["parameter"] = {}
+            # Fetch all related data
+            data["metadata"] = self._get_metadata(cursor, object_id)
+            data["inlets"] = self._get_simple_list(cursor, "inlets", object_id)
+            data["outlets"] = self._get_simple_list(cursor, "outlets", object_id)
+            data["objargs"] = self._get_simple_list(cursor, "objargs", object_id)
+            data["methods"] = self._get_methods(cursor, object_id)
+            data["attributes"] = self._get_attributes(cursor, object_id)
+            data["examples"] = self._get_simple_list(cursor, "examples", object_id)
+            data["seealso"] = self._get_seealso(cursor, object_id)
+            data["misc"] = self._get_misc(cursor, object_id)
+            data["palette"] = self._get_palette(cursor, object_id)
+            data["parameter"] = self._get_parameter(cursor, object_id)
 
             return data
 
