@@ -930,6 +930,16 @@ class InteractiveEditor {
             });
         }
 
+        // Layout Engine selector - toggle parameter visibility
+        const layoutEngineSelector = document.getElementById('layout-engine');
+        if (layoutEngineSelector) {
+            layoutEngineSelector.addEventListener('change', (e) => {
+                this.toggleLayoutParameters(e.target.value);
+            });
+            // Set initial state
+            this.toggleLayoutParameters(layoutEngineSelector.value);
+        }
+
         // Apply Layout button
         const applyLayoutBtn = document.getElementById('apply-layout-btn');
         if (applyLayoutBtn) {
@@ -1145,15 +1155,26 @@ class InteractiveEditor {
     }
 
     autoLayout() {
+        if (this.boxes.size === 0) {
+            this.updateInfo('No objects to layout');
+            return;
+        }
+
+        // Check which layout engine is selected
+        const layoutEngine = document.getElementById('layout-engine')?.value || 'cola';
+
+        if (layoutEngine === 'elk') {
+            this.elkAutoLayout();
+        } else {
+            this.colaAutoLayout();
+        }
+    }
+
+    colaAutoLayout() {
         // Use WebCola for force-directed graph layout
         if (typeof cola === 'undefined') {
             console.error('WebCola library not loaded');
             this.updateInfo('Error: WebCola library not available');
-            return;
-        }
-
-        if (this.boxes.size === 0) {
-            this.updateInfo('No objects to layout');
             return;
         }
 
@@ -1293,7 +1314,231 @@ class InteractiveEditor {
         });
     }
 
+    elkAutoLayout() {
+        // Use ELK for hierarchical graph layout with port support
+        if (typeof ELK === 'undefined') {
+            console.error('ELK library not loaded');
+            this.updateInfo('Error: ELK library not available');
+            return;
+        }
+
+        this.updateInfo('Computing ELK layout with ports...');
+
+        // Get parameters from controls
+        const flowDirection = document.getElementById('flow-direction')?.value || 'none';
+        const flowSpacing = parseInt(document.getElementById('flow-spacing-slider')?.value || 150);
+        const elkAlgorithm = document.getElementById('elk-algorithm')?.value || 'layered';
+        const elkNodePlacement = document.getElementById('elk-node-placement')?.value || 'NETWORK_SIMPLEX';
+        const elkEdgeRouting = document.getElementById('elk-edge-routing')?.value || 'ORTHOGONAL';
+
+        // Determine ELK direction from flow direction
+        let elkDirection = 'RIGHT';  // default: left-to-right
+        if (flowDirection === 'y' || flowDirection === 'vertical-flow') {
+            elkDirection = 'DOWN';  // top-to-bottom
+        } else if (flowDirection === 'x-reverse') {
+            elkDirection = 'LEFT';  // right-to-left
+        } else if (flowDirection === 'y-reverse') {
+            elkDirection = 'UP';  // bottom-to-top
+        }
+
+        // Build ELK graph structure with ports
+        const children = [];
+        const edges = [];
+        const nodeMap = new Map();
+
+        // Create nodes with ports
+        this.boxes.forEach((box, boxId) => {
+            const width = box.width || 60;
+            const height = box.height || 22;
+
+            // Create port definitions
+            const ports = [];
+
+            // Add inlet ports (top of box)
+            const inletCount = box.inlet_count || 0;
+            for (let i = 0; i < inletCount; i++) {
+                ports.push({
+                    id: `${boxId}_inlet_${i}`,
+                    properties: {
+                        'port.side': 'NORTH',
+                        'port.index': i
+                    }
+                });
+            }
+
+            // Add outlet ports (bottom of box)
+            const outletCount = box.outlet_count || 0;
+            for (let i = 0; i < outletCount; i++) {
+                ports.push({
+                    id: `${boxId}_outlet_${i}`,
+                    properties: {
+                        'port.side': 'SOUTH',
+                        'port.index': i
+                    }
+                });
+            }
+
+            children.push({
+                id: boxId,
+                width: width,
+                height: height,
+                ports: ports
+            });
+
+            nodeMap.set(boxId, box);
+        });
+
+        // Create edges with port connections
+        this.lines.forEach(line => {
+            const srcOutlet = line.src_outlet || 0;
+            const dstInlet = line.dst_inlet || 0;
+
+            edges.push({
+                id: `${line.src}_${srcOutlet}_to_${line.dst}_${dstInlet}`,
+                sources: [`${line.src}_outlet_${srcOutlet}`],
+                targets: [`${line.dst}_inlet_${dstInlet}`]
+            });
+        });
+
+        // Build ELK graph with dynamic options
+        const layoutOptions = {
+            'elk.algorithm': elkAlgorithm,
+            'elk.direction': elkDirection,
+            'elk.spacing.nodeNode': flowSpacing.toString(),
+            'elk.portConstraints': 'FIXED_SIDE'
+        };
+
+        // Add algorithm-specific options
+        if (elkAlgorithm === 'layered') {
+            layoutOptions['elk.layered.spacing.nodeNodeBetweenLayers'] = flowSpacing.toString();
+            layoutOptions['elk.layered.nodePlacement.strategy'] = elkNodePlacement;
+            layoutOptions['elk.edgeRouting'] = elkEdgeRouting;
+        }
+
+        const graph = {
+            id: "root",
+            layoutOptions: layoutOptions,
+            children: children,
+            edges: edges
+        };
+
+        console.log('ELK graph:', graph);
+
+        // Run ELK layout
+        const elk = new ELK();
+        elk.layout(graph)
+            .then(layoutedGraph => {
+                console.log('ELK layout result:', layoutedGraph);
+
+                // Apply positions from ELK layout
+                const animationPromises = [];
+
+                layoutedGraph.children.forEach(node => {
+                    const box = this.boxes.get(node.id);
+                    if (box) {
+                        const oldX = box.x || 0;
+                        const oldY = box.y || 0;
+                        const newX = Math.round(node.x);
+                        const newY = Math.round(node.y);
+
+                        // Update internal state
+                        box.x = newX;
+                        box.y = newY;
+
+                        // Find the SVG element for this box
+                        const boxElement = this.boxesGroup.querySelector(`[data-id="${node.id}"]`);
+
+                        if (boxElement) {
+                            // Use SVG.js to animate the transform
+                            const svgElement = SVG(boxElement);
+                            const promise = new Promise(resolve => {
+                                svgElement.animate(500, 0, 'now')
+                                    .ease('<>')  // Ease in-out
+                                    .transform({ translateX: newX - oldX, translateY: newY - oldY })
+                                    .after(() => {
+                                        resolve();
+                                    });
+                            });
+                            animationPromises.push(promise);
+                        }
+
+                        // Send position update to server
+                        this.sendMessage({
+                            type: 'update_position',
+                            box_id: node.id,
+                            x: box.x,
+                            y: box.y
+                        });
+                    }
+                });
+
+                // Wait for animations to complete, then re-render
+                Promise.all(animationPromises).then(() => {
+                    console.log('ELK animations complete, re-rendering...');
+                    this.render();
+                    this.updateInfo(`ELK layout applied: ${layoutedGraph.children.length} objects, algorithm: ${elkAlgorithm}, direction: ${elkDirection}, spacing: ${flowSpacing}px`);
+                });
+            })
+            .catch(error => {
+                console.error('ELK layout error:', error);
+                this.updateInfo(`ELK layout error: ${error.message}`);
+            });
+    }
+
     // Helper methods
+
+    toggleLayoutParameters(engine) {
+        // Remove all layout engine classes
+        document.body.classList.remove('layout-engine-cola', 'layout-engine-elk');
+
+        // Add the appropriate class for the selected engine
+        document.body.classList.add(`layout-engine-${engine}`);
+
+        // Also keep the data attribute for backwards compatibility
+        document.body.setAttribute('data-layout-engine', engine);
+
+        console.log(`Layout engine changed to: ${engine}`);
+        console.log(`Body classes: ${document.body.className}`);
+
+        // DIRECT JavaScript manipulation for Safari compatibility
+        const colaParams = document.querySelectorAll('.param-cola-only');
+        const elkParams = document.querySelectorAll('.param-elk-only');
+
+        if (engine === 'elk') {
+            // Hide WebCola params, show ELK params
+            colaParams.forEach(el => {
+                el.style.display = 'none';
+                el.style.visibility = 'hidden';
+                el.style.height = '0';
+                el.style.overflow = 'hidden';
+            });
+            elkParams.forEach(el => {
+                el.style.display = 'flex';
+                el.style.visibility = 'visible';
+                el.style.height = 'auto';
+                el.style.overflow = 'visible';
+            });
+        } else {
+            // Hide ELK params, show WebCola params
+            elkParams.forEach(el => {
+                el.style.display = 'none';
+                el.style.visibility = 'hidden';
+                el.style.height = '0';
+                el.style.overflow = 'hidden';
+            });
+            colaParams.forEach(el => {
+                el.style.display = 'flex';
+                el.style.visibility = 'visible';
+                el.style.height = 'auto';
+                el.style.overflow = 'visible';
+            });
+        }
+
+        // Debug: count visible parameters
+        const visibleCola = Array.from(colaParams).filter(el => el.offsetHeight > 0).length;
+        const visibleElk = Array.from(elkParams).filter(el => el.offsetHeight > 0).length;
+        console.log(`Visible cola params: ${visibleCola}/${colaParams.length}, elk params: ${visibleElk}/${elkParams.length}`);
+    }
 
     getSVGPoint(event) {
         const CTM = this.svg.getScreenCTM();

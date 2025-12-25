@@ -7,7 +7,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* wss://localhost:*; img-src 'self' data:;">
     <style>
         :root {
-            --header-height: 120px;
+            --header-height: 60px;
         }
 
         * {
@@ -25,7 +25,7 @@
 
         #header {
             background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
-            padding: 12px 20px;
+            padding: 8px 16px;
             border-bottom: 2px solid #4080ff;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             display: flex;
@@ -35,7 +35,7 @@
         }
 
         h1 {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: #4080ff;
             letter-spacing: 0.5px;
@@ -48,13 +48,13 @@
         }
 
         button {
-            padding: 6px 12px;
+            padding: 4px 10px;
             background: #4080ff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             transition: background 0.2s;
         }
@@ -68,14 +68,14 @@
         }
 
         #status {
-            padding: 6px 12px;
+            padding: 4px 10px;
             background: rgba(255,255,255,0.05);
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         #status::before {
@@ -354,9 +354,48 @@
             height: 16px;
             cursor: pointer;
         }
+
+        /* Parameter visibility based on layout engine - MUST come after .control-group */
+        /* Default: hide elk params (tabindex=2), show cola params (tabindex=1) */
+        #layout-controls .control-group.param-elk-only[tabindex="2"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        #layout-controls .control-group.param-cola-only[tabindex="1"] {
+            display: flex !important;
+            visibility: visible !important;
+            height: auto !important;
+            overflow: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        /* When ELK is selected: hide cola params, show elk params */
+        body.layout-engine-elk #layout-controls .control-group.param-cola-only[tabindex="1"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        body.layout-engine-elk #layout-controls .control-group.param-elk-only[tabindex="2"] {
+            display: flex !important;
+            visibility: visible !important;
+            height: auto !important;
+            overflow: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
     </style>
 </head>
-<body>
+<body class="layout-engine-cola" data-layout-engine="cola">
     <div id="header">
         <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
             <h1 id="title">py2max Interactive Editor</h1>
@@ -379,7 +418,14 @@
     </div>
 
     <div id="layout-controls">
-        <div class="control-group">
+        <div class="control-group param-shared">
+            <label>Layout Engine</label>
+            <select id="layout-engine" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="cola">WebCola (Force-Directed)</option>
+                <option value="elk">ELK (Layered + Ports)</option>
+            </select>
+        </div>
+        <div class="control-group param-cola-only" tabindex="1">
             <label>Constraint Preset</label>
             <select id="constraint-preset" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
                 <option value="none">None</option>
@@ -388,7 +434,7 @@
                 <option value="grid">Grid Alignment</option>
             </select>
         </div>
-        <div class="control-group">
+        <div class="control-group param-shared">
             <label>Flow Layout Direction</label>
             <select id="flow-direction" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
                 <option value="none">None</option>
@@ -398,44 +444,70 @@
                 <option value="y-reverse">Vertical (Bottom-to-Top)</option>
             </select>
         </div>
-        <div class="control-group">
+        <div class="control-group param-shared">
             <label>Flow Spacing</label>
             <input type="range" id="flow-spacing-slider" min="50" max="300" value="150" step="10">
             <span class="value-display" id="flow-spacing-value">150</span>
         </div>
-        <div class="control-group">
+        <div class="control-group param-cola-only" tabindex="1">
             <label>Link Distance</label>
             <input type="range" id="link-distance-slider" min="50" max="300" value="100" step="10">
             <span class="value-display" id="link-distance-value">100</span>
         </div>
-        <div class="control-group">
+        <div class="control-group param-cola-only" tabindex="1">
             <label>Iterations</label>
             <input type="range" id="iterations-slider" min="10" max="200" value="50" step="10">
             <span class="value-display" id="iterations-value">50</span>
         </div>
-        <div class="control-group">
+        <div class="control-group param-shared">
             <label>Canvas Width</label>
             <input type="range" id="canvas-width-slider" min="400" max="1600" value="800" step="50">
             <span class="value-display" id="canvas-width-value">800</span>
         </div>
-        <div class="control-group">
+        <div class="control-group param-shared">
             <label>Canvas Height</label>
             <input type="range" id="canvas-height-slider" min="300" max="1200" value="600" step="50">
             <span class="value-display" id="canvas-height-value">600</span>
         </div>
-        <div class="control-group">
+        <div class="control-group param-shared">
             <label>Min ViewBox Width</label>
             <input type="range" id="min-viewbox-width-slider" min="400" max="1600" value="800" step="50">
             <span class="value-display" id="min-viewbox-width-value">800</span>
         </div>
-        <div class="control-group">
+        <div class="control-group param-shared">
             <label>Min ViewBox Height</label>
             <input type="range" id="min-viewbox-height-slider" min="300" max="1200" value="600" step="50">
             <span class="value-display" id="min-viewbox-height-value">600</span>
         </div>
-        <div class="control-group">
+        <div class="control-group param-cola-only" tabindex="1">
             <label>Avoid Overlaps</label>
             <input type="checkbox" id="avoid-overlaps-checkbox" checked>
+        </div>
+        <div class="control-group param-elk-only" tabindex="2">
+            <label>ELK Algorithm</label>
+            <select id="elk-algorithm" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="layered">Layered (Hierarchical)</option>
+                <option value="force">Force-Directed</option>
+                <option value="stress">Stress Minimization</option>
+                <option value="mrtree">Tree (Multi-Root)</option>
+            </select>
+        </div>
+        <div class="control-group param-elk-only" tabindex="2">
+            <label>Node Placement</label>
+            <select id="elk-node-placement" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="NETWORK_SIMPLEX">Network Simplex</option>
+                <option value="LINEAR_SEGMENTS">Linear Segments</option>
+                <option value="BRANDES_KOEPF">Brandes-Koepf</option>
+                <option value="SIMPLE">Simple</option>
+            </select>
+        </div>
+        <div class="control-group param-elk-only" tabindex="2">
+            <label>Edge Routing</label>
+            <select id="elk-edge-routing" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="ORTHOGONAL">Orthogonal</option>
+                <option value="POLYLINE">Polyline</option>
+                <option value="SPLINES">Splines</option>
+            </select>
         </div>
         <button id="apply-layout-btn" style="margin-top: 14px;">Apply Layout</button>
         <button id="reset-layout-btn" style="margin-top: 14px;">Reset Layout</button>
@@ -451,6 +523,7 @@
     <script src="d3.v7.min.js"></script>
     <script src="svg.min.js"></script>
     <script src="cola.min.js"></script>
+    <script src="elk.bundled.js"></script>
 
     <!-- Main interactive editor -->
     <script src="interactive.js"></script>
