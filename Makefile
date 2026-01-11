@@ -3,7 +3,7 @@
 
 .PHONY: help all build test test-verbose coverage lint \
 		typecheck quality docs docs-clean docs-serve install \
-		dev clean reset ci format
+		dev clean reset ci format check-wheel publish-test publish
 
 help: ## Show this help message
 	@echo "Available commands:"
@@ -75,3 +75,12 @@ ci: ## Run CI-like checks locally
 	@uv run mypy py2max
 	@uv run ruff check py2max
 	@cd docs && uv run sphinx-build -b html source build
+
+check-wheel: build ## Check wheel with twine
+	@uv run twine check dist/*
+
+publish-test: check-wheel ## Publish to PyPI Test
+	@uv run twine upload --repository testpypi dist/*
+
+publish: check-wheel ## Publish to PyPI
+	@uv run twine upload dist/*
