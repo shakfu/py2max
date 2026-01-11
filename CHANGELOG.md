@@ -2,6 +2,75 @@
 
 ## [Unreleased]
 
+### New: Dagre Layout Algorithm
+
+- Added Dagre (Directed Acyclic Graph) as third layout algorithm option alongside WebCola and ELK
+- Integrated `dagre-bundle.js` combining graphlib with require shim for browser compatibility
+- Added Dagre-specific controls: Ranker (network-simplex, longest-path, tight-tree) and Align options
+- Supports all flow directions: top-bottom, bottom-top, left-right, right-left
+
+### Improved: Interactive Editor Visualization
+
+- **ViewBox Scaling**: Dynamic padding (10% of content, min 30px, max 100px) with aspect ratio preservation
+- **Port Position Safety**: Added bounds checking with `safeIndex` clamping to prevent invalid port positions
+- **Patchline Animation**: Added `animatePatchlines()` method for smooth patchline transitions during layout
+- **Layout Centering**: Added `centerLayout()` helper method - all three algorithms now center content within canvas
+- **Delta Updates**: Position updates now send only changed box data instead of full patcher state
+  - Added `updateBoxPosition()` for efficient single-box DOM updates
+  - Added `updateConnectedLines()` to update patchlines without full re-render
+  - Significantly reduces bandwidth during drag operations
+
+### Improved: FlowLayoutManager
+
+- **Line Crossing Minimization**: Added `_minimize_crossings()` method using barycenter heuristic
+  - Objects within each level are reordered based on average position of connected objects in previous level
+  - Reduces visual line crossings for cleaner layouts
+- **Negative Position Prevention**: Added bounds clamping and auto-scaling when content exceeds available space
+- **Incremental Layout**: Supports `optimize_layout(changed_objects)` for efficient partial updates
+
+### Improved: GridLayoutManager
+
+- Fixed integer division to float division for consistent cluster positioning
+- Now uses consistent float spacing within clusters
+- **Incremental Layout**: Supports `optimize_layout(changed_objects)` for efficient partial updates
+
+### Improved: WebSocket Server Security
+
+- **Input Validation**: Added comprehensive schema-based message validation
+  - `MESSAGE_SCHEMAS` defines required fields and types for each message type
+  - `MAX_STRING_LENGTHS` prevents abuse (256 chars for IDs, 10000 for text, 4096 for filepaths)
+  - `COORDINATE_BOUNDS` validates positions (-100000 to 100000)
+  - Checks for control characters in strings
+  - Validates optional fields (outlet/inlet indices 0-255)
+  - Validation errors sent back to client as error messages
+
+### New: Save As Dialog
+
+- Added `save_as_required` message type when patcher has no filepath
+- Added `handle_save_as()` handler for saving with specified filepath
+- Added `showSaveAsDialog()` in JavaScript with filename prompt
+- Automatically adds `.maxpat` extension if not provided
+
+### Fixed: ELK Layout
+
+- Fixed "Referenced shape does not exist" errors by validating edges before creating ports
+- Ports now created based on actual connections, not just declared counts
+
+### Fixed: Static File Paths
+
+- Fixed 404 error for `interactive.html` by correcting static file path resolution
+
+### Improved: Base LayoutManager
+
+- Added `prevent_overlaps()` method for iterative overlap prevention
+- **Incremental Layout System**: Added smart layout optimization that only repositions affected objects
+  - `optimize_layout(changed_objects)` accepts optional set of changed object IDs
+  - `should_use_incremental()` determines when to use incremental vs full layout (30% threshold)
+  - `get_affected_objects()` finds changed objects plus their connected neighbors
+  - `_incremental_layout()` repositions only affected objects using spiral search
+  - `_find_non_overlapping_position()` finds nearby positions that don't overlap with fixed objects
+  - `_full_layout()` for complete layout recalculation (subclasses override)
+
 ## [0.2.0]
 
 ### Updated: Optional Layout Dependencies

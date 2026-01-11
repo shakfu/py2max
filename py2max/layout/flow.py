@@ -3,7 +3,7 @@
 This module provides FlowLayoutManager for intelligent signal flow-based layouts.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 from py2max.core.abstract import AbstractPatcher
 from py2max.core.common import Rect
@@ -370,11 +370,26 @@ class FlowLayoutManager(LayoutManager):
 
         return Rect(x, y, w, h)
 
-    def optimize_layout(self):
-        """Optimize the layout of all existing objects based on their connections."""
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None):
+        """Optimize the layout of all existing objects based on their connections.
+
+        Args:
+            changed_objects: Optional set of object IDs that have changed.
+                If provided and small relative to total objects, only
+                affected objects will be repositioned (incremental layout).
+        """
         if len(self.parent._objects) < 2:
             return  # Nothing to optimize
 
+        # Use parent's incremental layout decision logic
+        if self.should_use_incremental(changed_objects):
+            affected = self.get_affected_objects(changed_objects)
+            self._incremental_layout(affected)
+        else:
+            self._full_layout()
+
+    def _full_layout(self):
+        """Perform full layout optimization based on signal flow analysis."""
         positions = self._calculate_positions()
 
         # Apply optimized positions to existing objects

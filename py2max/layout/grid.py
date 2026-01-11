@@ -3,7 +3,7 @@
 This module provides GridLayoutManager and legacy aliases for grid-based layouts.
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 
 from py2max.core.abstract import AbstractPatcher
 from py2max.core.common import Rect
@@ -128,8 +128,23 @@ class GridLayoutManager(LayoutManager):
 
         return clusters
 
-    def optimize_layout(self):
-        """Optimize the layout to cluster connected objects together."""
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None):
+        """Optimize the layout to cluster connected objects together.
+
+        Args:
+            changed_objects: Optional set of object IDs that have changed.
+                If provided and small relative to total objects, only
+                affected objects will be repositioned (incremental layout).
+        """
+        # Use parent's incremental layout decision logic
+        if self.should_use_incremental(changed_objects):
+            affected = self.get_affected_objects(changed_objects)
+            self._incremental_layout(affected)
+        else:
+            self._full_layout()
+
+    def _full_layout(self):
+        """Perform full layout optimization."""
         if not self.cluster_connected or len(self.parent._objects) < 2:
             # Even without clustering, prevent overlaps
             self.prevent_overlaps()

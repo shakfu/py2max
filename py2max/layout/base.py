@@ -3,11 +3,14 @@
 This module provides the base LayoutManager class that all layout managers inherit from.
 """
 
-from typing import Optional
+from typing import Dict, Optional, Set
 
 from py2max.core.abstract import AbstractLayoutManager, AbstractPatcher
 from py2max.core.common import Rect
 from py2max.maxref import MAXCLASS_DEFAULTS
+
+# Threshold for incremental vs full layout (30% of total objects)
+INCREMENTAL_THRESHOLD = 0.3
 
 
 class LayoutManager(AbstractLayoutManager):
@@ -246,10 +249,213 @@ class LayoutManager(AbstractLayoutManager):
 
         return iterations_performed
 
-    def optimize_layout(self):
+    def get_connected_objects(self, obj_ids: Set[str]) -> Set[str]:
+        """Get all objects connected to the given objects via patchlines.
+
+        Args:
+            obj_ids: Set of object IDs to find connections for.
+
+        Returns:
+            Set of object IDs that are directly connected to the input objects.
+        """
+        connected = set()
+
+        for line in self.parent._lines:
+            src_id, dst_id = line.src, line.dst
+            if src_id is None or dst_id is None:
+                continue
+
+            if src_id in obj_ids:
+                connected.add(dst_id)
+            if dst_id in obj_ids:
+                connected.add(src_id)
+
+        return connected
+
+    def get_affected_objects(self, changed_objects: Set[str]) -> Set[str]:
+        """Get all objects affected by changes to the given objects.
+
+        This includes the changed objects themselves plus their immediate
+        neighbors (objects connected via patchlines).
+
+        Args:
+            changed_objects: Set of object IDs that have changed.
+
+        Returns:
+            Set of all affected object IDs.
+        """
+        affected = set(changed_objects)
+        neighbors = self.get_connected_objects(changed_objects)
+        affected.update(neighbors)
+        return affected
+
+    def should_use_incremental(self, changed_objects: Optional[Set[str]]) -> bool:
+        """Determine whether to use incremental or full layout.
+
+        Uses incremental layout when:
+        - changed_objects is provided
+        - The number of affected objects is less than INCREMENTAL_THRESHOLD
+          of total objects
+
+        Args:
+            changed_objects: Set of changed object IDs, or None for full layout.
+
+        Returns:
+            True if incremental layout should be used.
+        """
+        if changed_objects is None:
+            return False
+
+        total_objects = len(self.parent._objects)
+        if total_objects == 0:
+            return False
+
+        affected = self.get_affected_objects(changed_objects)
+        return len(affected) < total_objects * INCREMENTAL_THRESHOLD
+
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None):
         """Optimize the layout of objects.
 
-        Subclasses should override this method to implement specific
-        layout optimization algorithms. The base implementation does nothing.
+        If changed_objects is provided and the number of affected objects
+        is small relative to the total, only those objects and their
+        neighbors will be repositioned (incremental layout). Otherwise,
+        a full layout recalculation is performed.
+
+        Args:
+            changed_objects: Optional set of object IDs that have changed.
+                If None, performs full layout optimization.
+
+        Subclasses should override _full_layout() and optionally
+        _incremental_layout() to implement specific algorithms.
+        """
+        if self.should_use_incremental(changed_objects):
+            affected = self.get_affected_objects(changed_objects)
+            self._incremental_layout(affected)
+        else:
+            self._full_layout()
+
+    def _full_layout(self):
+        """Perform full layout optimization.
+
+        Subclasses should override this method to implement their
+        full layout algorithm.
         """
         pass
+
+    def _incremental_layout(self, affected_objects: Set[str]):
+        """Perform incremental layout optimization for affected objects.
+
+        This method repositions only the affected objects while keeping
+        other objects in their current positions. The default implementation
+        finds optimal positions for affected objects that minimize overlap
+        with existing objects.
+
+        Args:
+            affected_objects: Set of object IDs to reposition.
+
+        Subclasses can override this for more sophisticated incremental layouts.
+        """
+        if not affected_objects:
+            return
+
+        # Get current positions of non-affected objects (these are fixed)
+        fixed_positions: Dict[str, Rect] = {}
+        for obj_id, obj in self.parent._objects.items():
+            if obj_id not in affected_objects:
+                if hasattr(obj, "patching_rect"):
+                    fixed_positions[obj_id] = obj.patching_rect
+
+        # For each affected object, find a position that doesn't overlap
+        pad = self.pad
+        for obj_id in affected_objects:
+            if obj_id not in self.parent._objects:
+                continue
+
+            obj = self.parent._objects[obj_id]
+            if not hasattr(obj, "patching_rect"):
+                continue
+
+            current_rect = obj.patching_rect
+
+            # Try to find a nearby position that doesn't overlap
+            best_pos = self._find_non_overlapping_position(
+                current_rect, fixed_positions, affected_objects
+            )
+
+            if best_pos:
+                obj.patching_rect = best_pos
+                # Add to fixed positions for subsequent objects
+                fixed_positions[obj_id] = best_pos
+
+        # Final overlap prevention pass
+        self.prevent_overlaps()
+
+    def _find_non_overlapping_position(
+        self,
+        rect: Rect,
+        fixed_positions: Dict[str, Rect],
+        exclude_ids: Set[str],
+    ) -> Optional[Rect]:
+        """Find a position for rect that doesn't overlap with fixed positions.
+
+        Tries positions in a spiral pattern around the current position.
+
+        Args:
+            rect: The rectangle to position.
+            fixed_positions: Dictionary of fixed object positions.
+            exclude_ids: Object IDs to exclude from overlap checking.
+
+        Returns:
+            A non-overlapping Rect, or the original rect if no better position found.
+        """
+        pad = self.pad
+        min_gap = 10.0
+
+        def overlaps_any(test_rect: Rect) -> bool:
+            for obj_id, fixed_rect in fixed_positions.items():
+                if obj_id in exclude_ids:
+                    continue
+                # Check overlap
+                if (
+                    test_rect.x < fixed_rect.x + fixed_rect.w + min_gap
+                    and fixed_rect.x < test_rect.x + test_rect.w + min_gap
+                    and test_rect.y < fixed_rect.y + fixed_rect.h + min_gap
+                    and fixed_rect.y < test_rect.y + test_rect.h + min_gap
+                ):
+                    return True
+            return False
+
+        # If current position doesn't overlap, keep it
+        if not overlaps_any(rect):
+            return rect
+
+        # Try positions in a spiral pattern
+        step = pad / 2
+        max_radius = max(self.parent.width, self.parent.height) / 2
+
+        for radius in range(1, int(max_radius / step) + 1):
+            offset = radius * step
+            # Try 8 directions
+            for dx, dy in [
+                (offset, 0),
+                (-offset, 0),
+                (0, offset),
+                (0, -offset),
+                (offset, offset),
+                (-offset, offset),
+                (offset, -offset),
+                (-offset, -offset),
+            ]:
+                new_x = rect.x + dx
+                new_y = rect.y + dy
+
+                # Ensure within bounds
+                new_x = max(pad, min(new_x, self.parent.width - rect.w - pad))
+                new_y = max(pad, min(new_y, self.parent.height - rect.h - pad))
+
+                test_rect = Rect(new_x, new_y, rect.w, rect.h)
+                if not overlaps_any(test_rect):
+                    return test_rect
+
+        # No non-overlapping position found, return original
+        return rect
