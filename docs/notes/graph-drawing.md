@@ -60,7 +60,7 @@ Paul Klose](https://rtsys.informatik.uni-kiel.de/~biblio/downloads/theses/pkl-mt
 
 - <https://stackoverflow.com/questions/5028433/graph-auto-layout-algorithm>
 
-- <https://stackoverflow.com/questions/45174962/getting-layout-coordinates-of-graph-vertices-using-python-networkx-pygraphviz> (includes a trick to  generate svg from graphviz and then get coordinates from the svg)
+- <https://stackoverflow.com/questions/45174962/getting-layout-coordinates-of-graph-vertices-using-python-networkx-pygraphviz> (includes a trick to generate svg from graphviz and then get coordinates from the svg)
 
 - <https://stackoverflow.com/questions/13938770/how-to-get-the-coordinates-from-layout-from-graphviz>
 

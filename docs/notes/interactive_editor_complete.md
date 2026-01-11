@@ -50,7 +50,7 @@ This is the critical outcome - users can:
 
 ### 5. Save Functionality [x]
 
-- **Manual save** - Click  Save button (default)
+- **Manual save** - Click Save button (default)
 - **Auto-save** - Optional 2-second debounced save
 - **Visual feedback** - "Saving..." → "[x] Saved to [filepath]"
 - **Error handling** - "[X] Save error: [message]"

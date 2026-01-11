@@ -151,7 +151,7 @@ py2max[demo.maxpat]>>> await asyncio.sleep(1)  # Async works!
 
 ## Test Results
 
-```
+```text
 $ uv run pytest tests/test_repl.py -v
 
 ============================= test session starts ==============================
@@ -193,6 +193,7 @@ dependencies = [
 ```
 
 **Transitive dependencies installed**:
+
 - `prompt-toolkit==3.0.52` (ptpython requirement)
 - `jedi==0.19.2` (code completion)
 - `parso==0.8.5` (parser for Jedi)
@@ -218,7 +219,6 @@ dependencies = [
 | Ease of use | [+] | [+] | [+] |
 | **Overall** | **[+]** | **[+]** | **[+]** |
 
-
 ### Command Functions vs Magic Commands
 
 Instead of IPython-style `%magic` commands, we use simple functions:
@@ -236,6 +236,7 @@ Instead of IPython-style `%magic` commands, we use simple functions:
 ```
 
 **Benefits**:
+
 - No IPython dependency (~5MB saved)
 - More Pythonic (just functions)
 - Easy to implement and test
@@ -252,11 +253,13 @@ Instead of IPython-style `%magic` commands, we use simple functions:
 **Current Solution**: Use browser for live feedback
 
 **Workflow**:
+
 1. Edit in REPL
 2. Changes sync to browser instantly [x]
 3. To test in Max: manually reload patch
 
 **Future Option** (Phase 3):
+
 - OSC/UDP trigger to Max helper patch
 - Automatic reload via Max scripting
 - Requires user setup (optional feature)
@@ -276,7 +279,7 @@ Instead of IPython-style `%magic` commands, we use simple functions:
 
 ### Lines of Code
 
-```
+```text
 py2max/repl.py:                    331 lines
 tests/test_repl.py:                262 lines
 tests/examples/repl_quickstart.py: 141 lines
@@ -285,7 +288,7 @@ Total new code:                    734 lines
 
 ### Test Coverage
 
-```
+```text
 19 tests, 19 passed (100%)
 - 13 unit tests (command functions)
 - 2 display tests (__pt_repr__)
@@ -299,7 +302,7 @@ Total new code:                    734 lines
 
 ### Startup Banner
 
-```
+```text
 ======================================================================
 py2max Interactive REPL
 ======================================================================
@@ -350,7 +353,7 @@ All commands provide visual feedback:
 
 ### Startup Time
 
-```
+```text
 ptpython import:        ~100ms
 WebSocket server:       ~50ms
 REPL initialization:    ~50ms
@@ -375,6 +378,7 @@ Total startup:          ~200ms
 ### Phase 3: Max Integration (Not Implemented)
 
 **Potential additions** (if user demand exists):
+
 - OSC/UDP reload trigger
 - Max helper patch template
 - `--max-reload` flag
@@ -387,6 +391,7 @@ Total startup:          ~200ms
 ### Other Enhancements
 
 **Could add**:
+
 - Custom tab completion for Max objects (from maxref DB)
 - Undo/redo support
 - Macro recording
@@ -402,6 +407,7 @@ Total startup:          ~200ms
 ### Original Requirements (from REPL_DEVELOPMENT.md)
 
 [x] **Phase 1: Core REPL Integration (MVP)**
+
 - [x] Create `py2max/repl.py` module
 - [x] Implement async REPL using ptpython
 - [x] Add auto-save wrapper
@@ -414,6 +420,7 @@ Total startup:          ~200ms
 - [x] Document usage
 
 [x] **Phase 2: Enhanced Features**
+
 - [x] Implement magic-like commands (8 commands)
 - [x] Add command history (ptpython built-in)
 - [x] Add syntax highlighting (ptpython built-in)
@@ -422,6 +429,7 @@ Total startup:          ~200ms
 - [x] Rich output formatting
 
 [X] **Phase 3: Max Integration** (Deferred)
+
 - [ ] Max reload trigger (not implemented)
 - [ ] OSC/UDP communication (not needed yet)
 - [ ] Helper patch template (not needed yet)
@@ -465,4 +473,4 @@ py2max serve my-patch.maxpat --repl
 >>> save()
 ```
 
-**Enjoy live patch editing with py2max!** 
+**Enjoy live patch editing with py2max!**

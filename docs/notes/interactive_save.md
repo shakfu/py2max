@@ -14,7 +14,7 @@ This is the critical feature that makes the interactive editor useful - changes 
 
 ### 1. Manual Save (Default)
 
-- **Save Button**: Click the  Save button in the web interface
+- **Save Button**: Click the Save button in the web interface
 - **Keyboard Shortcut**: Could be added (e.g., Ctrl+S / Cmd+S)
 - **Visual Feedback**: Shows "Saving..." then "[x] Saved to [filepath]"
 - **Error Handling**: Shows "[X] Save error: [message]" if save fails

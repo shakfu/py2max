@@ -20,7 +20,7 @@ Both modes solve the original problem: **server logs interfering with REPL usabi
 
 The initial inline REPL implementation had logs interrupting user input:
 
-```
+```text
 py2max[demo.maxpat]>>> osc = p.add('cycle~ 440')
 [00:00:01] - INFO - Client connected           ← Server log
 [00:00:01] - DEBUG - WebSocket message         ← Server log
@@ -66,7 +66,7 @@ py2max[remote]>>> save()
 
 ### Architecture
 
-```
+```text
 Terminal 1: Server                    Terminal 2: REPL Client
 ┌──────────────────────┐              ┌────────────────────┐
 │ py2max serve         │              │ py2max repl        │
@@ -133,7 +133,7 @@ py2max[demo.maxpat]>>> save()
 
 ### Architecture
 
-```
+```text
 Single Terminal
 ┌─────────────────────────────────────┐
 │                                     │
@@ -196,6 +196,7 @@ Optional: $ tail -f server.log (in another terminal)
 ### Client-Server Mode Examples
 
 **Basic session**:
+
 ```bash
 # Terminal 1
 $ py2max serve demo.maxpat
@@ -207,32 +208,35 @@ py2max[remote]>>> save()
 ```
 
 **Custom ports**:
+
 ```bash
 # Terminal 1 (use port 9000 for HTTP, 9001 for WS, 9002 for REPL)
-$ py2max serve demo.maxpat --port 9000
+py2max serve demo.maxpat --port 9000
 
 # Terminal 2
-$ py2max repl localhost:9002
+py2max repl localhost:9002
 ```
 
 **Multiple clients**:
+
 ```bash
 # Terminal 1: Server
-$ py2max serve demo.maxpat
+py2max serve demo.maxpat
 
 # Terminal 2: Client 1
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 
 # Terminal 3: Client 2
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 
 # Terminal 4: Client 3
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 ```
 
 ### Single Terminal Mode Examples
 
 **Basic session**:
+
 ```bash
 $ py2max serve demo.maxpat --repl --log-file server.log
 py2max[demo.maxpat]>>> osc = p.add('cycle~ 440')
@@ -240,17 +244,19 @@ py2max[demo.maxpat]>>> save()
 ```
 
 **Monitor logs in second terminal (optional)**:
+
 ```bash
 # Terminal 1: REPL
-$ py2max serve demo.maxpat --repl --log-file server.log
+py2max serve demo.maxpat --repl --log-file server.log
 
 # Terminal 2: Log viewer (optional)
-$ tail -f server.log
+tail -f server.log
 ```
 
 **Custom log location**:
+
 ```bash
-$ py2max serve demo.maxpat --repl --log-file ~/logs/py2max_$(date +%Y%m%d).log
+py2max serve demo.maxpat --repl --log-file ~/logs/py2max_$(date +%Y%m%d).log
 ```
 
 ---
@@ -292,6 +298,7 @@ py2max>>> asyncio     # Async module
 **Port**: 8002 (default: HTTP port + 2)
 
 **Init**:
+
 ```json
 // Client → Server
 {"type": "init"}
@@ -308,6 +315,7 @@ py2max>>> asyncio     # Async module
 ```
 
 **Eval**:
+
 ```json
 // Client → Server
 {
@@ -336,7 +344,8 @@ py2max>>> asyncio     # Async module
 ## Performance
 
 ### Client-Server Mode
-```
+
+```text
 localhost:      5-10ms   (instant)
 local network: 20-50ms   (responsive)
 internet:      50-200ms  (usable)
@@ -345,7 +354,8 @@ Bandwidth: ~10-20 KB per command (very lightweight)
 ```
 
 ### Single Terminal Mode
-```
+
+```text
 No network overhead (background thread)
 Response time: <1ms (instant)
 ```
@@ -355,8 +365,9 @@ Response time: <1ms (instant)
 ## Migration from Old Inline REPL
 
 ### Old Way (DEPRECATED)
+
 ```bash
-$ py2max serve my-patch.maxpat --repl
+py2max serve my-patch.maxpat --repl
 
 # WARNING: Server logs interfere with REPL!
 # This shows deprecation warning now.
@@ -365,17 +376,19 @@ $ py2max serve my-patch.maxpat --repl
 ### New Ways (RECOMMENDED)
 
 **Option 1: Client-Server** (best for development)
+
 ```bash
 # Terminal 1
-$ py2max serve my-patch.maxpat
+py2max serve my-patch.maxpat
 
 # Terminal 2
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 ```
 
 **Option 2: Single Terminal** (best for quick edits)
+
 ```bash
-$ py2max serve my-patch.maxpat --repl --log-file server.log
+py2max serve my-patch.maxpat --repl --log-file server.log
 ```
 
 ---
@@ -385,17 +398,19 @@ $ py2max serve my-patch.maxpat --repl --log-file server.log
 ### Client-Server Mode
 
 **Q: Can't connect to server**
+
 ```bash
 # Check server is running
-$ ps aux | grep "py2max serve"
+ps aux | grep "py2max serve"
 
 # Check correct port (default: 8002)
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 
 # Check server output for port number
 ```
 
 **Q: Connection refused**
+
 ```bash
 # Make sure server started successfully
 # Check for "REPL server started on port 8002" message
@@ -404,21 +419,23 @@ $ py2max repl localhost:8002
 ### Single Terminal Mode
 
 **Q: Can't find log file**
+
 ```bash
 # Default location: outputs/py2max_server.log
-$ tail -f outputs/py2max_server.log
+tail -f outputs/py2max_server.log
 
 # Or specify custom location
-$ py2max serve patch.maxpat --repl --log-file ~/my.log
+py2max serve patch.maxpat --repl --log-file ~/my.log
 ```
 
 **Q: REPL not starting**
+
 ```bash
 # Check ptpython is installed
-$ uv add ptpython
+uv add ptpython
 
 # Check for error messages in log file
-$ cat outputs/py2max_server.log
+cat outputs/py2max_server.log
 ```
 
 ---
@@ -430,12 +447,14 @@ $ cat outputs/py2max_server.log
 **Best for**: Development, debugging, team collaboration
 
 **Pros**:
+
 - Real-time log visibility
 - Multiple clients
 - Reconnection support
 - Remote access
 
 **Cons**:
+
 - Requires two terminals
 - Slightly more complex setup
 
@@ -444,12 +463,14 @@ $ cat outputs/py2max_server.log
 **Best for**: Quick edits, demos, learning
 
 **Pros**:
+
 - Single terminal
 - Simple setup
 - Fast startup
 - Logs preserved in file
 
 **Cons**:
+
 - No real-time log visibility
 - Single REPL only
 - No remote access
@@ -460,19 +481,19 @@ $ cat outputs/py2max_server.log
 
 ```bash
 # Client-Server Mode
-$ py2max serve <patch.maxpat>              # Terminal 1
-$ py2max repl localhost:8002                # Terminal 2
+py2max serve <patch.maxpat>              # Terminal 1
+py2max repl localhost:8002                # Terminal 2
 
 # Single Terminal Mode
-$ py2max serve <patch.maxpat> --repl --log-file server.log
+py2max serve <patch.maxpat> --repl --log-file server.log
 
 # Custom ports
-$ py2max serve <patch.maxpat> --port 9000   # REPL on 9002
-$ py2max repl localhost:9002
+py2max serve <patch.maxpat> --port 9000   # REPL on 9002
+py2max repl localhost:9002
 
 # Help
-$ py2max serve --help
-$ py2max repl --help
+py2max serve --help
+py2max repl --help
 ```
 
-**Both modes provide clean, usable REPL with full server logging!** 
+**Both modes provide clean, usable REPL with full server logging!**

@@ -50,6 +50,7 @@ htmlcov/
 .nox/
 .coverage
 .coverage.*
+.*_cache
 .cache
 nosetests.xml
 coverage.xml
@@ -135,7 +136,7 @@ dmypy.json
 .pyre
 
 # uv
-uv.lock
+# uv.lock
 
 # ai
 .claude

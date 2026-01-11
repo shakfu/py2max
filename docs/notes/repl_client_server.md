@@ -9,7 +9,8 @@
 ## Problem
 
 The original inline REPL implementation had a critical usability issue:
-```
+
+```text
 py2max[demo.maxpat]>>> osc = p.add('cycle~ 440')
 [00:00:01] - INFO - Client connected
 [00:00:01] - DEBUG - WebSocket message received
@@ -26,7 +27,7 @@ py2max[demo.maxpat]>>> gain = p.add[00:00:02] - DEBUG - Saving patcher
 
 Separate the server (with logs) from the REPL client (clean interface):
 
-```
+```text
 Terminal 1 (Server)              Terminal 2 (REPL Client)
 ┌──────────────────────┐        ┌───────────────────────┐
 │ $ py2max serve       │        │ $ py2max repl         │
@@ -131,11 +132,11 @@ Connections: 1 lines
 
 ```bash
 # Server with custom port
-$ py2max serve my-patch.maxpat --port 9000
+py2max serve my-patch.maxpat --port 9000
 # Creates: HTTP=9000, WS=9001, REPL=9002
 
 # Client connecting to custom port
-$ py2max repl localhost:9002
+py2max repl localhost:9002
 ```
 
 ---
@@ -147,6 +148,7 @@ $ py2max repl localhost:9002
 **Message Types**:
 
 #### 1. Init (Client → Server)
+
 ```json
 {
   "type": "init"
@@ -154,6 +156,7 @@ $ py2max repl localhost:9002
 ```
 
 **Response**:
+
 ```json
 {
   "type": "init_response",
@@ -166,6 +169,7 @@ $ py2max repl localhost:9002
 ```
 
 #### 2. Eval (Client → Server)
+
 ```json
 {
   "type": "eval",
@@ -175,6 +179,7 @@ $ py2max repl localhost:9002
 ```
 
 **Response (Success)**:
+
 ```json
 {
   "type": "result",
@@ -184,6 +189,7 @@ $ py2max repl localhost:9002
 ```
 
 **Response (Error)**:
+
 ```json
 {
   "type": "error",
@@ -205,21 +211,25 @@ $ py2max repl localhost:9002
 ## Benefits
 
 ### [x] Clean Separation
+
 - Server logs stay in Terminal 1
 - REPL interface clean in Terminal 2
 - No log interference with user input
 
 ### [x] Multiple Clients
+
 - Can have multiple REPL clients connected simultaneously
 - Each client has independent session
 - Shared patcher state
 
 ### [x] Resilience
+
 - If REPL client crashes, just reconnect
 - Server continues running
 - No state loss
 
 ### [x] Development Workflow
+
 - Server runs continuously with full logging
 - Connect/disconnect REPL as needed
 - Monitor logs while using REPL
@@ -231,6 +241,7 @@ $ py2max repl localhost:9002
 ### 1. Simple REPL Loop (TODO)
 
 **Current**: Uses simple `input()` loop
+
 ```python
 while True:
     code = input("py2max[remote]>>> ")
@@ -238,12 +249,14 @@ while True:
 ```
 
 **Future**: Full ptpython integration
+
 - Syntax highlighting
 - Tab completion (with server-side completion)
 - Multiline editing
 - History search
 
 **Implementation Plan**:
+
 - Create custom ptpython evaluator that routes through WebSocket
 - Implement server-side completion hints
 - Stream execution results
@@ -255,6 +268,7 @@ while True:
 **Reason**: Completion requires server-side introspection
 
 **Future**: Implement RPC-based completion
+
 ```json
 {
   "type": "complete",
@@ -270,6 +284,7 @@ Server responds with completion list from patcher namespace.
 **Current**: Plain text results
 
 **Future**: Use ptpython's `__pt_repr__()` over RPC
+
 - Send formatted HTML to client
 - Client renders with prompt_toolkit
 
@@ -281,7 +296,7 @@ Server responds with completion list from patcher namespace.
 
 ```bash
 # Old: Inline REPL (logs interfere)
-$ py2max serve my-patch.maxpat --repl
+py2max serve my-patch.maxpat --repl
 
 # WARNING: --repl flag is deprecated.
 # Instead, in a separate terminal, run:
@@ -292,10 +307,10 @@ $ py2max serve my-patch.maxpat --repl
 
 ```bash
 # Terminal 1
-$ py2max serve my-patch.maxpat
+py2max serve my-patch.maxpat
 
 # Terminal 2
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 ```
 
 **Backward Compatibility**: `--repl` flag still accepted but shows deprecation warning.
@@ -323,6 +338,7 @@ $ py2max repl localhost:8002
 ### Unit Tests (TODO)
 
 Create `tests/test_repl_client_server.py`:
+
 - Test RPC protocol
 - Test error handling
 - Test multiple clients
@@ -333,7 +349,7 @@ Create `tests/test_repl_client_server.py`:
 
 ## Code Statistics
 
-```
+```text
 New code:
   py2max/repl_server.py:               189 lines
   py2max/repl_client.py:               254 lines
@@ -351,7 +367,7 @@ Modified code:
 
 ### Latency
 
-```
+```text
 Local connection (localhost):
   Round-trip time: ~5-10ms
   User perception: Instant
@@ -367,7 +383,7 @@ Remote connection (internet):
 
 ### Bandwidth
 
-```
+```text
 Typical eval request:  < 1 KB
 Typical result:        < 10 KB
 Total per command:     < 20 KB
@@ -382,6 +398,7 @@ Conclusion: Extremely lightweight
 ### Current State: **Development Only**
 
 [!] **WARNING**: Current implementation has NO authentication/encryption
+
 - Only bind to `localhost` by default
 - Do NOT expose to internet
 - Development use only
@@ -413,12 +430,14 @@ Conclusion: Extremely lightweight
 ### vs. Jupyter Notebooks
 
 **Jupyter**:
+
 - Heavy dependency (~50MB)
 - Web-based interface
 - Cell-based execution
 - Rich display, widgets
 
 **py2max REPL**:
+
 - Lightweight (~2MB)
 - Terminal-based
 - Line-by-line execution
@@ -429,11 +448,13 @@ Conclusion: Extremely lightweight
 ### vs. IPython Remote Kernel
 
 **IPython**:
+
 - Built-in remote kernel support
 - Mature, well-tested
 - Heavy dependencies
 
 **py2max**:
+
 - Custom implementation
 - Lightweight
 - Max-specific features
@@ -449,6 +470,7 @@ The client-server REPL architecture successfully solves the log interference pro
 **Status**: [x] **Production Ready** (for development use)
 
 **Next Steps**:
+
 1. User testing
 2. Gather feedback on UX
 3. Consider full ptpython integration (Phase 2)
@@ -489,4 +511,4 @@ py2max[remote]>>> save()
 py2max[remote]>>> info()
 ```
 
-**Enjoy clean REPL + full server logging!** 
+**Enjoy clean REPL + full server logging!**

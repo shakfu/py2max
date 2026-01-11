@@ -14,7 +14,8 @@ Successfully implemented a client-server REPL for py2max that solves the server 
 ## Problem & Solution
 
 ### Original Problem
-```
+
+```text
 # Inline REPL - logs interfere with user input
 py2max[demo.maxpat]>>> osc = p.add('cycle~ 440')
 [00:00:01] - INFO - Client connected           ← Server log
@@ -22,10 +23,12 @@ py2max[demo.maxpat]>>> osc = p.add('cycle~ 440')
 py2max[demo.maxpat]>>> gain = p.add[00:00:02]  ← Log interrupts!
 ('gain~')
 ```
+
 **Result**: UNUSABLE during development [X]
 
 ### Solution Implemented
-```
+
+```text
 Terminal 1 (Server)          Terminal 2 (REPL)
 $ py2max serve patch.maxpat  $ py2max repl localhost:8002
 [logs here...]               py2max[remote]>>> osc = p.add(...)
@@ -37,7 +40,7 @@ $ py2max serve patch.maxpat  $ py2max repl localhost:8002
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    py2max System Architecture               │
 └─────────────────────────────────────────────────────────────┘
@@ -128,7 +131,7 @@ Browser: http://localhost:8000
 
 ### Total New Code
 
-```
+```text
 Source code:     615 lines (client + server + demo)
 Documentation:   715 lines (docs + examples)
 Total:          1330 lines
@@ -192,6 +195,7 @@ Connections: 1 lines
 ### [x] Implemented
 
 **Core Functionality**:
+
 - [x] WebSocket-based RPC protocol
 - [x] Code execution on server
 - [x] Result streaming to client
@@ -201,6 +205,7 @@ Connections: 1 lines
 - [x] Clean separation (logs vs REPL)
 
 **Commands**:
+
 - [x] `save()` - Save patcher
 - [x] `info()` - Show stats
 - [x] `layout(type)` - Change layout
@@ -210,6 +215,7 @@ Connections: 1 lines
 - [x] All patcher methods (`p.add()`, `p.link()`, etc.)
 
 **UX**:
+
 - [x] Simple input loop with readline (arrow keys, history)
 - [x] Connection status display
 - [x] Patcher info on connect
@@ -219,6 +225,7 @@ Connections: 1 lines
 ### TODO (Future Enhancements)
 
 **Full ptpython Integration**:
+
 - [ ] Syntax highlighting
 - [ ] Tab completion (server-side)
 - [ ] Multiline editing
@@ -227,11 +234,13 @@ Connections: 1 lines
 - [ ] Rich object display (`__pt_repr__` over RPC)
 
 **Protocol Enhancements**:
+
 - [ ] Completion RPC (`{"type": "complete", ...}`)
 - [ ] Introspection RPC (`{"type": "introspect", ...}`)
 - [ ] Streaming output (for long-running commands)
 
 **Security** (if production use needed):
+
 - [ ] Token-based authentication
 - [ ] WSS (encrypted WebSocket)
 - [ ] Sandboxing/resource limits
@@ -241,28 +250,34 @@ Connections: 1 lines
 ## Benefits
 
 ### [x] Clean Separation
-```
+
+```text
 Terminal 1 (Server)          Terminal 2 (REPL)
 [00:00:01] Client connected  py2max[remote]>>> osc = ...
 [00:00:01] Saving...         py2max[remote]>>> gain = ...
 [00:00:02] Optimized         py2max[remote]>>> save()
 ```
+
 **No interference!**
 
 ### [x] Multiple Clients
-```
+
+```text
 Terminal 2: $ py2max repl localhost:8002  # Client 1
 Terminal 3: $ py2max repl localhost:8002  # Client 2
 Terminal 4: $ py2max repl localhost:8002  # Client 3
 ```
+
 **All share same patcher state**
 
 ### [x] Resilience
+
 - Client crashes? Just reconnect
 - Server keeps running
 - No state loss
 
 ### [x] Development Workflow
+
 - Server runs continuously with full logging
 - Connect/disconnect REPL as needed
 - Monitor logs while using REPL
@@ -277,6 +292,7 @@ Terminal 4: $ py2max repl localhost:8002  # Client 3
 **Port**: 8002 (default, configurable via `--port`)
 
 #### Init
+
 ```json
 // Client → Server
 {"type": "init"}
@@ -293,6 +309,7 @@ Terminal 4: $ py2max repl localhost:8002  # Client 3
 ```
 
 #### Eval
+
 ```json
 // Client → Server
 {
@@ -340,6 +357,7 @@ Terminal 4: $ py2max repl localhost:8002  # Client 3
 ### Unit Tests (TODO)
 
 Future work: `tests/test_repl_client_server.py`
+
 - Mock WebSocket connections
 - Test RPC protocol
 - Test error handling
@@ -352,7 +370,7 @@ Future work: `tests/test_repl_client_server.py`
 ### Old Way (DEPRECATED)
 
 ```bash
-$ py2max serve my-patch.maxpat --repl
+py2max serve my-patch.maxpat --repl
 
 # WARNING: --repl flag is deprecated.
 # Server logs interfere with REPL!
@@ -362,10 +380,10 @@ $ py2max serve my-patch.maxpat --repl
 
 ```bash
 # Terminal 1
-$ py2max serve my-patch.maxpat
+py2max serve my-patch.maxpat
 
 # Terminal 2
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 ```
 
 **Note**: `--repl` flag still works but shows deprecation warning.
@@ -375,14 +393,16 @@ $ py2max repl localhost:8002
 ## Performance
 
 ### Latency
-```
+
+```text
 localhost:      5-10ms  (instant)
 local network: 20-50ms  (responsive)
 internet:      50-200ms (usable)
 ```
 
 ### Bandwidth
-```
+
+```text
 Per command: ~10-20 KB
 Conclusion: Very lightweight
 ```
@@ -411,6 +431,7 @@ Conclusion: Very lightweight
 **Goal**: Replace simple input loop with full ptpython features
 
 **Implementation**:
+
 ```python
 # Create custom ptpython evaluator
 class RemoteEvaluator:
@@ -428,6 +449,7 @@ await embed(
 ```
 
 **Benefits**:
+
 - Syntax highlighting
 - Multiline editing
 - History search
@@ -440,6 +462,7 @@ await embed(
 **Goal**: Tab completion that works remotely
 
 **Protocol**:
+
 ```json
 {
   "type": "complete",
@@ -461,6 +484,7 @@ await embed(
 **Goal**: Use `__pt_repr__()` over RPC
 
 **Benefits**:
+
 - Colored object display in REPL
 - Better UX
 
@@ -473,10 +497,12 @@ await embed(
 [!] **WARNING**: NO authentication or encryption
 
 **Safe for**:
+
 - Local development (localhost only)
 - Trusted local network
 
 **NOT safe for**:
+
 - Internet exposure
 - Production use
 - Shared machines
@@ -488,12 +514,14 @@ await embed(
 ## Documentation
 
 ### Created
+
 - [x] REPL_CLIENT_SERVER.md - Full implementation docs
 - [x] REPL_FINAL_SUMMARY.md - This document
 - [x] Updated CLAUDE.md
 - [x] Example: repl_client_server_demo.py
 
 ### Updated
+
 - [x] CLAUDE.md - Interactive REPL Mode section
 - [x] CLI help text
 
@@ -512,18 +540,21 @@ await embed(
 ### Implementation Quality
 
 **Code Quality**: [*][*][*][*] (4/5)
+
 - Clean architecture
 - Well documented
 - Error handling
 - TODO: Unit tests
 
 **User Experience**: [*][*][*][*] (4/5)
+
 - Solves the problem
 - Easy to use
 - Good error messages
 - TODO: Full ptpython integration
 
 **Documentation**: [*][*][*][*][*] (5/5)
+
 - Comprehensive docs
 - Architecture diagrams
 - Usage examples
@@ -541,18 +572,18 @@ The client-server REPL successfully solves the log interference problem and prov
 
 ```bash
 # Start server
-$ py2max serve <patch.maxpat>
+py2max serve <patch.maxpat>
 
 # Connect REPL (in another terminal)
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 
 # Custom port
-$ py2max serve <patch.maxpat> --port 9000  # REPL on 9002
-$ py2max repl localhost:9002
+py2max serve <patch.maxpat> --port 9000  # REPL on 9002
+py2max repl localhost:9002
 
 # Check help
-$ py2max serve --help
-$ py2max repl --help
+py2max serve --help
+py2max repl --help
 ```
 
-**Enjoy clean REPL with full server logging!** 
+**Enjoy clean REPL with full server logging!**

@@ -36,13 +36,14 @@ Comparison of three REPL solutions for implementing `py2max serve --repl`:
 
 ### 1. ptpython (`[*]` RECOMMENDED)
 
-**Project**: https://github.com/prompt-toolkit/ptpython
-**PyPI**: https://pypi.org/project/ptpython/
+**Project**: <https://github.com/prompt-toolkit/ptpython>
+**PyPI**: <https://pypi.org/project/ptpython/>
 **Dependencies**: `prompt-toolkit`, `pygments`, `jedi`
 
 #### Strengths
 
 **[x] Perfect Async Support**:
+
 ```python
 # Embedding ptpython in async context
 from ptpython.repl import embed
@@ -56,11 +57,13 @@ async def run_repl(patcher, server):
 ```
 
 **[x] Background Task Support**:
+
 - Coroutines can run while REPL is active
 - Perfect for WebSocket server + REPL simultaneously
 - Example from ptpython docs shows counter updating while REPL runs
 
 **[x] Rich Interactive Features**:
+
 - Syntax highlighting (Python code)
 - Multiline editing with proper indentation
 - Autocompletion (via Jedi)
@@ -70,6 +73,7 @@ async def run_repl(patcher, server):
 - Color schemes
 
 **[x] Simple Embedding**:
+
 ```python
 from ptpython.repl import embed
 
@@ -81,12 +85,14 @@ await embed(globals(), locals(), return_asyncio_coroutine=True)
 ```
 
 **[x] Lightweight**:
+
 - Small footprint (~500KB)
 - Only 3 main dependencies
 - Fast startup time
 - No heavy ecosystem baggage
 
 **[x] Custom Repr Support**:
+
 ```python
 class Box:
     def __pt_repr__(self):
@@ -97,16 +103,19 @@ class Box:
 #### Weaknesses
 
 **[X] No Built-in Magic Commands**:
+
 - ptpython itself doesn't have IPython-style `%magic` commands
 - Would need to implement our own (e.g., `%save`, `%info`)
 - Alternative: Use `ptipython` (hybrid) for IPython magics
 
 **[o] Limited Customization Compared to Raw**:
+
 - Can't deeply customize the REPL behavior
 - Configuration via `config.py` but limited scope
 - Less control than building from scratch
 
 **[o] Config Ignored When Embedding**:
+
 - User's `~/.config/ptpython/config.py` not loaded in embedded mode
 - Need to configure programmatically
 
@@ -158,6 +167,7 @@ async def start_repl(patcher, server):
 **Score: 9/10**
 
 **Perfect for py2max because**:
+
 - Native async support (critical for WebSocket server)
 - Simple embedding with minimal code
 - Professional UX out-of-the-box
@@ -165,6 +175,7 @@ async def start_repl(patcher, server):
 - Background tasks work seamlessly (WebSocket + REPL)
 
 **Trade-offs**:
+
 - Need to implement our own magic commands
 - Less flexible than raw prompt-toolkit
 
@@ -174,13 +185,14 @@ async def start_repl(patcher, server):
 
 ### 2. IPython
 
-**Project**: https://ipython.org/
-**Docs**: https://ipython.readthedocs.io/
+**Project**: <https://ipython.org/>
+**Docs**: <https://ipython.readthedocs.io/>
 **Dependencies**: Many (including `traitlets`, `decorator`, `jedi`, `matplotlib-inline`, etc.)
 
 #### Strengths
 
 **[x] Extensive Magic Commands**:
+
 ```python
 %timeit code          # Time execution
 %debug                # Post-mortem debugger
@@ -190,17 +202,20 @@ async def start_repl(patcher, server):
 %who                  # List variables
 %edit                 # Open editor
 ```
+
 - Could reuse many existing magics
 - Well-documented system for adding custom magics
 - Familiar to Python developers
 
 **[x] Rich Display System**:
+
 - HTML, images, LaTeX rendering
 - Could display patch diagrams inline
 - Widget support (ipywidgets)
 - Integration with Jupyter notebooks
 
 **[x] Excellent Introspection**:
+
 ```python
 p?        # Show docstring
 p??       # Show source code
@@ -208,6 +223,7 @@ p.<TAB>   # Completion with docs
 ```
 
 **[x] Autoawait Support** (IPython 7.0+):
+
 ```python
 # IPython automatically awaits coroutines
 await asyncio.sleep(1)  # Works at top level
@@ -215,6 +231,7 @@ result = await some_async_function()
 ```
 
 **[x] Mature Ecosystem**:
+
 - Huge community
 - Extensive documentation
 - Many extensions available
@@ -223,7 +240,8 @@ result = await some_async_function()
 #### Weaknesses
 
 **[X] Heavy Dependency Chain**:
-```
+
+```text
 IPython requires:
   - traitlets
   - decorator
@@ -236,11 +254,13 @@ IPython requires:
   - pickleshare
   ... and more
 ```
+
 - ~5MB installation
 - Slow startup time
 - Many transitive dependencies
 
 **[X] Complex Embedding**:
+
 ```python
 from IPython import embed
 
@@ -258,16 +278,19 @@ ipshell()
 ```
 
 **[X] Autoawait Limitations When Embedded**:
+
 - From IPython docs: "IPython core being asynchronous, the use of `IPython.embed()` will now require a loop to run"
 - Default fake coroutine runner may not work well with our WebSocket server
 - `%autoawait` feature may not work when embedding
 
 **[o] Overkill for py2max**:
+
 - Most IPython features not needed (matplotlib, widgets, etc.)
 - We only need: REPL + async + magic commands
 - Brings unnecessary complexity
 
 **[o] Configuration Complexity**:
+
 - Powerful but complex configuration system (traitlets)
 - Harder to customize for specific needs
 
@@ -326,12 +349,14 @@ async def start_repl(patcher, server):
 **Score: 6/10**
 
 **Good for py2max if**:
+
 - Users expect IPython features
 - Want rich display capabilities
 - Need mature magic command system
 - Don't mind heavy dependencies
 
 **Problems**:
+
 - Heavy dependency chain (overkill)
 - Complex async embedding
 - Slower startup
@@ -343,28 +368,32 @@ async def start_repl(patcher, server):
 
 ### 3. prompt-toolkit (Raw)
 
-**Project**: https://github.com/prompt-toolkit/python-prompt-toolkit
-**Docs**: https://python-prompt-toolkit.readthedocs.io/
+**Project**: <https://github.com/prompt-toolkit/python-prompt-toolkit>
+**Docs**: <https://python-prompt-toolkit.readthedocs.io/>
 **Dependencies**: Only `pygments` and `wcwidth`
 
 #### Strengths
 
 **[x] Complete Control**:
+
 - Build exactly what you need
 - No unnecessary features
 - Custom behavior at every level
 - Optimize for py2max use case
 
 **[x] Minimal Dependencies**:
-```
+
+```text
 Only requires:
   - pygments (syntax highlighting)
   - wcwidth (character width)
 ```
+
 - Smallest footprint (~200KB)
 - Fast startup
 
 **[x] Native Async Support**:
+
 ```python
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit import PromptSession
@@ -379,6 +408,7 @@ async def main():
 ```
 
 **[x] Powerful Features Available**:
+
 - Full-screen applications
 - Custom key bindings
 - Input validation
@@ -388,13 +418,15 @@ async def main():
 - Completions
 
 **[x] Learning Resource**:
+
 - Excellent tutorial for building REPLs
-- https://python-prompt-toolkit.readthedocs.io/en/master/pages/tutorials/repl.html
+- <https://python-prompt-toolkit.readthedocs.io/en/master/pages/tutorials/repl.html>
 - Shows SQLite REPL example
 
 #### Weaknesses
 
 **[X] High Implementation Effort**:
+
 - Must implement everything yourself:
   - Code execution
   - Error handling
@@ -406,16 +438,19 @@ async def main():
 - 4-5 days vs. 1-2 days with ptpython
 
 **[X] Reinventing the Wheel**:
+
 - Python REPL already exists (ptpython)
 - Why rebuild what's already built?
 - Risk of bugs and edge cases
 
 **[X] More Code to Maintain**:
+
 - Custom REPL = custom bugs
 - Need comprehensive tests
 - Ongoing maintenance burden
 
 **[o] Steeper Learning Curve**:
+
 - Need to understand prompt-toolkit internals
 - More complex than using ptpython
 - Documentation is good but requires study
@@ -531,6 +566,7 @@ async def start_repl(patcher, server):
 ```
 
 **Note**: This is simplified - full implementation needs:
+
 - Proper multiline handling (detect incomplete statements)
 - Better error handling and display
 - Magic command system
@@ -546,12 +582,14 @@ async def start_repl(patcher, server):
 **Score: 5/10**
 
 **Good for py2max if**:
+
 - Need highly specialized behavior
 - Want minimal dependencies
 - Have time for custom development
 - Enjoy building infrastructure
 
 **Problems**:
+
 - High implementation effort (4-5 days)
 - Reinventing the wheel
 - More code to maintain and test
@@ -640,11 +678,13 @@ async def start_repl(patcher, server):
 **Command**: `ptipython` (separate package)
 
 **Features**:
+
 - ptpython's excellent UX
 - IPython's magic commands
 - Best of both worlds
 
 **Trade-offs**:
+
 - Heavier dependencies (requires IPython)
 - More complex setup
 - Two systems to configure
@@ -656,6 +696,7 @@ async def start_repl(patcher, server):
 **What**: Use ptpython, implement our own magic-like commands
 
 **Approach**:
+
 ```python
 # Instead of %save, use a function
 def save():
@@ -669,11 +710,13 @@ await embed(globals=namespace)
 ```
 
 **Pros**:
+
 - Lightweight (no IPython)
 - Custom commands tailored for py2max
 - Simple implementation
 
 **Cons**:
+
 - Not "real" magic commands
 - Different syntax than IPython (`save()` vs `%save`)
 - Less discoverable
@@ -749,6 +792,7 @@ async def start_py2max_repl(patcher, server):
 ```
 
 **Usage**:
+
 ```python
 py2max[demo.maxpat]>>> osc = p.add('cycle~ 440')
 py2max[demo.maxpat]>>> gain = p.add('gain~')
@@ -770,6 +814,7 @@ py2max[demo.maxpat]>>> save()
 **Goal**: Working REPL with auto-sync
 
 **Tasks**:
+
 1. Add ptpython to dependencies
 2. Create `py2max/repl.py` with `start_repl()` function
 3. Integrate with `cmd_serve()` via `--repl` flag
@@ -785,6 +830,7 @@ py2max[demo.maxpat]>>> save()
 **Goal**: Rich command set
 
 **Tasks**:
+
 1. Add more command functions:
    - `help(obj)` - Max object help
    - `optimize()` - Layout optimization
@@ -801,6 +847,7 @@ py2max[demo.maxpat]>>> save()
 **Goal**: Tab complete Max objects
 
 **Tasks**:
+
 1. Create custom completer for Max objects
 2. Integrate with ptpython's completion system
 3. Add completion for command functions
@@ -813,6 +860,7 @@ py2max[demo.maxpat]>>> save()
 **Goal**: Production-ready
 
 **Tasks**:
+
 1. Custom prompt with patcher name
 2. Error handling improvements
 3. Documentation (README, examples)
@@ -843,6 +891,7 @@ py2max[demo.maxpat]>>> save()
 **Use ptpython** for py2max REPL implementation.
 
 **Justification**:
+
 - Perfect balance of features, simplicity, and implementation time
 - Native async support ideal for WebSocket server integration
 - Lightweight dependencies appropriate for a library
@@ -854,6 +903,7 @@ py2max[demo.maxpat]>>> save()
 **Alternative**: If users strongly request IPython-style magics later, we can always add ptipython support as an option in Phase 3+.
 
 **Next Steps**:
+
 1. Add `ptpython>=3.0.0` to `pyproject.toml` dependencies
 2. Implement `py2max/repl.py` following Phase 1 roadmap
 3. Add `--repl` flag to `cmd_serve()` in `cli.py`

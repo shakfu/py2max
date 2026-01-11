@@ -68,6 +68,7 @@ py2max[remote]>>> save()
 ```
 
 **Benefits**:
+
 - [x] Real-time log visibility
 - [x] Multiple clients can connect
 - [x] Client reconnection support
@@ -99,6 +100,7 @@ py2max[demo.maxpat]>>> save()
 ```
 
 **Benefits**:
+
 - [x] Single terminal
 - [x] Simple setup (one command)
 - [x] Logs preserved in file
@@ -109,18 +111,21 @@ py2max[demo.maxpat]>>> save()
 ## Testing Status
 
 ### Unit Tests
+
 ```bash
 $ make test
 ======================= 369 passed, 14 skipped =======================
 ```
 
 **All 19 REPL-specific tests passing**:
+
 - ReplCommands: 13 tests [x]
-- Box __pt_repr__: 2 tests [x]
+- Box **pt_repr**: 2 tests [x]
 - Integration: 2 tests [x]
 - AutoSyncWrapper: 2 tests [x]
 
 ### Manual Testing
+
 - [x] Client-server mode works
 - [x] Single-terminal mode works
 - [x] Log redirection works
@@ -136,7 +141,7 @@ $ make test
 
 ### Option 2a: Client-Server
 
-```
+```text
 Terminal 1: Server                    Terminal 2: REPL Client
 ┌──────────────────────┐              ┌────────────────────┐
 │ HTTP: 8000           │              │ ReplClient         │
@@ -148,6 +153,7 @@ Terminal 1: Server                    Terminal 2: REPL Client
 ```
 
 **Protocol**: WebSocket JSON-RPC
+
 - `{"type": "init"}` - Initialize connection
 - `{"type": "eval", "code": "..."}` - Execute code
 - `{"type": "result", "result": "..."}` - Return result
@@ -155,7 +161,7 @@ Terminal 1: Server                    Terminal 2: REPL Client
 
 ### Option 2b: Single Terminal
 
-```
+```text
 Single Terminal
 ┌─────────────────────────────────────┐
 │ ┌─────────────────────────────────┐ │
@@ -174,6 +180,7 @@ Single Terminal
 ```
 
 **Mechanism**: Background threading + log redirection
+
 - Server runs in `threading.Thread`
 - Logs redirected to file via `logging.FileHandler`
 - REPL runs in foreground with clean interface
@@ -183,6 +190,7 @@ Single Terminal
 ## Key Technical Details
 
 ### Port Allocation (Default)
+
 - HTTP Server: 8000
 - WebSocket (Browser): 8001
 - REPL Server: 8002
@@ -190,12 +198,14 @@ Single Terminal
 **Customizable**: `--port N` sets HTTP=N, WS=N+1, REPL=N+2
 
 ### Dependencies
+
 - `ptpython>=3.0.0` - For enhanced REPL
 - `websockets>=12.0` - For WebSocket communication
 - `asyncio` - For async execution
 
 ### File Organization
-```
+
+```text
 py2max/
 ├── repl.py              # Original REPL commands (331 lines)
 ├── repl_server.py       # RPC server for Option 2a (189 lines)
@@ -215,25 +225,28 @@ tests/
 ## Migration from Old Inline REPL
 
 ### Before (BROKEN)
+
 ```bash
-$ py2max serve patch.maxpat --repl
+py2max serve patch.maxpat --repl
 # Logs interfere with REPL → UNUSABLE [X]
 ```
 
 ### After (FIXED) - Two Options
 
 **Option 2a: Client-Server** (recommended for development)
+
 ```bash
 # Terminal 1
-$ py2max serve patch.maxpat
+py2max serve patch.maxpat
 
 # Terminal 2
-$ py2max repl localhost:8002
+py2max repl localhost:8002
 ```
 
 **Option 2b: Single Terminal** (recommended for quick edits)
+
 ```bash
-$ py2max serve patch.maxpat --repl --log-file server.log
+py2max serve patch.maxpat --repl --log-file server.log
 ```
 
 **Backward Compatibility**: The old `--repl` flag without `--log-file` shows a deprecation warning and recommends the new modes.
@@ -258,6 +271,7 @@ $ py2max serve patch.maxpat --repl --log-file server.log
 ## Quality Metrics
 
 ### Code Quality: [*][*][*][*][*] (5/5)
+
 - Clean architecture
 - Well-structured modules
 - Comprehensive error handling
@@ -265,6 +279,7 @@ $ py2max serve patch.maxpat --repl --log-file server.log
 - Full test coverage
 
 ### User Experience: [*][*][*][*][*] (5/5)
+
 - Solves the original problem completely
 - Two modes for different use cases
 - Easy to use
@@ -272,6 +287,7 @@ $ py2max serve patch.maxpat --repl --log-file server.log
 - Good error messages
 
 ### Documentation: [*][*][*][*][*] (5/5)
+
 - 4 comprehensive markdown documents
 - Usage examples
 - Architecture diagrams
@@ -283,14 +299,16 @@ $ py2max serve patch.maxpat --repl --log-file server.log
 ## Performance
 
 ### Option 2a (Client-Server)
-```
+
+```text
 Latency (localhost):     5-10ms (instant)
 Latency (local network): 20-50ms (responsive)
 Bandwidth per command:   ~10-20 KB (lightweight)
 ```
 
 ### Option 2b (Single Terminal)
-```
+
+```text
 Latency: <1ms (no network overhead)
 Startup time: ~2 seconds
 ```
@@ -326,6 +344,7 @@ Startup time: ~2 seconds
 ### Mission Status: [x] **COMPLETE**
 
 Both REPL modes are:
+
 - [x] Fully implemented
 - [x] Thoroughly tested
 - [x] Comprehensively documented
@@ -334,12 +353,14 @@ Both REPL modes are:
 ### Which Mode to Use?
 
 **Use Client-Server Mode (Option 2a) when**:
+
 - Developing and debugging
 - Need real-time log visibility
 - Working with team (multiple clients)
 - Want reconnection support
 
 **Use Single Terminal Mode (Option 2b) when**:
+
 - Quick patch editing
 - Demos or teaching
 - Don't need real-time logs
@@ -354,7 +375,7 @@ The py2max REPL implementation successfully solves the log interference problem 
 
 Both modes provide a clean, professional REPL experience for interactive Max patch development.
 
-**Enjoy clean REPL with full server logging!** 
+**Enjoy clean REPL with full server logging!**
 
 ---
 
@@ -362,21 +383,22 @@ Both modes provide a clean, professional REPL experience for interactive Max pat
 
 ```bash
 # Option 2a: Client-Server (Development)
-$ py2max serve <patch.maxpat>              # Terminal 1
-$ py2max repl localhost:8002                # Terminal 2
+py2max serve <patch.maxpat>              # Terminal 1
+py2max repl localhost:8002                # Terminal 2
 
 # Option 2b: Single Terminal (Quick Edits)
-$ py2max serve <patch.maxpat> --repl --log-file server.log
+py2max serve <patch.maxpat> --repl --log-file server.log
 
 # Custom ports
-$ py2max serve <patch.maxpat> --port 9000   # REPL on 9002
+py2max serve <patch.maxpat> --port 9000   # REPL on 9002
 
 # Help
-$ py2max serve --help
-$ py2max repl --help
+py2max serve --help
+py2max repl --help
 ```
 
 **Documentation**:
+
 - `REPL_MODES.md` - Complete user guide
 - `REPL_CLIENT_SERVER.md` - Technical details (Option 2a)
 - `REPL_FINAL_SUMMARY.md` - Implementation summary (Option 2a)

@@ -16,6 +16,7 @@ Analysis of requirements and implementation strategy for adding a `py2max serve`
 py2max already has substantial infrastructure for this feature:
 
 #### 1. **Server Infrastructure** (`py2max/server.py`)
+
 - WebSocket-based interactive server with bidirectional communication
 - Real-time synchronization (Python ↔ Browser)
 - Token-based authentication
@@ -29,11 +30,13 @@ py2max already has substantial infrastructure for this feature:
   - Subpatcher navigation
 
 **Key classes**:
+
 - `InteractiveWebSocketHandler` - WebSocket message handling
 - `InteractivePatcherServer` - Server lifecycle management
 - `serve_interactive()` - Async server startup function
 
 #### 2. **CLI Integration** (`py2max/cli.py:641-694`)
+
 - `cmd_serve()` function already exists
 - Handles existing/new patchers
 - Manages WebSocket server lifecycle
@@ -41,6 +44,7 @@ py2max already has substantial infrastructure for this feature:
 - Support for `--port`, `--no-open`, `--no-save` flags
 
 #### 3. **Example Implementations**
+
 - `live_preview_demo.py:108-156` - REPL mode using `code.interact()`
 - `interactive_demo.py` - Demonstrates async updates from Python
 - Shows feasibility but requires manual `p.save()` calls
@@ -52,11 +56,13 @@ py2max already has substantial infrastructure for this feature:
 ### 1. Enhanced REPL Integration
 
 **Current Limitation**:
+
 - Existing REPL demo uses `code.interact()` which blocks async operations
 - Requires manual `p.save()` calls after each operation
 - No auto-notification to WebSocket clients
 
 **Requirements**:
+
 - Custom async-aware REPL integration
 - Auto-save after each REPL command execution
 - Auto-broadcast to WebSocket clients without explicit calls
@@ -68,11 +74,13 @@ py2max already has substantial infrastructure for this feature:
 **Challenge**: Max/MSP doesn't natively auto-reload `.maxpat` files when they change on disk.
 
 **Research Findings**:
+
 - Max's `[filewatch]` object can detect file changes
 - JavaScript objects support `autowatch = 1` for auto-reload
 - Patchers: **No native auto-reload mechanism exists**
 
 **Current Sync Status**:
+
 | Direction | Status | Notes |
 |-----------|--------|-------|
 | Python → Browser | [x] Works | Via WebSocket |
@@ -85,6 +93,7 @@ py2max already has substantial infrastructure for this feature:
 **Current State**: Basic patcher manipulation via standard API
 
 **Desired Features**:
+
 - Magic commands (e.g., `%save`, `%reload`, `%layout`, `%info`, `%help`)
 - Tab completion for Max objects (using `maxref` database)
 - Inline help for Max objects (integration with `Box.help()`)
@@ -112,6 +121,7 @@ async def serve_with_repl(patcher, port=8000):
 #### Components
 
 **1. AsyncREPL Class**:
+
 - Uses `aioconsole` or `prompt_toolkit` with async support
 - Executes commands in async context
 - Auto-broadcasts updates to WebSocket clients
@@ -119,15 +129,18 @@ async def serve_with_repl(patcher, port=8000):
 - Maintains command history
 
 **2. Auto-Sync Wrapper**:
+
 - Wraps patcher methods to auto-save and broadcast
 - Example flow:
+
   ```python
   osc = p.add('cycle~ 440')
   # → Internally: add object → save → notify WebSocket clients
   ```
 
 **3. Enhanced Prompt**:
-```
+
+```text
 py2max[my-patch.maxpat] >>> osc = p.add('cycle~ 440')
 Created: cycle~ (obj-1) at [100.0, 100.0]
 
@@ -145,6 +158,7 @@ Server: http://localhost:8000 (1 client)
 ```
 
 **4. Magic Commands**:
+
 - `%save` - Force save to disk
 - `%reload` - Reload from disk
 - `%layout [type]` - Change layout manager
@@ -156,6 +170,7 @@ Server: http://localhost:8000 (1 client)
 - `%clients` - Show connected WebSocket clients
 
 #### Pros
+
 - Builds on existing infrastructure
 - Reasonable complexity
 - Good developer experience
@@ -163,6 +178,7 @@ Server: http://localhost:8000 (1 client)
 - Can add features incrementally
 
 #### Cons
+
 - Requires new dependency (`aioconsole` or `prompt_toolkit`)
 - Medium implementation effort
 - Max reload still manual
@@ -174,6 +190,7 @@ Server: http://localhost:8000 (1 client)
 Implement IPython/Jupyter kernel integration for py2max.
 
 #### Features
+
 - Richer interactive experience
 - Cell-based execution model
 - Inline visualization of patches (SVG)
@@ -182,6 +199,7 @@ Implement IPython/Jupyter kernel integration for py2max.
 - Existing IPython magic commands
 
 #### Implementation
+
 ```python
 class Py2MaxKernel(IPythonKernel):
     def __init__(self):
@@ -196,12 +214,14 @@ class Py2MaxKernel(IPythonKernel):
 ```
 
 #### Pros
+
 - Excellent developer experience
 - Rich ecosystem (widgets, visualization)
 - Notebook integration
 - Professional-grade REPL
 
 #### Cons
+
 - Heavy dependency (IPython/Jupyter)
 - Higher complexity
 - Overkill for simple use cases
@@ -214,16 +234,19 @@ class Py2MaxKernel(IPythonKernel):
 Use multiprocessing to run REPL in separate process.
 
 #### Structure
+
 - **Main process**: WebSocket server
 - **Child process**: REPL with IPC to main
 - **Communication**: Queue/Pipe for state sync
 
 #### Pros
+
 - Simpler implementation
 - No async REPL needed
 - Familiar `code.interact()` approach
 
 #### Cons
+
 - Less elegant architecture
 - Potential synchronization issues
 - IPC overhead
@@ -239,6 +262,7 @@ Use multiprocessing to run REPL in separate process.
 **Goal**: Basic working REPL with auto-sync
 
 **Tasks**:
+
 1. Create `py2max/repl.py` module
 2. Implement `AsyncREPL` class using `aioconsole` or `prompt_toolkit`
 3. Add auto-save wrapper for patcher methods
@@ -251,6 +275,7 @@ Use multiprocessing to run REPL in separate process.
 10. Document basic usage in README
 
 **Files to create/modify**:
+
 - `py2max/repl.py` (new) - Core REPL implementation
 - `py2max/cli.py` (modify) - Add `--repl` flag to `cmd_serve()`
 - `examples/repl_demo.py` (new) - Usage demonstration
@@ -260,6 +285,7 @@ Use multiprocessing to run REPL in separate process.
 **Estimated complexity**: Medium (2-3 days)
 
 **Success criteria**:
+
 - REPL starts with `py2max serve --repl patch.maxpat`
 - Commands execute in async context
 - Changes auto-save and sync to browser
@@ -273,6 +299,7 @@ Use multiprocessing to run REPL in separate process.
 **Goal**: Production-ready REPL with power-user features
 
 **Tasks**:
+
 1. Implement magic commands:
    - `%save` - Force save
    - `%layout [type]` - Change layout
@@ -307,6 +334,7 @@ Use multiprocessing to run REPL in separate process.
    - Statistics and summaries
 
 **Files to modify**:
+
 - `py2max/repl.py` - Add features
 - `py2max/repl_completers.py` (new) - Tab completion logic
 - `py2max/repl_magic.py` (new) - Magic command handlers
@@ -316,6 +344,7 @@ Use multiprocessing to run REPL in separate process.
 **Estimated complexity**: Medium (2-3 days)
 
 **Success criteria**:
+
 - All magic commands working
 - Tab completion for Max objects
 - Persistent command history
@@ -330,6 +359,7 @@ Use multiprocessing to run REPL in separate process.
 **Goal**: Enable automatic reload in Max/MSP
 
 **Tasks**:
+
 1. Research Max scripting APIs
 2. Design helper Max patch with `[filewatch]` object
 3. Implement OSC/UDP communication layer
@@ -341,6 +371,7 @@ Use multiprocessing to run REPL in separate process.
 9. Provide troubleshooting guide
 
 **Implementation approach**:
+
 ```python
 # py2max side
 class MaxReloadHandler:
@@ -362,6 +393,7 @@ class MaxReloadHandler:
 ```
 
 **Challenges**:
+
 - Max doesn't expose native reload API
 - Requires Max-side setup (helper patch)
 - Platform-specific behaviors
@@ -371,6 +403,7 @@ class MaxReloadHandler:
 **Estimated complexity**: High (4-5 days)
 
 **Success criteria**:
+
 - Max patch auto-reloads on Python changes
 - Works on macOS and Windows
 - Graceful fallback if Max not running
@@ -390,6 +423,7 @@ py2max watch script.py --serve
 ```
 
 **How it works**:
+
 - Watches Python script for changes
 - Re-executes script on save
 - Updates patcher state
@@ -399,18 +433,21 @@ py2max watch script.py --serve
 Development workflow where you edit Python files in your IDE and see live updates in browser.
 
 **Pros**:
+
 - Simpler than REPL
 - Familiar development workflow
 - Works with any editor
 - Easy to implement (`watchdog` library)
 
 **Cons**:
+
 - Less interactive than REPL
 - No command history
 - No inline evaluation
 - Must edit external file
 
 **Implementation**:
+
 ```python
 # py2max/watcher.py
 class ScriptWatcher:
@@ -434,17 +471,20 @@ py2max serve patch.maxpat --watch script.py --repl
 ```
 
 **Features**:
+
 - REPL for quick experimentation
 - Script watching for development workflow
 - Changes from either source sync to browser
 - Best of both worlds
 
 **Pros**:
+
 - Maximum flexibility
 - Supports different workflows
 - Incremental feature adoption
 
 **Cons**:
+
 - More complex implementation
 - Potential state conflicts
 - Increased testing surface
@@ -471,6 +511,7 @@ py2max serve patch.maxpat --watch script.py --repl
 ### 1. Start with Option 1 (AsyncIO-Based REPL) `[*]`
 
 **Rationale**:
+
 - Builds on existing infrastructure (WebSocket server)
 - Reasonable complexity with good ROI
 - Natural fit for async architecture
@@ -482,6 +523,7 @@ py2max serve patch.maxpat --watch script.py --repl
 **Primary file**: `py2max/repl.py`
 
 **Core components**:
+
 ```python
 class AsyncREPL:
     """Async-aware REPL for py2max with auto-sync."""
@@ -541,6 +583,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
 ```
 
 **Add to argparse**:
+
 ```python
 serve_parser.add_argument(
     "--repl",
@@ -552,6 +595,7 @@ serve_parser.add_argument(
 ### 4. Documentation Needs
 
 **Essential documentation**:
+
 1. **README.md section**: "Interactive REPL Mode"
 2. **REPL_REFERENCE.md**: Complete command reference
 3. **Examples**:
@@ -578,11 +622,13 @@ The biggest challenge is Max/MSP's lack of native auto-reload for `.maxpat` file
 ### Recommended Strategy
 
 **Phase 1 & 2**:
+
 - Focus on **A + D**: Document manual reload + emphasize browser workflow
 - Browser viewer provides instant feedback
 - Users can test in Max periodically
 
 **Phase 3** (if user demand exists):
+
 - Add **B**: OSC/UDP trigger with optional helper patch
 - Provide template Max patch with `[filewatch]` → `[udpreceive]` → reload logic
 - Make it opt-in with `--max-reload` flag
@@ -619,21 +665,26 @@ Connected: cycle~[0] → gain~[0]
 ### Required Dependencies
 
 **Already in project**:
+
 - `websockets>=12.0` [x]
 
 **New dependencies** (Phase 1):
+
 - `aioconsole>=0.6.0` OR `prompt_toolkit>=3.0.0`
   - Recommendation: `aioconsole` (lighter, simpler)
 
 **New dependencies** (Phase 2):
+
 - `pygments>=2.0.0` (syntax highlighting)
 
 **New dependencies** (Alternative: Watch Mode):
+
 - `watchdog>=3.0.0` (file watching)
 
 ### Optional Dependencies (Phase 3)
 
 **For Max integration**:
+
 - `python-osc>=1.8.0` (OSC communication)
 
 ---
@@ -643,6 +694,7 @@ Connected: cycle~[0] → gain~[0]
 ### Unit Tests
 
 **Core REPL tests** (`tests/test_repl.py`):
+
 - REPL initialization
 - Command execution
 - Auto-sync behavior
@@ -650,11 +702,13 @@ Connected: cycle~[0] → gain~[0]
 - Graceful shutdown
 
 **Magic command tests** (`tests/test_repl_magic.py`):
+
 - Each magic command
 - Parameter validation
 - Error cases
 
 **Integration tests** (`tests/test_repl_integration.py`):
+
 - REPL + WebSocket server
 - Browser communication
 - State synchronization
@@ -703,6 +757,7 @@ Connected: cycle~[0] → gain~[0]
 ## Success Metrics
 
 ### Phase 1 (MVP)
+
 - [ ] REPL starts successfully
 - [ ] Basic commands work
 - [ ] Auto-sync to browser
@@ -710,6 +765,7 @@ Connected: cycle~[0] → gain~[0]
 - [ ] Zero critical bugs
 
 ### Phase 2 (Enhanced)
+
 - [ ] All magic commands implemented
 - [ ] Tab completion works
 - [ ] Command history persists
@@ -717,6 +773,7 @@ Connected: cycle~[0] → gain~[0]
 - [ ] Documentation complete
 
 ### Phase 3 (Max Integration)
+
 - [ ] Max reload trigger works
 - [ ] Cross-platform support
 - [ ] Setup documentation clear
@@ -743,17 +800,20 @@ The `py2max serve --repl` feature is **highly feasible** with approximately **70
 ### Key Takeaways
 
 [x] **Strong foundation**:
+
 - WebSocket server with bidirectional sync
 - Browser-based editor
 - CLI integration
 - Existing examples
 
 [!] **Moderate implementation effort**:
+
 - AsyncIO-based REPL (~2-3 days)
 - Magic commands and enhancements (~2-3 days)
 - Total MVP + Enhanced: ~4-6 days
 
 [X] **Known limitation**:
+
 - Max doesn't auto-reload `.maxpat` files
 - Workaround: Use browser for live feedback
 - Optional: OSC trigger in Phase 3
@@ -761,6 +821,7 @@ The `py2max serve --repl` feature is **highly feasible** with approximately **70
 ### Recommended Action
 
 **Implement Phase 1 + 2** (MVP + Enhanced Features):
+
 - Use AsyncIO-based REPL (Option 1)
 - `aioconsole` for async input
 - Focus on browser workflow
