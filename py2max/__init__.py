@@ -32,7 +32,7 @@ Example:
     >>> p.save()
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 from .core import Box, Patcher, Patchline
 from .maxref import MaxRefDB

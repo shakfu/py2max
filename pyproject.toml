@@ -4,10 +4,7 @@ description = "A library for offline generation of Max/MSP patcher (.maxpat) fil
 authors = [
     { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
 ]
-maintainers = [
-    { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
-]
-version = "0.2.0"
+version = "0.2.1"
 readme = "README.md"
 requires-python = ">=3.9"
 keywords = ["Max", "maxpat", "offline"]

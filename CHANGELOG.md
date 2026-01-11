@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-01-11
+
 ### New: Dagre Layout Algorithm
 
 - Added Dagre (Directed Acyclic Graph) as third layout algorithm option alongside WebCola and ELK
