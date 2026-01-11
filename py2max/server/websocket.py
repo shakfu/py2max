@@ -45,7 +45,8 @@ if TYPE_CHECKING:
 
 # Message validation schemas
 # Each schema defines required fields and their expected types
-MESSAGE_SCHEMAS: dict[str, dict[str, type]] = {
+# Values can be a single type or a tuple of types for isinstance() checks
+MESSAGE_SCHEMAS: dict[str, dict[str, type | tuple[type, ...]]] = {
     "update_position": {"box_id": str, "x": (int, float), "y": (int, float)},
     "create_object": {"text": str},  # x, y optional
     "create_connection": {

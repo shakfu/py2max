@@ -138,6 +138,7 @@ class GridLayoutManager(LayoutManager):
         """
         # Use parent's incremental layout decision logic
         if self.should_use_incremental(changed_objects):
+            assert changed_objects is not None
             affected = self.get_affected_objects(changed_objects)
             self._incremental_layout(affected)
         else:

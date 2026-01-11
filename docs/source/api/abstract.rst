@@ -1,5 +1,5 @@
-py2max.abstract Module
-======================
+py2max.core.abstract Module
+===========================
 
 Purpose and Design
 ------------------
@@ -23,7 +23,7 @@ The abstract classes include:
 
 The abstract classes are not intended for direct use but provide the foundation for the concrete implementations in the core module.
 
-.. automodule:: py2max.abstract
+.. automodule:: py2max.core.abstract
    :members:
    :undoc-members:
    :show-inheritance:

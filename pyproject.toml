@@ -1,14 +1,18 @@
 [project]
 name = "py2max"
+description = "A library for offline generation of Max/MSP patcher (.maxpat) files."
 authors = [
-    {name = "Shakeeb Alireza", email = "me@org.me"},
+    { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
+]
+maintainers = [
+    { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
 ]
 version = "0.2.0"
-description = "A library for offline generation of Max/MSP patcher (.maxpat) files."
 readme = "README.md"
 requires-python = ">=3.9"
 keywords = ["Max", "maxpat", "offline"]
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -22,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Typing :: Typed",
 ]
@@ -51,16 +56,24 @@ docs = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/shakfu/py2max"
+Homepage = "https://github.com/shakfu/py2max"
+Documentation = "https://github.com/shakfu/py2max#readme"
+Repository = "https://github.com/shakfu/py2max.git"
+Issues = "https://github.com/shakfu/py2max/issues"
+Changelog = "https://github.com/shakfu/py2max/blob/main/CHANGELOG.md"
 
 [project.scripts]
 py2max = "py2max.__main__:main"
 
-
-[tool.uv]
-python-preference = "only-system" # comment this out to use managed python
+# [tool.uv]
+# python-preference = "only-system" # comment this out to use managed python
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.9.23,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "py2max"
+module-root = ""
+source-include = ["CHANGELOG.md", "tests/**"]
 

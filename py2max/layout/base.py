@@ -329,6 +329,9 @@ class LayoutManager(AbstractLayoutManager):
         _incremental_layout() to implement specific algorithms.
         """
         if self.should_use_incremental(changed_objects):
+            # changed_objects is guaranteed non-None here since should_use_incremental
+            # returns False when changed_objects is None
+            assert changed_objects is not None
             affected = self.get_affected_objects(changed_objects)
             self._incremental_layout(affected)
         else:
@@ -366,7 +369,6 @@ class LayoutManager(AbstractLayoutManager):
                     fixed_positions[obj_id] = obj.patching_rect
 
         # For each affected object, find a position that doesn't overlap
-        pad = self.pad
         for obj_id in affected_objects:
             if obj_id not in self.parent._objects:
                 continue

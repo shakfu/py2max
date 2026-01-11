@@ -1,7 +1,7 @@
-py2max.common Module
-====================
+py2max.core.common Module
+=========================
 
-.. automodule:: py2max.common
+.. automodule:: py2max.core.common
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ Creating Rectangles
 
 .. code-block:: python
 
-   from py2max.common import Rect
+   from py2max.core.common import Rect
 
    # Create a rectangle at position (100, 50) with size 200x100
    rect = Rect(100, 50, 200, 100)
@@ -60,7 +60,7 @@ The Rect class is heavily used in the layout system:
 .. code-block:: python
 
    from py2max import Patcher
-   from py2max.common import Rect
+   from py2max.core.common import Rect
 
    p = Patcher('positioned-patch.maxpat')
 
