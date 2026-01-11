@@ -138,25 +138,37 @@ class FlowLayoutManager(LayoutManager):
     def _calculate_horizontal_positions(self, groups: dict, pad: float) -> dict:
         """Calculate positions for horizontal (left-to-right) flow."""
         positions = {}
-        level_width = (
-            self.parent.width / max(len(groups), 1) if groups else self.parent.width
-        )
+        num_levels = max(len(groups), 1)
+
+        # Calculate available width per level
+        available_width = self.parent.width - 2 * pad
+        level_width = available_width / num_levels if groups else self.parent.width
 
         for level, obj_ids in groups.items():
             # Calculate x position based on level (left-to-right flow)
             x_base = pad + (level * level_width * 0.8)  # 0.8 factor for better spacing
 
             # Calculate y positions for objects in this level
-            level_height = len(obj_ids) * (self.box_height + pad)
-            y_start = (self.parent.height - level_height) / 2  # Center vertically
+            num_objects = len(obj_ids)
+            level_height = num_objects * (self.box_height + pad)
+
+            # Ensure y_start doesn't go negative - clamp to pad minimum
+            available_height = self.parent.height - 2 * pad
+            if level_height > available_height:
+                # Scale down spacing if too many objects
+                spacing = available_height / max(num_objects, 1)
+                y_start = pad
+            else:
+                spacing = self.box_height + pad
+                y_start = max(pad, (self.parent.height - level_height) / 2)
 
             for i, obj_id in enumerate(obj_ids):
                 x = x_base
-                y = max(pad, y_start + i * (self.box_height + pad))
+                y = y_start + i * spacing
 
                 # Ensure positions stay within bounds
-                x = min(x, self.parent.width - self.box_width - pad)
-                y = min(y, self.parent.height - self.box_height - pad)
+                x = max(pad, min(x, self.parent.width - self.box_width - pad))
+                y = max(pad, min(y, self.parent.height - self.box_height - pad))
 
                 positions[obj_id] = Rect(x, y, self.box_width, self.box_height)
 
@@ -165,25 +177,37 @@ class FlowLayoutManager(LayoutManager):
     def _calculate_vertical_positions(self, groups: dict, pad: float) -> dict:
         """Calculate positions for vertical (top-to-bottom) flow."""
         positions = {}
-        level_height = (
-            self.parent.height / max(len(groups), 1) if groups else self.parent.height
-        )
+        num_levels = max(len(groups), 1)
+
+        # Calculate available height per level
+        available_height = self.parent.height - 2 * pad
+        level_height = available_height / num_levels if groups else self.parent.height
 
         for level, obj_ids in groups.items():
             # Calculate y position based on level (top-to-bottom flow)
             y_base = pad + (level * level_height * 0.8)  # 0.8 factor for better spacing
 
             # Calculate x positions for objects in this level
-            level_width = len(obj_ids) * (self.box_width + pad)
-            x_start = (self.parent.width - level_width) / 2  # Center horizontally
+            num_objects = len(obj_ids)
+            level_width = num_objects * (self.box_width + pad)
+
+            # Ensure x_start doesn't go negative - clamp to pad minimum
+            available_width = self.parent.width - 2 * pad
+            if level_width > available_width:
+                # Scale down spacing if too many objects
+                spacing = available_width / max(num_objects, 1)
+                x_start = pad
+            else:
+                spacing = self.box_width + pad
+                x_start = max(pad, (self.parent.width - level_width) / 2)
 
             for i, obj_id in enumerate(obj_ids):
                 y = y_base
-                x = max(pad, x_start + i * (self.box_width + pad))
+                x = x_start + i * spacing
 
                 # Ensure positions stay within bounds
-                x = min(x, self.parent.width - self.box_width - pad)
-                y = min(y, self.parent.height - self.box_height - pad)
+                x = max(pad, min(x, self.parent.width - self.box_width - pad))
+                y = max(pad, min(y, self.parent.height - self.box_height - pad))
 
                 positions[obj_id] = Rect(x, y, self.box_width, self.box_height)
 
@@ -289,6 +313,9 @@ class FlowLayoutManager(LayoutManager):
         for obj_id, position in positions.items():
             if obj_id in self.parent._objects:
                 self.parent._objects[obj_id].patching_rect = position
+
+        # Prevent any remaining overlaps after flow layout
+        self.prevent_overlaps()
 
         # Clear cache so future positions use the optimized layout
         self._position_cache = positions

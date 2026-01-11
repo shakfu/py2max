@@ -301,6 +301,9 @@ class MatrixLayoutManager(LayoutManager):
         # Step 4: Apply matrix layout
         self._apply_matrix_layout(matrix_positions)
 
+        # Step 5: Prevent any remaining overlaps
+        self.prevent_overlaps()
+
     def _optimize_columnar_layout(self):
         """Optimize the layout by organizing objects into functional columns."""
         # Step 1: Classify all objects into columns
@@ -313,6 +316,9 @@ class MatrixLayoutManager(LayoutManager):
 
         # Step 3: Apply columnar layout
         self._apply_columnar_layout()
+
+        # Step 4: Prevent any remaining overlaps
+        self.prevent_overlaps()
 
     def _apply_matrix_layout(self, positions: Dict[str, tuple]):
         """Apply the matrix layout to all objects.

@@ -24,6 +24,9 @@ class InteractiveEditor {
         // Store original box positions for reset functionality
         this.originalPositions = new Map();
 
+        // Current filepath (for save/save-as logic)
+        this.currentFilepath = null;
+
         this.initializeWebSocket();
         this.initializeSVG();
         this.initializeControls();
@@ -273,10 +276,13 @@ class InteractiveEditor {
 
             // Update save button tooltip with filepath
             if (data.filepath) {
+                this.currentFilepath = data.filepath;
                 const saveBtn = document.getElementById('save-btn');
                 if (saveBtn) {
                     saveBtn.title = `Save patch to ${data.filepath}`;
                 }
+            } else {
+                this.currentFilepath = null;
             }
 
             // Clear current state
@@ -312,10 +318,15 @@ class InteractiveEditor {
             // Update info
             this.updateInfo(`${this.boxes.size} objects · ${this.lines.length} connections`);
         } else if (data.type === 'save_complete') {
-            this.updateInfo(`✅ Saved to ${data.filepath}`);
+            this.updateInfo(`Saved to ${data.filepath}`);
             console.log('Patch saved:', data.filepath);
+            // Update the current filepath
+            this.currentFilepath = data.filepath;
+        } else if (data.type === 'save_as_required') {
+            // No filepath set - show save dialog
+            this.showSaveAsDialog();
         } else if (data.type === 'save_error') {
-            this.updateInfo(`❌ Save error: ${data.message}`);
+            this.updateInfo(`Save error: ${data.message}`);
             console.error('Save error:', data.message);
         }
     }
@@ -518,17 +529,21 @@ class InteractiveEditor {
         const h = box.height || 22;
 
         if (isOutlet) {
-            const count = box.outlet_count || 1;
+            const count = Math.max(1, box.outlet_count || 1);
+            // Clamp port index to valid range
+            const safeIndex = Math.max(0, Math.min(portIndex, count - 1));
             const spacing = w / (count + 1);
             return {
-                x: x + spacing * (portIndex + 1),
+                x: x + spacing * (safeIndex + 1),
                 y: y + h
             };
         } else {
-            const count = box.inlet_count || 1;
+            const count = Math.max(1, box.inlet_count || 1);
+            // Clamp port index to valid range
+            const safeIndex = Math.max(0, Math.min(portIndex, count - 1));
             const spacing = w / (count + 1);
             return {
-                x: x + spacing * (portIndex + 1),
+                x: x + spacing * (safeIndex + 1),
                 y: y
             };
         }
@@ -561,7 +576,13 @@ class InteractiveEditor {
             maxY = Math.max(maxY, y + h);
         });
 
-        const padding = 50;
+        // Calculate content dimensions
+        const contentWidth = maxX - minX;
+        const contentHeight = maxY - minY;
+
+        // Dynamic padding: 10% of content size, minimum 30px, maximum 100px
+        const padding = Math.max(30, Math.min(100, Math.min(contentWidth, contentHeight) * 0.1));
+
         minX -= padding;
         minY -= padding;
         maxX += padding;
@@ -579,6 +600,27 @@ class InteractiveEditor {
 
         let width = Math.max(maxX - minX, minViewWidth);
         let height = Math.max(maxY - minY, minViewHeight);
+
+        // Preserve aspect ratio based on canvas dimensions
+        const canvas = document.getElementById('canvas');
+        if (canvas && canvas.clientWidth > 0 && canvas.clientHeight > 0) {
+            const canvasAspect = canvas.clientWidth / canvas.clientHeight;
+            const viewAspect = width / height;
+
+            if (viewAspect > canvasAspect) {
+                // ViewBox is wider than canvas - increase height to match
+                const newHeight = width / canvasAspect;
+                const heightDiff = newHeight - height;
+                minY -= heightDiff / 2;
+                height = newHeight;
+            } else if (viewAspect < canvasAspect) {
+                // ViewBox is taller than canvas - increase width to match
+                const newWidth = height * canvasAspect;
+                const widthDiff = newWidth - width;
+                minX -= widthDiff / 2;
+                width = newWidth;
+            }
+        }
 
         this.svg.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
     }
@@ -1165,6 +1207,8 @@ class InteractiveEditor {
 
         if (layoutEngine === 'elk') {
             this.elkAutoLayout();
+        } else if (layoutEngine === 'dagre') {
+            this.dagreAutoLayout();
         } else {
             this.colaAutoLayout();
         }
@@ -1261,50 +1305,74 @@ class InteractiveEditor {
         }
 
         // Update box positions with smooth SVG.js animations
+        // Also animate patchlines for smooth transitions
 
+        const animationDuration = 500;
         const animationPromises = [];
 
+        // Store old positions for patchline animation
+        const oldPositions = new Map();
         nodes.forEach(node => {
             const box = this.boxes.get(node.id);
             if (box) {
-                const oldX = box.x || 0;
-                const oldY = box.y || 0;
-                const newX = Math.round(node.x);
-                const newY = Math.round(node.y);
+                oldPositions.set(node.id, { x: box.x || 0, y: box.y || 0 });
+            }
+        });
 
-                // Update internal state
-                box.x = newX;
-                box.y = newY;
+        // Update internal state first
+        nodes.forEach(node => {
+            const box = this.boxes.get(node.id);
+            if (box) {
+                box.x = Math.round(node.x);
+                box.y = Math.round(node.y);
+            }
+        });
+
+        // Center the layout
+        this.centerLayout();
+
+        // Animate boxes
+        nodes.forEach(node => {
+            const box = this.boxes.get(node.id);
+            const oldPos = oldPositions.get(node.id);
+            if (box && oldPos) {
+                const newX = box.x;
+                const newY = box.y;
 
                 // Find the SVG element for this box
                 const boxElement = this.boxesGroup.querySelector(`[data-id="${node.id}"]`);
 
                 if (boxElement) {
-                    // Use SVG.js to animate the transform
                     const svgElement = SVG(boxElement);
-                    const promise = new Promise(resolve => {
-                        svgElement.animate(500, 0, 'now')
-                            .ease('<>')  // Ease in-out
-                            .transform({ translateX: newX - oldX, translateY: newY - oldY })
-                            .after(() => {
-                                // After animation, update actual position and reset transform
-                                resolve();
-                            });
-                    });
-                    animationPromises.push(promise);
+                    const deltaX = newX - oldPos.x;
+                    const deltaY = newY - oldPos.y;
+
+                    // Only animate if there's actual movement
+                    if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+                        const promise = new Promise(resolve => {
+                            svgElement.animate(animationDuration, 0, 'now')
+                                .ease('<>')
+                                .transform({ translateX: deltaX, translateY: deltaY })
+                                .after(() => resolve());
+                        });
+                        animationPromises.push(promise);
+                    }
                 }
 
                 // Send position update to server
                 this.sendMessage({
                     type: 'update_position',
                     box_id: node.id,
-                    x: box.x,
-                    y: box.y
+                    x: newX,
+                    y: newY
                 });
             }
         });
 
-        // Wait for animations to complete, then re-render
+        // Animate patchlines by updating line coordinates during animation
+        this.animatePatchlines(oldPositions, animationDuration);
+
+        // Wait for animations to complete, then re-render to finalize positions
         Promise.all(animationPromises).then(() => {
             console.log('Animations complete, re-rendering...');
             this.render();
@@ -1312,6 +1380,93 @@ class InteractiveEditor {
             const flowInfo = flowDirection !== 'none' ? `, flow: ${flowDirection} (${flowSpacing}px)` : '';
             this.updateInfo(`Auto-layout applied: ${nodes.length} objects, linkDistance: ${linkDistance}, iterations: ${iterations}${flowInfo}${constraintInfo}`);
         });
+    }
+
+    animatePatchlines(oldPositions, duration) {
+        /**
+         * Animate patchlines from old positions to new positions.
+         * Uses requestAnimationFrame for smooth interpolation.
+         */
+        const startTime = performance.now();
+
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Ease in-out function
+            const eased = progress < 0.5
+                ? 2 * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+            // Update each patchline
+            this.lines.forEach(line => {
+                const srcBox = this.boxes.get(line.src);
+                const dstBox = this.boxes.get(line.dst);
+                const srcOld = oldPositions.get(line.src);
+                const dstOld = oldPositions.get(line.dst);
+
+                if (srcBox && dstBox && srcOld && dstOld) {
+                    // Interpolate positions
+                    const srcX = srcOld.x + (srcBox.x - srcOld.x) * eased;
+                    const srcY = srcOld.y + (srcBox.y - srcOld.y) * eased;
+                    const dstX = dstOld.x + (dstBox.x - dstOld.x) * eased;
+                    const dstY = dstOld.y + (dstBox.y - dstOld.y) * eased;
+
+                    // Calculate port positions with interpolated box positions
+                    const srcPoint = this.getPortPositionFromCoords(
+                        srcX, srcY, srcBox.width || 60, srcBox.height || 22,
+                        line.src_outlet || 0, srcBox.outlet_count || 1, true
+                    );
+                    const dstPoint = this.getPortPositionFromCoords(
+                        dstX, dstY, dstBox.width || 60, dstBox.height || 22,
+                        line.dst_inlet || 0, dstBox.inlet_count || 1, false
+                    );
+
+                    // Find and update the line element
+                    const lineGroup = this.linesGroup.querySelector(
+                        `[data-src="${line.src}"][data-dst="${line.dst}"][data-src-outlet="${line.src_outlet || 0}"][data-dst-inlet="${line.dst_inlet || 0}"]`
+                    );
+
+                    if (lineGroup) {
+                        const visibleLine = lineGroup.querySelector('.patchline');
+                        const hitbox = lineGroup.querySelector('.patchline-hitbox');
+
+                        if (visibleLine) {
+                            visibleLine.setAttribute('x1', srcPoint.x);
+                            visibleLine.setAttribute('y1', srcPoint.y);
+                            visibleLine.setAttribute('x2', dstPoint.x);
+                            visibleLine.setAttribute('y2', dstPoint.y);
+                        }
+                        if (hitbox) {
+                            hitbox.setAttribute('x1', srcPoint.x);
+                            hitbox.setAttribute('y1', srcPoint.y);
+                            hitbox.setAttribute('x2', dstPoint.x);
+                            hitbox.setAttribute('y2', dstPoint.y);
+                        }
+                    }
+                }
+            });
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        requestAnimationFrame(animate);
+    }
+
+    getPortPositionFromCoords(x, y, w, h, portIndex, portCount, isOutlet) {
+        /**
+         * Calculate port position given box coordinates (for animation interpolation).
+         */
+        const count = Math.max(1, portCount);
+        const safeIndex = Math.max(0, Math.min(portIndex, count - 1));
+        const spacing = w / (count + 1);
+
+        return {
+            x: x + spacing * (safeIndex + 1),
+            y: isOutlet ? (y + h) : y
+        };
     }
 
     elkAutoLayout() {
@@ -1346,6 +1501,26 @@ class InteractiveEditor {
         const edges = [];
         const nodeMap = new Map();
 
+        // First, analyze connections to determine required ports
+        const requiredOutlets = new Map();  // boxId -> max outlet index needed
+        const requiredInlets = new Map();   // boxId -> max inlet index needed
+
+        this.lines.forEach(line => {
+            // Skip connections where source or destination box doesn't exist
+            if (!this.boxes.has(line.src) || !this.boxes.has(line.dst)) {
+                return;
+            }
+
+            const srcOutlet = line.src_outlet || 0;
+            const dstInlet = line.dst_inlet || 0;
+
+            const currentMaxOutlet = requiredOutlets.get(line.src) || 0;
+            requiredOutlets.set(line.src, Math.max(currentMaxOutlet, srcOutlet + 1));
+
+            const currentMaxInlet = requiredInlets.get(line.dst) || 0;
+            requiredInlets.set(line.dst, Math.max(currentMaxInlet, dstInlet + 1));
+        });
+
         // Create nodes with ports
         this.boxes.forEach((box, boxId) => {
             const width = box.width || 60;
@@ -1355,7 +1530,11 @@ class InteractiveEditor {
             const ports = [];
 
             // Add inlet ports (top of box)
-            const inletCount = box.inlet_count || 0;
+            // Use the greater of: declared inlet_count OR required by connections
+            const declaredInlets = box.inlet_count || 0;
+            const neededInlets = requiredInlets.get(boxId) || 0;
+            const inletCount = Math.max(declaredInlets, neededInlets);
+
             for (let i = 0; i < inletCount; i++) {
                 ports.push({
                     id: `${boxId}_inlet_${i}`,
@@ -1367,7 +1546,11 @@ class InteractiveEditor {
             }
 
             // Add outlet ports (bottom of box)
-            const outletCount = box.outlet_count || 0;
+            // Use the greater of: declared outlet_count OR required by connections
+            const declaredOutlets = box.outlet_count || 0;
+            const neededOutlets = requiredOutlets.get(boxId) || 0;
+            const outletCount = Math.max(declaredOutlets, neededOutlets);
+
             for (let i = 0; i < outletCount; i++) {
                 ports.push({
                     id: `${boxId}_outlet_${i}`,
@@ -1388,8 +1571,14 @@ class InteractiveEditor {
             nodeMap.set(boxId, box);
         });
 
-        // Create edges with port connections
+        // Create edges with port connections (only for valid boxes)
         this.lines.forEach(line => {
+            // Skip edges where source or destination box doesn't exist
+            if (!this.boxes.has(line.src) || !this.boxes.has(line.dst)) {
+                console.warn(`Skipping edge: source ${line.src} or destination ${line.dst} not found`);
+                return;
+            }
+
             const srcOutlet = line.src_outlet || 0;
             const dstInlet = line.dst_inlet || 0;
 
@@ -1430,47 +1619,67 @@ class InteractiveEditor {
             .then(layoutedGraph => {
                 console.log('ELK layout result:', layoutedGraph);
 
-                // Apply positions from ELK layout
-                const animationPromises = [];
+                // Store old positions for animation
+                const oldPositions = new Map();
+                this.boxes.forEach((box, boxId) => {
+                    oldPositions.set(boxId, { x: box.x || 0, y: box.y || 0 });
+                });
 
+                // First pass: update all internal positions
                 layoutedGraph.children.forEach(node => {
                     const box = this.boxes.get(node.id);
                     if (box) {
-                        const oldX = box.x || 0;
-                        const oldY = box.y || 0;
-                        const newX = Math.round(node.x);
-                        const newY = Math.round(node.y);
+                        box.x = Math.round(node.x);
+                        box.y = Math.round(node.y);
+                    }
+                });
 
-                        // Update internal state
-                        box.x = newX;
-                        box.y = newY;
+                // Center the layout
+                this.centerLayout();
+
+                // Second pass: animate and send updates
+                const animationPromises = [];
+                const animationDuration = 500;
+
+                layoutedGraph.children.forEach(node => {
+                    const box = this.boxes.get(node.id);
+                    const oldPos = oldPositions.get(node.id);
+
+                    if (box && oldPos) {
+                        const newX = box.x;
+                        const newY = box.y;
 
                         // Find the SVG element for this box
                         const boxElement = this.boxesGroup.querySelector(`[data-id="${node.id}"]`);
 
                         if (boxElement) {
-                            // Use SVG.js to animate the transform
                             const svgElement = SVG(boxElement);
-                            const promise = new Promise(resolve => {
-                                svgElement.animate(500, 0, 'now')
-                                    .ease('<>')  // Ease in-out
-                                    .transform({ translateX: newX - oldX, translateY: newY - oldY })
-                                    .after(() => {
-                                        resolve();
-                                    });
-                            });
-                            animationPromises.push(promise);
+                            const deltaX = newX - oldPos.x;
+                            const deltaY = newY - oldPos.y;
+
+                            if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+                                const promise = new Promise(resolve => {
+                                    svgElement.animate(animationDuration, 0, 'now')
+                                        .ease('<>')
+                                        .transform({ translateX: deltaX, translateY: deltaY })
+                                        .after(() => resolve());
+                                });
+                                animationPromises.push(promise);
+                            }
                         }
 
                         // Send position update to server
                         this.sendMessage({
                             type: 'update_position',
                             box_id: node.id,
-                            x: box.x,
-                            y: box.y
+                            x: newX,
+                            y: newY
                         });
                     }
                 });
+
+                // Animate patchlines
+                this.animatePatchlines(oldPositions, animationDuration);
 
                 // Wait for animations to complete, then re-render
                 Promise.all(animationPromises).then(() => {
@@ -1485,11 +1694,207 @@ class InteractiveEditor {
             });
     }
 
+    dagreAutoLayout() {
+        // Use Dagre for hierarchical DAG layout
+        if (typeof dagre === 'undefined') {
+            console.error('Dagre library not loaded');
+            this.updateInfo('Error: Dagre library not available');
+            return;
+        }
+
+        this.updateInfo('Computing Dagre layout...');
+
+        // Get parameters from controls
+        const flowDirection = document.getElementById('flow-direction')?.value || 'none';
+        const flowSpacing = parseInt(document.getElementById('flow-spacing-slider')?.value || 150);
+        const dagreRanker = document.getElementById('dagre-ranker')?.value || 'network-simplex';
+        const dagreAlign = document.getElementById('dagre-align')?.value || '';
+
+        // Determine dagre rankdir from flow direction
+        let rankdir = 'TB';  // default: top-to-bottom
+        if (flowDirection === 'x' || flowDirection === 'horizontal-flow') {
+            rankdir = 'LR';  // left-to-right
+        } else if (flowDirection === 'x-reverse') {
+            rankdir = 'RL';  // right-to-left
+        } else if (flowDirection === 'y-reverse') {
+            rankdir = 'BT';  // bottom-to-top
+        }
+
+        // Create a new directed graph
+        const g = new dagre.graphlib.Graph();
+
+        // Set graph options
+        const graphOptions = {
+            rankdir: rankdir,
+            nodesep: flowSpacing * 0.5,  // horizontal separation
+            ranksep: flowSpacing,         // vertical separation between ranks
+            marginx: 20,
+            marginy: 20,
+            ranker: dagreRanker
+        };
+
+        if (dagreAlign) {
+            graphOptions.align = dagreAlign;
+        }
+
+        g.setGraph(graphOptions);
+
+        // Default edge label (required by dagre)
+        g.setDefaultEdgeLabel(() => ({}));
+
+        // Add nodes
+        this.boxes.forEach((box, boxId) => {
+            const width = box.width || 60;
+            const height = box.height || 22;
+
+            g.setNode(boxId, {
+                width: width,
+                height: height,
+                label: box.text || boxId
+            });
+        });
+
+        // Add edges (only for valid boxes)
+        this.lines.forEach(line => {
+            if (!this.boxes.has(line.src) || !this.boxes.has(line.dst)) {
+                console.warn(`Skipping edge: source ${line.src} or destination ${line.dst} not found`);
+                return;
+            }
+            g.setEdge(line.src, line.dst);
+        });
+
+        // Run the layout algorithm
+        try {
+            dagre.layout(g);
+        } catch (error) {
+            console.error('Dagre layout error:', error);
+            this.updateInfo(`Dagre layout error: ${error.message}`);
+            return;
+        }
+
+        // Store old positions for animation
+        const oldPositions = new Map();
+        this.boxes.forEach((box, boxId) => {
+            oldPositions.set(boxId, { x: box.x || 0, y: box.y || 0 });
+        });
+
+        // First pass: update all internal positions
+        g.nodes().forEach(nodeId => {
+            const node = g.node(nodeId);
+            const box = this.boxes.get(nodeId);
+
+            if (box && node) {
+                // Dagre returns center coordinates, convert to top-left
+                box.x = Math.round(node.x - node.width / 2);
+                box.y = Math.round(node.y - node.height / 2);
+            }
+        });
+
+        // Center the layout
+        this.centerLayout();
+
+        // Second pass: animate and send updates
+        const animationDuration = 500;
+        const animationPromises = [];
+
+        g.nodes().forEach(nodeId => {
+            const box = this.boxes.get(nodeId);
+            const oldPos = oldPositions.get(nodeId);
+
+            if (box && oldPos) {
+                const newX = box.x;
+                const newY = box.y;
+
+                // Find the SVG element for this box
+                const boxElement = this.boxesGroup.querySelector(`[data-id="${nodeId}"]`);
+
+                if (boxElement) {
+                    const svgElement = SVG(boxElement);
+                    const deltaX = newX - oldPos.x;
+                    const deltaY = newY - oldPos.y;
+
+                    // Only animate if there's actual movement
+                    if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+                        const promise = new Promise(resolve => {
+                            svgElement.animate(animationDuration, 0, 'now')
+                                .ease('<>')
+                                .transform({ translateX: deltaX, translateY: deltaY })
+                                .after(() => resolve());
+                        });
+                        animationPromises.push(promise);
+                    }
+                }
+
+                // Send position update to server
+                this.sendMessage({
+                    type: 'update_position',
+                    box_id: nodeId,
+                    x: newX,
+                    y: newY
+                });
+            }
+        });
+
+        // Animate patchlines
+        this.animatePatchlines(oldPositions, animationDuration);
+
+        // Wait for animations to complete, then re-render
+        Promise.all(animationPromises).then(() => {
+            console.log('Dagre animations complete, re-rendering...');
+            this.render();
+            this.updateInfo(`Dagre layout applied: ${g.nodeCount()} objects, direction: ${rankdir}, ranker: ${dagreRanker}, spacing: ${flowSpacing}px`);
+        });
+    }
+
     // Helper methods
+
+    centerLayout() {
+        /**
+         * Center all boxes within the canvas.
+         * Call this after computing layout positions but before animation.
+         */
+        if (this.boxes.size === 0) return;
+
+        // Get canvas dimensions
+        const canvasWidth = parseInt(document.getElementById('canvas-width-slider')?.value || 800);
+        const canvasHeight = parseInt(document.getElementById('canvas-height-slider')?.value || 600);
+
+        // Calculate bounding box of all objects
+        let minX = Infinity, minY = Infinity;
+        let maxX = -Infinity, maxY = -Infinity;
+
+        this.boxes.forEach(box => {
+            const x = box.x || 0;
+            const y = box.y || 0;
+            const w = box.width || 60;
+            const h = box.height || 22;
+
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x + w);
+            maxY = Math.max(maxY, y + h);
+        });
+
+        // Calculate content dimensions
+        const contentWidth = maxX - minX;
+        const contentHeight = maxY - minY;
+
+        // Calculate offset to center content
+        const offsetX = (canvasWidth - contentWidth) / 2 - minX;
+        const offsetY = (canvasHeight - contentHeight) / 2 - minY;
+
+        // Apply offset to all boxes
+        this.boxes.forEach(box => {
+            box.x = (box.x || 0) + offsetX;
+            box.y = (box.y || 0) + offsetY;
+        });
+
+        console.log(`Layout centered: offset (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`);
+    }
 
     toggleLayoutParameters(engine) {
         // Remove all layout engine classes
-        document.body.classList.remove('layout-engine-cola', 'layout-engine-elk');
+        document.body.classList.remove('layout-engine-cola', 'layout-engine-elk', 'layout-engine-dagre');
 
         // Add the appropriate class for the selected engine
         document.body.classList.add(`layout-engine-${engine}`);
@@ -1503,36 +1908,34 @@ class InteractiveEditor {
         // DIRECT JavaScript manipulation for Safari compatibility
         const colaParams = document.querySelectorAll('.param-cola-only');
         const elkParams = document.querySelectorAll('.param-elk-only');
+        const dagreParams = document.querySelectorAll('.param-dagre-only');
 
+        // Hide all engine-specific params first
+        [colaParams, elkParams, dagreParams].forEach(params => {
+            params.forEach(el => {
+                el.style.display = 'none';
+                el.style.visibility = 'hidden';
+                el.style.height = '0';
+                el.style.overflow = 'hidden';
+            });
+        });
+
+        // Show params for the selected engine
+        let activeParams;
         if (engine === 'elk') {
-            // Hide WebCola params, show ELK params
-            colaParams.forEach(el => {
-                el.style.display = 'none';
-                el.style.visibility = 'hidden';
-                el.style.height = '0';
-                el.style.overflow = 'hidden';
-            });
-            elkParams.forEach(el => {
-                el.style.display = 'flex';
-                el.style.visibility = 'visible';
-                el.style.height = 'auto';
-                el.style.overflow = 'visible';
-            });
+            activeParams = elkParams;
+        } else if (engine === 'dagre') {
+            activeParams = dagreParams;
         } else {
-            // Hide ELK params, show WebCola params
-            elkParams.forEach(el => {
-                el.style.display = 'none';
-                el.style.visibility = 'hidden';
-                el.style.height = '0';
-                el.style.overflow = 'hidden';
-            });
-            colaParams.forEach(el => {
-                el.style.display = 'flex';
-                el.style.visibility = 'visible';
-                el.style.height = 'auto';
-                el.style.overflow = 'visible';
-            });
+            activeParams = colaParams;
         }
+
+        activeParams.forEach(el => {
+            el.style.display = 'flex';
+            el.style.visibility = 'visible';
+            el.style.height = 'auto';
+            el.style.overflow = 'visible';
+        });
 
         // Debug: count visible parameters
         const visibleCola = Array.from(colaParams).filter(el => el.offsetHeight > 0).length;
@@ -1557,6 +1960,30 @@ class InteractiveEditor {
                 x: x || 100,
                 y: y || 100
             });
+        }
+    }
+
+    showSaveAsDialog() {
+        /**
+         * Show a save-as dialog to get a filepath from the user.
+         * Uses a simple prompt for now - could be enhanced with a modal dialog.
+         */
+        // Get suggested filename from patcher title
+        const titleEl = document.getElementById('title');
+        const title = titleEl?.textContent?.replace('py2max Interactive Editor - ', '') || 'untitled';
+        const suggestedName = title.endsWith('.maxpat') ? title : `${title}.maxpat`;
+
+        const filepath = prompt('Save patch as:', suggestedName);
+
+        if (filepath) {
+            // Send save_as message to server
+            this.sendMessage({
+                type: 'save_as',
+                filepath: filepath.trim()
+            });
+            this.updateInfo(`Saving as ${filepath}...`);
+        } else {
+            this.updateInfo('Save cancelled');
         }
     }
 

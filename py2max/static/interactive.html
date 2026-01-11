@@ -393,6 +393,44 @@
             opacity: 1 !important;
             pointer-events: auto !important;
         }
+
+        /* Default: hide dagre params */
+        #layout-controls .control-group.param-dagre-only[tabindex="3"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* When Dagre is selected: hide cola/elk params, show dagre params */
+        body.layout-engine-dagre #layout-controls .control-group.param-cola-only[tabindex="1"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        body.layout-engine-dagre #layout-controls .control-group.param-elk-only[tabindex="2"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        body.layout-engine-dagre #layout-controls .control-group.param-dagre-only[tabindex="3"] {
+            display: flex !important;
+            visibility: visible !important;
+            height: auto !important;
+            overflow: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 <body class="layout-engine-cola" data-layout-engine="cola">
@@ -423,6 +461,7 @@
             <select id="layout-engine" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
                 <option value="cola">WebCola (Force-Directed)</option>
                 <option value="elk">ELK (Layered + Ports)</option>
+                <option value="dagre">Dagre (Hierarchical DAG)</option>
             </select>
         </div>
         <div class="control-group param-cola-only" tabindex="1">
@@ -509,6 +548,24 @@
                 <option value="SPLINES">Splines</option>
             </select>
         </div>
+        <div class="control-group param-dagre-only" tabindex="3">
+            <label>Dagre Ranker</label>
+            <select id="dagre-ranker" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="network-simplex">Network Simplex (Default)</option>
+                <option value="tight-tree">Tight Tree</option>
+                <option value="longest-path">Longest Path</option>
+            </select>
+        </div>
+        <div class="control-group param-dagre-only" tabindex="3">
+            <label>Dagre Align</label>
+            <select id="dagre-align" style="padding: 4px 8px; background: #444; color: #fff; border: 1px solid #666; border-radius: 3px; cursor: pointer;">
+                <option value="">None (Default)</option>
+                <option value="UL">Upper Left</option>
+                <option value="UR">Upper Right</option>
+                <option value="DL">Down Left</option>
+                <option value="DR">Down Right</option>
+            </select>
+        </div>
         <button id="apply-layout-btn" style="margin-top: 14px;">Apply Layout</button>
         <button id="reset-layout-btn" style="margin-top: 14px;">Reset Layout</button>
     </div>
@@ -524,6 +581,7 @@
     <script src="svg.min.js"></script>
     <script src="cola.min.js"></script>
     <script src="elk.bundled.js"></script>
+    <script src="dagre-bundle.js"></script>
 
     <!-- Main interactive editor -->
     <script src="interactive.js"></script>

@@ -131,7 +131,9 @@ class GridLayoutManager(LayoutManager):
     def optimize_layout(self):
         """Optimize the layout to cluster connected objects together."""
         if not self.cluster_connected or len(self.parent._objects) < 2:
-            return  # Nothing to optimize
+            # Even without clustering, prevent overlaps
+            self.prevent_overlaps()
+            return
 
         # Analyze connections and create clusters
         connections = self._analyze_object_connections()
@@ -140,6 +142,9 @@ class GridLayoutManager(LayoutManager):
         # Even single clusters can benefit from reorganization
         # Apply optimized positions to existing objects based on clusters
         self._apply_clustered_layout(clusters)
+
+        # Prevent any remaining overlaps after clustering
+        self.prevent_overlaps()
 
     def _apply_clustered_layout(self, clusters: list[set]):
         """Apply cluster-based positioning to all objects."""
@@ -174,8 +179,12 @@ class GridLayoutManager(LayoutManager):
             cluster_cols = min(3, num_clusters)
             cluster_rows = (num_clusters + cluster_cols - 1) // cluster_cols
 
-        cluster_width = (self.parent.width - pad) // cluster_cols
-        cluster_height = (self.parent.height - pad) // cluster_rows
+        # Use float division for consistent spacing
+        cluster_width = (self.parent.width - 2 * pad) / max(cluster_cols, 1)
+        cluster_height = (self.parent.height - 2 * pad) / max(cluster_rows, 1)
+
+        # Consistent spacing between objects (use float)
+        object_spacing = pad * 0.5
 
         # Position each cluster in its designated area
         for cluster_idx, cluster_objects in enumerate(clusters):
@@ -189,7 +198,7 @@ class GridLayoutManager(LayoutManager):
             cluster_y_base = cluster_row * cluster_height + pad
 
             # Position objects within this cluster's designated area (horizontal priority)
-            objects_per_row = max(1, int(cluster_width // (self.box_width + pad // 2)))
+            objects_per_row = max(1, int(cluster_width / (self.box_width + object_spacing)))
 
             for obj_idx, obj_id in enumerate(cluster_objects_list):
                 if obj_id in self.parent._objects:
@@ -199,8 +208,8 @@ class GridLayoutManager(LayoutManager):
                         obj_col = obj_idx % objects_per_row
                         obj_row = obj_idx // objects_per_row
 
-                        x = cluster_x_base + obj_col * (self.box_width + pad // 2)
-                        y = cluster_y_base + obj_row * (self.box_height + pad // 2)
+                        x = cluster_x_base + obj_col * (self.box_width + object_spacing)
+                        y = cluster_y_base + obj_row * (self.box_height + object_spacing)
 
                         # Ensure bounds (stay within cluster area)
                         x = min(
@@ -234,8 +243,12 @@ class GridLayoutManager(LayoutManager):
             cluster_rows = min(3, num_clusters)
             cluster_cols = (num_clusters + cluster_rows - 1) // cluster_rows
 
-        cluster_width = (self.parent.width - pad) // cluster_cols
-        cluster_height = (self.parent.height - pad) // cluster_rows
+        # Use float division for consistent spacing
+        cluster_width = (self.parent.width - 2 * pad) / max(cluster_cols, 1)
+        cluster_height = (self.parent.height - 2 * pad) / max(cluster_rows, 1)
+
+        # Consistent spacing between objects (use float)
+        object_spacing = pad * 0.5
 
         # Position each cluster in its designated area
         for cluster_idx, cluster_objects in enumerate(clusters):
@@ -250,7 +263,7 @@ class GridLayoutManager(LayoutManager):
 
             # Position objects within this cluster's designated area (vertical priority)
             objects_per_col = max(
-                1, int(cluster_height // (self.box_height + pad // 2))
+                1, int(cluster_height / (self.box_height + object_spacing))
             )
 
             for obj_idx, obj_id in enumerate(cluster_objects_list):
@@ -261,8 +274,8 @@ class GridLayoutManager(LayoutManager):
                         obj_row = obj_idx % objects_per_col
                         obj_col = obj_idx // objects_per_col
 
-                        x = cluster_x_base + obj_col * (self.box_width + pad // 2)
-                        y = cluster_y_base + obj_row * (self.box_height + pad // 2)
+                        x = cluster_x_base + obj_col * (self.box_width + object_spacing)
+                        y = cluster_y_base + obj_row * (self.box_height + object_spacing)
 
                         # Ensure bounds (stay within cluster area)
                         x = min(

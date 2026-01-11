@@ -158,12 +158,20 @@ def get_patcher_state_json(patcher: Optional["Patcher"]) -> dict:
     if patcher_title and hasattr(patcher_title, "name"):
         patcher_title = patcher_title.name
 
+    # Get filepath for save/save-as logic
+    filepath = None
+    if hasattr(patcher, "filepath") and patcher.filepath:
+        filepath = str(patcher.filepath)
+    elif hasattr(patcher, "_path") and patcher._path:
+        filepath = str(patcher._path)
+
     return {
         "type": "update",
         "boxes": boxes,
         "lines": lines,
         "patcher_path": patcher_path,
         "patcher_title": str(patcher_title),
+        "filepath": filepath,
     }
 
 
@@ -174,7 +182,8 @@ class InteractiveHTTPHandler(http.server.SimpleHTTPRequestHandler):
     session_token: Optional[str] = None
 
     def __init__(self, *args, **kwargs):
-        static_dir = Path(__file__).parent / "static"
+        # Static files are in py2max/static/, not py2max/server/static/
+        static_dir = Path(__file__).parent.parent / "static"
         super().__init__(*args, directory=str(static_dir), **kwargs)
 
     def do_GET(self):
@@ -186,7 +195,8 @@ class InteractiveHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def serve_interactive_html(self):
         """Serve the interactive editor HTML with injected session token."""
-        html_file = Path(__file__).parent / "static" / "interactive.html"
+        # Static files are in py2max/static/, not py2max/server/static/
+        html_file = Path(__file__).parent.parent / "static" / "interactive.html"
         if html_file.exists():
             html_content = html_file.read_text(encoding="utf-8")
 
@@ -347,6 +357,8 @@ class InteractiveWebSocketHandler:
                 await self.handle_delete_connection(data)
             elif message_type == "save":
                 await self.handle_save()
+            elif message_type == "save_as":
+                await self.handle_save_as(data)
             elif message_type == "navigate_to_subpatcher":
                 await self.handle_navigate_to_subpatcher(data)
             elif message_type == "navigate_to_parent":
@@ -564,10 +576,54 @@ class InteractiveWebSocketHandler:
                     }
                 )
             else:
-                print("Warning: No filepath set, cannot save")
+                # No filepath set - request filename from client
+                print("No filepath set, requesting filename from client")
                 await self.broadcast(
-                    {"type": "save_error", "message": "No filepath set"}
+                    {"type": "save_as_required", "message": "Please enter a filename"}
                 )
+        except Exception as e:
+            print(f"Error saving: {e}")
+            await self.broadcast({"type": "save_error", "message": str(e)})
+
+    async def handle_save_as(self, data: dict):
+        """Handle save-as request with specified filepath."""
+        if not self.root_patcher:
+            return
+
+        filepath = data.get("filepath", "")
+        if not filepath:
+            await self.broadcast(
+                {"type": "save_error", "message": "No filepath provided"}
+            )
+            return
+
+        try:
+            # Ensure .maxpat extension
+            if not filepath.endswith((".maxpat", ".maxhelp", ".rbnopat")):
+                filepath = filepath + ".maxpat"
+
+            # Set the filepath on the patcher
+            from pathlib import Path
+
+            self.root_patcher._path = Path(filepath)
+
+            # Save the patcher
+            self.root_patcher.save()
+            print(f"Saved as: {filepath}")
+
+            # Notify clients that save completed
+            await self.broadcast(
+                {
+                    "type": "save_complete",
+                    "filepath": filepath,
+                }
+            )
+
+            # Also update the state to include the new filepath
+            state = get_patcher_state_json(self.patcher)
+            state["filepath"] = filepath
+            await self.broadcast(state)
+
         except Exception as e:
             print(f"Error saving: {e}")
             await self.broadcast({"type": "save_error", "message": str(e)})
