@@ -43,6 +43,139 @@ if TYPE_CHECKING:
     from ..core import Patcher
 
 
+# Message validation schemas
+# Each schema defines required fields and their expected types
+MESSAGE_SCHEMAS: dict[str, dict[str, type]] = {
+    "update_position": {"box_id": str, "x": (int, float), "y": (int, float)},
+    "create_object": {"text": str},  # x, y optional
+    "create_connection": {
+        "src_id": str,
+        "dst_id": str,
+    },  # src_outlet, dst_inlet optional
+    "delete_object": {"box_id": str},
+    "delete_connection": {"src_id": str, "dst_id": str},
+    "save": {},  # No required fields
+    "save_as": {"filepath": str},
+    "navigate_to_subpatcher": {"box_id": str},
+    "navigate_to_parent": {},
+    "navigate_to_root": {},
+}
+
+# Maximum lengths for string fields to prevent abuse
+MAX_STRING_LENGTHS: dict[str, int] = {
+    "box_id": 256,
+    "src_id": 256,
+    "dst_id": 256,
+    "text": 10000,  # Max object text length
+    "filepath": 4096,  # Max filepath length
+}
+
+# Coordinate bounds
+COORDINATE_BOUNDS = {"min": -100000, "max": 100000}
+
+
+class ValidationError(Exception):
+    """Raised when message validation fails."""
+
+    pass
+
+
+def validate_message(data: dict) -> tuple[bool, Optional[str]]:
+    """Validate an incoming WebSocket message.
+
+    Args:
+        data: The parsed message data
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    message_type = data.get("type")
+
+    # Check message type exists and is known
+    if not message_type:
+        return False, "Missing 'type' field"
+
+    if not isinstance(message_type, str):
+        return False, "'type' must be a string"
+
+    if message_type not in MESSAGE_SCHEMAS:
+        return False, f"Unknown message type: {message_type}"
+
+    schema = MESSAGE_SCHEMAS[message_type]
+
+    # Check required fields
+    for field, expected_type in schema.items():
+        if field not in data:
+            return False, f"Missing required field: {field}"
+
+        value = data[field]
+
+        # Check type (expected_type can be a single type or tuple of types)
+        if isinstance(expected_type, tuple):
+            if not isinstance(value, expected_type):
+                type_names = " or ".join(t.__name__ for t in expected_type)
+                return False, f"Field '{field}' must be {type_names}"
+        else:
+            if not isinstance(value, expected_type):
+                return False, f"Field '{field}' must be {expected_type.__name__}"
+
+        # String length validation
+        if isinstance(value, str) and field in MAX_STRING_LENGTHS:
+            if len(value) > MAX_STRING_LENGTHS[field]:
+                return (
+                    False,
+                    f"Field '{field}' exceeds max length ({MAX_STRING_LENGTHS[field]})",
+                )
+
+            # Check for null bytes or control characters (except newline, tab)
+            if any(ord(c) < 32 and c not in "\n\t\r" for c in value):
+                return False, f"Field '{field}' contains invalid control characters"
+
+        # Coordinate bounds validation
+        if field in ("x", "y") and isinstance(value, (int, float)):
+            if value < COORDINATE_BOUNDS["min"] or value > COORDINATE_BOUNDS["max"]:
+                return (
+                    False,
+                    f"Field '{field}' out of bounds ({COORDINATE_BOUNDS['min']} to {COORDINATE_BOUNDS['max']})",
+                )
+
+    # Validate optional fields if present
+    if message_type == "update_position":
+        # x and y are required and already validated above
+        pass
+
+    if message_type == "create_object":
+        # Validate optional x, y if present
+        for field in ("x", "y"):
+            if field in data:
+                value = data[field]
+                if not isinstance(value, (int, float)):
+                    return False, f"Optional field '{field}' must be a number"
+                if value < COORDINATE_BOUNDS["min"] or value > COORDINATE_BOUNDS["max"]:
+                    return False, f"Optional field '{field}' out of bounds"
+
+    if message_type == "create_connection":
+        # Validate optional outlet/inlet indices
+        for field in ("src_outlet", "dst_inlet"):
+            if field in data:
+                value = data[field]
+                if not isinstance(value, int):
+                    return False, f"Optional field '{field}' must be an integer"
+                if value < 0 or value > 255:  # Max 256 inlets/outlets
+                    return False, f"Optional field '{field}' out of range (0-255)"
+
+    if message_type == "delete_connection":
+        for field in ("src_outlet", "dst_inlet"):
+            if field in data:
+                value = data[field]
+                if not isinstance(value, int):
+                    return False, f"Optional field '{field}' must be an integer"
+                if value < 0 or value > 255:
+                    return False, f"Optional field '{field}' out of range (0-255)"
+
+    return True, None
+
+
 def get_patcher_state_json(patcher: Optional["Patcher"]) -> dict:
     """Convert patcher to JSON state for browser.
 
@@ -343,6 +476,16 @@ class InteractiveWebSocketHandler:
         """Handle incoming message from client."""
         try:
             data = json.loads(message)
+
+            # Validate message before processing
+            is_valid, error_msg = validate_message(data)
+            if not is_valid:
+                print(f"Message validation failed: {error_msg}")
+                await websocket.send(
+                    json.dumps({"type": "error", "message": f"Validation error: {error_msg}"})
+                )
+                return
+
             message_type = data.get("type")
 
             if message_type == "update_position":
@@ -365,13 +508,17 @@ class InteractiveWebSocketHandler:
                 await self.handle_navigate_to_parent()
             elif message_type == "navigate_to_root":
                 await self.handle_navigate_to_root()
-            else:
-                print(f"Unknown message type: {message_type}")
 
         except json.JSONDecodeError as e:
             print(f"Invalid JSON: {e}")
+            await websocket.send(
+                json.dumps({"type": "error", "message": "Invalid JSON format"})
+            )
         except Exception as e:
             print(f"Error handling message: {e}")
+            await websocket.send(
+                json.dumps({"type": "error", "message": f"Server error: {str(e)}"})
+            )
 
     async def handle_update_position(self, data: dict):
         """Handle object position update from browser."""
@@ -402,9 +549,15 @@ class InteractiveWebSocketHandler:
                         rect[0] = x
                         rect[1] = y
 
-                # Broadcast update to all clients
-                state = get_patcher_state_json(self.patcher)
-                await self.broadcast(state)
+                # Send delta update instead of full state (performance optimization)
+                await self.broadcast(
+                    {
+                        "type": "position_update",
+                        "box_id": box_id,
+                        "x": float(x) if x is not None else 0.0,
+                        "y": float(y) if y is not None else 0.0,
+                    }
+                )
 
                 # Schedule debounced save
                 await self.schedule_save()

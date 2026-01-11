@@ -317,6 +317,15 @@ class InteractiveEditor {
 
             // Update info
             this.updateInfo(`${this.boxes.size} objects · ${this.lines.length} connections`);
+        } else if (data.type === 'position_update') {
+            // Delta update - only update the specific box position
+            const box = this.boxes.get(data.box_id);
+            if (box) {
+                box.x = data.x;
+                box.y = data.y;
+                // Update the visual position without full re-render
+                this.updateBoxPosition(data.box_id, data.x, data.y);
+            }
         } else if (data.type === 'save_complete') {
             this.updateInfo(`Saved to ${data.filepath}`);
             console.log('Patch saved:', data.filepath);
@@ -553,6 +562,101 @@ class InteractiveEditor {
         if (box.maxclass === 'comment') return '#ffffd0';
         if (box.maxclass === 'message') return '#e0e0e0';
         return '#f0f0f0';
+    }
+
+    updateBoxPosition(boxId, x, y) {
+        /**
+         * Efficiently update a single box position without full re-render.
+         * Used for delta position updates from the server.
+         */
+        const boxElement = this.boxesGroup.querySelector(`[data-id="${boxId}"]`);
+        if (!boxElement) return;
+
+        const box = this.boxes.get(boxId);
+        if (!box) return;
+
+        const svgBox = SVG(boxElement);
+
+        // Update rectangle position
+        const rect = svgBox.findOne('rect');
+        if (rect) {
+            rect.move(x, y);
+        }
+
+        // Update text position
+        const text = svgBox.findOne('text');
+        if (text) {
+            text.attr({ x: x + 5, y: y + (box.height || 22) / 2 + 4 });
+        }
+
+        // Update clip path
+        const clipRect = svgBox.findOne('clipPath rect');
+        if (clipRect) {
+            clipRect.move(x, y);
+        }
+
+        // Update port positions
+        const inlets = boxElement.querySelectorAll('.inlet');
+        const outlets = boxElement.querySelectorAll('.outlet');
+        const w = box.width || 60;
+        const h = box.height || 22;
+
+        if (inlets.length > 0) {
+            const spacing = w / (inlets.length + 1);
+            inlets.forEach((inlet, i) => {
+                SVG(inlet).center(x + spacing * (i + 1), y);
+            });
+        }
+
+        if (outlets.length > 0) {
+            const spacing = w / (outlets.length + 1);
+            outlets.forEach((outlet, i) => {
+                SVG(outlet).center(x + spacing * (i + 1), y + h);
+            });
+        }
+
+        // Update connected patchlines
+        this.updateConnectedLines(boxId);
+    }
+
+    updateConnectedLines(boxId) {
+        /**
+         * Update all patchlines connected to a specific box.
+         */
+        this.lines.forEach(line => {
+            if (line.src === boxId || line.dst === boxId) {
+                const srcBox = this.boxes.get(line.src);
+                const dstBox = this.boxes.get(line.dst);
+
+                if (srcBox && dstBox) {
+                    const srcPoint = this.getPortPosition(srcBox, line.src_outlet || 0, true);
+                    const dstPoint = this.getPortPosition(dstBox, line.dst_inlet || 0, false);
+
+                    // Find the line element
+                    const lineGroup = this.linesGroup.querySelector(
+                        `[data-src="${line.src}"][data-dst="${line.dst}"][data-src-outlet="${line.src_outlet || 0}"][data-dst-inlet="${line.dst_inlet || 0}"]`
+                    );
+
+                    if (lineGroup) {
+                        const visibleLine = lineGroup.querySelector('.patchline');
+                        const hitbox = lineGroup.querySelector('.patchline-hitbox');
+
+                        if (visibleLine) {
+                            visibleLine.setAttribute('x1', srcPoint.x);
+                            visibleLine.setAttribute('y1', srcPoint.y);
+                            visibleLine.setAttribute('x2', dstPoint.x);
+                            visibleLine.setAttribute('y2', dstPoint.y);
+                        }
+                        if (hitbox) {
+                            hitbox.setAttribute('x1', srcPoint.x);
+                            hitbox.setAttribute('y1', srcPoint.y);
+                            hitbox.setAttribute('x2', dstPoint.x);
+                            hitbox.setAttribute('y2', dstPoint.y);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     updateViewBox() {

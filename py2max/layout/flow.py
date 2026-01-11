@@ -121,13 +121,81 @@ class FlowLayoutManager(LayoutManager):
             groups[level].append(obj_id)
         return groups
 
+    def _minimize_crossings(
+        self, groups: Dict[int, List[str]], connections: dict
+    ) -> Dict[int, List[str]]:
+        """Minimize line crossings using the barycenter heuristic.
+
+        For each level (after the first), objects are reordered based on
+        the average position (barycenter) of their connected objects in
+        the previous level. This tends to place connected objects near
+        each other, reducing line crossings.
+
+        Args:
+            groups: Objects grouped by level
+            connections: Connection graph from _analyze_connections()
+
+        Returns:
+            Reordered groups with minimized crossings
+        """
+        if len(groups) < 2:
+            return groups
+
+        sorted_levels = sorted(groups.keys())
+        result: Dict[int, List[str]] = {}
+
+        # First level stays as-is (sorted for consistency)
+        first_level = sorted_levels[0]
+        result[first_level] = sorted(groups[first_level])
+
+        # Process subsequent levels
+        for i, level in enumerate(sorted_levels[1:], 1):
+            prev_level = sorted_levels[i - 1]
+            prev_objects = result[prev_level]
+            current_objects = groups[level]
+
+            # Create position map for previous level objects
+            prev_positions = {obj_id: idx for idx, obj_id in enumerate(prev_objects)}
+
+            # Calculate barycenter for each object in current level
+            barycenters: Dict[str, float] = {}
+            for obj_id in current_objects:
+                # Find all connections to previous level
+                connected_positions = []
+
+                # Check inputs (connections from previous level)
+                if obj_id in connections:
+                    for input_id in connections[obj_id]["inputs"]:
+                        if input_id in prev_positions:
+                            connected_positions.append(prev_positions[input_id])
+
+                if connected_positions:
+                    # Barycenter is the average position of connected objects
+                    barycenters[obj_id] = sum(connected_positions) / len(
+                        connected_positions
+                    )
+                else:
+                    # No connections to previous level - use a large value to push to end
+                    barycenters[obj_id] = float("inf")
+
+            # Sort objects by their barycenter values
+            sorted_objects = sorted(
+                current_objects,
+                key=lambda obj_id: (barycenters[obj_id], obj_id),  # obj_id as tiebreaker
+            )
+            result[level] = sorted_objects
+
+        return result
+
     def _calculate_positions(self) -> dict:
         """Calculate optimized positions for all objects."""
         connections = self._analyze_connections()
         levels = self._calculate_flow_levels(connections)
         groups = self._group_by_level(levels)
 
-        # positions = {}
+        # Apply crossing minimization to reorder objects within each level
+        groups = self._minimize_crossings(groups, connections)
+
         pad = self.pad
 
         if self.flow_direction == "vertical":
