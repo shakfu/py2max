@@ -19,6 +19,7 @@ from typing import List, Optional, Tuple, Union, cast
 
 from py2max import layout as layout_module
 from py2max import maxref
+from py2max.amxd import pack_amxd, unpack_amxd
 from py2max.exceptions import InvalidConnectionError, PatcherIOError
 from py2max.log import get_logger, log_operation
 
@@ -325,10 +326,15 @@ class Patcher(AbstractPatcher):
     def from_file(
         cls, path: Union[str, Path], save_to: Optional[str] = None
     ) -> "Patcher":
-        """create a patcher instance from a .maxpat json file"""
+        """create a patcher instance from a .maxpat or .amxd file"""
 
-        with open(path, encoding="utf8") as f:
-            maxpat = json.load(f)
+        path = Path(path)
+        if path.suffix.lower() == ".amxd":
+            payload = unpack_amxd(path.read_bytes())
+            maxpat = json.loads(payload)
+        else:
+            with open(path, encoding="utf8") as f:
+                maxpat = json.load(f)
         return Patcher.from_dict(maxpat["patcher"], save_to)
 
     def to_dict(self) -> dict:
@@ -466,8 +472,12 @@ class Patcher(AbstractPatcher):
                 self.render()
 
             # Use resolved path for writing
-            with open(resolved_path, "w", encoding="utf8") as f:
-                json.dump(self.to_dict(), f, indent=4)
+            if resolved_path.suffix.lower() == ".amxd":
+                payload = json.dumps(self.to_dict(), indent=4)
+                resolved_path.write_bytes(pack_amxd(payload))
+            else:
+                with open(resolved_path, "w", encoding="utf8") as f:
+                    json.dump(self.to_dict(), f, indent=4)
 
             logger.info(
                 f"Saved patcher to: {resolved_path} ({len(self._boxes)} objects, {len(self._lines)} connections)"
@@ -480,6 +490,29 @@ class Patcher(AbstractPatcher):
                 file_path=str(resolved_path),
                 operation="write",
             ) from e
+
+    def enable_presentation(self, devicewidth: Optional[int] = None) -> "Patcher":
+        """Configure this patcher to open as a Max for Live device.
+
+        Sets ``openinpresentation=1`` so Ableton Live renders the device
+        strip instead of the patcher view, and optionally sets
+        ``devicewidth``. Ableton's device strip height is fixed at ~170 px;
+        only width is author-controlled.
+        """
+        from py2max.m4l import enable_presentation
+
+        return enable_presentation(self, devicewidth=devicewidth)
+
+    def enforce_integer_coords(self) -> int:
+        """Round all rect coordinates in this patcher tree to integers.
+
+        Ableton renders fractional device-strip coordinates blurry on
+        non-retina displays. Returns the number of rects that were
+        non-integer and got rounded. Recurses into subpatchers.
+        """
+        from py2max.m4l import enforce_integer_coords
+
+        return enforce_integer_coords(self)
 
     def save(self) -> None:
         """Save the patch to the default file path.

@@ -2,6 +2,31 @@
 
 ## [Unreleased]
 
+### New: Max for Live (.amxd) Binary Format Support
+
+Implements the features requested in [issue #9](https://github.com/shakfu/py2max/issues/9) (thanks to @williamfrench95 for reverse-engineering the format).
+
+- **`.amxd` read/write** (`py2max/amxd.py`): 24-byte header (`ampf` v4 + `aaaa` + `meta` chunk + `ptch` tag + uint32 LE JSON length) wrapping patcher JSON.
+  - Public helpers: `pack_amxd`, `unpack_amxd`, `read_amxd`, `write_amxd`.
+  - `Patcher.save()` and `Patcher.from_file()` auto-detect the `.amxd` extension; `.maxpat` path is unchanged.
+  - Brace-balanced, string-aware fallback extractor handles files with a corrupted length field.
+  - Verified end-to-end in Max 9 (a generated `.amxd` opens and its presentation-mode UI renders correctly).
+
+### New: Max for Live Presentation-Mode Helpers
+
+- New module `py2max/m4l.py` with helpers that encode M4L conventions.
+- `Patcher.enable_presentation(devicewidth=...)`: sets `openinpresentation=1` and optional `devicewidth`. Ableton's device strip height is fixed at ~170 px; only width is author-controlled.
+- `Box.add_to_presentation([x, y, w, h])`: sets `presentation=1` + `presentation_rect`, rounds fractional coordinates to integers with `NonIntegerCoordinateWarning` (Ableton renders decimals blurry on non-retina), and **raises `ValueError`** if called on M4L infrastructure (`live.remote~`, `live.map`, `live.object`, `live.path`, `live.observer`, `live.thisdevice`, …) that must stay hidden from the device strip.
+- `Patcher.enforce_integer_coords()`: opt-in sweep that rounds every `patching_rect` / `presentation_rect` across the patcher tree (recurses into subpatchers).
+- Classification helpers: `is_presentation_ui(box)`, `is_m4l_infrastructure(box)`, plus the underlying `M4L_PRESENTATION_UI_CLASSES` and `M4L_INFRASTRUCTURE_CLASSES` frozensets.
+
+### New: Prebuilt MaxRef Bundle (Linux Support)
+
+- Ship `py2max/maxref/data/bundle.json.gz` in the wheel (1175 objects, ~1 MiB compressed, ~7 MiB raw).
+- `MaxRefCache._get_refdict()` falls back to the bundle when no local Max installation is found, pre-seeding the parser cache so `Box.help()`, `get_inlet_count`, `get_outlet_count`, and connection validation work identically on Linux.
+- Regenerate with `uv run python scripts/build_maxref_bundle.py` on a machine with Max installed; commit the result.
+- Bundle stores full parsed data (methods, attributes, inlets/outlets, digests, descriptions) — not a trimmed subset — so introspection parity with macOS/Windows is preserved.
+
 ## [0.2.1] - 2026-01-11
 
 ### New: Dagre Layout Algorithm

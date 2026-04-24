@@ -34,7 +34,18 @@ Example:
 
 __version__ = "0.2.1"
 
+from .amxd import pack_amxd, read_amxd, unpack_amxd, write_amxd
 from .core import Box, Patcher, Patchline
+from .m4l import (
+    M4L_INFRASTRUCTURE_CLASSES,
+    M4L_PRESENTATION_UI_CLASSES,
+    NonIntegerCoordinateWarning,
+    add_to_presentation,
+    enable_presentation,
+    enforce_integer_coords,
+    is_m4l_infrastructure,
+    is_presentation_ui,
+)
 from .maxref import MaxRefDB
 from .exceptions import (
     DatabaseError,
@@ -55,6 +66,20 @@ __all__ = [
     "Box",
     "Patchline",
     "MaxRefDB",
+    # .amxd (Max for Live) binary format
+    "pack_amxd",
+    "unpack_amxd",
+    "read_amxd",
+    "write_amxd",
+    # M4L presentation helpers
+    "M4L_PRESENTATION_UI_CLASSES",
+    "M4L_INFRASTRUCTURE_CLASSES",
+    "NonIntegerCoordinateWarning",
+    "add_to_presentation",
+    "enable_presentation",
+    "enforce_integer_coords",
+    "is_presentation_ui",
+    "is_m4l_infrastructure",
     # Exceptions
     "Py2MaxError",
     "InvalidConnectionError",

@@ -148,6 +148,27 @@ class Box(AbstractBox):
         # Otherwise get from _kwds (from programmatic creation)
         return self._kwds.get("text", "")
 
+    def add_to_presentation(
+        self,
+        rect,
+        *,
+        strict: bool = False,
+    ) -> "Box":
+        """Mark this box as a presentation-mode UI element (Max for Live).
+
+        Sets ``presentation=1`` and ``presentation_rect`` on the box. Rounds
+        fractional coordinates to integers with a warning. Raises if the box
+        is M4L infrastructure (``live.remote~``, ``live.map``, etc.) that
+        must stay hidden from the device strip.
+
+        Args:
+            rect: [x, y, width, height] in device-strip coordinates.
+            strict: if True, warn when this isn't a known UI class.
+        """
+        from py2max.m4l import add_to_presentation
+
+        return add_to_presentation(self, rect, strict=strict)
+
     def help_text(self) -> str:
         """Get formatted help documentation for this Max object.
 

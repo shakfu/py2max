@@ -2,6 +2,14 @@
 
 ## High Priority
 
+### M4L / .amxd Support (issue #9)
+
+- [x] **.amxd read/write** — implemented in `py2max/amxd.py`; `Patcher.save()` / `from_file()` auto-detect the `.amxd` extension. Verified in Max 9 (issue #9).
+
+- [x] **M4L presentation-mode helpers + integer-coordinate guardrail** — `py2max/m4l.py`: `Box.add_to_presentation(rect)`, `Patcher.enable_presentation(devicewidth=...)`, `Patcher.enforce_integer_coords()`, plus `M4L_PRESENTATION_UI_CLASSES` / `M4L_INFRASTRUCTURE_CLASSES` with rejection of infrastructure objects and float-coord rounding warning (issue #9).
+
+- [x] **Ship prebuilt maxref JSON in the wheel (fix Linux)** — `py2max/maxref/data/bundle.json.gz` (1175 objects, ~1 MiB compressed) is bundled in the wheel. `MaxRefCache._get_refdict()` falls back to it when no local Max install is found, pre-seeding `_cache` with full parsed data. Regenerate with `uv run python scripts/build_maxref_bundle.py` on a Max-equipped machine. See https://github.com/shakfu/py2max/issues/9
+
 ### Auto-Layout Mode
 
 Implement automatic layout optimization that repositions objects as they are added or connected.
