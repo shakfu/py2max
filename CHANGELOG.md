@@ -2,23 +2,19 @@
 
 ## [Unreleased]
 
-### New: Max for Live (.amxd) Binary Format Support
+### New: Max for Live Support (`py2max.m4l`)
 
-Implements the features requested in [issue #9](https://github.com/shakfu/py2max/issues/9) (thanks to @williamfrench95 for reverse-engineering the format).
+Implements [issue #9](https://github.com/shakfu/py2max/issues/9). See [`docs/notes/amxd.md`](docs/notes/amxd.md) for the on-disk format, embedded-project block, and verification details.
 
-- **`.amxd` read/write** (`py2max/amxd.py`): 24-byte header (`ampf` v4 + `aaaa` + `meta` chunk + `ptch` tag + uint32 LE JSON length) wrapping patcher JSON.
-  - Public helpers: `pack_amxd`, `unpack_amxd`, `read_amxd`, `write_amxd`.
-  - `Patcher.save()` and `Patcher.from_file()` auto-detect the `.amxd` extension; `.maxpat` path is unchanged.
-  - Brace-balanced, string-aware fallback extractor handles files with a corrupted length field.
-  - Verified end-to-end in Max 9 (a generated `.amxd` opens and its presentation-mode UI renders correctly).
+- **`.amxd` read/write**: byte-for-byte compatible with Max-exported devices; verified against real fixtures and end-to-end in Live 12.
+- **Device-type discrimination**: Audio Effect / Instrument / MIDI Effect via `Patcher(device_type=...)` or the `pack_amxd` / `write_amxd` `device_type` argument.
+- **Presentation-mode helpers**: `Patcher.enable_presentation(devicewidth=...)`, `Patcher.enforce_integer_coords()`, `Box.add_to_presentation([x, y, w, h])` (rejects M4L infrastructure objects, rounds fractional coords with a warning).
+- `Patcher.save()` / `Patcher.from_file()` auto-detect the `.amxd` extension; `.maxpat` path is unchanged.
 
-### New: Max for Live Presentation-Mode Helpers
+### Changed: M4L Module Layout & Imports
 
-- New module `py2max/m4l.py` with helpers that encode M4L conventions.
-- `Patcher.enable_presentation(devicewidth=...)`: sets `openinpresentation=1` and optional `devicewidth`. Ableton's device strip height is fixed at ~170 px; only width is author-controlled.
-- `Box.add_to_presentation([x, y, w, h])`: sets `presentation=1` + `presentation_rect`, rounds fractional coordinates to integers with `NonIntegerCoordinateWarning` (Ableton renders decimals blurry on non-retina), and **raises `ValueError`** if called on M4L infrastructure (`live.remote~`, `live.map`, `live.object`, `live.path`, `live.observer`, `live.thisdevice`, …) that must stay hidden from the device strip.
-- `Patcher.enforce_integer_coords()`: opt-in sweep that rounds every `patching_rect` / `presentation_rect` across the patcher tree (recurses into subpatchers).
-- Classification helpers: `is_presentation_ui(box)`, `is_m4l_infrastructure(box)`, plus the underlying `M4L_PRESENTATION_UI_CLASSES` and `M4L_INFRASTRUCTURE_CLASSES` frozensets.
+- All M4L code (binary format + presentation helpers) lives in a single module `py2max/m4l.py`. Previously briefly split as `py2max/amxd.py`.
+- M4L symbols are reachable only via `from py2max.m4l import …`; nothing is re-exported from the top-level `py2max` namespace.
 
 ### New: Prebuilt MaxRef Bundle (Linux Support)
 

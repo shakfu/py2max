@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from py2max import (
+from py2max import Patcher
+from py2max.m4l import (
     NonIntegerCoordinateWarning,
-    Patcher,
     add_to_presentation,
     enable_presentation,
     enforce_integer_coords,

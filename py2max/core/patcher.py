@@ -19,7 +19,7 @@ from typing import List, Optional, Tuple, Union, cast
 
 from py2max import layout as layout_module
 from py2max import maxref
-from py2max.amxd import pack_amxd, unpack_amxd
+from py2max.m4l import ensure_amxd_project_block, pack_amxd, unpack_amxd
 from py2max.exceptions import InvalidConnectionError, PatcherIOError
 from py2max.log import get_logger, log_operation
 
@@ -110,6 +110,7 @@ class Patcher(AbstractPatcher):
         num_dimensions: int = 4,
         dimension_spacing: float = 100.0,
         semantic_ids: bool = False,
+        device_type: str = "audio_effect",
     ):
         logger.debug(
             f"Initializing Patcher: path={path}, layout={layout}, "
@@ -130,6 +131,7 @@ class Patcher(AbstractPatcher):
         self._reset_on_render = reset_on_render
         self._semantic_ids = semantic_ids
         self._semantic_counters: dict[str, int] = {}  # Track counts per object type
+        self._device_type = device_type  # M4L device type for .amxd writes
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
         self._num_dimensions = num_dimensions
@@ -329,13 +331,17 @@ class Patcher(AbstractPatcher):
         """create a patcher instance from a .maxpat or .amxd file"""
 
         path = Path(path)
+        device_type: Optional[str] = None
         if path.suffix.lower() == ".amxd":
-            payload = unpack_amxd(path.read_bytes())
+            payload, device_type = unpack_amxd(path.read_bytes())
             maxpat = json.loads(payload)
         else:
             with open(path, encoding="utf8") as f:
                 maxpat = json.load(f)
-        return Patcher.from_dict(maxpat["patcher"], save_to)
+        patcher = Patcher.from_dict(maxpat["patcher"], save_to)
+        if device_type is not None:
+            patcher._device_type = device_type
+        return patcher
 
     def to_dict(self) -> dict:
         """create dict from object with extra kwds included"""
@@ -473,8 +479,18 @@ class Patcher(AbstractPatcher):
 
             # Use resolved path for writing
             if resolved_path.suffix.lower() == ".amxd":
-                payload = json.dumps(self.to_dict(), indent=4)
-                resolved_path.write_bytes(pack_amxd(payload))
+                patcher_dict = self.to_dict()
+                ensure_amxd_project_block(
+                    patcher_dict, device_type=self._device_type
+                )
+                payload = json.dumps(patcher_dict, indent=4)
+                resolved_path.write_bytes(
+                    pack_amxd(
+                        payload,
+                        device_type=self._device_type,
+                        patcher_filename=resolved_path.stem + ".maxpat",
+                    )
+                )
             else:
                 with open(resolved_path, "w", encoding="utf8") as f:
                     json.dump(self.to_dict(), f, indent=4)

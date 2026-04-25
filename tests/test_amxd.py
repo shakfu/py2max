@@ -6,7 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from py2max import Patcher, pack_amxd, read_amxd, unpack_amxd, write_amxd
+from py2max import Patcher
+from py2max.m4l import (
+    DEVICE_TYPES,
+    ensure_amxd_project_block,
+    pack_amxd,
+    read_amxd,
+    unpack_amxd,
+    write_amxd,
+)
 from py2max.core.common import Rect
 from py2max.exceptions import PatcherIOError
 
@@ -27,18 +35,41 @@ def _build_patcher(path: str) -> Patcher:
 
 def test_pack_header_layout():
     payload = b'{"hello": "world"}'
-    data = pack_amxd(payload)
+    data = pack_amxd(payload, patcher_filename="hello.maxpat", mtime=0x12345678)
 
-    # Fixed header bytes per issue #9
+    # Header (offsets 0-35) — see py2max/m4l.py docstring.
     assert data[0:4] == b"ampf"
     assert struct.unpack("<I", data[4:8])[0] == 4
     assert data[8:12] == b"aaaa"
-    assert data[12:16] == b"meta"
-    assert struct.unpack("<I", data[16:20])[0] == 4
-    assert data[20:24] == b"\x00\x00\x00\x00"
-    assert data[24:28] == b"ptch"
-    assert struct.unpack("<I", data[28:32])[0] == len(payload)
-    assert data[32:] == payload
+    assert data[12:16] == b"ptch"
+    # ptch payload size (LE) covers everything from offset 20 to end.
+    assert struct.unpack("<I", data[16:20])[0] == len(data) - 20
+    assert data[20:24] == b"mx@c"
+    assert struct.unpack(">I", data[24:28])[0] == 16
+    assert struct.unpack(">I", data[28:32])[0] == 0
+    # mx@c content size = 16-byte preamble + JSON + NUL.
+    assert struct.unpack(">I", data[32:36])[0] == 16 + len(payload) + 1
+    # JSON starts at offset 36 and is NUL-terminated.
+    assert data[36 : 36 + len(payload)] == payload
+    assert data[36 + len(payload) : 36 + len(payload) + 1] == b"\x00"
+
+
+def test_pack_byte_for_byte_matches_max_export():
+    """Re-pack the JSON from a real Max-exported .amxd; bytes must match exactly."""
+    fixtures = [
+        ("outputs/mydevice.amxd", "mydevice.maxpat", 3859919929),
+        ("outputs/mydevice2.amxd", "mydevice2.maxpat", 3859920850),
+    ]
+    for rel, fnam, mtime in fixtures:
+        path = Path(rel)
+        if not path.exists():
+            pytest.skip(f"missing fixture: {rel}")
+        original = path.read_bytes()
+        json_bytes, dt = unpack_amxd(original)
+        repacked = pack_amxd(
+            json_bytes, device_type=dt, patcher_filename=fnam, mtime=mtime
+        )
+        assert repacked == original, f"mismatch for {rel}"
 
 
 def test_pack_accepts_str_and_bytes():
@@ -49,8 +80,9 @@ def test_pack_accepts_str_and_bytes():
 def test_roundtrip_bytes():
     original = '{"patcher": {"boxes": [], "lines": []}}'
     data = pack_amxd(original)
-    payload = unpack_amxd(data)
+    payload, device_type = unpack_amxd(data)
     assert json.loads(payload) == json.loads(original)
+    assert device_type == "audio_effect"
 
 
 def test_unpack_rejects_short_data():
@@ -73,18 +105,16 @@ def test_unpack_rejects_bad_version():
 
 def test_unpack_rejects_missing_ptch_tag():
     data = bytearray(pack_amxd('{"x":1}'))
-    data[24:28] = b"XXXX"
-    with pytest.raises(PatcherIOError):
+    data[12:16] = b"XXXX"
+    with pytest.raises(PatcherIOError, match="ptch"):
         unpack_amxd(bytes(data))
 
 
-def test_unpack_falls_back_to_brace_scan_on_bad_length():
-    # Declared length of 0 should trigger the brace-balanced fallback.
-    payload = b'{"nested": {"a": 1, "b": "}"}}'
-    data = bytearray(pack_amxd(payload))
-    struct.pack_into("<I", data, 28, 0)
-    recovered = unpack_amxd(bytes(data))
-    assert json.loads(recovered) == json.loads(payload)
+def test_unpack_rejects_missing_mxac_tag():
+    data = bytearray(pack_amxd('{"x":1}'))
+    data[20:24] = b"XXXX"
+    with pytest.raises(PatcherIOError, match="mx@c"):
+        unpack_amxd(bytes(data))
 
 
 def test_write_and_read_amxd_file(tmp_path):
@@ -94,10 +124,12 @@ def test_write_and_read_amxd_file(tmp_path):
 
     raw = path.read_bytes()
     assert raw[0:4] == b"ampf"
-    assert raw[24:28] == b"ptch"
+    assert raw[12:16] == b"ptch"
+    assert raw[20:24] == b"mx@c"
 
-    recovered = read_amxd(path)
+    recovered, device_type = read_amxd(path)
     assert recovered == patcher_dict
+    assert device_type == "audio_effect"
 
 
 def test_patcher_save_amxd_extension(tmp_path):
@@ -151,7 +183,7 @@ def test_build_amxd_demo_tone():
 
     raw = path.read_bytes()
     assert raw[0:4] == b"ampf"
-    assert raw[24:28] == b"ptch"
+    assert raw[12:16] == b"ptch"
     # Round-trips cleanly back through py2max.
     reloaded = Patcher.from_file(path)
     assert len(reloaded._boxes) == 3
@@ -206,3 +238,97 @@ def test_build_amxd_demo_device():
     assert any(t.startswith("plugout~") for t in texts)
     assert any(t.startswith("live.thisdevice") for t in texts)
     _ = thisdevice  # silence unused
+
+
+@pytest.mark.parametrize(
+    "device_type, expected_tag",
+    [
+        ("audio_effect", b"aaaa"),
+        ("instrument", b"iiii"),
+        ("midi_effect", b"mmmm"),
+    ],
+)
+def test_pack_emits_correct_device_tag(device_type, expected_tag):
+    data = pack_amxd('{"x":1}', device_type=device_type)
+    assert data[8:12] == expected_tag
+
+
+@pytest.mark.parametrize("device_type", list(DEVICE_TYPES))
+def test_roundtrip_preserves_device_type(device_type):
+    original = '{"patcher": {"boxes": [], "lines": []}}'
+    payload, recovered_type = unpack_amxd(pack_amxd(original, device_type=device_type))
+    assert json.loads(payload) == json.loads(original)
+    assert recovered_type == device_type
+
+
+def test_pack_rejects_unknown_device_type():
+    with pytest.raises(ValueError, match="unknown device_type"):
+        pack_amxd('{"x":1}', device_type="bogus")
+
+
+def test_unpack_rejects_unknown_device_tag():
+    data = bytearray(pack_amxd('{"x":1}'))
+    data[8:12] = b"zzzz"
+    with pytest.raises(PatcherIOError, match="unknown amxd device-type tag"):
+        unpack_amxd(bytes(data))
+
+
+@pytest.mark.parametrize("device_type", list(DEVICE_TYPES))
+def test_write_read_amxd_file_device_type(tmp_path, device_type):
+    path = tmp_path / f"{device_type}.amxd"
+    patcher_dict = {"patcher": {"boxes": [], "lines": [], "rect": [0, 0, 100, 100]}}
+    write_amxd(path, patcher_dict, device_type=device_type)
+    recovered, recovered_type = read_amxd(path)
+    assert recovered == patcher_dict
+    assert recovered_type == device_type
+
+
+@pytest.mark.parametrize("device_type", list(DEVICE_TYPES))
+def test_patcher_save_amxd_with_device_type(tmp_path, device_type):
+    path = tmp_path / f"device_{device_type}.amxd"
+    p = Patcher(str(path), device_type=device_type)
+    p.add_textbox("cycle~ 440")
+    p.save()
+
+    raw = path.read_bytes()
+    assert raw[8:12] == DEVICE_TYPES[device_type]
+
+    reloaded = Patcher.from_file(path)
+    assert reloaded._device_type == device_type
+
+
+@pytest.mark.parametrize(
+    "device_type, expected_amxdtype",
+    [
+        ("audio_effect", 0x61616161),
+        ("instrument", 0x69696969),
+        ("midi_effect", 0x6D6D6D6D),
+    ],
+)
+def test_ensure_project_block_injects_correct_amxdtype(device_type, expected_amxdtype):
+    pd = {"patcher": {"boxes": [], "lines": []}}
+    ensure_amxd_project_block(pd, device_type=device_type, mtime=12345)
+    proj = pd["patcher"]["project"]
+    assert proj["amxdtype"] == expected_amxdtype
+    assert proj["creationdate"] == 12345
+    assert proj["modificationdate"] == 12345
+    assert proj["contents"] == {"patchers": {}}
+
+
+def test_ensure_project_block_is_idempotent():
+    pd = {"patcher": {"project": {"sentinel": True}}}
+    ensure_amxd_project_block(pd, device_type="audio_effect")
+    assert pd["patcher"]["project"] == {"sentinel": True}
+
+
+def test_patcher_save_amxd_includes_project_block(tmp_path):
+    path = tmp_path / "device.amxd"
+    p = Patcher(str(path), device_type="instrument")
+    p.add_textbox("cycle~ 440")
+    p.save()
+
+    recovered, _ = read_amxd(path)
+    proj = recovered["patcher"]["project"]
+    assert proj["amxdtype"] == 0x69696969
+    assert proj["contents"] == {"patchers": {}}
+    assert proj["devpath"] == "."

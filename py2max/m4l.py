@@ -1,26 +1,425 @@
-"""Max for Live (M4L) helpers: presentation mode and device constraints.
+"""Max for Live (.amxd) binary format support.
 
-Reference: https://github.com/shakfu/py2max/issues/9
+The on-disk layout was reverse-engineered by comparing two valid Max-exported
+devices (``outputs/mydevice.amxd`` and ``outputs/mydevice2.amxd``) byte-by-byte.
 
-M4L devices live in a fixed-size device strip in Ableton Live. The patcher
-renders in *presentation mode* (not patching mode), so each UI object must
-be explicitly marked with ``presentation=1`` and given a ``presentation_rect``.
-Infrastructure objects (``live.remote~``, ``live.map``, etc.) stay hidden.
+A ``.amxd`` file is a 36-byte header followed by NUL-terminated UTF-8 patcher
+JSON, followed by an IFF-style dependency-list trailer.
 
-Ableton's device view also imposes these constraints:
-- Device strip height is fixed at ~170 px by the host.
-- Coordinates should be whole integers; fractional values render blurry on
-  non-retina displays.
-- ``devicewidth`` on the patcher controls the device strip width.
+Header (offsets 0-35)::
+
+    offset  size  endian  value                           meaning
+    0       4     -       "ampf"                          magic
+    4       4     LE u32  4                               format version
+    8       4     -       "aaaa"/"iiii"/"mmmm"            M4L device type
+    12      4     -       "ptch"                          top-level chunk id
+    16      4     LE u32  file_size - 20                  ptch payload size
+    20      4     -       "mx@c"                          sub-block id
+    24      4     BE u32  16                              constant
+    28      4     BE u32  0                               flags
+    32      4     BE u32  json_size + 16                  mx@c content size
+    36      N+1   -       <utf-8 json>\\x00               JSON, NUL-terminated
+
+Trailer (immediately after the JSON NUL, no padding). Each chunk is
+``FOURCC + BE u32 size + payload`` where ``size`` *includes* the 8-byte chunk
+header. Container chunks (``dlst``, ``dire``) wrap further chunks in their
+payload::
+
+    dlst
+      dire
+        type  -> "JSON"
+        fnam  -> patcher filename, NUL-terminated, padded to 4-byte boundary
+        sz32  -> BE u32, JSON byte count including NUL
+        of32  -> BE u32, 16   (offset of JSON within mx@c block)
+        vers  -> BE u32, 0
+        flag  -> BE u32, 17
+        mdat  -> BE u32, modification time in Max epoch (1904-01-01 UTC)
+
+Originally tracked at https://github.com/shakfu/py2max/issues/9.
 """
 
 from __future__ import annotations
 
+import json
+import struct
+import time
 import warnings
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+
+from .exceptions import PatcherIOError
 
 if TYPE_CHECKING:
     from .core import Box, Patcher
+
+__all__ = [
+    # Binary format
+    "pack_amxd",
+    "unpack_amxd",
+    "read_amxd",
+    "write_amxd",
+    "ensure_amxd_project_block",
+    "DEVICE_TYPES",
+    "MAX_EPOCH_OFFSET",
+    "unix_to_max_time",
+    # Presentation-mode helpers (formerly m4l.py)
+    "M4L_PRESENTATION_UI_CLASSES",
+    "M4L_INFRASTRUCTURE_CLASSES",
+    "M4L_DEVICE_HEIGHT_PX",
+    "NonIntegerCoordinateWarning",
+    "is_presentation_ui",
+    "is_m4l_infrastructure",
+    "add_to_presentation",
+    "enable_presentation",
+    "enforce_integer_coords",
+]
+
+_MAGIC = b"ampf"
+_VERSION = 4
+_PTCH_TAG = b"ptch"
+_MXAC_TAG = b"mx@c"
+_HEADER_SIZE = 36
+
+_MXAC_CONST = 16
+_MXAC_FLAGS = 0
+_MXAC_PREAMBLE = 16  # bytes between "mx@c" tag and start of JSON
+
+# Trailer chunk constants observed in Max-exported files.
+_OF32_VALUE = 16
+_VERS_VALUE = 0
+_FLAG_VALUE = 17
+_TYPE_PAYLOAD = b"JSON"
+
+# Difference in seconds between the Unix epoch (1970-01-01 UTC) and the
+# classic Mac/HFS epoch (1904-01-01 UTC) used by Max for its mdat field
+# and creation/modification dates inside the patcher JSON.
+MAX_EPOCH_OFFSET = 2_082_844_800
+
+# Max for Live device-type markers at header offset 8.
+DEVICE_TYPES: dict[str, bytes] = {
+    "audio_effect": b"aaaa",
+    "instrument": b"iiii",
+    "midi_effect": b"mmmm",
+}
+_TAG_TO_DEVICE_TYPE: dict[bytes, str] = {v: k for k, v in DEVICE_TYPES.items()}
+
+
+def unix_to_max_time(unix_seconds: Optional[float] = None) -> int:
+    """Convert a Unix timestamp to Max's seconds-since-1904 epoch."""
+    if unix_seconds is None:
+        unix_seconds = time.time()
+    return int(unix_seconds) + MAX_EPOCH_OFFSET
+
+
+def _amxdtype_for(device_type: str) -> int:
+    """Return the project.amxdtype int for a device type.
+
+    The value is the FOURCC tag reinterpreted as a big-endian uint32:
+    "aaaa" -> 0x61616161, "iiii" -> 0x69696969, "mmmm" -> 0x6d6d6d6d.
+    """
+    return struct.unpack(">I", _tag_for(device_type))[0]
+
+
+def ensure_amxd_project_block(
+    patcher_dict: dict,
+    device_type: str = "audio_effect",
+    mtime: Optional[int] = None,
+) -> dict:
+    """Ensure the patcher dict carries the embedded ``project`` block Max
+    requires for self-contained .amxd devices.
+
+    Without this block, Max emits the diagnostic
+    "a project without a name is like a day without sunshine. fatal." when
+    loading the device. The block mirrors the one Max emits when exporting a
+    device from a project; ``contents.patchers`` is left empty so the device
+    is self-contained (no external .maxproj reference).
+
+    Mutates ``patcher_dict['patcher']`` in place if the ``project`` key is
+    absent. Returns the same dict for convenience.
+    """
+    inner = patcher_dict.get("patcher", patcher_dict)
+    if "project" in inner:
+        return patcher_dict
+    if mtime is None:
+        mtime = unix_to_max_time()
+    inner["project"] = {
+        "version": 1,
+        "creationdate": mtime,
+        "modificationdate": mtime,
+        "viewrect": [0.0, 0.0, 300.0, 500.0],
+        "autoorganize": 1,
+        "hideprojectwindow": 1,
+        "showdependencies": 1,
+        "autolocalize": 0,
+        "contents": {"patchers": {}},
+        "layout": {},
+        "searchpath": {},
+        "detailsvisible": 0,
+        "amxdtype": _amxdtype_for(device_type),
+        "readonly": 0,
+        "devpathtype": 0,
+        "devpath": ".",
+        "sortmode": 0,
+        "viewmode": 0,
+        "includepackages": 0,
+    }
+    return patcher_dict
+
+
+def _tag_for(device_type: str) -> bytes:
+    try:
+        return DEVICE_TYPES[device_type]
+    except KeyError as e:
+        raise ValueError(
+            f"unknown device_type {device_type!r}; "
+            f"expected one of {sorted(DEVICE_TYPES)}"
+        ) from e
+
+
+def _pad4(payload: bytes) -> bytes:
+    """Right-pad a chunk payload with zeros to a 4-byte boundary."""
+    extra = (-len(payload)) % 4
+    return payload + b"\x00" * extra
+
+
+def _chunk(tag: bytes, payload: bytes) -> bytes:
+    """Build an IFF-style chunk: FOURCC + BE u32 size + payload.
+
+    Size is inclusive of the 8-byte header. Payloads must already be padded.
+    """
+    if len(tag) != 4:
+        raise ValueError(f"chunk tag must be 4 bytes, got {tag!r}")
+    size = 8 + len(payload)
+    return tag + struct.pack(">I", size) + payload
+
+
+def _u32_chunk(tag: bytes, value: int) -> bytes:
+    return _chunk(tag, struct.pack(">I", value))
+
+
+def pack_amxd(
+    patcher_json: Union[str, bytes],
+    *,
+    device_type: str = "audio_effect",
+    patcher_filename: str = "patcher.maxpat",
+    mtime: Optional[int] = None,
+) -> bytes:
+    """Wrap patcher JSON in the .amxd binary container.
+
+    Args:
+        patcher_json: The patcher JSON, as a str or pre-encoded UTF-8 bytes.
+        device_type: M4L device type. One of "audio_effect" (default),
+            "instrument", or "midi_effect".
+        patcher_filename: Filename to embed in the trailer's ``fnam`` chunk.
+            Max uses this to resolve the patcher within the surrounding
+            project. Defaults to ``"patcher.maxpat"``.
+        mtime: Modification time, in Max's seconds-since-1904 epoch. If
+            ``None``, the current time is used.
+    """
+    tag = _tag_for(device_type)
+    if isinstance(patcher_json, str):
+        json_bytes = patcher_json.encode("utf-8")
+    else:
+        json_bytes = patcher_json
+
+    json_block = json_bytes + b"\x00"
+    mxac_content_size = _MXAC_PREAMBLE + len(json_block)
+
+    if mtime is None:
+        mtime = unix_to_max_time()
+
+    fname_payload = _pad4(patcher_filename.encode("utf-8") + b"\x00")
+    dire_payload = b"".join(
+        [
+            _chunk(b"type", _TYPE_PAYLOAD),
+            _chunk(b"fnam", fname_payload),
+            _u32_chunk(b"sz32", len(json_block)),
+            _u32_chunk(b"of32", _OF32_VALUE),
+            _u32_chunk(b"vers", _VERS_VALUE),
+            _u32_chunk(b"flag", _FLAG_VALUE),
+            _u32_chunk(b"mdat", mtime),
+        ]
+    )
+    dlst = _chunk(b"dlst", _chunk(b"dire", dire_payload))
+
+    # Header
+    header_top = (
+        _MAGIC
+        + struct.pack("<I", _VERSION)
+        + tag
+        + _PTCH_TAG
+    )
+    # ptch payload starts at offset 20 and runs to end of file.
+    ptch_payload_size = (
+        4  # "mx@c"
+        + 4  # bytes 24-27 (BE 16)
+        + 4  # bytes 28-31 (BE 0 flags)
+        + 4  # bytes 32-35 (mxac content size)
+        + len(json_block)
+        + len(dlst)
+    )
+
+    mxac_block = (
+        _MXAC_TAG
+        + struct.pack(">I", _MXAC_CONST)
+        + struct.pack(">I", _MXAC_FLAGS)
+        + struct.pack(">I", mxac_content_size)
+        + json_block
+    )
+
+    return (
+        header_top
+        + struct.pack("<I", ptch_payload_size)
+        + mxac_block
+        + dlst
+    )
+
+
+def unpack_amxd(data: bytes) -> Tuple[bytes, str]:
+    """Extract the patcher JSON payload and device type from an .amxd byte string.
+
+    Returns:
+        A ``(payload, device_type)`` tuple where ``payload`` is the raw JSON
+        bytes (no trailing NUL) and ``device_type`` is one of "audio_effect",
+        "instrument", or "midi_effect".
+
+    Raises:
+        PatcherIOError: on an invalid header or unrecognized device tag.
+    """
+    if len(data) < _HEADER_SIZE:
+        raise PatcherIOError(
+            f"amxd file too short ({len(data)} bytes, need >= {_HEADER_SIZE})",
+            operation="read",
+        )
+
+    if data[0:4] != _MAGIC:
+        raise PatcherIOError(
+            f"not an amxd file (magic={data[0:4]!r}, expected {_MAGIC!r})",
+            operation="read",
+        )
+
+    version = struct.unpack("<I", data[4:8])[0]
+    if version != _VERSION:
+        raise PatcherIOError(
+            f"unsupported amxd version {version} (expected {_VERSION})",
+            operation="read",
+        )
+
+    tag = data[8:12]
+    device_type = _TAG_TO_DEVICE_TYPE.get(tag)
+    if device_type is None:
+        raise PatcherIOError(
+            f"unknown amxd device-type tag {tag!r} at offset 8 "
+            f"(expected one of {sorted(DEVICE_TYPES.values())})",
+            operation="read",
+        )
+
+    if data[12:16] != _PTCH_TAG:
+        raise PatcherIOError(
+            f"missing ptch tag at offset 12 (got {data[12:16]!r})",
+            operation="read",
+        )
+
+    if data[20:24] != _MXAC_TAG:
+        raise PatcherIOError(
+            f"missing mx@c tag at offset 20 (got {data[20:24]!r})",
+            operation="read",
+        )
+
+    mxac_content_size = struct.unpack(">I", data[32:36])[0]
+    if mxac_content_size < _MXAC_PREAMBLE + 1:
+        raise PatcherIOError(
+            f"mx@c content size too small ({mxac_content_size})",
+            operation="read",
+        )
+    json_block_len = mxac_content_size - _MXAC_PREAMBLE
+    json_end_excl_nul = _HEADER_SIZE + json_block_len - 1
+    if json_end_excl_nul > len(data):
+        raise PatcherIOError(
+            f"declared JSON length runs past end of file "
+            f"({json_end_excl_nul} > {len(data)})",
+            operation="read",
+        )
+
+    json_bytes = data[_HEADER_SIZE:json_end_excl_nul]
+    return json_bytes, device_type
+
+
+def read_amxd(path: Union[str, Path]) -> Tuple[dict, str]:
+    """Read an .amxd file.
+
+    Returns:
+        A ``(patcher_dict, device_type)`` tuple.
+    """
+    path = Path(path)
+    try:
+        data = path.read_bytes()
+    except OSError as e:
+        raise PatcherIOError(
+            f"failed to read amxd file: {path}", file_path=str(path), operation="read"
+        ) from e
+
+    payload, device_type = unpack_amxd(data)
+    return json.loads(payload), device_type
+
+
+def write_amxd(
+    path: Union[str, Path],
+    patcher_dict: dict,
+    *,
+    device_type: str = "audio_effect",
+    patcher_filename: Optional[str] = None,
+    mtime: Optional[int] = None,
+) -> None:
+    """Serialize a patcher dict and write it as a .amxd file.
+
+    Args:
+        path: Output path.
+        patcher_dict: Patcher dict (the same shape as a .maxpat JSON).
+        device_type: M4L device type. One of "audio_effect" (default),
+            "instrument", or "midi_effect".
+        patcher_filename: Filename to embed in the ``fnam`` trailer chunk.
+            Defaults to the output path's stem with a ``.maxpat`` extension.
+        mtime: Modification time in Max's seconds-since-1904 epoch.
+            Defaults to the current time.
+    """
+    path = Path(path)
+    if patcher_filename is None:
+        patcher_filename = path.stem + ".maxpat"
+    ensure_amxd_project_block(patcher_dict, device_type=device_type, mtime=mtime)
+    payload = json.dumps(patcher_dict, indent=4)
+    data = pack_amxd(
+        payload,
+        device_type=device_type,
+        patcher_filename=patcher_filename,
+        mtime=mtime,
+    )
+    try:
+        if path.parent:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    except OSError as e:
+        raise PatcherIOError(
+            f"failed to write amxd file: {path}",
+            file_path=str(path),
+            operation="write",
+        ) from e
+
+
+# ===========================================================================
+# Max for Live (M4L) presentation-mode helpers
+#
+# M4L devices live in a fixed-size device strip in Ableton Live. The patcher
+# renders in *presentation mode* (not patching mode), so each UI object must
+# be explicitly marked with ``presentation=1`` and given a ``presentation_rect``.
+# Infrastructure objects (``live.remote~``, ``live.map``, etc.) stay hidden.
+#
+# Constraints imposed by Live's device view:
+# - Device strip height is fixed at ~170 px by the host.
+# - Coordinates should be whole integers; fractional values render blurry on
+#   non-retina displays.
+# - ``devicewidth`` on the patcher controls the device strip width.
+# ===========================================================================
 
 
 # ---------------------------------------------------------------------------
@@ -136,7 +535,7 @@ def is_m4l_infrastructure(box: "Box") -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Public API
+# Presentation-mode public API
 
 
 def add_to_presentation(
@@ -231,16 +630,3 @@ def enforce_integer_coords(patcher: "Patcher") -> int:
             changed += enforce_integer_coords(sub)
 
     return changed
-
-
-__all__ = [
-    "M4L_PRESENTATION_UI_CLASSES",
-    "M4L_INFRASTRUCTURE_CLASSES",
-    "M4L_DEVICE_HEIGHT_PX",
-    "NonIntegerCoordinateWarning",
-    "is_presentation_ui",
-    "is_m4l_infrastructure",
-    "add_to_presentation",
-    "enable_presentation",
-    "enforce_integer_coords",
-]
