@@ -51,8 +51,38 @@ That's it! Open `my-synth.maxpat` in Max to see your patch.
 
 - **Offline Patch Generation** - Create Max patches programmatically without Max running
 - **Round-trip Conversion** - Load, modify, and save existing `.maxpat` files
+- **Max for Live (.amxd)** - Read/write binary `.amxd` device files with presentation-mode helpers
 - **Universal Object Support** - Works with any Max/MSP/Jitter object
-- **99% Test Coverage** - 418+ tests ensure reliability
+- **Fully typed** - Passes `mypy --strict`; no runtime dependencies
+- **High Test Coverage** - 420+ tests ensure reliability
+
+### Max for Live (.amxd)
+
+Generate Max for Live devices directly. `Patcher.save()` / `Patcher.from_file()`
+auto-detect the `.amxd` extension and read/write the binary device format,
+byte-for-byte compatible with Max-exported devices.
+
+```python
+from py2max import Patcher
+
+# device_type: "audio_effect" (default), "instrument", or "midi_effect"
+p = Patcher('gain.amxd', device_type='audio_effect')
+p.enable_presentation(devicewidth=120)        # render Ableton's device strip
+
+plugin = p.add_textbox('plugin~')             # audio in from Live
+gain = p.add('live.gain~', maxclass='live.gain~')
+plugout = p.add_textbox('plugout~')           # audio back to Live
+gain.add_to_presentation([20, 20, 60, 136])   # show the fader in the device
+
+p.add_line(plugin, gain, outlet=0, inlet=0)
+p.add_line(gain, plugout, outlet=0, inlet=0)
+p.save()                                       # writes a binary .amxd
+```
+
+Helpers: `Patcher.enable_presentation(devicewidth=...)`,
+`Box.add_to_presentation([x, y, w, h])` (rejects M4L infrastructure objects and
+rounds fractional coordinates), and `Patcher.enforce_integer_coords()`. M4L
+binary helpers live in `py2max.m4l`.
 
 ### Interactive Server (separate package)
 
