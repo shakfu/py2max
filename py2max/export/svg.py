@@ -30,21 +30,67 @@ if TYPE_CHECKING:
     from ..core.abstract import AbstractBox, AbstractPatchline
 
 
-# SVG styling constants
-BOX_FILL = "#f0f0f0"
-BOX_STROKE = "#333333"
+# SVG styling constants -- approximate Max's default light theme.
+BG_COLOR = "#cfcfcf"  # patcher background
+BOX_FILL = "#e2e2e2"  # default object box
+BOX_STROKE = "#8c8c8c"
 BOX_STROKE_WIDTH = 1
 COMMENT_FILL = "#ffffd0"
-MESSAGE_FILL = "#e0e0e0"
-TEXT_COLOR = "#000000"
-TEXT_FONT_FAMILY = "Monaco, Courier, monospace"
+MESSAGE_FILL = "#dcdcdc"  # message box
+SUBPATCHER_FILL = "#d3dcec"  # subpatchers get a blue tint
+TEXT_COLOR = "#1a1a1a"
+TEXT_FONT_FAMILY = "Helvetica, Arial, sans-serif"
 TEXT_FONT_SIZE = 12
-LINE_COLOR = "#666666"
-LINE_WIDTH = 2
-INLET_COLOR = "#4080ff"
-OUTLET_COLOR = "#ff8040"
-PORT_RADIUS = 3
+# Connections: signal cables are drawn thicker and in a distinct color.
+LINE_COLOR = "#5a5a5a"  # message/control cable
+LINE_WIDTH = 1.2
+SIGNAL_LINE_COLOR = "#b58900"  # signal cable
+SIGNAL_LINE_WIDTH = 2.4
+# Ports, colored by signal vs message/control.
+SIGNAL_PORT_COLOR = "#2e8b57"  # signal inlets/outlets
+MESSAGE_PORT_COLOR = "#1f1f1f"  # control/message inlets/outlets
+PORT_RADIUS = 2.5
 PADDING = 20
+
+
+def _outlet_types(box: AbstractBox) -> list[str]:
+    """Outlet type strings for a box (``"signal"`` marks a signal outlet)."""
+    ot = getattr(box, "outlettype", None)
+    if isinstance(ot, (list, tuple)) and ot:
+        return [str(t) for t in ot]
+    if hasattr(box, "get_outlet_types"):
+        try:
+            return [str(t) for t in (box.get_outlet_types() or [])]
+        except Exception:
+            return []
+    return []
+
+
+def _inlet_types(box: AbstractBox) -> list[str]:
+    """Inlet type strings for a box (``"signal"`` marks a signal inlet)."""
+    if hasattr(box, "get_inlet_types"):
+        try:
+            return [str(t) for t in (box.get_inlet_types() or [])]
+        except Exception:
+            return []
+    return []
+
+
+def _port_color(types: list[str], idx: int) -> str:
+    """Color a port green if it is a signal port, dark otherwise."""
+    if idx < len(types) and types[idx] == "signal":
+        return SIGNAL_PORT_COLOR
+    return MESSAGE_PORT_COLOR
+
+
+def _is_subpatcher(box: AbstractBox) -> bool:
+    """True if the box embeds a subpatcher (``p``, ``bpatcher``, ``poly~`` ...)."""
+    if getattr(box, "subpatcher", None) is not None:
+        return True
+    text = str(getattr(box, "text", "") or "")
+    return text == "p" or text.startswith(
+        ("p ", "bpatcher", "poly~", "gen~", "gen ", "rnbo~")
+    )
 
 
 def _escape_text(text: str) -> str:
@@ -59,6 +105,8 @@ def _get_box_fill(box: AbstractBox) -> str:
         return COMMENT_FILL
     elif maxclass == "message":
         return MESSAGE_FILL
+    elif _is_subpatcher(box):
+        return SUBPATCHER_FILL
     return BOX_FILL
 
 
@@ -139,26 +187,30 @@ def _render_box(box: AbstractBox, show_ports: bool = True) -> str:
         if outlet_count == 0:
             outlet_count = getattr(box, "_outlet_count", 0) or 0
 
-        # Draw inlets at top
+        # Draw inlets at top, colored by signal vs message/control type.
         if inlet_count > 0:
+            inlet_types = _inlet_types(box)
             inlet_spacing = w / (inlet_count + 1)
             for i in range(inlet_count):
                 inlet_x = x + inlet_spacing * (i + 1)
                 inlet_y = y
                 svg_parts.append(
                     f'<circle cx="{inlet_x}" cy="{inlet_y}" r="{PORT_RADIUS}" '
-                    f'fill="{INLET_COLOR}" stroke="{BOX_STROKE}" stroke-width="0.5" />'
+                    f'fill="{_port_color(inlet_types, i)}" '
+                    f'stroke="{BOX_STROKE}" stroke-width="0.5" />'
                 )
 
-        # Draw outlets at bottom
+        # Draw outlets at bottom, colored by signal vs message/control type.
         if outlet_count > 0:
+            outlet_types = _outlet_types(box)
             outlet_spacing = w / (outlet_count + 1)
             for i in range(outlet_count):
                 outlet_x = x + outlet_spacing * (i + 1)
                 outlet_y = y + h
                 svg_parts.append(
                     f'<circle cx="{outlet_x}" cy="{outlet_y}" r="{PORT_RADIUS}" '
-                    f'fill="{OUTLET_COLOR}" stroke="{BOX_STROKE}" stroke-width="0.5" />'
+                    f'fill="{_port_color(outlet_types, i)}" '
+                    f'stroke="{BOX_STROKE}" stroke-width="0.5" />'
                 )
 
     return "\n".join(svg_parts)
@@ -237,10 +289,15 @@ def _render_patchline(line: AbstractPatchline, patcher: Patcher) -> str:
     x1, y1 = _get_port_position(src_box, src_port, is_outlet=True)
     x2, y2 = _get_port_position(dst_box, dst_port, is_outlet=False)
 
-    # Draw line
+    # Signal cables (from a signal outlet) are drawn thicker and distinct.
+    out_types = _outlet_types(src_box)
+    is_signal = src_port < len(out_types) and out_types[src_port] == "signal"
+    color = SIGNAL_LINE_COLOR if is_signal else LINE_COLOR
+    width = SIGNAL_LINE_WIDTH if is_signal else LINE_WIDTH
+
     return (
         f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
-        f'stroke="{LINE_COLOR}" stroke-width="{LINE_WIDTH}" '
+        f'stroke="{color}" stroke-width="{width}" '
         f'stroke-linecap="round" />'
     )
 
@@ -323,6 +380,9 @@ def export_svg(
         "    text { user-select: none; }",
         "  </style>",
         "</defs>",
+        "",
+        # Max-like patcher background.
+        f'<rect x="{vx}" y="{vy}" width="{vw}" height="{vh}" fill="{BG_COLOR}" />',
         "",
     ]
 

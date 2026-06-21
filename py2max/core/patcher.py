@@ -27,6 +27,7 @@ from .abstract import (
     AbstractPatchline,
 )
 from .box import Box
+from .colors import ColorLike
 from .common import Rect
 from .factory import BoxFactoryMixin
 from .patchline import Patchline
@@ -71,6 +72,9 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         auto_hints: Whether to automatically generate object hints.
         openinpresentation: Presentation mode setting.
         validate_connections: Whether to validate patchline connections.
+        validate_attrs: Whether to warn (UserWarning) when an object is given a
+            keyword that is not a known attribute for its Max class -- catches
+            typos like ``inital=`` for ``initial=``. Off by default.
         flow_direction: Direction for flow-based layouts ('horizontal', 'vertical').
         cluster_connected: Whether to cluster connected objects in grid layout.
         num_dimensions: Number of rows used by the matrix layout (also treated as column count when flow_direction='column').
@@ -103,6 +107,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         auto_hints: bool = False,
         openinpresentation: int = 0,
         validate_connections: bool = False,
+        validate_attrs: bool = False,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
         # Matrix layout configuration parameters
@@ -138,6 +143,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._layout_mgr: AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
+        self._validate_attrs = validate_attrs
         self._pending_comments: list[
             tuple[str, str, Optional[str]]
         ] = []  # [(box_id, comment_text, comment_pos), ...]
@@ -277,6 +283,34 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
                 if pattern in text:
                     results.append(box)
         return cast(List["Box"], results)
+
+    def apply_theme(self, theme: Union[str, Dict[str, "ColorLike"]]) -> "Patcher":
+        """Apply a color theme to every box in this patcher (and subpatchers).
+
+        ``theme`` is a named theme (``"light"``, ``"dark"``, ``"blue"``,
+        ``"high-contrast"``) or a dict with ``"bg"`` / ``"text"`` / ``"border"``
+        color values (each a name, hex string, or float sequence). Returns self
+        for chaining.
+
+        Example:
+            >>> Patcher('p.maxpat').apply_theme('dark')
+        """
+        from .colors import THEMES
+
+        if isinstance(theme, str):
+            if theme not in THEMES:
+                raise ValueError(f"unknown theme {theme!r}; known: {sorted(THEMES)}")
+            spec: Dict[str, "ColorLike"] = THEMES[theme]
+        else:
+            spec = theme
+        for obj in self:
+            if isinstance(obj, Box):
+                obj.set_color(
+                    bg=spec.get("bg"),
+                    text=spec.get("text"),
+                    border=spec.get("border"),
+                )
+        return self
 
     @property
     def filepath(self) -> Union[str, Path]:

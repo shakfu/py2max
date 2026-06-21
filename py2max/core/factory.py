@@ -8,6 +8,7 @@ no API change -- adding a new object type means editing this file, not the
 core class.
 """
 
+import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -34,9 +35,81 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# Box attributes valid on (nearly) every Max object, independent of an object's
+# own maxref attribute set. Used by add_box when validate_attrs is enabled to
+# whitelist universal/jbox attributes plus the structural keys py2max emits, so
+# only genuinely unknown keys (typically typos) are flagged.
+UNIVERSAL_BOX_ATTRS = frozenset(
+    {
+        # structural keys py2max sets on boxes
+        "text",
+        "maxclass",
+        "numinlets",
+        "numoutlets",
+        "outlettype",
+        "id",
+        "patching_rect",
+        "presentation_rect",
+        "presentation",
+        "code",
+        "data",
+        "table_data",
+        "editor_rect",
+        "embed",
+        "hint",
+        "minimum",
+        "maximum",
+        "parameter_enable",
+        "saved_attribute_attributes",
+        "saved_object_attributes",
+        # common universal jbox attributes
+        "varname",
+        "prototypename",
+        "hidden",
+        "ignoreclick",
+        "bgcolor",
+        "bgfillcolor",
+        "bordercolor",
+        "textcolor",
+        "color",
+        "elementcolor",
+        "accentcolor",
+        "fontname",
+        "fontsize",
+        "fontface",
+        "annotation",
+        "annotation_name",
+        "rounded",
+        "border",
+        "style",
+        "comment",
+    }
+)
+
 
 class BoxFactoryMixin(AbstractPatcher):
     """Object creation (boxes, patchlines, and the add_* factory) for Patcher."""
+
+    def _validate_box_attrs(self, box: "Box") -> None:
+        """Warn when a box carries keywords that are not known attributes.
+
+        Best-effort lint, enabled by ``Patcher(validate_attrs=True)``. The known
+        set is the object's maxref attributes plus ``UNIVERSAL_BOX_ATTRS``;
+        objects with no maxref entry are skipped (cannot be checked).
+        """
+        name = self._get_object_name(box)
+        info = maxref.get_object_info(name)
+        if not info:
+            return
+        known = UNIVERSAL_BOX_ATTRS | set(info.get("attributes", {}).keys())
+        for key in box._kwds:
+            if key not in known:
+                warnings.warn(
+                    f"Unknown attribute {key!r} for Max object {name!r} "
+                    f"(possible typo?)",
+                    UserWarning,
+                    stacklevel=3,
+                )
 
     def _get_object_name(self, obj: AbstractBox) -> str:
         """Get the actual object name for validation purposes.
@@ -57,6 +130,8 @@ class BoxFactoryMixin(AbstractPatcher):
         """registers the box and adds it to the patcher"""
 
         assert box.id, f"object {box} must have an id"
+        if self._validate_attrs:
+            self._validate_box_attrs(box)
         self._node_ids.append(box.id)
         self._objects[box.id] = box
         self._boxes.append(box)
@@ -656,6 +731,99 @@ class BoxFactoryMixin(AbstractPatcher):
             comment_pos,
         )
 
+    # -- Preset / parameter scaffolding --------------------------------------
+
+    def add_pattrstorage(self, name: str = "presets", **kwds: Any) -> "Box":
+        """Add a ``pattrstorage`` object for saving and recalling named presets.
+
+        ``pattrstorage`` stores presets of every parameter-enabled and
+        pattr-bound object in the patcher. Pair it with :meth:`add_autopattr`
+        (or use :meth:`add_preset_system`) so named objects are exposed
+        automatically.
+
+        Args:
+            name: the storage name (the pattrstorage argument).
+            **kwds: extra attributes forwarded to the box.
+        """
+        return self.add_textbox(
+            f"pattrstorage {name}".strip(),
+            numinlets=1,
+            numoutlets=1,
+            outlettype=[""],
+            saved_object_attributes=dict(
+                client_rect=[0, 0, 0, 0],
+                parameter_enable=0,
+                parameter_mappable=0,
+            ),
+            **kwds,
+        )
+
+    def add_autopattr(self, **kwds: Any) -> "Box":
+        """Add an ``autopattr`` object exposing named objects to the pattr system.
+
+        Any object with a scripting name (``varname``) is bound automatically,
+        so it participates in ``pattrstorage`` presets without a per-object
+        ``pattr``.
+        """
+        return self.add_textbox(
+            "autopattr",
+            numinlets=1,
+            numoutlets=4,
+            outlettype=["", "", "", ""],
+            **kwds,
+        )
+
+    def add_preset_system(
+        self, name: str = "presets", **kwds: Any
+    ) -> Tuple["Box", "Box"]:
+        """Add a standard preset system: ``autopattr`` + ``pattrstorage``, wired.
+
+        Connects ``autopattr`` to ``pattrstorage`` so that any object with a
+        scripting name (``varname``) or ``parameter_enable=1`` participates in
+        presets. Returns ``(autopattr_box, pattrstorage_box)``.
+        """
+        autopattr = self.add_autopattr()
+        storage = self.add_pattrstorage(name, **kwds)
+        self.add_line(autopattr, storage)
+        return autopattr, storage
+
+    def enable_parameter(
+        self,
+        box: "Box",
+        longname: str,
+        shortname: str = "",
+        ptype: int = 0,
+        initial: Optional[float] = None,
+    ) -> "Box":
+        """Mark an existing box as a Max parameter.
+
+        Parameterized objects participate in ``pattrstorage`` presets and, in a
+        Max for Live device, appear as automatable parameters. Use this to turn
+        a plain UI object (toggle, dial, slider, ...) into a parameter without
+        rebuilding it.
+
+        Args:
+            box: the box to parameterize.
+            longname: parameter long name (its preset/automation name).
+            shortname: optional short name.
+            ptype: parameter type (0=float, 1=int, 2=enum, 3=blob).
+            initial: optional initial value.
+
+        Returns:
+            The same box, for chaining.
+        """
+        box._kwds["parameter_enable"] = 1
+        valueof: Dict[str, Any] = dict(
+            parameter_longname=longname,
+            parameter_shortname=shortname,
+            parameter_type=ptype,
+        )
+        if initial is not None:
+            valueof["parameter_initial"] = [initial]
+            valueof["parameter_initial_enable"] = 1
+        box._kwds["saved_attribute_attributes"] = dict(valueof=valueof)
+        return box
+
     def add_attr(
         self,
         name: str,
@@ -916,6 +1084,33 @@ class BoxFactoryMixin(AbstractPatcher):
         return self.add_subpatcher(
             text, patcher=Patcher(parent=self, classnamespace="rnbo"), **kwds
         )
+
+    # -- Multichannel (mc.) / polyphony helpers ------------------------------
+
+    def add_mc(self, text: str, chans: Optional[int] = None, **kwds: Any) -> "Box":
+        """Add a multichannel (``mc.``) object.
+
+        Prefixes ``mc.`` to the object name if not already present, and appends
+        an ``@chans`` attribute when ``chans`` is given. A single patchline
+        between two ``mc.`` objects carries all channels.
+
+        Example:
+            >>> p.add_mc("cycle~ 440", chans=4)   # -> "mc.cycle~ 440 @chans 4"
+        """
+        name = text if text.startswith("mc.") else f"mc.{text}"
+        if chans is not None:
+            name = f"{name} @chans {chans}"
+        return self.add_textbox(name, **kwds)
+
+    def add_poly(self, target: str, voices: int = 1, **kwds: Any) -> "Box":
+        """Add a ``poly~`` object hosting ``voices`` instances of ``target``.
+
+        ``target`` is the patch (or subpatcher) name loaded into each voice.
+
+        Example:
+            >>> p.add_poly("mysynth", 8)   # -> "poly~ mysynth 8"
+        """
+        return self.add_textbox(f"poly~ {target} {voices}", **kwds)
 
     def add_coll(
         self,

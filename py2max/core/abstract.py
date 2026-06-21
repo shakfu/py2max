@@ -143,6 +143,7 @@ class AbstractPatcher(ABC):
     _layout_mgr: AbstractLayoutManager
     _auto_hints: bool
     _validate_connections: bool
+    _validate_attrs: bool
     _maxclass_methods: dict[str, Callable[..., Any]]
     _semantic_ids: bool
     _semantic_counters: dict[str, int]

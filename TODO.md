@@ -25,9 +25,11 @@ Implement automatic layout optimization that repositions objects as they are add
 
 ### Server Security & Reliability
 
-- [ ] Move session token from HTML source to HttpOnly cookies
-- [ ] Add rate limiting on WebSocket messages
-- [ ] Fix race condition in `_debounced_save` (use snapshot during save)
+> **Moved to the separate [`py2max-server`](https://github.com/shakfu/py2max-server) package** (0.3.0). The interactive server and REPL no longer live in this repo; track these there. The RPC REPL now requires token authentication.
+
+- [ ] Move session token from HTML source to HttpOnly cookies *(py2max-server)*
+- [ ] Add rate limiting on WebSocket messages *(py2max-server)*
+- [ ] Fix race condition in `_debounced_save` (use snapshot during save) *(py2max-server)*
 
 ### Database Improvements
 
@@ -55,18 +57,20 @@ Implement automatic layout optimization that repositions objects as they are add
 
 ### Server & WebSocket
 
-- [ ] Make WebSocket port configurable (currently hardcoded as `port + 1`)
-- [ ] Add REPL reconnection logic on transient failures
-- [ ] Add command history persistence across sessions
-- [ ] Implement diff-based SVG updates (not full re-render)
-- [ ] Use proper logging instead of `print()` for tokens
+> **Moved to [`py2max-server`](https://github.com/shakfu/py2max-server)** (0.3.0).
+
+- [ ] Make WebSocket port configurable (currently hardcoded as `port + 1`) *(py2max-server)*
+- [ ] Add REPL reconnection logic on transient failures *(py2max-server)*
+- [ ] Add command history persistence across sessions *(py2max-server)*
+- [ ] Implement diff-based SVG updates (not full re-render) *(py2max-server)*
+- [ ] Use proper logging instead of `print()` for tokens *(py2max-server)*
 
 ### SVG Export
 
-- [ ] Text truncation with ellipsis for long names
-- [ ] Subpatcher visualization (show depth indication)
-- [ ] Differentiate signal vs message ports visually
-- [ ] Match Max's color scheme
+- [~] Text truncation with ellipsis for long names — intentionally **not** done: Max objects size to their text and never truncate, so truncating would be less faithful (and would hide info).
+- [x] Subpatcher visualization (show depth indication) — subpatcher boxes are tinted.
+- [x] Differentiate signal vs message ports visually — signal ports green, control dark; signal cables thicker/distinct.
+- [x] Match Max's color scheme — light patcher background + Max-like box/port/cable palette.
 
 ### MaxRef
 
@@ -109,8 +113,21 @@ Implement automatic layout optimization that repositions objects as they are add
 ### CI/CD
 
 - [ ] Enable CI on push/PR (currently workflow_dispatch only)
-- [ ] Update author email in `pyproject.toml`
-- [ ] Run `mypy --strict` and fix all errors
+- [x] Update author email in `pyproject.toml` — intentionally kept the `users.noreply.github.com` privacy address; `maintainers` added.
+- [x] Run `mypy --strict` and fix all errors — whole package passes `mypy --strict`; `[tool.mypy] strict = true` enforces it.
+
+### From REVIEW.md — Strategic (P3)
+
+Deferred; each is a sizeable, self-contained effort.
+
+- [ ] **gen~/RNBO codebox DSL** — a small DSP-graph DSL that emits `codebox` text, turning py2max into a code-generation backend (`add_gen`/`add_codebox`/`add_rnbo` already exist as targets).
+- [ ] **Declarative patch DSL / YAML recipes** — see "Recipe-driven scaffolding" above (`py2max new --from tutorials/basic.yml`).
+- [ ] **Publish API docs (ReadTheDocs)** — see Documentation above.
+
+### From REVIEW.md — Code-quality polish (low value)
+
+- [ ] `maxref/db.py`: whitelist the f-string-interpolated table/column names (`_insert_inlets_outlets`, `_delete_related_records`, `_get_simple_list`) and escape `%`/`_` in `LIKE` search terms. Not currently exploitable (identifiers are internal constants); largely superseded by the planned FTS5 migration.
+- [ ] `exceptions.py`: trim ~40% — several exception classes (`InvalidPatchError`, `InternalError`, `DatabaseError.operation`) have no raisers. Low value; check for external imports before removing.
 
 ---
 

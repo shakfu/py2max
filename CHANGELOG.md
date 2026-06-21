@@ -16,6 +16,30 @@ The browser-based live editor and remote REPL have moved to a separate companion
 
 - `Patcher.encapsulate(boxes, text="p sub")` wraps a selection of boxes into a subpatcher, auto-generating `inlet`/`outlet` objects for any connections that cross the selection boundary and rewiring the parent through the new subpatcher box. Connections wholly inside the selection move into the subpatcher; connections wholly outside it are untouched. Ports are de-duplicated by source, matching how patches are built by hand. Returns the new subpatcher `Box`.
 
+### New: Preset / `pattrstorage` Scaffolding
+
+- `Patcher.add_pattrstorage(name)`, `Patcher.add_autopattr()`, and `Patcher.add_preset_system(name)` (which adds both and wires `autopattr` -> `pattrstorage`) scaffold a Max preset system. Any object with a scripting name (`varname`) or `parameter_enable=1` participates.
+- `Patcher.enable_parameter(box, longname, shortname="", ptype=0, initial=None)` turns an existing UI box into a Max parameter (sets `parameter_enable` and the `saved_attribute_attributes`), so it participates in presets and, in a Max for Live device, appears as an automatable parameter.
+
+### New: Keyword-Attribute Validation (`validate_attrs`)
+
+- `Patcher(validate_attrs=True)` warns (`UserWarning`) when an object is given a keyword that is not a known attribute for its Max class -- catching typos like `inital=` for `initial=`. The known set is the object's maxref attributes plus a universal box-attribute whitelist; objects with no maxref entry are skipped. Off by default and warn-only, so it never changes generated output.
+
+### New: Multichannel (`mc.`) / Polyphony Helpers
+
+- `Patcher.add_mc(text, chans=None)` adds a multichannel object, prefixing `mc.` and appending `@chans` (e.g. `add_mc("cycle~ 440", chans=4)` -> `mc.cycle~ 440 @chans 4`).
+- `Patcher.add_poly(target, voices=1)` adds a `poly~` object hosting N voices of a target patch.
+
+### Improved: SVG Export (Max-faithful preview)
+
+- The `preview` / `to_svg` output now approximates Max's look: a light patcher background, signal vs message/control **ports colored distinctly** (signal green, control dark), signal **cables drawn thicker and in a distinct color**, and subpatcher boxes tinted so they stand out. Object text is intentionally not truncated, matching Max (objects size to their text).
+
+### New: Color / Theme Helpers
+
+- `Box.set_color(bg=..., text=..., border=...)` sets a box's `bgcolor`/`textcolor`/`bordercolor`; each accepts a named color (e.g. `"red"`), a hex string (`"#ff8800"`), or an `[r, g, b(, a)]` float sequence. Returns the box for chaining.
+- `Patcher.apply_theme(theme)` applies a color theme to every box (recursing into subpatchers). Built-in themes: `"light"`, `"dark"`, `"blue"`, `"high-contrast"`; or pass a dict of `bg`/`text`/`border` colors.
+- `py2max.core.colors` exposes the `MAX_COLORS` named palette and `resolve_color()`.
+
 ### Security
 
 - **Removed a misleading path-traversal check** in `Patcher.save_as()`. The previous `..`/`/etc` allowlist was trivially bypassable and gave a false sense of safety; for an offline file generator it provided no real protection. Genuinely unresolvable paths still raise `PatcherIOError`.

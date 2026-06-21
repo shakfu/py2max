@@ -328,3 +328,42 @@ def test_svg_cli_command_nonexistent_file(tmp_path):
     result = main(["preview", str(nonexistent)])
 
     assert result == 1  # Should fail
+
+
+def test_svg_signal_vs_message_ports_and_cables():
+    """Signal ports/cables render in distinct colors from message ones."""
+    from py2max.export.svg import export_svg_string
+
+    p = Patcher("sig.maxpat")
+    osc = p.add_textbox("cycle~ 440")  # signal outlet
+    gain = p.add_textbox("gain~")
+    metro = p.add_textbox("metro 500")  # message (bang) outlet
+    p.add_line(osc, gain)  # signal cable
+    p.add_line(metro, osc)  # message cable
+
+    s = export_svg_string(p)
+    assert "#2e8b57" in s  # signal port color
+    assert "#1f1f1f" in s  # message/control port color
+    assert "#b58900" in s  # signal cable color
+    assert "#5a5a5a" in s  # message cable color
+
+
+def test_svg_subpatcher_gets_distinct_fill():
+    """Subpatcher boxes are tinted to stand out."""
+    from py2max.export.svg import export_svg_string
+
+    p = Patcher("sub.maxpat")
+    p.add_textbox("cycle~ 440")
+    p.add_subpatcher("p voice")
+
+    s = export_svg_string(p)
+    assert "#d3dcec" in s  # subpatcher fill
+
+
+def test_svg_has_background():
+    """The exported SVG has a Max-like background fill."""
+    from py2max.export.svg import export_svg_string
+
+    p = Patcher("bg.maxpat")
+    p.add_textbox("cycle~ 440")
+    assert "#cfcfcf" in export_svg_string(p)

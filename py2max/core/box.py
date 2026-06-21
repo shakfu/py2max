@@ -7,6 +7,7 @@ from .abstract import AbstractBox
 from .common import Rect
 
 if TYPE_CHECKING:
+    from .colors import ColorLike
     from .patcher import Patcher
 
 
@@ -159,6 +160,31 @@ class Box(AbstractBox):
             return self.__dict__["text"]
         # Otherwise get from _kwds (from programmatic creation)
         return self._kwds.get("text", "")
+
+    def set_color(
+        self,
+        bg: Optional["ColorLike"] = None,
+        text: Optional["ColorLike"] = None,
+        border: Optional["ColorLike"] = None,
+    ) -> "Box":
+        """Set this box's colors, returning self for chaining.
+
+        Each argument accepts a named color (e.g. ``"red"``), a hex string
+        (``"#ff8800"``), or an ``[r, g, b(, a)]`` float sequence (0..1). Sets the
+        ``bgcolor`` / ``textcolor`` / ``bordercolor`` attributes respectively.
+
+        Example:
+            >>> p.add_textbox("toggle").set_color(bg="blue", text="white")
+        """
+        from .colors import resolve_color
+
+        if bg is not None:
+            self._kwds["bgcolor"] = resolve_color(bg)
+        if text is not None:
+            self._kwds["textcolor"] = resolve_color(text)
+        if border is not None:
+            self._kwds["bordercolor"] = resolve_color(border)
+        return self
 
     def add_to_presentation(
         self,
