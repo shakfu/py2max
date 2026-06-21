@@ -2,6 +2,43 @@
 
 ## [Unreleased]
 
+## [0.3.0]
+
+### Removed: Interactive Server Split Into `py2max-server` (breaking)
+
+The browser-based live editor and remote REPL have moved to a separate companion package, [`py2max-server`](https://github.com/shakfu/py2max-server), so the core library stays small, offline, and dependency-free.
+
+- Removed `Patcher.serve()` and the `py2max serve` / `py2max repl` CLI commands; those CLI subcommands now print a pointer to `py2max-server`.
+- Removed the `[server]` optional-dependency extra (`websockets`, `ptpython`) and the bundled browser assets (`py2max/static/`).
+- Install the server features with `pip install py2max-server` and use `py2max-server serve <patch>` / `py2max-server repl …`. The remote REPL now requires token authentication (passed via `--token` or `PY2MAX_REPL_TOKEN`).
+
+### Security
+
+- **Removed a misleading path-traversal check** in `Patcher.save_as()`. The previous `..`/`/etc` allowlist was trivially bypassable and gave a false sense of safety; for an offline file generator it provided no real protection. Genuinely unresolvable paths still raise `PatcherIOError`.
+
+### Typed: Full `mypy --strict`
+
+- The entire package is now annotated and passes `mypy --strict`, backing the shipped `py.typed` marker. `[tool.mypy]` enforces `strict = true`. Core has **no runtime dependencies**.
+
+### Changed: Lighter Core Imports
+
+- `import py2max` no longer eagerly imports `sqlite3`, the maxref database layer, or `py2max.m4l`. `MaxRefDB` is now available lazily via `from py2max.maxref import MaxRefDB` (removed from the top-level `py2max` namespace).
+
+### Internal: `Patcher` Decomposition
+
+- Split the ~1660-line `Patcher` class into focused mixins composed via inheritance: object creation (`BoxFactoryMixin` in `core/factory.py`) and serialization (`SerializationMixin` in `core/serialization.py`). The public API is unchanged; adding a new object type now means editing `core/factory.py` rather than the core class.
+
+### Fixed
+
+- Object-name resolution (used by connection validation and object classification) now reads the box `text` property, so it resolves correctly for boxes loaded from a file. Previously it inspected only programmatic kwargs and returned `newobj` for loaded boxes.
+- Fixed an `inital` -> `initial` keyword typo in the simple-synthesis tutorial.
+
+### Testing & Tooling
+
+- The test suite is now hermetic: a `conftest.py` autouse fixture isolates each test in a temporary working directory, so relative `outputs/` writes no longer accumulate in the repo. Fixture reads are anchored at the test file.
+- Promoted the `.amxd` byte-for-byte fixtures from the gitignored `outputs/` into tracked `tests/data/`, so that verification runs in CI and on fresh checkouts instead of only on the author's machine.
+- Repo-wide `ruff` lint and format cleanup.
+
 ### New: Max for Live Support (`py2max.m4l`)
 
 Implements [issue #9](https://github.com/shakfu/py2max/issues/9). See [`docs/notes/amxd.md`](docs/notes/amxd.md) for the on-disk format, embedded-project block, and verification details.

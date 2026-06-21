@@ -144,3 +144,30 @@ class AbstractPatcher(ABC):
     _auto_hints: bool
     _validate_connections: bool
     _maxclass_methods: dict[str, Callable[..., Any]]
+    _semantic_ids: bool
+    _semantic_counters: dict[str, int]
+    _device_type: str
+    classnamespace: str
+    _pending_comments: list[tuple[str, str, Optional[str]]]
+    # Rendered (dict) forms, populated by render() and read by serialization.
+    boxes: list[dict[str, Any]]
+    lines: list[dict[str, Any]]
+
+    # Core methods implemented by Patcher and relied on by the BoxFactory and
+    # serialization mixins. Declared here (non-abstract) so each mixin can be
+    # type-checked in isolation; Patcher provides the real implementations.
+    def get_id(self, object_name: Optional[str] = None) -> str:
+        """Generate an object id (implemented by Patcher)."""
+        raise NotImplementedError
+
+    def get_pos(self, maxclass: Optional[str] = None) -> Rect:
+        """Get a box position from the layout manager (implemented by Patcher)."""
+        raise NotImplementedError
+
+    def render(self, reset: bool = False) -> None:
+        """Render boxes/lines to dicts (implemented by Patcher)."""
+        raise NotImplementedError
+
+    def _process_pending_comments(self) -> None:
+        """Position deferred associated comments (implemented by Patcher)."""
+        raise NotImplementedError
