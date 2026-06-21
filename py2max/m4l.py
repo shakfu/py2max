@@ -243,12 +243,7 @@ def pack_amxd(
     dlst = _chunk(b"dlst", _chunk(b"dire", dire_payload))
 
     # Header
-    header_top = (
-        _MAGIC
-        + struct.pack("<I", _VERSION)
-        + tag
-        + _PTCH_TAG
-    )
+    header_top = _MAGIC + struct.pack("<I", _VERSION) + tag + _PTCH_TAG
     # ptch payload starts at offset 20 and runs to end of file.
     ptch_payload_size = (
         4  # "mx@c"
@@ -267,12 +262,7 @@ def pack_amxd(
         + json_block
     )
 
-    return (
-        header_top
-        + struct.pack("<I", ptch_payload_size)
-        + mxac_block
-        + dlst
-    )
+    return header_top + struct.pack("<I", ptch_payload_size) + mxac_block + dlst
 
 
 def unpack_amxd(data: bytes) -> Tuple[bytes, str]:
@@ -483,9 +473,7 @@ class NonIntegerCoordinateWarning(UserWarning):
     """Emitted when a rect contains fractional coordinates."""
 
 
-def _to_int_rect(
-    rect: Iterable[Union[int, float]], *, context: str
-) -> List[int]:
+def _to_int_rect(rect: Iterable[Union[int, float]], *, context: str) -> List[int]:
     """Coerce a 4-tuple rect to ints, warning on non-integer inputs."""
     values = list(rect)
     if len(values) != 4:
@@ -602,6 +590,7 @@ def enforce_integer_coords(patcher: "Patcher") -> int:
     Returns the number of rects that were non-integer (and got rounded).
     Recurses into nested subpatchers.
     """
+
     def _round_rect(rect):
         """Round a rect in-place. Returns 1 if any coord was non-integer."""
         # Rect dataclass with .x/.y/.w/.h or a plain [x,y,w,h] list.

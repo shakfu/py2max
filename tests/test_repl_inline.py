@@ -1,6 +1,5 @@
 """Tests for py2max inline REPL functionality."""
 
-import asyncio
 import logging
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch

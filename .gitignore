@@ -1,5 +1,6 @@
 # project specific
 outputs/
+REVIEW.md
 
 # general detritus
 .DS_Store

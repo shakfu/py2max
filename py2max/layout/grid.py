@@ -214,7 +214,9 @@ class GridLayoutManager(LayoutManager):
             cluster_y_base = cluster_row * cluster_height + pad
 
             # Position objects within this cluster's designated area (horizontal priority)
-            objects_per_row = max(1, int(cluster_width / (self.box_width + object_spacing)))
+            objects_per_row = max(
+                1, int(cluster_width / (self.box_width + object_spacing))
+            )
 
             for obj_idx, obj_id in enumerate(cluster_objects_list):
                 if obj_id in self.parent._objects:
@@ -225,7 +227,9 @@ class GridLayoutManager(LayoutManager):
                         obj_row = obj_idx // objects_per_row
 
                         x = cluster_x_base + obj_col * (self.box_width + object_spacing)
-                        y = cluster_y_base + obj_row * (self.box_height + object_spacing)
+                        y = cluster_y_base + obj_row * (
+                            self.box_height + object_spacing
+                        )
 
                         # Ensure bounds (stay within cluster area)
                         x = min(
@@ -291,7 +295,9 @@ class GridLayoutManager(LayoutManager):
                         obj_col = obj_idx // objects_per_col
 
                         x = cluster_x_base + obj_col * (self.box_width + object_spacing)
-                        y = cluster_y_base + obj_row * (self.box_height + object_spacing)
+                        y = cluster_y_base + obj_row * (
+                            self.box_height + object_spacing
+                        )
 
                         # Ensure bounds (stay within cluster area)
                         x = min(

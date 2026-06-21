@@ -182,7 +182,9 @@ def test_visit_tree():
             if "patcher" in box:
                 visit(box, func)
 
-    print_name = lambda node: print(node["name"])
+    def print_name(node):
+        print(node["name"])
+
     visit(d, print_name)
 
 

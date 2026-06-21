@@ -1,7 +1,7 @@
 """Tests to achieve 100% coverage for py2max.abstract module."""
 
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from py2max.core.abstract import (
     AbstractLayoutManager,
     AbstractBox,

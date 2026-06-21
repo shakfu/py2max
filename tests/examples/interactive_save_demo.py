@@ -98,8 +98,8 @@ async def auto_save_demo():
     try:
         # Create initial patch
         p = Patcher(str(temp_path))
-        osc = p.add_textbox("cycle~ 440")
-        gain = p.add_textbox("gain~ 0.5")
+        p.add_textbox("cycle~ 440")
+        p.add_textbox("gain~ 0.5")
         p.save()
 
         print(f"Created patch: {temp_path}")

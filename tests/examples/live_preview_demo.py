@@ -33,8 +33,8 @@ def demo_basic_live_preview():
 
     # Start server (opens browser automatically)
     server = p.serve(port=8000)
-    print(f"   Server started at: http://localhost:8000")
-    print(f"   Browser should have opened automatically")
+    print("   Server started at: http://localhost:8000")
+    print("   Browser should have opened automatically")
     print()
 
     # Give browser time to open
@@ -171,8 +171,8 @@ def demo_context_manager():
     print()
 
     # Use server as context manager (auto_open=False to avoid browser in automated tests)
-    with p.serve(port=8002, auto_open=False) as server:
-        print(f"   Server started at: http://localhost:8002")
+    with p.serve(port=8002, auto_open=False):
+        print("   Server started at: http://localhost:8002")
         print("   Building patch...")
         time.sleep(0.2)
 

@@ -3,7 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from py2max import Patcher
 
@@ -34,7 +33,7 @@ def test_svg_export_basic():
 def test_svg_export_with_title():
     """Test SVG export with custom title."""
     p = Patcher("test.maxpat")
-    osc = p.add_textbox("cycle~ 440")
+    p.add_textbox("cycle~ 440")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
@@ -47,7 +46,7 @@ def test_svg_export_with_title():
 def test_svg_export_without_ports():
     """Test SVG export with ports disabled."""
     p = Patcher("test.maxpat")
-    osc = p.add_textbox("cycle~ 440")
+    p.add_textbox("cycle~ 440")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
@@ -61,7 +60,7 @@ def test_svg_export_without_ports():
 def test_svg_export_with_ports():
     """Test SVG export with ports enabled."""
     p = Patcher("test.maxpat")
-    osc = p.add_textbox("cycle~ 440")
+    p.add_textbox("cycle~ 440")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
@@ -106,7 +105,7 @@ def test_svg_export_empty_patch():
 def test_svg_export_comments():
     """Test SVG export with comment boxes."""
     p = Patcher("test.maxpat")
-    comment = p.add_comment("This is a comment")
+    p.add_comment("This is a comment")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
@@ -121,7 +120,7 @@ def test_svg_export_comments():
 def test_svg_export_messages():
     """Test SVG export with message boxes."""
     p = Patcher("test.maxpat")
-    msg = p.add_message("bang")
+    p.add_message("bang")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
@@ -211,7 +210,7 @@ def test_svg_text_escaping():
     """Test that special characters in text are properly escaped."""
     p = Patcher("test.maxpat")
     # Add box with special characters
-    box = p.add_textbox('print <test> & "value"')
+    p.add_textbox('print <test> & "value"')
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
@@ -226,7 +225,7 @@ def test_svg_text_escaping():
 def test_svg_viewbox_calculation():
     """Test that viewBox is calculated correctly."""
     p = Patcher("test.maxpat")
-    osc = p.add_textbox("cycle~ 440")
+    p.add_textbox("cycle~ 440")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test.svg"
@@ -270,7 +269,7 @@ def test_svg_cli_command_no_output(tmp_path):
     # Create a test patch
     test_patch = tmp_path / "test.maxpat"
     p = Patcher(test_patch)
-    osc = p.add_textbox("cycle~ 440")
+    p.add_textbox("cycle~ 440")
     p.save()
 
     # Test preview command without output (should use /tmp)
@@ -296,7 +295,7 @@ def test_svg_cli_command_with_options(tmp_path):
     # Create a test patch
     test_patch = tmp_path / "test.maxpat"
     p = Patcher(test_patch)
-    osc = p.add_textbox("cycle~ 440")
+    p.add_textbox("cycle~ 440")
     p.save()
 
     # Test with custom title and no ports

@@ -1,8 +1,7 @@
 """Tests for py2max REPL server functionality."""
 
-import asyncio
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -310,6 +309,97 @@ class TestReplServer:
 
         # Should handle coroutine and return result
         assert response["type"] == "result"
+
+
+class TestReplServerAuth:
+    """Tests for ReplServer session-token authentication.
+
+    The REPL server eval/exec's whatever it receives, so an unauthenticated
+    connection must never reach handle_eval. These tests exercise the
+    handshake performed by ReplServer._authenticate before any code runs.
+    """
+
+    TOKEN = "s3cret-session-token"
+
+    @pytest.fixture
+    def authed_server(self, patcher, mock_interactive_server):
+        from py2max.server.rpc import ReplServer
+
+        mock_interactive_server.handler.session_token = self.TOKEN
+        return ReplServer(patcher, mock_interactive_server)
+
+    def test_token_inherited_from_websocket_handler(self, authed_server):
+        """ReplServer reuses the WebSocket handler's session token."""
+        assert authed_server.session_token == self.TOKEN
+
+    def test_verify_token(self, authed_server):
+        """verify_token accepts only the exact token."""
+        assert authed_server.verify_token(self.TOKEN) is True
+        assert authed_server.verify_token("wrong") is False
+        assert authed_server.verify_token("") is False
+
+    @pytest.mark.asyncio
+    async def test_authenticate_success(self, authed_server, mock_websocket):
+        """A correct token authenticates and is acknowledged."""
+        mock_websocket.recv.return_value = json.dumps(
+            {"type": "auth", "token": self.TOKEN}
+        )
+
+        assert await authed_server._authenticate(mock_websocket) is True
+        mock_websocket.close.assert_not_called()
+        response = json.loads(mock_websocket.send.call_args[0][0])
+        assert response["type"] == "auth_success"
+
+    @pytest.mark.asyncio
+    async def test_authenticate_wrong_token_rejected(
+        self, authed_server, mock_websocket
+    ):
+        """A wrong token is rejected and the socket is closed 1008."""
+        mock_websocket.recv.return_value = json.dumps(
+            {"type": "auth", "token": "wrong"}
+        )
+
+        assert await authed_server._authenticate(mock_websocket) is False
+        mock_websocket.close.assert_called_once()
+        assert mock_websocket.close.call_args[0][0] == 1008
+
+    @pytest.mark.asyncio
+    async def test_authenticate_non_auth_message_rejected(
+        self, authed_server, mock_websocket
+    ):
+        """A first message that is not an auth handshake is rejected."""
+        mock_websocket.recv.return_value = json.dumps({"type": "eval", "code": "1+1"})
+
+        assert await authed_server._authenticate(mock_websocket) is False
+        mock_websocket.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_authenticate_no_token_configured_refuses(
+        self, patcher, mock_interactive_server, mock_websocket
+    ):
+        """With no token configured the server refuses rather than allowing exec."""
+        from py2max.server.rpc import ReplServer
+
+        mock_interactive_server.handler.session_token = None
+        server = ReplServer(patcher, mock_interactive_server)
+
+        assert await server._authenticate(mock_websocket) is False
+        mock_websocket.close.assert_called_once()
+        assert mock_websocket.close.call_args[0][0] == 1011
+        # Must not have read any client code before refusing.
+        mock_websocket.recv.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_handle_client_blocks_unauthenticated(
+        self, authed_server, mock_websocket
+    ):
+        """handle_client returns without registering when auth fails."""
+        mock_websocket.recv.return_value = json.dumps(
+            {"type": "auth", "token": "wrong"}
+        )
+
+        await authed_server.handle_client(mock_websocket)
+        assert len(authed_server.clients) == 0
 
 
 if __name__ == "__main__":

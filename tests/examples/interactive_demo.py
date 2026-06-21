@@ -73,7 +73,7 @@ async def demo_interactive():
     # Import and start interactive server
     from py2max.websocket_server import serve_interactive
 
-    async with await serve_interactive(p, port=8000) as server:
+    async with await serve_interactive(p, port=8000):
         print()
         print("=" * 70)
         print("Interactive editor is now running!")
@@ -118,7 +118,7 @@ async def demo_interactive_async_updates():
     p = Patcher("async_demo.maxpat", layout="grid")
 
     # Add one initial object
-    metro = p.add_textbox("metro 1000")
+    p.add_textbox("metro 1000")
     p.optimize_layout()
 
     print("Starting interactive server...")
@@ -140,15 +140,15 @@ async def demo_interactive_async_updates():
 
             # Add new object
             if i == 0:
-                box = p.add_textbox("random 127")
+                p.add_textbox("random 127")
             elif i == 1:
-                box = p.add_textbox("mtof")
+                p.add_textbox("mtof")
             elif i == 2:
-                box = p.add_textbox("cycle~")
+                p.add_textbox("cycle~")
             elif i == 3:
-                box = p.add_textbox("gain~ 0.5")
+                p.add_textbox("gain~ 0.5")
             else:
-                box = p.add_textbox("ezdac~")
+                p.add_textbox("ezdac~")
 
             # Notify browser of update
             await server.notify_update()
@@ -195,7 +195,7 @@ async def demo_context_manager():
     print("Starting server with context manager...")
     from py2max.websocket_server import serve_interactive
 
-    async with await serve_interactive(p, port=8002) as server:
+    async with await serve_interactive(p, port=8002):
         print()
         print("Server running! Edit in browser for 10 seconds...")
         await asyncio.sleep(10)

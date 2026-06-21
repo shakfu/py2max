@@ -176,17 +176,24 @@ class TestPatcherErrorHandling:
         assert exc_info.value.dst == gain.id
         assert exc_info.value.outlet == 10
 
-    def test_invalid_file_path_raises_error(self):
-        """Test that invalid file paths raise PatcherIOError"""
+    def test_unwritable_path_raises_io_error(self, tmp_path):
+        """Saving under a path whose parent is a file raises PatcherIOError.
+
+        The library deliberately does not police destinations (no path-traversal
+        allowlist), but a genuinely unwritable path must still surface a clear
+        PatcherIOError rather than a raw OSError.
+        """
         p = Patcher("test.maxpat")
         p.add_textbox("cycle~ 440")
 
-        # Try to save with path traversal using ..
-        with pytest.raises(PatcherIOError) as exc_info:
-            p.save_as("../../etc/passwd")
+        # Make a regular file, then treat it as a directory in the save path.
+        blocker = tmp_path / "not_a_dir"
+        blocker.write_text("x")
 
-        assert exc_info.value.operation == "validate"
-        assert "path traversal" in str(exc_info.value).lower()
+        with pytest.raises(PatcherIOError) as exc_info:
+            p.save_as(blocker / "sub" / "patch.maxpat")
+
+        assert exc_info.value.operation == "write"
 
     def test_file_write_error_handling(self):
         """Test error handling for file write failures"""
@@ -243,7 +250,7 @@ class TestLoggingConfiguration:
         """Test that logging level can be configured via environment"""
         # This is hard to test completely since logging is configured globally
         # But we can verify the configuration functions exist
-        from py2max.log import config, get_logger
+        from py2max.log import get_logger
 
         logger = get_logger("test.module")
         assert logger is not None

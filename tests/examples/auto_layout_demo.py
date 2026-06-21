@@ -101,21 +101,21 @@ def create_complex_patch():
     p.save()
 
     print(f"✅ Created auto-layout demo patch: {p._path}")
-    print(f"\n📊 Patch statistics:")
+    print("\n📊 Patch statistics:")
     print(f"   Objects: {len(p._boxes)}")
     print(f"   Connections: {len(p._lines)}")
-    print(f"\n🎯 Usage:")
-    print(f"   1. Start the interactive server:")
+    print("\n🎯 Usage:")
+    print("   1. Start the interactive server:")
     print(f"      py2max serve {p._path}")
-    print(f"\n   2. In the browser:")
-    print(f"      - Notice the randomly positioned objects (messy!)")
-    print(f"      - Click the '🔄 Auto-Layout' button")
-    print(f"      - Watch WebCola automatically arrange everything")
-    print(f"\n   3. WebCola features:")
-    print(f"      - Avoids overlapping objects")
-    print(f"      - Maintains reasonable connection lengths")
-    print(f"      - Handles multiple disconnected components")
-    print(f"      - Creates visually pleasing layouts")
+    print("\n   2. In the browser:")
+    print("      - Notice the randomly positioned objects (messy!)")
+    print("      - Click the '🔄 Auto-Layout' button")
+    print("      - Watch WebCola automatically arrange everything")
+    print("\n   3. WebCola features:")
+    print("      - Avoids overlapping objects")
+    print("      - Maintains reasonable connection lengths")
+    print("      - Handles multiple disconnected components")
+    print("      - Creates visually pleasing layouts")
 
 
 def create_hierarchical_patch():
@@ -143,7 +143,7 @@ def create_hierarchical_patch():
     # Second level processors
     proc2 = []
     for i in range(2):
-        proc = p.add_textbox(f"+~")
+        proc = p.add_textbox("+~")
         proc2.append(proc)
 
     # Final mix
@@ -180,7 +180,7 @@ def create_hierarchical_patch():
 
     print(f"\n✅ Created hierarchical layout demo: {p._path}")
     print(f"   Objects: {len(p._boxes)}")
-    print(f"   This demonstrates WebCola's ability to create hierarchical layouts")
+    print("   This demonstrates WebCola's ability to create hierarchical layouts")
 
 
 def main():

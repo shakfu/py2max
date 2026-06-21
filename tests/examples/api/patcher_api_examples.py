@@ -37,23 +37,23 @@ def demonstrate_object_creation():
     p = Patcher("objects-demo.maxpat")
 
     # Generic text-based objects
-    osc = p.add_textbox("cycle~ 440")
-    filter_obj = p.add_textbox("biquad~ 1000 0.707")
-    gain = p.add_textbox("gain~")
+    p.add_textbox("cycle~ 440")
+    p.add_textbox("biquad~ 1000 0.707")
+    p.add_textbox("gain~")
 
     # UI objects
-    button = p.add_message("bang")
-    comment = p.add_comment("This is a comment")
-    float_num = p.add_floatbox(440.0, name="frequency")
-    int_num = p.add_intbox(127, name="velocity")
+    p.add_message("bang")
+    p.add_comment("This is a comment")
+    p.add_floatbox(440.0, name="frequency")
+    p.add_intbox(127, name="velocity")
 
     # Container objects
-    table = p.add_table("wavetable", data=[0.5, 0.3, -0.2, 0.8])
-    coll = p.add_coll("sequence", data=["0, 60 127", "1, 64 100"])
-    dict_obj = p.add_dict("patch-data")
+    p.add_table("wavetable", data=[0.5, 0.3, -0.2, 0.8])
+    p.add_coll("sequence", data=["0, 60 127", "1, 64 100"])
+    p.add_dict("patch-data")
 
     # Objects with custom positioning
-    custom_obj = p.add_textbox("ezdac~", patching_rect=Rect(300, 200, 66, 22))
+    p.add_textbox("ezdac~", patching_rect=Rect(300, 200, 66, 22))
 
     # Subpatchers
     sub_box = p.add_subpatcher("voice-processor")
@@ -180,7 +180,7 @@ def demonstrate_patch_introspection():
     print(f"Gain inlets: {gain.get_inlet_count()}")
 
     # Get help for objects
-    umenu_help = umenu.help()
+    umenu.help()
     umenu_info = umenu.get_info()
 
     methods_count = len(umenu_info.get("methods", [])) if umenu_info else 0

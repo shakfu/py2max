@@ -156,9 +156,9 @@ def test_layout_flow_fallback():
     p = Patcher("outputs/test_layout_flow_fallback.maxpat", layout="flow")
 
     # Add objects without connections
-    obj1 = p.add_textbox("cycle~")
-    obj2 = p.add_textbox("gain~")
-    obj3 = p.add_textbox("ezdac~")
+    p.add_textbox("cycle~")
+    p.add_textbox("gain~")
+    p.add_textbox("ezdac~")
 
     # Should still work and place objects
     positions = []
@@ -276,7 +276,7 @@ def test_layout_flow_vertical_complex():
 
     # Verify objects at same level are arranged horizontally (not overlapping)
     # Oscillators should have different x positions but similar y positions
-    osc_y_diff = abs(osc1_y - osc2_y)
+    abs(osc1_y - osc2_y)
     osc_x_diff = abs(osc1.patching_rect.x - osc2.patching_rect.x)
     assert osc_x_diff > 0, "Oscillators should have different x positions"
 

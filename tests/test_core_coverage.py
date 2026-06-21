@@ -1,7 +1,5 @@
 """Tests to achieve 100% coverage for py2max.core module."""
 
-import pytest
-from unittest.mock import Mock, patch
 from py2max.core import Patcher, Box
 from py2max.core.common import Rect
 
@@ -14,9 +12,9 @@ class TestCoreCoverage:
         p = Patcher()
 
         # Add objects with text that starts with search string
-        obj1 = p.add_textbox("test message")
-        obj2 = p.add_textbox("test another")
-        obj3 = p.add_textbox("different")
+        p.add_textbox("test message")
+        p.add_textbox("test another")
+        p.add_textbox("different")
 
         # Test finding by text start
         result = p.find("test")
@@ -40,9 +38,9 @@ class TestCoreCoverage:
         p = Patcher()
 
         # Add boxes with text that starts with search string
-        box1 = p.add_textbox("test message")
-        box2 = p.add_textbox("test another")
-        box3 = p.add_textbox("different")
+        p.add_textbox("test message")
+        p.add_textbox("test another")
+        p.add_textbox("different")
 
         # Test finding by text start
         result = p.find_box("test")
@@ -66,9 +64,9 @@ class TestCoreCoverage:
         p = Patcher()
 
         # Add boxes with text that starts with search string
-        box1 = p.add_textbox("test message")
-        box2 = p.add_textbox("test another")
-        box3 = p.add_textbox("different")
+        p.add_textbox("test message")
+        p.add_textbox("test another")
+        p.add_textbox("different")
 
         # Test finding by text start
         result = p.find_box_with_index("test")

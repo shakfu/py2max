@@ -100,7 +100,7 @@ def test_layout_grid_horizontal_clustered():
     # Verify layout manager type
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "horizontal"
-    assert p._layout_mgr.cluster_connected == True
+    assert p._layout_mgr.cluster_connected is True
 
 
 def test_layout_grid_vertical():
@@ -116,7 +116,7 @@ def test_layout_grid_vertical():
     # Verify layout manager type
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
-    assert p._layout_mgr.cluster_connected == False
+    assert p._layout_mgr.cluster_connected is False
 
 
 def test_layout_grid_vertical_clustered():
@@ -132,7 +132,7 @@ def test_layout_grid_vertical_clustered():
     # Verify layout manager type
     assert isinstance(p._layout_mgr, GridLayoutManager)
     assert p._layout_mgr.flow_direction == "vertical"
-    assert p._layout_mgr.cluster_connected == True
+    assert p._layout_mgr.cluster_connected is True
 
 
 def test_layout_grid_default():
@@ -259,7 +259,7 @@ def test_grid_clustering_horizontal():
 
     # Verify layout manager has clustering enabled
     assert isinstance(p._layout_mgr, GridLayoutManager)
-    assert p._layout_mgr.cluster_connected == True
+    assert p._layout_mgr.cluster_connected is True
 
     p.save()
 
@@ -309,7 +309,7 @@ def test_grid_clustering_vertical():
     assert len(unique_positions) > 1, "Objects should have different positions"
 
     # Verify clustering is enabled
-    assert p._layout_mgr.cluster_connected == True
+    assert p._layout_mgr.cluster_connected is True
 
     p.save()
 
@@ -334,7 +334,7 @@ def test_grid_clustering_disabled():
     p.optimize_layout()
 
     # Verify clustering is disabled
-    assert p._layout_mgr.cluster_connected == False
+    assert p._layout_mgr.cluster_connected is False
 
     # Objects should still be positioned (just not clustered)
     positions = []

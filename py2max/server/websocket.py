@@ -483,7 +483,9 @@ class InteractiveWebSocketHandler:
             if not is_valid:
                 print(f"Message validation failed: {error_msg}")
                 await websocket.send(
-                    json.dumps({"type": "error", "message": f"Validation error: {error_msg}"})
+                    json.dumps(
+                        {"type": "error", "message": f"Validation error: {error_msg}"}
+                    )
                 )
                 return
 

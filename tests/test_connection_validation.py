@@ -82,8 +82,8 @@ def test_box_inlet_outlet_methods():
     p = Patcher("outputs/test_box_methods.maxpat")
 
     cycle = p.add_textbox("cycle~ 440")
-    gain = p.add_textbox("gain~")
-    dac = p.add_textbox("ezdac~")
+    p.add_textbox("gain~")
+    p.add_textbox("ezdac~")
 
     # Test inlet/outlet counts
     cycle_inlets = cycle.get_inlet_count()

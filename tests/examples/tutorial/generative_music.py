@@ -46,7 +46,7 @@ def create_generative_music():
 
         # Convert to frequencies
         freq_data = [pitch2freq(note) for note in scale]
-        freq_table = p.add_table(f"freqs{i}", data=freq_data)
+        p.add_table(f"freqs{i}", data=freq_data)
         table_lookup = p.add_textbox(f"table freqs{i}")
 
         p.add_line(note_selector, table_lookup)

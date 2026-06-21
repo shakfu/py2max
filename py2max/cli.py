@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from pprint import pprint
@@ -701,11 +702,15 @@ def cmd_serve(args: argparse.Namespace) -> int:
 
             repl_port = args.port + 2  # HTTP=8000, WS=8001, REPL=8002
             repl_server = await start_repl_server(patcher, server, port=repl_port)
+            token = getattr(server.handler, "session_token", None)
+            connect_cmd = f"py2max repl localhost:{repl_port}"
+            if token:
+                connect_cmd += f" --token {token}"
 
             print()
             print("=" * 70)
             print("REPL server started")
-            print(f"Connect with: py2max repl localhost:{repl_port}")
+            print(f"Connect with: {connect_cmd}")
             print("=" * 70)
             print()
 
@@ -716,7 +721,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
                 print(
                     "For client-server mode (recommended), in a separate terminal run:"
                 )
-                print(f"  py2max repl localhost:{repl_port}")
+                print(f"  {connect_cmd}")
                 print()
 
             # Keep running until interrupted
@@ -820,11 +825,21 @@ def cmd_repl(args: argparse.Namespace) -> int:
         print("Install with: pip install ptpython or uv add ptpython", file=sys.stderr)
         return 1
 
+    # Resolve the session token (CLI flag takes precedence over env var)
+    token = args.token or os.environ.get("PY2MAX_REPL_TOKEN")
+    if not token:
+        print(
+            "Error: a session token is required. Pass --token <token> "
+            "(printed by the server) or set PY2MAX_REPL_TOKEN.",
+            file=sys.stderr,
+        )
+        return 1
+
     # Start REPL client
     try:
         from .server.client import start_repl_client
 
-        return asyncio.run(start_repl_client(host, port))
+        return asyncio.run(start_repl_client(host, port, token=token))
 
     except KeyboardInterrupt:
         print("\nDisconnected.")
@@ -1227,6 +1242,12 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         default="localhost:9000",
         help="Server address (default: localhost:9000)",
+    )
+    repl_parser.add_argument(
+        "--token",
+        default=None,
+        help="Session token printed by the server "
+        "(or set PY2MAX_REPL_TOKEN). Required for authentication.",
     )
     repl_parser.set_defaults(func=cmd_repl)
 

@@ -50,7 +50,7 @@ def test_build_graph():
 
     assert g.getNumNodes() == 2
 
-    e = g.addEdge(a, b)
+    g.addEdge(a, b)
 
     assert g.getNumEdges() == 1
 

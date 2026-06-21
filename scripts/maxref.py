@@ -465,9 +465,7 @@ class MaxRefParser:
                     self="self, " if args else "self",
                     args=", ".join(method_args),
                 )
-                sig_selfless = "{name}({args})".format(
-                    name=name, args=", ".join(args)
-                )
+                sig_selfless = "{name}({args})".format(name=name, args=", ".join(args))
             else:
                 sig = "{name}(self):".format(name=self.__check_iskeyword(str(name)))
             print(f"{spacer}def {sig}")

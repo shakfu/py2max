@@ -1,7 +1,5 @@
 """Tests for nested patcher (subpatcher) functionality in interactive editor."""
 
-import asyncio
-import json
 from pathlib import Path
 import tempfile
 import pytest

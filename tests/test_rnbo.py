@@ -47,7 +47,7 @@ class CaseTilde(Case):
 
 def test_rnb_optimization():
     p = Patcher("outputs/test_rnbo_optimization.maxpat")
-    sbox = p.add_rnbo(saved_object_attributes=dict(optimization="O3"))
+    p.add_rnbo(saved_object_attributes=dict(optimization="O3"))
     p.save()
 
 
@@ -136,7 +136,6 @@ def test_rnbo_ezdac():
 def test_rnbo_ezdac2():
     p = Patcher("outputs/test_rnbo_ezdac2.maxpat")
     rnbo = p.add_rnbo(numinlets=2, numoutlets=2)
-    sp = rnbo.subpatcher
     populate_rnbo_patch(p, rnbo)
 
 

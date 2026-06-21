@@ -60,7 +60,7 @@ def create_clustered_grid():
         chains.append([osc, filter_obj, delay, gain])
 
     # Add some control objects
-    master_vol = p.add_floatbox(0.5, name="master_volume")
+    p.add_floatbox(0.5, name="master_volume")
     output = p.add_textbox("ezdac~")
 
     # Connect all chains to output

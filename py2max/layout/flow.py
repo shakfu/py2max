@@ -181,7 +181,10 @@ class FlowLayoutManager(LayoutManager):
             # Sort objects by their barycenter values
             sorted_objects = sorted(
                 current_objects,
-                key=lambda obj_id: (barycenters[obj_id], obj_id),  # obj_id as tiebreaker
+                key=lambda obj_id: (
+                    barycenters[obj_id],
+                    obj_id,
+                ),  # obj_id as tiebreaker
             )
             result[level] = sorted_objects
 

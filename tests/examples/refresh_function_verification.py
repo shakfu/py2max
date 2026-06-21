@@ -20,22 +20,22 @@ async def test_refresh():
 
     print("Creating test patch...")
     p = Patcher(patch_path)
-    osc = p.add("cycle~ 440")
+    p.add("cycle~ 440")
     p.save()
 
     print("\nTest 1: Create BackgroundServerREPL instance")
     log_file = output_dir / "test_refresh.log"
     repl = BackgroundServerREPL(p, port=8100, log_file=log_file)
-    print(f"  ✓ BackgroundServerREPL created")
+    print("  ✓ BackgroundServerREPL created")
 
     print("\nTest 2: Verify notify_update_sync method exists")
     assert hasattr(repl, "notify_update_sync"), "notify_update_sync method missing"
-    print(f"  ✓ notify_update_sync method exists")
+    print("  ✓ notify_update_sync method exists")
 
     print("\nTest 3: Test notify_update_sync without server (should handle gracefully)")
     # Should not crash even though server isn't running
     repl.notify_update_sync()
-    print(f"  ✓ notify_update_sync handles missing server gracefully")
+    print("  ✓ notify_update_sync handles missing server gracefully")
 
     print("\n" + "=" * 70)
     print("All refresh function tests passed!")

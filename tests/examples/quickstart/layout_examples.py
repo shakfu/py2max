@@ -100,7 +100,7 @@ def connection_validation_example():
         error_occurred = False
     except InvalidConnectionError as e:
         error_occurred = True
-        error_message = str(e)
+        str(e)
 
     p.save()
 

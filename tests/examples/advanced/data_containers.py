@@ -25,8 +25,8 @@ def create_wavetable_synth():
     saw_data = [2 * (i / wavetable_size) - 1 for i in range(wavetable_size)]
 
     # Create tables
-    sine_table = p.add_table("sine_wave", data=sine_data)
-    saw_table = p.add_table("saw_wave", data=saw_data)
+    p.add_table("sine_wave", data=sine_data)
+    p.add_table("saw_wave", data=saw_data)
 
     # Wavetable oscillator
     phasor = p.add_textbox("phasor~ 440")
@@ -64,8 +64,8 @@ def create_sequencer():
     rhythm_sequence = ["0, kick", "1, snare", "2, kick", "3, hihat", "4, kick"]
 
     # Create collections
-    melody_coll = p.add_coll("melody", data=melody_sequence)
-    rhythm_coll = p.add_coll("rhythm", data=rhythm_sequence)
+    p.add_coll("melody", data=melody_sequence)
+    p.add_coll("rhythm", data=rhythm_sequence)
 
     # Sequence player
     metro = p.add_textbox("metro 500")
@@ -79,7 +79,7 @@ def create_sequencer():
 
     # Rhythm player
     rhythm_lookup = p.add_textbox("coll rhythm")
-    drum_select = p.add_textbox("select kick snare hihat")
+    p.add_textbox("select kick snare hihat")
 
     # Connect sequencer
     p.add_line(metro, counter)

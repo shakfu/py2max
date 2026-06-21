@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import secrets
 import sys
 import traceback as tb
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from ..core import Patcher
@@ -38,6 +39,13 @@ class ReplServer:
         self.clients: set[ServerConnection] = set()
         self._lock = asyncio.Lock()
 
+        # Reuse the WebSocket server's session token so a single token guards
+        # every port for a serving session. Code sent here is eval/exec'd, so
+        # an unauthenticated connection must never reach handle_eval.
+        self.session_token: Optional[str] = getattr(
+            server.handler, "session_token", None
+        )
+
         # Build execution namespace with patcher and commands
         from .repl import ReplCommands
 
@@ -58,8 +66,65 @@ class ReplServer:
             "commands": self.commands.commands,
         }
 
+    def verify_token(self, token: str) -> bool:
+        """Verify an authentication token using constant-time comparison."""
+        if not token or not self.session_token:
+            return False
+        return secrets.compare_digest(token, self.session_token)
+
+    async def _authenticate(self, websocket: ServerConnection) -> bool:
+        """Require a valid session token as the client's first message.
+
+        Returns True if the client authenticated, False otherwise (the socket
+        is closed on failure). Refuses to serve if no token is configured, so a
+        misconfigured server never falls back to unauthenticated code execution.
+        """
+        if not self.session_token:
+            await websocket.close(1011, "Server misconfigured: no session token")
+            print("REPL client rejected: no session token configured")
+            return False
+
+        try:
+            auth_message = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+        except asyncio.TimeoutError:
+            await websocket.close(1008, "Authentication timeout")
+            print("REPL client authentication timeout")
+            return False
+
+        auth_str = (
+            auth_message.decode("utf-8")
+            if isinstance(auth_message, bytes)
+            else auth_message
+        )
+
+        try:
+            auth_data = json.loads(auth_str)
+        except json.JSONDecodeError:
+            await websocket.send(
+                json.dumps({"type": "error", "error": "Invalid authentication message"})
+            )
+            await websocket.close(1008, "Invalid auth format")
+            print("REPL client sent invalid authentication message")
+            return False
+
+        if auth_data.get("type") != "auth" or not self.verify_token(
+            auth_data.get("token", "")
+        ):
+            await websocket.send(
+                json.dumps({"type": "error", "error": "Authentication failed"})
+            )
+            await websocket.close(1008, "Unauthorized")
+            print("REPL client authentication failed")
+            return False
+
+        await websocket.send(json.dumps({"type": "auth_success"}))
+        return True
+
     async def handle_client(self, websocket: ServerConnection):
         """Handle REPL client connection."""
+        if not await self._authenticate(websocket):
+            return
+
         async with self._lock:
             self.clients.add(websocket)
             print(f"REPL client connected (total: {len(self.clients)})")
@@ -231,7 +296,13 @@ async def start_repl_server(
     )
 
     print(f"REPL server started on port {port}")
-    print(f"Connect with: py2max repl localhost:{port}")
+    if repl_server.session_token:
+        print(
+            f"Connect with: py2max repl localhost:{port} "
+            f"--token {repl_server.session_token}"
+        )
+    else:
+        print(f"Connect with: py2max repl localhost:{port}")
     print()
 
     return ws_server

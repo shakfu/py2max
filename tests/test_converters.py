@@ -1,6 +1,5 @@
 import json
 import runpy
-import sqlite3
 from pathlib import Path
 
 from py2max import cli

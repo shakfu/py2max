@@ -122,9 +122,9 @@ def demo_custom_styling():
     print("\nDemonstrating custom SVG options...")
 
     p = Patcher("styled_patch.maxpat")
-    comment = p.add_comment("This is a comment - should be yellow")
-    msg = p.add_message("bang")
-    osc = p.add_textbox("cycle~ 440")
+    p.add_comment("This is a comment - should be yellow")
+    p.add_message("bang")
+    p.add_textbox("cycle~ 440")
 
     p.save()
 
@@ -205,10 +205,10 @@ def demo_programmatic_workflow():
     svg_path = Path("workflow_demo.svg")
     export_svg(p, svg_path, title="Random Note Generator")
 
-    print(f"\nDone! Files created:")
-    print(f"  Max patch: workflow_demo.maxpat")
+    print("\nDone! Files created:")
+    print("  Max patch: workflow_demo.maxpat")
     print(f"  SVG preview: {svg_path}")
-    print(f"\nView SVG in browser:")
+    print("\nView SVG in browser:")
     print(f"  file://{svg_path.absolute()}")
 
 
@@ -232,7 +232,7 @@ def demo_temp_preview():
 
     export_svg(p, svg_path, title="Quick Preview")
     print(f"  Preview saved to: {svg_path}")
-    print(f"  This file will be cleaned up by the OS")
+    print("  This file will be cleaned up by the OS")
 
 
 if __name__ == "__main__":

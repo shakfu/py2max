@@ -1,6 +1,5 @@
 """Tests for MatrixLayoutManager in both columnar and matrix modes."""
 
-import pytest
 from py2max import Patcher
 from py2max.layout import MatrixLayoutManager
 from py2max.core.common import Rect

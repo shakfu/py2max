@@ -31,7 +31,7 @@ async def test_inline_repl():
     print("\nTest 1: Verify BackgroundServerREPL can be instantiated")
     log_file = output_dir / "test_server.log"
     repl = BackgroundServerREPL(p, port=8100, log_file=log_file)
-    print(f"  ✓ BackgroundServerREPL created")
+    print("  ✓ BackgroundServerREPL created")
     print(f"  ✓ Log file: {repl.log_file}")
     print(f"  ✓ Port: {repl.port}")
 

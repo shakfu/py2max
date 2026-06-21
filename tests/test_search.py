@@ -8,7 +8,7 @@ def test_find_by_id():
     p = Patcher("test.maxpat")
     osc = p.add_textbox("cycle~ 440")
     gain = p.add_textbox("gain~")
-    dac = p.add_textbox("ezdac~")
+    p.add_textbox("ezdac~")
 
     # Find by ID
     found = p.find_by_id(osc.id)
@@ -26,8 +26,8 @@ def test_find_by_id():
 def test_find_by_type():
     """Test finding boxes by Max object type."""
     p = Patcher("test.maxpat")
-    osc = p.add_textbox("cycle~ 440")
-    gain = p.add_textbox("gain~")
+    p.add_textbox("cycle~ 440")
+    p.add_textbox("gain~")
     msg = p.add_message("bang")
     comment = p.add_comment("This is a comment")
 
@@ -55,10 +55,10 @@ def test_find_by_text():
     """Test finding boxes by text content."""
     p = Patcher("test.maxpat")
     osc1 = p.add_textbox("cycle~ 440")
-    osc2 = p.add_textbox("saw~ 220")
+    p.add_textbox("saw~ 220")
     osc3 = p.add_textbox("Cycle~ 880")  # Different case
     gain = p.add_textbox("gain~ 0.5")
-    dac = p.add_textbox("ezdac~")
+    p.add_textbox("ezdac~")
 
     # Find all MSP objects (contain ~)
     msp_objects = p.find_by_text("~")
@@ -97,16 +97,16 @@ def test_search_complex_patch():
 
     # Build a simple synth
     metro = p.add_textbox("metro 500")
-    osc1 = p.add_textbox("cycle~ 440")
-    osc2 = p.add_textbox("saw~ 220")
-    filter1 = p.add_textbox("lores~ 1000")
-    gain = p.add_textbox("gain~ 0.5")
-    dac = p.add_textbox("ezdac~")
+    p.add_textbox("cycle~ 440")
+    p.add_textbox("saw~ 220")
+    p.add_textbox("lores~ 1000")
+    p.add_textbox("gain~ 0.5")
+    p.add_textbox("ezdac~")
 
     # Add some messages and comments
     msg1 = p.add_message("start")
     msg2 = p.add_message("stop")
-    comment = p.add_comment("Simple synth patch")
+    p.add_comment("Simple synth patch")
 
     # Find all oscillators
     oscillators = [
@@ -151,7 +151,7 @@ def test_search_chaining():
     p.add_textbox("saw~ 220")
     p.add_textbox("gain~ 0.5")
     msg = p.add_message("440")
-    comment = p.add_comment("cycle~ info")
+    p.add_comment("cycle~ info")
 
     # Total should be 6 boxes
     assert len(p._boxes) == 6

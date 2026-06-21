@@ -2,8 +2,8 @@ import pytest
 
 try:
     import networkx as nx
-    import matplotlib.pyplot as plt
-    import pygraphviz
+    import matplotlib.pyplot as plt  # noqa: F401
+    import pygraphviz  # noqa: F401
 
     HAS_REQS = True
 except ImportError:
@@ -30,7 +30,7 @@ def test_graph():
                 G.add_edge(nodes[line.src], nodes[line.dst])
 
             # layout
-            scale = self.rect[2] / 35
+            self.rect[2] / 35
             # pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
             # pos = nx.nx_agraph.graphviz_layout(G, prog='neato')
             # pos = nx.nx_agraph.graphviz_layout(G, prog='fdp')

@@ -9,7 +9,6 @@ from py2max.m4l import (
     NonIntegerCoordinateWarning,
     add_to_presentation,
     enable_presentation,
-    enforce_integer_coords,
     is_m4l_infrastructure,
     is_presentation_ui,
 )

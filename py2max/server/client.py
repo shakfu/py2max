@@ -36,9 +36,12 @@ except ImportError:
 class ReplClient:
     """Remote REPL client that connects to py2max server."""
 
-    def __init__(self, host: str = "localhost", port: int = 9000):
+    def __init__(
+        self, host: str = "localhost", port: int = 9000, token: Optional[str] = None
+    ):
         self.host = host
         self.port = port
+        self.token = token
         self.ws: Optional[ClientConnection] = None
         self.namespace: Dict[str, Any] = {}
         self.connected = False
@@ -50,6 +53,17 @@ class ReplClient:
 
         try:
             self.ws = await connect(uri)
+
+            # Authenticate before anything else; the server eval/exec's whatever
+            # it receives, so it rejects unauthenticated connections up front.
+            await self.ws.send(json.dumps({"type": "auth", "token": self.token or ""}))
+            auth_response = json.loads(await self.ws.recv())
+            if auth_response.get("type") != "auth_success":
+                raise ConnectionError(
+                    auth_response.get("error", "Authentication failed")
+                    + " (pass the server's token with --token)"
+                )
+
             self.connected = True
 
             # Get initial state from server
@@ -268,17 +282,20 @@ class ReplClient:
                 continue
 
 
-async def start_repl_client(host: str = "localhost", port: int = 9000):
+async def start_repl_client(
+    host: str = "localhost", port: int = 9000, token: Optional[str] = None
+):
     """Start remote REPL client.
 
     Args:
         host: Server hostname
         port: REPL server port (default: 9000)
+        token: Session token printed by the server (required for auth)
 
     Example:
-        >>> await start_repl_client("localhost", 9000)
+        >>> await start_repl_client("localhost", 9000, token="...")
     """
-    client = ReplClient(host, port)
+    client = ReplClient(host, port, token=token)
 
     try:
         await client.connect()

@@ -1,8 +1,7 @@
 """Tests for py2max REPL client functionality."""
 
-import asyncio
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -48,6 +47,58 @@ class TestReplClient:
 
         assert client.host == "192.168.1.1"
         assert client.port == 8888
+
+    def test_init_token(self):
+        """Token is stored for the authentication handshake."""
+        from py2max.server.client import ReplClient
+
+        client = ReplClient(token="abc123")
+        assert client.token == "abc123"
+        # Default is no token.
+        assert ReplClient().token is None
+
+    @pytest.mark.asyncio
+    async def test_connect_authenticates_first(self):
+        """connect() sends the auth token before any other message."""
+        from unittest.mock import patch
+
+        from py2max.server.client import ReplClient
+
+        mock_ws = AsyncMock()
+        mock_ws.send = AsyncMock()
+        mock_ws.recv = AsyncMock(
+            side_effect=[
+                json.dumps({"type": "auth_success"}),
+                json.dumps({"type": "init_response", "info": {}}),
+            ]
+        )
+
+        client = ReplClient(token="tok")
+        with patch("py2max.server.client.connect", AsyncMock(return_value=mock_ws)):
+            await client.connect()
+
+        assert client.connected is True
+        first_msg = json.loads(mock_ws.send.call_args_list[0][0][0])
+        assert first_msg == {"type": "auth", "token": "tok"}
+
+    @pytest.mark.asyncio
+    async def test_connect_auth_failure_raises(self):
+        """connect() raises when the server rejects the token."""
+        from unittest.mock import patch
+
+        from py2max.server.client import ReplClient
+
+        mock_ws = AsyncMock()
+        mock_ws.send = AsyncMock()
+        mock_ws.recv = AsyncMock(
+            return_value=json.dumps({"type": "error", "error": "Authentication failed"})
+        )
+
+        client = ReplClient(token="wrong")
+        with patch("py2max.server.client.connect", AsyncMock(return_value=mock_ws)):
+            with pytest.raises(Exception):
+                await client.connect()
+        assert client.connected is False
 
     @pytest.mark.asyncio
     async def test_execute_not_connected(self, capsys):
@@ -104,7 +155,7 @@ class TestReplClient:
         )
         client.ws = mock_ws
 
-        result = await client.execute("print('Hello, World!')")
+        await client.execute("print('Hello, World!')")
 
         captured = capsys.readouterr()
         assert "Hello, World!" in captured.out
@@ -213,22 +264,26 @@ class TestReplClient:
         """Test successful connection."""
         from py2max.server.client import ReplClient
 
-        client = ReplClient()
+        client = ReplClient(token="tok")
 
-        # Mock the connect function and websocket
+        # Mock the connect function and websocket. recv yields the auth
+        # acknowledgement first, then the init response.
         mock_ws = AsyncMock()
         mock_ws.send = AsyncMock()
         mock_ws.recv = AsyncMock(
-            return_value=json.dumps(
-                {
-                    "type": "init_response",
-                    "info": {
-                        "patcher_path": "test.maxpat",
-                        "num_objects": 5,
-                        "num_connections": 3,
-                    },
-                }
-            )
+            side_effect=[
+                json.dumps({"type": "auth_success"}),
+                json.dumps(
+                    {
+                        "type": "init_response",
+                        "info": {
+                            "patcher_path": "test.maxpat",
+                            "num_objects": 5,
+                            "num_connections": 3,
+                        },
+                    }
+                ),
+            ]
         )
 
         # connect() is an async function that returns a websocket directly
@@ -291,16 +346,19 @@ class TestStartReplClient:
         mock_ws = AsyncMock()
         mock_ws.send = AsyncMock()
         mock_ws.recv = AsyncMock(
-            return_value=json.dumps(
-                {
-                    "type": "init_response",
-                    "info": {
-                        "patcher_path": "test.maxpat",
-                        "num_objects": 0,
-                        "num_connections": 0,
-                    },
-                }
-            )
+            side_effect=[
+                json.dumps({"type": "auth_success"}),
+                json.dumps(
+                    {
+                        "type": "init_response",
+                        "info": {
+                            "patcher_path": "test.maxpat",
+                            "num_objects": 0,
+                            "num_connections": 0,
+                        },
+                    }
+                ),
+            ]
         )
         mock_ws.close = AsyncMock()
 
@@ -311,7 +369,7 @@ class TestStartReplClient:
             with patch(
                 "py2max.server.client.ReplClient.run_repl", new_callable=AsyncMock
             ):
-                result = await start_repl_client("localhost", 9000)
+                result = await start_repl_client("localhost", 9000, token="tok")
 
         assert result == 0
 

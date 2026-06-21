@@ -13,7 +13,7 @@ https://github.com/shakfu/hola-graph
 import pytest
 
 try:
-    from hola_graph._core import Graph, Node, Edge, do_hola, HolaOpts
+    from hola_graph._core import Graph, Node, Edge, do_hola, HolaOpts  # noqa: F401
 
     HAS_HOLA_GRAPH = True
 except ImportError:

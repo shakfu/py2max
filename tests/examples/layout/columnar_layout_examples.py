@@ -75,10 +75,10 @@ def create_typical_synth_patch():
 
     print(f"Created columnar synth patch: {p._path}")
     print(f"Objects organized into {p._layout_mgr.num_columns} functional columns:")
-    print(f"  Column 1 (Controls): metro, floatboxes")
-    print(f"  Column 2 (Generators): cycle~, saw~, noise~")
-    print(f"  Column 3 (Processors): gain~, lores~, delay~")
-    print(f"  Column 4 (Outputs): ezdac~, scope~")
+    print("  Column 1 (Controls): metro, floatboxes")
+    print("  Column 2 (Generators): cycle~, saw~, noise~")
+    print("  Column 3 (Processors): gain~, lores~, delay~")
+    print("  Column 4 (Outputs): ezdac~, scope~")
 
 
 def create_multi_voice_patch():
@@ -152,7 +152,7 @@ def create_multi_voice_patch():
     p.save()
 
     print(f"Created multi-voice patch: {p._path}")
-    print(f"Demonstrates horizontal replication within functional columns")
+    print("Demonstrates horizontal replication within functional columns")
 
 
 if __name__ == "__main__":

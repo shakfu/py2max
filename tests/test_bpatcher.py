@@ -15,6 +15,6 @@ def test_bpatcher():
     bp2 = p.add_bpatcher(
         "test_bpatcher_child", patching_rect=[32.0, 92.0, 140.0, 140.0]
     )
-    dac = p.add("ezdac~")
+    p.add("ezdac~")
     p.link(osc, bp2)
     p.save()

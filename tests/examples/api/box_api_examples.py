@@ -20,8 +20,8 @@ def demonstrate_object_help():
     cycle = p.add_textbox("cycle~ 440")
     umenu = p.add_textbox("umenu")
     biquad = p.add_textbox("biquad~")
-    metro = p.add_textbox("metro 500")
-    select = p.add_textbox("select 0 1 2 3")
+    p.add_textbox("metro 500")
+    p.add_textbox("select 0 1 2 3")
 
     # Get formatted help for objects
     print("=== cycle~ Help ===")
@@ -95,19 +95,19 @@ def demonstrate_object_properties():
     print("Object Properties:")
     print("=" * 30)
 
-    print(f"Oscillator:")
+    print("Oscillator:")
     print(f"  ID: {osc.id}")
     print(f"  Max class: {osc.maxclass}")
     print(f"  Text: {osc.text}")
     print(f"  Position: {osc.patching_rect}")
 
-    print(f"\nGain control:")
+    print("\nGain control:")
     print(f"  ID: {gain.id}")
     print(f"  Max class: {gain.maxclass}")
     print(f"  Text: {gain.text}")
     print(f"  Value: {getattr(gain, 'floatvalue', 'N/A')}")
 
-    print(f"\nComment:")
+    print("\nComment:")
     print(f"  ID: {comment.id}")
     print(f"  Max class: {comment.maxclass}")
     print(f"  Text: {comment.text}")
@@ -152,7 +152,7 @@ def demonstrate_object_validation():
         print(f"✓ Caught invalid inlet: {e}")
 
     # Check object capabilities
-    print(f"\nObject capabilities:")
+    print("\nObject capabilities:")
     print(
         f"cycle~ - Inlets: {cycle.get_inlet_count()}, Outlets: {cycle.get_outlet_count()}"
     )
@@ -208,7 +208,7 @@ def demonstrate_object_types():
 
     print("\nSignal Objects (MSP):")
     for name, obj in signal_objects:
-        info = obj.get_info()
+        obj.get_info()
         print(f"  {name}: {obj.get_inlet_count()}in/{obj.get_outlet_count()}out")
 
     print("\nControl Objects (Max):")

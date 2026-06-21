@@ -8,9 +8,9 @@ import pprint
 import yaml
 
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CLoader as Loader, CDumper as Dumper  # noqa: F401
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Dumper
 
 
 from deepdiff import DeepDiff
@@ -18,7 +18,6 @@ from deepdiff import DeepDiff
 
 def from_json(maxpat) -> dict:
     path = pathlib.Path(maxpat)
-    name = path.stem
     with open(path) as f:
         d = json.load(f)
     return d

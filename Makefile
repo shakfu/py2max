@@ -2,7 +2,7 @@
 # Makefile for py2max project
 
 .PHONY: help all build test test-verbose coverage lint \
-		typecheck quality docs docs-clean docs-serve install \
+		typecheck qa docs docs-clean docs-serve install \
 		dev clean reset ci format check-wheel publish-test publish
 
 help: ## Show this help message
@@ -33,7 +33,7 @@ format: ## Run code formatting
 typecheck: ## Run type checking
 	@uv run mypy py2max
 
-quality: ## Run all quality checks (lint + formatcheck + typecheck)
+qa: ## Run all quality checks (lint + formatcheck + typecheck)
 	@uv run ruff check py2max
 	@uv run ruff format --check
 	@uv run mypy py2max

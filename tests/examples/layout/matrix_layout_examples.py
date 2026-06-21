@@ -197,7 +197,7 @@ def create_effects_chain_matrix():
 
     print(f"Created effects chain patch: {p._path}")
     print(f"Detected {chain_info['num_chains']} signal chains")
-    print(f"Matrix demonstrates parallel input sources feeding into shared effects")
+    print("Matrix demonstrates parallel input sources feeding into shared effects")
 
 
 def demonstrate_signal_chain_analysis():
@@ -250,7 +250,7 @@ def demonstrate_signal_chain_analysis():
     p.save()
 
     print(f"Created analysis demo patch: {p._path}")
-    print(f"Signal chain analysis results:")
+    print("Signal chain analysis results:")
     print(f"  - Number of chains detected: {chain_info['num_chains']}")
     print(f"  - Matrix dimensions: {chain_info['matrix_size']}")
 

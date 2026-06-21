@@ -27,7 +27,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+    # Hardened XML parsing for .maxref.xml (entity-expansion / XXE defense).
+    # Pure-Python with no transitive dependencies.
+    "defusedxml>=0.7.1",
+]
 
 [project.optional-dependencies]
 server = [
@@ -38,6 +42,7 @@ server = [
 [dependency-groups]
 dev = [
     "mypy>=1.4.1",
+    "types-defusedxml>=0.7.0",
     "pytest>=7.4.4",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",

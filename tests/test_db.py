@@ -1,10 +1,8 @@
 """Tests for SQLite database functionality"""
 
-import json
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from py2max.maxref.db import MaxRefDB
 from py2max.maxref import get_object_info

@@ -430,37 +430,13 @@ class Patcher(AbstractPatcher):
         logger.debug(f"Saving patcher to: {path}")
         path = Path(path)
 
-        # Security: Validate path to prevent path traversal attacks
+        # Resolve to an absolute, normalized path. This is an offline file
+        # generator that writes wherever the caller asks; we deliberately do not
+        # police the destination (the previous ".."/"/etc" allowlist was trivially
+        # bypassable and gave a false sense of safety). We still surface genuinely
+        # unresolvable paths as a clear error rather than letting them fail later.
         try:
-            # Check for suspicious path components BEFORE resolving
-            path_str = str(path)
-            if (
-                ".." in path.parts
-                or path_str.startswith("/etc")
-                or path_str.startswith("/sys")
-            ):
-                raise PatcherIOError(
-                    f"Invalid path detected (potential path traversal): {path}",
-                    file_path=str(path),
-                    operation="validate",
-                )
-
-            # Resolve path to absolute and normalize it
             resolved_path = path.resolve()
-
-            # Check for path traversal attempts
-            # Ensure the resolved path is within the current working directory or user-specified location
-            # This prevents attacks like ../../etc/passwd
-            if not resolved_path.is_absolute():
-                raise PatcherIOError(
-                    f"Path must resolve to absolute path: {path}",
-                    file_path=str(path),
-                    operation="validate",
-                )
-
-        except PatcherIOError:
-            # Re-raise PatcherIOError exceptions as-is
-            raise
         except (OSError, RuntimeError) as e:
             raise PatcherIOError(
                 f"Invalid file path: {path}", file_path=str(path), operation="validate"
@@ -480,9 +456,7 @@ class Patcher(AbstractPatcher):
             # Use resolved path for writing
             if resolved_path.suffix.lower() == ".amxd":
                 patcher_dict = self.to_dict()
-                ensure_amxd_project_block(
-                    patcher_dict, device_type=self._device_type
-                )
+                ensure_amxd_project_block(patcher_dict, device_type=self._device_type)
                 payload = json.dumps(patcher_dict, indent=4)
                 resolved_path.write_bytes(
                     pack_amxd(

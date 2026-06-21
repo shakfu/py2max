@@ -1,8 +1,6 @@
 """Tests to achieve 100% coverage for py2max.layout module."""
 
-import pytest
-from unittest.mock import Mock, patch
-from py2max.core import Patcher, Box
+from py2max.core import Patcher
 from py2max.layout import LayoutManager, GridLayoutManager, FlowLayoutManager
 from py2max.core.common import Rect
 
@@ -34,7 +32,7 @@ class TestLayoutCoverage:
         layout_mgr = GridLayoutManager(p)
 
         # Add some objects
-        obj1 = p.add_textbox("obj1")
+        p.add_textbox("obj1")
         obj2 = p.add_textbox("obj2")
 
         # Create a line with None src or dst
@@ -126,9 +124,9 @@ class TestLayoutCoverage:
         layout_mgr = FlowLayoutManager(p)
 
         # Add objects to test flow layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test horizontal flow
         layout_mgr.optimize_layout()
@@ -139,9 +137,9 @@ class TestLayoutCoverage:
         layout_mgr = FlowLayoutManager(p)
 
         # Add objects to test flow layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test vertical flow
         layout_mgr.optimize_layout()
@@ -152,9 +150,9 @@ class TestLayoutCoverage:
         layout_mgr = GridLayoutManager(p, cluster_connected=True)
 
         # Add objects to test grid layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test grid layout
         layout_mgr.optimize_layout()
@@ -165,9 +163,9 @@ class TestLayoutCoverage:
         layout_mgr = GridLayoutManager(p, cluster_connected=False)
 
         # Add objects to test grid layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test grid layout
         layout_mgr.optimize_layout()
@@ -180,9 +178,9 @@ class TestLayoutCoverage:
         )
 
         # Add objects to test vertical layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test vertical layout
         layout_mgr.optimize_layout()
@@ -195,9 +193,9 @@ class TestLayoutCoverage:
         )
 
         # Add objects to test vertical layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test vertical layout
         layout_mgr.optimize_layout()
@@ -210,9 +208,9 @@ class TestLayoutCoverage:
         )
 
         # Add objects to test horizontal layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test horizontal layout
         layout_mgr.optimize_layout()
@@ -225,9 +223,9 @@ class TestLayoutCoverage:
         )
 
         # Add objects to test horizontal layout
-        obj1 = p.add_textbox("obj1")
-        obj2 = p.add_textbox("obj2")
-        obj3 = p.add_textbox("obj3")
+        p.add_textbox("obj1")
+        p.add_textbox("obj2")
+        p.add_textbox("obj3")
 
         # Test horizontal layout
         layout_mgr.optimize_layout()

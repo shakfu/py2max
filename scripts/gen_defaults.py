@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 # sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from py2max import Patcher
 
 
 def convert_patcher_to_dict(maxpat):

@@ -1400,7 +1400,7 @@ if __name__ == "__main__":
         sender = p.add_textbox("s to_py")
         classname = parser.d["name"]
         for name in parser.d["methods"]:
-            m = parser.d["methods"][name]
+            parser.d["methods"][name]
             test_name = f"test_{classname}_{name}()"
             msg = p.add_message(test_name)
             p.add_line(msg, sender)

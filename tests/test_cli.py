@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 
 from py2max import Patcher
 from py2max import cli
