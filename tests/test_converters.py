@@ -7,7 +7,7 @@ from py2max.export.converters import maxpat_to_python, maxref_to_sqlite
 from py2max import Patcher
 
 
-DATA_DIR = Path("tests/data")
+DATA_DIR = Path(__file__).parent / "data"
 OUTPUT_DIR = Path("./outputs")
 
 

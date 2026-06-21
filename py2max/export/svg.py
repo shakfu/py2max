@@ -26,7 +26,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
-    from ..core import Box, Patcher
+    from ..core import Patcher
+    from ..core.abstract import AbstractBox, AbstractPatchline
 
 
 # SVG styling constants
@@ -51,7 +52,7 @@ def _escape_text(text: str) -> str:
     return html.escape(str(text))
 
 
-def _get_box_fill(box: Box) -> str:
+def _get_box_fill(box: AbstractBox) -> str:
     """Determine fill color based on box type."""
     maxclass = getattr(box, "maxclass", "newobj")
     if maxclass == "comment":
@@ -61,7 +62,7 @@ def _get_box_fill(box: Box) -> str:
     return BOX_FILL
 
 
-def _get_box_text(box: Box) -> str:
+def _get_box_text(box: AbstractBox) -> str:
     """Extract display text from a box."""
     text = getattr(box, "text", None)
     if text:
@@ -75,7 +76,7 @@ def _get_box_text(box: Box) -> str:
     return maxclass
 
 
-def _render_box(box, show_ports: bool = True) -> str:
+def _render_box(box: AbstractBox, show_ports: bool = True) -> str:
     """Render a single box to SVG elements."""
     rect = getattr(box, "patching_rect", None)
     if not rect:
@@ -163,7 +164,9 @@ def _render_box(box, show_ports: bool = True) -> str:
     return "\n".join(svg_parts)
 
 
-def _get_port_position(box, port_index: int, is_outlet: bool) -> tuple[float, float]:
+def _get_port_position(
+    box: AbstractBox, port_index: int, is_outlet: bool
+) -> tuple[float, float]:
     """Calculate the x,y position of an inlet or outlet port."""
     rect = getattr(box, "patching_rect", None)
     if not rect:
@@ -208,7 +211,7 @@ def _get_port_position(box, port_index: int, is_outlet: bool) -> tuple[float, fl
     return (port_x, port_y)
 
 
-def _render_patchline(line, patcher: Patcher) -> str:
+def _render_patchline(line: AbstractPatchline, patcher: Patcher) -> str:
     """Render a patchline connection to SVG."""
     # Get source and destination boxes
     src_id = getattr(line, "src", None)

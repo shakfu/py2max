@@ -8,7 +8,10 @@ Main Classes:
     Patcher: Core class for creating and managing Max patches
     Box: Represents individual Max objects (oscillators, effects, etc.)
     Patchline: Represents connections between objects
-    MaxRefDB: SQLite database for Max object reference data
+
+The SQLite Max-reference database is available as ``from py2max.maxref import
+MaxRefDB`` -- kept out of the top-level import so ``import py2max`` does not pull
+in ``sqlite3`` and the database layer.
 
 Exceptions:
     Py2MaxError: Base exception for all py2max errors
@@ -35,7 +38,6 @@ Example:
 __version__ = "0.2.1"
 
 from .core import Box, Patcher, Patchline
-from .maxref import MaxRefDB
 from .exceptions import (
     DatabaseError,
     InvalidConnectionError,
@@ -54,7 +56,6 @@ __all__ = [
     "Patcher",
     "Box",
     "Patchline",
-    "MaxRefDB",
     # Exceptions
     "Py2MaxError",
     "InvalidConnectionError",

@@ -42,6 +42,16 @@ def test_mix_two_sinusoids():
     link(scp2, scop, inlet=1)
     p.save()
 
+    # 7 plain objects + 7 params (each param adds its own label box) = 21
+    # boxes, with 14 connections as built above.
+    assert len(p._boxes) == 21
+    assert len(p._lines) == 14
+
+    # Round-trips through the .maxpat file with identical structure.
+    reloaded = Patcher.from_file("outputs/test_two_sines.maxpat")
+    assert len(reloaded._boxes) == len(p._boxes)
+    assert len(reloaded._lines) == len(p._lines)
+
 
 if __name__ == "__main__":
     test_mix_two_sinusoids()

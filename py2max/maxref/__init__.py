@@ -13,6 +13,8 @@ Example:
     >>> defaults = MAXCLASS_DEFAULTS.get('cycle~')
 """
 
+from typing import Any
+
 # Re-export from parser module (main maxref functionality)
 from .parser import (
     MAXCLASS_DEFAULTS,
@@ -34,9 +36,6 @@ from .parser import (
     replace_tags,
     validate_connection,
 )
-
-# Re-export from db module
-from .db import MaxRefDB
 
 # Re-export category sets for layout managers
 from .category import (
@@ -76,3 +75,16 @@ __all__ = [
     "PROCESSOR_OBJECTS",
     "OUTPUT_OBJECTS",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazily expose MaxRefDB without importing sqlite3/the db layer eagerly.
+
+    Keeps ``from py2max.maxref import MaxRefDB`` working while a plain
+    ``import py2max`` (which imports this package) stays free of sqlite3.
+    """
+    if name == "MaxRefDB":
+        from .db import MaxRefDB
+
+        return MaxRefDB
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

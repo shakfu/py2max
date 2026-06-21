@@ -1,9 +1,17 @@
-"""Legacy Max object class defaults database.
+"""Curated Max object class defaults.
 
-This module provides default attributes for various Max object classes.
-It is maintained for compatibility but has been largely superseded by
-the dynamic maxref.py system which provides more comprehensive and
-up-to-date object information.
+This module provides hand-curated default attributes (maxclass, inlet/outlet
+counts and types, and crucially the correct UI ``patching_rect`` sizes) for the
+common Max objects -- especially native/UI objects like ``gain~`` (a tall
+slider), ``toggle`` (24x24), and ``ezdac~``.
+
+Despite the historical name, this is NOT dead code: it is the authoritative
+*override* layer and takes precedence over the dynamic ``.maxref.xml`` system.
+The maxref parser discovers 1000+ objects but cannot infer correct default
+geometry or UI semantics from the XML (it falls back to a generic 60x22 box),
+so these curated entries win where they exist. See ``MaxClassDefaults`` in
+``parser.py`` for the two-layer lookup (curated overrides first, dynamic
+maxref discovery as the fallback for everything else).
 """
 
 from typing import Any, Dict

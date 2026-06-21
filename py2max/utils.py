@@ -4,6 +4,27 @@ This module provides helper functions for common Max/MSP operations
 such as pitch-to-frequency conversion and other musical calculations.
 """
 
+from typing import Any
+
+
+def object_name(box: Any) -> str:
+    """Resolve the effective Max object name for a box.
+
+    Native-maxclass objects (e.g. ``live.dial``, ``toggle``) carry the name in
+    ``maxclass``. ``newobj`` boxes carry it as the first token of their text.
+
+    Reading the ``text`` property (rather than ``_kwds`` directly) means this
+    works for both programmatically-created boxes and boxes loaded from a file,
+    where the text lives in ``__dict__`` instead of ``_kwds``.
+    """
+    maxclass = getattr(box, "maxclass", "newobj")
+    if maxclass and maxclass != "newobj":
+        return maxclass
+    text = getattr(box, "text", "") or ""
+    tokens = text.split()
+    return tokens[0] if tokens else (maxclass or "")
+
+
 NOTE_TO_SEMITONE = {
     "C": 0,
     "C#": 1,
@@ -29,7 +50,7 @@ NOTE_TO_SEMITONE = {
 }
 
 
-def pitch2freq(pitch, A4=440):
+def pitch2freq(pitch: str, A4: int = 440) -> float:
     """Convert a pitch name to a frequency in Hz.
 
     Converts standard pitch notation (e.g., "C4", "A#3") to frequency

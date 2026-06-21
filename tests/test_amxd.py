@@ -22,6 +22,8 @@ from py2max.exceptions import PatcherIOError
 OUT = Path("outputs")
 OUT.mkdir(exist_ok=True)
 
+DATA_DIR = Path(__file__).parent / "data"
+
 
 def _build_patcher(path: str) -> Patcher:
     p = Patcher(path)
@@ -57,19 +59,19 @@ def test_pack_header_layout():
 def test_pack_byte_for_byte_matches_max_export():
     """Re-pack the JSON from a real Max-exported .amxd; bytes must match exactly."""
     fixtures = [
-        ("outputs/mydevice.amxd", "mydevice.maxpat", 3859919929),
-        ("outputs/mydevice2.amxd", "mydevice2.maxpat", 3859920850),
+        ("mydevice.amxd", "mydevice.maxpat", 3859919929),
+        ("mydevice2.amxd", "mydevice2.maxpat", 3859920850),
     ]
-    for rel, fnam, mtime in fixtures:
-        path = Path(rel)
+    for name, fnam, mtime in fixtures:
+        path = DATA_DIR / name
         if not path.exists():
-            pytest.skip(f"missing fixture: {rel}")
+            pytest.skip(f"missing fixture: {path}")
         original = path.read_bytes()
         json_bytes, dt = unpack_amxd(original)
         repacked = pack_amxd(
             json_bytes, device_type=dt, patcher_filename=fnam, mtime=mtime
         )
-        assert repacked == original, f"mismatch for {rel}"
+        assert repacked == original, f"mismatch for {name}"
 
 
 def test_pack_accepts_str_and_bytes():

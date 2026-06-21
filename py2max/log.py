@@ -30,7 +30,7 @@ import os
 import sys
 import traceback
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
 # ----------------------------------------------------------------------------
 # env helpers
@@ -262,7 +262,9 @@ def log_warning_once(logger: logging.Logger, key: str, message: str) -> None:
 
 
 @contextlib.contextmanager
-def log_operation(logger: logging.Logger, operation: str, **kwargs: Any):
+def log_operation(
+    logger: logging.Logger, operation: str, **kwargs: Any
+) -> Iterator[None]:
     """Context manager for logging operations with timing and error handling.
 
     Logs operation start, completion time, and any errors that occur.

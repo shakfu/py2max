@@ -1,6 +1,6 @@
 """Box class for representing Max objects in a patch."""
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional
 
 from .abstract import AbstractBox
 from .common import Rect
@@ -39,8 +39,8 @@ class Box(AbstractBox):
         numoutlets: Optional[int] = None,
         id: Optional[str] = None,
         patching_rect: Optional[Rect] = None,
-        **kwds,
-    ):
+        **kwds: Any,
+    ) -> None:
         self.id = id
         self.maxclass = maxclass or "newobj"
         self.numinlets = numinlets or 0
@@ -51,22 +51,22 @@ class Box(AbstractBox):
         self._kwds = self._remove_none_entries(kwds)
         self._patcher: Optional["Patcher"] = self._kwds.pop("patcher", None)
 
-    def _remove_none_entries(self, kwds):
+    def _remove_none_entries(self, kwds: Dict[str, Any]) -> Dict[str, Any]:
         """removes items in the dict which have None values.
 
         TODO: make recursive in case of nested dicts.
         """
         return {k: v for k, v in kwds.items() if v is not None}
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         yield self
         if self._patcher:
             yield from iter(self._patcher)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(id='{self.id}', maxclass='{self.maxclass}')"
 
-    def __pt_repr__(self):
+    def __pt_repr__(self) -> Any:
         """Custom representation for ptpython REPL.
 
         Provides rich colored output when displaying objects in the ptpython REPL.
@@ -106,13 +106,13 @@ class Box(AbstractBox):
                 f"at {pos}"
             )
 
-    def render(self):
+    def render(self) -> None:
         """convert self and children to dictionary."""
         if self._patcher:
             self._patcher.render()
             self.patcher = self._patcher.to_dict()
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """create dict from object with extra kwds included"""
         d = vars(self).copy()
         to_del = [k for k in d if k.startswith("_")]
@@ -122,7 +122,7 @@ class Box(AbstractBox):
         return dict(box=d)
 
     @classmethod
-    def from_dict(cls, obj_dict):
+    def from_dict(cls, obj_dict: Dict[str, Any]) -> "Box":
         """create instance from dict"""
         box = cls()
         box.__dict__.update(obj_dict)
@@ -141,12 +141,12 @@ class Box(AbstractBox):
         return None
 
     @property
-    def subpatcher(self):
+    def subpatcher(self) -> Optional["Patcher"]:
         """synonym for parent patcher object"""
         return self._patcher
 
     @property
-    def text(self):
+    def text(self) -> Any:
         """Get the text content of the box."""
         # Check if text is stored as a direct attribute (from file loading)
         if "text" in self.__dict__:
@@ -156,7 +156,7 @@ class Box(AbstractBox):
 
     def add_to_presentation(
         self,
-        rect,
+        rect: Any,
         *,
         strict: bool = False,
     ) -> "Box":
@@ -189,7 +189,7 @@ class Box(AbstractBox):
         """Print formatted help documentation for this Max object."""
         print(self.help_text())
 
-    def get_info(self) -> Optional[dict]:
+    def get_info(self) -> Optional[Dict[str, Any]]:
         """Get complete object information from .maxref.xml files.
 
         Returns:
@@ -244,15 +244,7 @@ class Box(AbstractBox):
         return get_outlet_types(object_name)
 
     def _get_object_name(self) -> str:
-        """Get the actual object name for this Box.
+        """Get the actual Max object name for this Box (see utils.object_name)."""
+        from ..utils import object_name
 
-        For 'newobj' maxclass objects, extract the first word from the text field.
-        For other objects, use the maxclass directly.
-        """
-        if self.maxclass == "newobj":
-            # Text is stored in _kwds for Box objects
-            text = self._kwds.get("text", "")
-            if text:
-                # Extract the first word from text (the object name)
-                return text.split()[0] if text.split() else self.maxclass
-        return self.maxclass
+        return object_name(self)

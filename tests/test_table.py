@@ -1,5 +1,9 @@
+from pathlib import Path
+
 import pytest
 from py2max import Patcher
+
+DATA_DIR = Path(__file__).parent / "data"
 
 try:
     import numpy as np
@@ -34,7 +38,7 @@ def test_table_wavetable1():
     t = np.linspace(0, 1, length, endpoint=False)
     # arr = signal.square(np.pi * 2 * t)
     arr = np.sin(t * 3) * length
-    p = Patcher.from_file("tests/data/tabular.maxpat")
+    p = Patcher.from_file(DATA_DIR / "tabular.maxpat")
 
     table_index, table = p.find_box_with_index("table~")
     table.table_data = list(arr)
@@ -55,7 +59,7 @@ def test_table_wavetable2():
     t = np.linspace(0, 1, length, endpoint=False)
     arr = signal.square(np.pi * 2 * t) * length
     # arr = np.sin(t * 5) * length
-    p = Patcher.from_file("tests/data/tabular.maxpat")
+    p = Patcher.from_file(DATA_DIR / "tabular.maxpat")
 
     table = p.find_box("table~")
     table.table_data = list(arr)

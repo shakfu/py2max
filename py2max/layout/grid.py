@@ -3,7 +3,7 @@
 This module provides GridLayoutManager and legacy aliases for grid-based layouts.
 """
 
-from typing import Dict, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from py2max.core.abstract import AbstractPatcher
 from py2max.core.common import Rect
@@ -82,9 +82,9 @@ class GridLayoutManager(LayoutManager):
         x = pad + x_shift
         return Rect(x, y, w, h)
 
-    def _analyze_object_connections(self) -> dict:
+    def _analyze_object_connections(self) -> Dict[str, Set[str]]:
         """Analyze connections between objects to understand clustering patterns."""
-        connections: Dict[str, set] = {}  # {obj_id: set(connected_obj_ids)}
+        connections: Dict[str, Set[str]] = {}  # {obj_id: set(connected_obj_ids)}
 
         # Initialize all objects with empty connection sets
         for obj_id in self.parent._objects:
@@ -102,12 +102,14 @@ class GridLayoutManager(LayoutManager):
 
         return connections
 
-    def _find_connected_components(self, connections: dict) -> list[set]:
+    def _find_connected_components(
+        self, connections: Dict[str, Set[str]]
+    ) -> List[Set[str]]:
         """Find clusters of connected objects using depth-first search."""
-        visited = set()
-        clusters = []
+        visited: Set[str] = set()
+        clusters: List[Set[str]] = []
 
-        def dfs(obj_id, current_cluster):
+        def dfs(obj_id: str, current_cluster: Set[str]) -> None:
             if obj_id in visited:
                 return
             visited.add(obj_id)
@@ -121,14 +123,14 @@ class GridLayoutManager(LayoutManager):
         # Find all connected components
         for obj_id in connections:
             if obj_id not in visited:
-                cluster: set[str] = set()
+                cluster: Set[str] = set()
                 dfs(obj_id, cluster)
                 if cluster:  # Only add non-empty clusters
                     clusters.append(cluster)
 
         return clusters
 
-    def optimize_layout(self, changed_objects: Optional[Set[str]] = None):
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
         """Optimize the layout to cluster connected objects together.
 
         Args:
@@ -144,7 +146,7 @@ class GridLayoutManager(LayoutManager):
         else:
             self._full_layout()
 
-    def _full_layout(self):
+    def _full_layout(self) -> None:
         """Perform full layout optimization."""
         if not self.cluster_connected or len(self.parent._objects) < 2:
             # Even without clustering, prevent overlaps
@@ -162,7 +164,7 @@ class GridLayoutManager(LayoutManager):
         # Prevent any remaining overlaps after clustering
         self.prevent_overlaps()
 
-    def _apply_clustered_layout(self, clusters: list[set]):
+    def _apply_clustered_layout(self, clusters: List[Set[str]]) -> None:
         """Apply cluster-based positioning to all objects."""
         # pad = self.pad
 
@@ -179,7 +181,7 @@ class GridLayoutManager(LayoutManager):
         else:
             self._apply_horizontal_clustered_layout(clusters)
 
-    def _apply_horizontal_clustered_layout(self, clusters: list[set]):
+    def _apply_horizontal_clustered_layout(self, clusters: List[Set[str]]) -> None:
         """Apply horizontal cluster-based positioning (clusters arranged left-to-right)."""
         pad = self.pad
         num_clusters = len(clusters)
@@ -247,7 +249,7 @@ class GridLayoutManager(LayoutManager):
 
                         obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
 
-    def _apply_vertical_clustered_layout(self, clusters: list[set]):
+    def _apply_vertical_clustered_layout(self, clusters: List[Set[str]]) -> None:
         """Apply vertical cluster-based positioning (clusters arranged top-to-bottom)."""
         pad = self.pad
         num_clusters = len(clusters)
@@ -315,10 +317,10 @@ class GridLayoutManager(LayoutManager):
 
                         obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
 
-    def _subdivide_large_cluster(self, cluster: set) -> list[set]:
+    def _subdivide_large_cluster(self, cluster: Set[str]) -> List[Set[str]]:
         """Subdivide a large cluster into smaller logical groups based on object types."""
         # Group objects by type
-        type_groups: Dict[str, set[str]] = {}
+        type_groups: Dict[str, Set[str]] = {}
 
         for obj_id in cluster:
             obj = self.parent._objects.get(obj_id)

@@ -3,9 +3,9 @@
 This module provides MatrixLayoutManager for matrix and columnar-based layouts.
 """
 
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from py2max.core.abstract import AbstractPatcher
+from py2max.core.abstract import AbstractBox, AbstractPatcher
 from py2max.core.common import Rect
 from py2max.maxref import category
 
@@ -97,7 +97,7 @@ class MatrixLayoutManager(LayoutManager):
         return self.dimension_spacing
 
     @column_spacing.setter
-    def column_spacing(self, value: float):
+    def column_spacing(self, value: float) -> None:
         """Set column spacing and update dimension_spacing (legacy property)."""
         self.dimension_spacing = value
 
@@ -107,7 +107,7 @@ class MatrixLayoutManager(LayoutManager):
         return self.dimension_spacing
 
     @row_spacing.setter
-    def row_spacing(self, value: float):
+    def row_spacing(self, value: float) -> None:
         """Set row spacing and update dimension_spacing (legacy property)."""
         self.dimension_spacing = value
 
@@ -206,13 +206,13 @@ class MatrixLayoutManager(LayoutManager):
 
         return chains
 
-    def _assign_objects_to_matrix_positions(self) -> Dict[str, tuple]:
+    def _assign_objects_to_matrix_positions(self) -> Dict[str, Tuple[int, float]]:
         """Assign each object to a (row, column) position in the matrix.
 
         Returns:
             Dictionary mapping object_id -> (row, column) tuple.
         """
-        positions: Dict[str, tuple[int, float]] = {}
+        positions: Dict[str, Tuple[int, float]] = {}
 
         # Group objects by signal chain and category
         for chain_idx, chain in enumerate(self._signal_chains):
@@ -273,8 +273,13 @@ class MatrixLayoutManager(LayoutManager):
 
         return Rect(x, y, w, h)
 
-    def optimize_layout(self):
-        """Optimize the layout based on flow_direction setting."""
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
+        """Optimize the layout based on flow_direction setting.
+
+        ``changed_objects`` is accepted for interface compatibility with
+        ``LayoutManager`` but ignored: the matrix layout always recomputes the
+        full arrangement from the signal-chain analysis.
+        """
         if len(self.parent._objects) < 1:
             return
 
@@ -285,7 +290,7 @@ class MatrixLayoutManager(LayoutManager):
             # Use matrix layout (signal chains as columns, categories as rows)
             self._optimize_matrix_layout()
 
-    def _optimize_matrix_layout(self):
+    def _optimize_matrix_layout(self) -> None:
         """Optimize the layout by organizing objects into a signal chain matrix."""
         # Step 1: Classify all objects into categories
         for obj_id, obj in self.parent._objects.items():
@@ -304,7 +309,7 @@ class MatrixLayoutManager(LayoutManager):
         # Step 5: Prevent any remaining overlaps
         self.prevent_overlaps()
 
-    def _optimize_columnar_layout(self):
+    def _optimize_columnar_layout(self) -> None:
         """Optimize the layout by organizing objects into functional columns."""
         # Step 1: Classify all objects into columns
         for obj_id, obj in self.parent._objects.items():
@@ -320,7 +325,7 @@ class MatrixLayoutManager(LayoutManager):
         # Step 4: Prevent any remaining overlaps
         self.prevent_overlaps()
 
-    def _apply_matrix_layout(self, positions: Dict[str, tuple]):
+    def _apply_matrix_layout(self, positions: Dict[str, Tuple[int, float]]) -> None:
         """Apply the matrix layout to all objects.
 
         Args:
@@ -470,7 +475,7 @@ class MatrixLayoutManager(LayoutManager):
         visited = set()
         result = []
 
-        def dfs(obj_id):
+        def dfs(obj_id: str) -> None:
             if obj_id in visited:
                 return
             visited.add(obj_id)
@@ -504,7 +509,7 @@ class MatrixLayoutManager(LayoutManager):
 
         return result
 
-    def _classify_object(self, obj) -> int:
+    def _classify_object(self, obj: AbstractBox) -> int:
         """Classify an object and assign it to the appropriate column/row.
 
         Args:
@@ -539,7 +544,7 @@ class MatrixLayoutManager(LayoutManager):
             # For unknown objects, try to infer from connections or name patterns
             return self._infer_column_from_context(obj, object_name)
 
-    def _infer_column_from_context(self, obj, object_name: str) -> int:
+    def _infer_column_from_context(self, obj: AbstractBox, object_name: str) -> int:
         """Infer category assignment from object name patterns and context.
 
         Args:
@@ -597,13 +602,13 @@ class MatrixLayoutManager(LayoutManager):
         # Default to processors category for unknown objects
         return 2
 
-    def _analyze_signal_flow(self) -> Dict[str, set]:
+    def _analyze_signal_flow(self) -> Dict[str, Set[str]]:
         """Analyze signal flow to refine column assignments.
 
         Returns:
             Dictionary mapping object IDs to their connected object IDs.
         """
-        connections: Dict[str, set] = {}
+        connections: Dict[str, Set[str]] = {}
 
         # Initialize all objects with empty connection sets
         for obj_id in self.parent._objects:
@@ -618,7 +623,7 @@ class MatrixLayoutManager(LayoutManager):
 
         return connections
 
-    def _refine_column_assignments_by_flow(self):
+    def _refine_column_assignments_by_flow(self) -> None:
         """Refine column assignments based on signal flow analysis."""
         # For now, disable flow refinement to keep objects in their initial classifications
         # The initial classification should be sufficient for most cases

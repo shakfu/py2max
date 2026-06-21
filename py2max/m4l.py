@@ -45,7 +45,17 @@ import struct
 import time
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    FrozenSet,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from .exceptions import PatcherIOError
 
@@ -117,14 +127,14 @@ def _amxdtype_for(device_type: str) -> int:
     The value is the FOURCC tag reinterpreted as a big-endian uint32:
     "aaaa" -> 0x61616161, "iiii" -> 0x69696969, "mmmm" -> 0x6d6d6d6d.
     """
-    return struct.unpack(">I", _tag_for(device_type))[0]
+    return int(struct.unpack(">I", _tag_for(device_type))[0])
 
 
 def ensure_amxd_project_block(
-    patcher_dict: dict,
+    patcher_dict: Dict[str, Any],
     device_type: str = "audio_effect",
     mtime: Optional[int] = None,
-) -> dict:
+) -> Dict[str, Any]:
     """Ensure the patcher dict carries the embedded ``project`` block Max
     requires for self-contained .amxd devices.
 
@@ -335,7 +345,7 @@ def unpack_amxd(data: bytes) -> Tuple[bytes, str]:
     return json_bytes, device_type
 
 
-def read_amxd(path: Union[str, Path]) -> Tuple[dict, str]:
+def read_amxd(path: Union[str, Path]) -> Tuple[Dict[str, Any], str]:
     """Read an .amxd file.
 
     Returns:
@@ -355,7 +365,7 @@ def read_amxd(path: Union[str, Path]) -> Tuple[dict, str]:
 
 def write_amxd(
     path: Union[str, Path],
-    patcher_dict: dict,
+    patcher_dict: Dict[str, Any],
     *,
     device_type: str = "audio_effect",
     patcher_filename: Optional[str] = None,
@@ -419,7 +429,7 @@ def write_amxd(
 # objects (Live API bridges, routing, device lifecycle) stay in the patcher
 # but must not get presentation=1.
 
-M4L_PRESENTATION_UI_CLASSES: frozenset = frozenset(
+M4L_PRESENTATION_UI_CLASSES: FrozenSet[str] = frozenset(
     {
         "live.dial",
         "live.numbox",
@@ -448,7 +458,7 @@ M4L_PRESENTATION_UI_CLASSES: frozenset = frozenset(
     }
 )
 
-M4L_INFRASTRUCTURE_CLASSES: frozenset = frozenset(
+M4L_INFRASTRUCTURE_CLASSES: FrozenSet[str] = frozenset(
     {
         "live.remote~",
         "live.map",
@@ -501,15 +511,10 @@ def _to_int_rect(rect: Iterable[Union[int, float]], *, context: str) -> List[int
 
 
 def _object_name(box: "Box") -> str:
-    """Resolve the effective object name for classification.
+    """Resolve the effective object name for classification (see utils.object_name)."""
+    from .utils import object_name
 
-    Native-maxclass objects (live.dial, toggle, etc.) carry the name in
-    ``maxclass``. ``newobj`` boxes carry it as the first token of ``text``.
-    """
-    if box.maxclass and box.maxclass != "newobj":
-        return box.maxclass
-    text = getattr(box, "text", "") or ""
-    return text.split()[0] if text else box.maxclass or ""
+    return object_name(box)
 
 
 def is_presentation_ui(box: "Box") -> bool:
@@ -578,9 +583,9 @@ def enable_presentation(
     Ableton's device strip height is fixed at ~170 px; only width is
     author-controlled.
     """
-    patcher.openinpresentation = 1  # type: ignore[attr-defined]
+    patcher.openinpresentation = 1
     if devicewidth is not None:
-        patcher.devicewidth = int(round(devicewidth))  # type: ignore[attr-defined]
+        patcher.devicewidth = int(round(devicewidth))
     return patcher
 
 
@@ -591,7 +596,7 @@ def enforce_integer_coords(patcher: "Patcher") -> int:
     Recurses into nested subpatchers.
     """
 
-    def _round_rect(rect):
+    def _round_rect(rect: Any) -> int:
         """Round a rect in-place. Returns 1 if any coord was non-integer."""
         # Rect dataclass with .x/.y/.w/.h or a plain [x,y,w,h] list.
         if hasattr(rect, "x"):

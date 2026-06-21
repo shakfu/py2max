@@ -1,6 +1,6 @@
 """Patchline class for representing connections between Max objects."""
 
-from typing import Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from .abstract import AbstractPatchline
 
@@ -22,24 +22,27 @@ class Patchline(AbstractPatchline):
     """
 
     def __init__(
-        self, source: Optional[list] = None, destination: Optional[list] = None, **kwds
-    ):
+        self,
+        source: Optional[List[Any]] = None,
+        destination: Optional[List[Any]] = None,
+        **kwds: Any,
+    ) -> None:
         self.source = source or []
         self.destination = destination or []
         self._kwds = kwds
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Patchline({self.source} -> {self.destination})"
 
     @property
-    def src(self):
+    def src(self) -> str:
         """first object from source list"""
-        return self.source[0]
+        return cast(str, self.source[0])
 
     @property
-    def dst(self):
+    def dst(self) -> str:
         """first object from destination list"""
-        return self.destination[0]
+        return cast(str, self.destination[0])
 
     def to_tuple(self) -> Tuple[str, str, str, str, Union[str, int]]:
         """Return a tuple describing the patchline."""
@@ -51,7 +54,7 @@ class Patchline(AbstractPatchline):
             self._kwds.get("order", 0),
         )
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """create dict from object with extra kwds included"""
         d = vars(self).copy()
         to_del = [k for k in d if k.startswith("_")]
@@ -61,7 +64,7 @@ class Patchline(AbstractPatchline):
         return dict(patchline=d)
 
     @classmethod
-    def from_dict(cls, obj_dict: dict):
+    def from_dict(cls, obj_dict: Dict[str, Any]) -> "Patchline":
         """convert to`Patchline` object from dict"""
         patchline = cls()
         patchline.__dict__.update(obj_dict)

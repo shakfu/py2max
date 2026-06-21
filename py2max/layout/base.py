@@ -3,7 +3,7 @@
 This module provides the base LayoutManager class that all layout managers inherit from.
 """
 
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, cast
 
 from py2max.core.abstract import AbstractLayoutManager, AbstractPatcher
 from py2max.core.common import Rect
@@ -61,7 +61,7 @@ class LayoutManager(AbstractLayoutManager):
             Default Rect for the object class, or None if not found.
         """
         try:
-            return MAXCLASS_DEFAULTS[maxclass]["patching_rect"]
+            return cast(Rect, MAXCLASS_DEFAULTS[maxclass]["patching_rect"])
         except KeyError:
             return None
 
@@ -313,7 +313,7 @@ class LayoutManager(AbstractLayoutManager):
         affected = self.get_affected_objects(changed_objects)
         return len(affected) < total_objects * INCREMENTAL_THRESHOLD
 
-    def optimize_layout(self, changed_objects: Optional[Set[str]] = None):
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
         """Optimize the layout of objects.
 
         If changed_objects is provided and the number of affected objects
@@ -337,7 +337,7 @@ class LayoutManager(AbstractLayoutManager):
         else:
             self._full_layout()
 
-    def _full_layout(self):
+    def _full_layout(self) -> None:
         """Perform full layout optimization.
 
         Subclasses should override this method to implement their
@@ -345,7 +345,7 @@ class LayoutManager(AbstractLayoutManager):
         """
         pass
 
-    def _incremental_layout(self, affected_objects: Set[str]):
+    def _incremental_layout(self, affected_objects: Set[str]) -> None:
         """Perform incremental layout optimization for affected objects.
 
         This method repositions only the affected objects while keeping

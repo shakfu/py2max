@@ -39,7 +39,7 @@ class FlowLayoutManager(LayoutManager):
         ] = {}  # Cache positions to avoid recalculation
         self.flow_direction = flow_direction  # "horizontal" or "vertical"
 
-    def _analyze_connections(self) -> dict:
+    def _analyze_connections(self) -> Dict[str, Dict[str, List[str]]]:
         """Analyze patchline connections to build a flow graph."""
         connections: Dict[
             str, Dict[str, List[str]]
@@ -64,10 +64,12 @@ class FlowLayoutManager(LayoutManager):
 
         return connections
 
-    def _calculate_flow_levels(self, connections: dict) -> dict:
+    def _calculate_flow_levels(
+        self, connections: Dict[str, Dict[str, List[str]]]
+    ) -> Dict[str, int]:
         """Calculate hierarchical flow levels for objects based on signal chain depth."""
-        levels = {}
-        visited = set()
+        levels: Dict[str, int] = {}
+        visited: Set[str] = set()
 
         # Find source objects (no inputs)
         sources = [obj_id for obj_id, conn in connections.items() if not conn["inputs"]]
@@ -112,7 +114,7 @@ class FlowLayoutManager(LayoutManager):
 
         return levels
 
-    def _group_by_level(self, levels: dict) -> dict:
+    def _group_by_level(self, levels: Dict[str, int]) -> Dict[int, List[str]]:
         """Group objects by their flow level."""
         groups: Dict[int, List[str]] = {}
         for obj_id, level in levels.items():
@@ -122,7 +124,9 @@ class FlowLayoutManager(LayoutManager):
         return groups
 
     def _minimize_crossings(
-        self, groups: Dict[int, List[str]], connections: dict
+        self,
+        groups: Dict[int, List[str]],
+        connections: Dict[str, Dict[str, List[str]]],
     ) -> Dict[int, List[str]]:
         """Minimize line crossings using the barycenter heuristic.
 
@@ -190,7 +194,7 @@ class FlowLayoutManager(LayoutManager):
 
         return result
 
-    def _calculate_positions(self) -> dict:
+    def _calculate_positions(self) -> Dict[str, Rect]:
         """Calculate optimized positions for all objects."""
         connections = self._analyze_connections()
         levels = self._calculate_flow_levels(connections)
@@ -206,9 +210,11 @@ class FlowLayoutManager(LayoutManager):
         else:
             return self._calculate_horizontal_positions(groups, pad)
 
-    def _calculate_horizontal_positions(self, groups: dict, pad: float) -> dict:
+    def _calculate_horizontal_positions(
+        self, groups: Dict[int, List[str]], pad: float
+    ) -> Dict[str, Rect]:
         """Calculate positions for horizontal (left-to-right) flow."""
-        positions = {}
+        positions: Dict[str, Rect] = {}
         num_levels = max(len(groups), 1)
 
         # Calculate available width per level
@@ -245,9 +251,11 @@ class FlowLayoutManager(LayoutManager):
 
         return positions
 
-    def _calculate_vertical_positions(self, groups: dict, pad: float) -> dict:
+    def _calculate_vertical_positions(
+        self, groups: Dict[int, List[str]], pad: float
+    ) -> Dict[str, Rect]:
         """Calculate positions for vertical (top-to-bottom) flow."""
-        positions = {}
+        positions: Dict[str, Rect] = {}
         num_levels = max(len(groups), 1)
 
         # Calculate available height per level
@@ -373,7 +381,7 @@ class FlowLayoutManager(LayoutManager):
 
         return Rect(x, y, w, h)
 
-    def optimize_layout(self, changed_objects: Optional[Set[str]] = None):
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
         """Optimize the layout of all existing objects based on their connections.
 
         Args:
@@ -392,7 +400,7 @@ class FlowLayoutManager(LayoutManager):
         else:
             self._full_layout()
 
-    def _full_layout(self):
+    def _full_layout(self) -> None:
         """Perform full layout optimization based on signal flow analysis."""
         positions = self._calculate_positions()
 

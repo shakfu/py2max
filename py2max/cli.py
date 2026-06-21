@@ -42,15 +42,13 @@ def _to_pascal_case(name: str) -> str:
     )
 
 
-def _object_name(box) -> str:
-    maxclass = getattr(box, "maxclass", "newobj")
-    text = getattr(box, "text", "") or ""
-    if maxclass == "newobj" and text:
-        return text.split()[0]
-    return maxclass
+def _object_name(box: Any) -> str:
+    from .utils import object_name
+
+    return object_name(box)
 
 
-def _unique_object_labels(boxes: Iterable) -> List[str]:
+def _unique_object_labels(boxes: Iterable[Any]) -> List[str]:
     labels: set[str] = set()
     for box in boxes:
         labels.add(_object_name(box))
@@ -63,7 +61,7 @@ def _coerce_rect(patcher: Patcher) -> None:
         patcher.rect = Rect(*rect)
 
 
-def _format_args(method: dict) -> List[str]:
+def _format_args(method: Dict[str, Any]) -> List[str]:
     args: List[str] = []
     for arg in method.get("args", []):
         name = _sanitize_identifier(arg.get("name", "arg"))
@@ -75,7 +73,7 @@ def _format_args(method: dict) -> List[str]:
     return args
 
 
-def _dump_code(name: str, data: dict) -> None:
+def _dump_code(name: str, data: Dict[str, Any]) -> None:
     class_name = _to_pascal_case(name)
     digest = data.get("digest", "")
     description = data.get("description", "")
@@ -112,7 +110,7 @@ def _dump_code(name: str, data: dict) -> None:
         print("        raise NotImplementedError\n")
 
 
-def _dump_tests(name: str, data: dict) -> None:
+def _dump_tests(name: str, data: Dict[str, Any]) -> None:
     base = _sanitize_identifier(name)
     for method_name, method in sorted(data.get("methods", {}).items()):
         identifier = _sanitize_identifier(method_name)
@@ -123,7 +121,7 @@ def _dump_tests(name: str, data: dict) -> None:
         print("    # TODO: implement test\n")
 
 
-def _generate_test_source(name: str, data: dict) -> str:
+def _generate_test_source(name: str, data: Dict[str, Any]) -> str:
     base = _sanitize_identifier(name)
     lines = [
         "from py2max.maxref import MaxRefCache",
@@ -1124,7 +1122,7 @@ def main(argv: List[str] | None = None) -> int:
         return 1
 
     try:
-        return args.func(args)
+        return cast(int, args.func(args))
     except InvalidConnectionError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

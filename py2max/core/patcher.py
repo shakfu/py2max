@@ -15,11 +15,10 @@ Example:
 
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 
 from py2max import layout as layout_module
 from py2max import maxref
-from py2max.m4l import ensure_amxd_project_block, pack_amxd, unpack_amxd
 from py2max.exceptions import InvalidConnectionError, PatcherIOError
 from py2max.log import get_logger, log_operation
 
@@ -194,16 +193,16 @@ class Patcher(AbstractPatcher):
         self.style = ""
         self.subpatcher_template = ""
         self.assistshowspatchername = 0
-        self.boxes: list[dict] = []
-        self.lines: list[dict] = []
+        self.boxes: List[Dict[str, Any]] = []
+        self.lines: List[Dict[str, Any]] = []
         # self.parameters: dict = {}
-        self.dependency_cache: list = []
+        self.dependency_cache: List[Any] = []
         self.autosave = 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path='{self._path}')"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         yield self
         for box in self._boxes:
             yield from iter(box)
@@ -296,7 +295,9 @@ class Patcher(AbstractPatcher):
         return self.rect.h
 
     @classmethod
-    def from_dict(cls, patcher_dict: dict, save_to: Optional[str] = None) -> "Patcher":
+    def from_dict(
+        cls, patcher_dict: Dict[str, Any], save_to: Optional[str] = None
+    ) -> "Patcher":
         """create a patcher instance from a dict"""
 
         if save_to:
@@ -333,6 +334,9 @@ class Patcher(AbstractPatcher):
         path = Path(path)
         device_type: Optional[str] = None
         if path.suffix.lower() == ".amxd":
+            # Lazy import: m4l is a feature layer, kept off core's import path.
+            from py2max.m4l import unpack_amxd
+
             payload, device_type = unpack_amxd(path.read_bytes())
             maxpat = json.loads(payload)
         else:
@@ -343,7 +347,7 @@ class Patcher(AbstractPatcher):
             patcher._device_type = device_type
         return patcher
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """create dict from object with extra kwds included"""
         d = vars(self).copy()
         to_del = [k for k in d if k.startswith("_")]
@@ -358,11 +362,23 @@ class Patcher(AbstractPatcher):
         self.render()
         return json.dumps(self.to_dict(), indent=4)
 
+    @staticmethod
+    def _matches(box: AbstractBox, text: str) -> bool:
+        """True if a box matches ``text`` by exact maxclass or text prefix.
+
+        Shared predicate for the ``find*`` methods, which differ only in scope
+        (recursive vs flat) and return shape, not in match semantics.
+        """
+        if box.maxclass == text:
+            return True
+        box_text = getattr(box, "text", "")
+        return bool(box_text and box_text.startswith(text))
+
     def find(self, text: str) -> Optional["Box"]:
         """Find box object by maxclass or text pattern.
 
-        Recursively searches through all objects in the patch to find
-        one matching the specified maxclass or text pattern.
+        Recursively searches through all objects in the patch (including
+        subpatchers) to find one matching the specified maxclass or text prefix.
 
         Args:
             text: The maxclass name or text pattern to search for.
@@ -371,38 +387,28 @@ class Patcher(AbstractPatcher):
             The first matching Box object, or None if not found.
         """
         for obj in self:
-            if not isinstance(obj, Patcher):
-                if obj.maxclass == text:
-                    return obj
-                if hasattr(obj, "text"):
-                    if obj.text and obj.text.startswith(text):
-                        return obj
+            if not isinstance(obj, Patcher) and self._matches(obj, text):
+                return cast("Box", obj)
         return None
 
     def find_box(self, text: str) -> Optional["Box"]:
-        """find box object by maxclass or type
+        """Find a box in this patcher (non-recursive) by maxclass or text prefix.
 
         returns box if found else None
         """
         for box in self._objects.values():
-            if box.maxclass == text:
+            if self._matches(box, text):
                 return cast("Box", box)
-            if hasattr(box, "text"):
-                if box.text and box.text.startswith(text):
-                    return cast("Box", box)
         return None
 
     def find_box_with_index(self, text: str) -> Optional[Tuple[int, "Box"]]:
-        """find box object by maxclass or type
+        """Find a box and its index by maxclass or text prefix (non-recursive).
 
         returns (index, box) if found
         """
         for i, box in enumerate(self._boxes):
-            if box.maxclass == text:
+            if self._matches(box, text):
                 return (i, cast("Box", box))
-            if hasattr(box, "text"):
-                if box.text and box.text.startswith(text):
-                    return (i, cast("Box", box))
         return None
 
     def render(self, reset: bool = False) -> None:
@@ -455,6 +461,9 @@ class Patcher(AbstractPatcher):
 
             # Use resolved path for writing
             if resolved_path.suffix.lower() == ".amxd":
+                # Lazy import: m4l is a feature layer, kept off core's import path.
+                from py2max.m4l import ensure_amxd_project_block, pack_amxd
+
                 patcher_dict = self.to_dict()
                 ensure_amxd_project_block(patcher_dict, device_type=self._device_type)
                 payload = json.dumps(patcher_dict, indent=4)
@@ -653,16 +662,12 @@ class Patcher(AbstractPatcher):
     def _get_object_name(self, obj: AbstractBox) -> str:
         """Get the actual object name for validation purposes.
 
-        For 'newobj' maxclass objects, extract the first word from the text field.
-        For other objects, use the maxclass directly.
+        See ``utils.object_name``. Uses the box ``text`` property so it resolves
+        correctly for both programmatic and file-loaded boxes.
         """
-        if obj.maxclass == "newobj":
-            # Text is stored in _kwds for Box objects
-            text = obj._kwds.get("text", "")
-            if text:
-                # Extract the first word from text (the object name)
-                return text.split()[0] if text.split() else obj.maxclass
-        return obj.maxclass
+        from ..utils import object_name
+
+        return object_name(obj)
 
     def add_box(
         self,
@@ -682,7 +687,7 @@ class Patcher(AbstractPatcher):
 
     def add_associated_comment(
         self, box: "Box", comment: str, comment_pos: Optional[str] = None
-    ):
+    ) -> None:
         """Store a comment association to be processed later during layout optimization or save.
 
         This defers the actual comment positioning until after layout optimization,
@@ -876,7 +881,7 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add a text-based Max object to the patch.
 
@@ -947,7 +952,7 @@ class Patcher(AbstractPatcher):
             comment_pos,
         )
 
-    def _textbox_helper(self, maxclass, kwds: dict) -> dict:
+    def _textbox_helper(self, maxclass: str, kwds: Dict[str, Any]) -> Dict[str, Any]:
         """adds special case support for textbox"""
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = maxclass
@@ -961,7 +966,7 @@ class Patcher(AbstractPatcher):
                     )
         return kwds
 
-    def _add_float(self, value, *args, **kwds) -> "Box":
+    def _add_float(self, value: float, *args: Any, **kwds: Any) -> "Box":
         """type-handler for float values in `add`"""
 
         assert isinstance(value, float)
@@ -979,7 +984,7 @@ class Patcher(AbstractPatcher):
             "should be: .add(<float>, '<name>') OR .add(<float>, name='<name>')"
         )
 
-    def _add_int(self, value, *args, **kwds) -> "Box":
+    def _add_int(self, value: int, *args: Any, **kwds: Any) -> "Box":
         """type-handler for int values in `add`"""
 
         assert isinstance(value, int)
@@ -997,7 +1002,7 @@ class Patcher(AbstractPatcher):
             "should be: .add(<int>, '<name>') OR .add(<int>, name='<name>')"
         )
 
-    def _add_str(self, value, *args, **kwds) -> "Box":
+    def _add_str(self, value: str, *args: Any, **kwds: Any) -> "Box":
         """type-handler for str values in `add`"""
 
         assert isinstance(value, str)
@@ -1008,7 +1013,7 @@ class Patcher(AbstractPatcher):
         # first check _maxclass_methods
         # these methods don't need the maxclass, just the `text` tail of value
         if maxclass in self._maxclass_methods:
-            return self._maxclass_methods[maxclass](txt, **kwds)  # type: ignore
+            return cast("Box", self._maxclass_methods[maxclass](txt, **kwds))
         # next two require value as a whole
         if maxclass == "p":
             return self.add_subpatcher(value, **kwds)
@@ -1018,7 +1023,7 @@ class Patcher(AbstractPatcher):
             return self.add_rnbo(value, **kwds)
         return self.add_textbox(text=value, **kwds)
 
-    def add(self, value, *args, **kwds) -> "Box":
+    def add(self, value: Any, *args: Any, **kwds: Any) -> "Box":
         """generic adder: value can be a number or a list or text for an object."""
 
         if isinstance(value, float):
@@ -1039,8 +1044,8 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        tilde=False,
-        **kwds,
+        tilde: bool = False,
+        **kwds: Any,
     ) -> "Box":
         """Add a codebox."""
 
@@ -1076,7 +1081,7 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add a codebox_tilde"""
         return self.add_codebox(
@@ -1090,7 +1095,7 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add a max message."""
 
@@ -1115,7 +1120,7 @@ class Patcher(AbstractPatcher):
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         justify: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add a basic comment object."""
         if justify:
@@ -1136,7 +1141,7 @@ class Patcher(AbstractPatcher):
         comment_pos: Optional[str] = None,
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add an int box object."""
 
@@ -1163,7 +1168,7 @@ class Patcher(AbstractPatcher):
         comment_pos: Optional[str] = None,
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add an float box object."""
 
@@ -1196,7 +1201,7 @@ class Patcher(AbstractPatcher):
         hint: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add a float parameter object."""
 
@@ -1240,7 +1245,7 @@ class Patcher(AbstractPatcher):
         hint: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add an int parameter object."""
 
@@ -1282,9 +1287,9 @@ class Patcher(AbstractPatcher):
         hint: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        autovar=True,
-        show_label=False,
-        **kwds,
+        autovar: bool = True,
+        show_label: bool = False,
+        **kwds: Any,
     ) -> "Box":
         """create a param-linke attrui entry"""
         if autovar:
@@ -1324,7 +1329,7 @@ class Patcher(AbstractPatcher):
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         patcher: Optional["Patcher"] = None,
-        **kwds,
+        **kwds: Any,
     ) -> "Box":
         """Add a subpatcher object."""
 
@@ -1344,7 +1349,9 @@ class Patcher(AbstractPatcher):
             )
         )
 
-    def add_gen(self, text: Optional[str] = None, tilde=False, **kwds):
+    def add_gen(
+        self, text: Optional[str] = None, tilde: bool = False, **kwds: Any
+    ) -> "Box":
         """Add a gen object."""
         prefix = "gen~" if tilde else "gen"
         _text = f"{prefix} {text}" if text else prefix
@@ -1352,15 +1359,15 @@ class Patcher(AbstractPatcher):
             _text, patcher=Patcher(parent=self, classnamespace="dsp.gen"), **kwds
         )
 
-    def add_gen_tilde(self, text: Optional[str] = None, **kwds):
+    def add_gen_tilde(self, text: Optional[str] = None, **kwds: Any) -> "Box":
         """Add a gen~ object."""
         return self.add_gen(text=text, tilde=True, **kwds)
 
-    def add_rnbo(self, text: str = "rnbo~", **kwds):
+    def add_rnbo(self, text: str = "rnbo~", **kwds: Any) -> "Box":
         """Add an rnbo~ object."""
         if "inletInfo" not in kwds:
             if "numinlets" in kwds:
-                inletInfo: dict[str, list] = {"IOInfo": []}
+                inletInfo: Dict[str, List[Any]] = {"IOInfo": []}
                 for i in range(kwds["numinlets"]):
                     inletInfo["IOInfo"].append(
                         dict(comment="", index=i + 1, tag=f"in{i + 1}", type="signal")
@@ -1368,7 +1375,7 @@ class Patcher(AbstractPatcher):
                 kwds["inletInfo"] = inletInfo
         if "outletInfo" not in kwds:
             if "numoutlets" in kwds:
-                outletInfo: dict[str, list] = {"IOInfo": []}
+                outletInfo: Dict[str, List[Any]] = {"IOInfo": []}
                 for i in range(kwds["numoutlets"]):
                     outletInfo["IOInfo"].append(
                         dict(comment="", index=i + 1, tag=f"out{i + 1}", type="signal")
@@ -1382,19 +1389,19 @@ class Patcher(AbstractPatcher):
     def add_coll(
         self,
         name: Optional[str] = None,
-        dictionary: Optional[dict] = None,
+        dictionary: Optional[Dict[Any, Any]] = None,
         embed: int = 1,
         patching_rect: Optional[Rect] = None,
         text: Optional[str] = None,
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
-    ):
+        **kwds: Any,
+    ) -> "Box":
         """Add a coll object with option to pre-populate from a py dictionary."""
         extra = {"saved_object_attributes": {"embed": embed, "precision": 6}}
         if dictionary:
-            extra["coll_data"] = {  # type: ignore
+            extra["coll_data"] = {
                 "count": len(dictionary.keys()),
                 "data": [{"key": k, "value": v} for k, v in dictionary.items()],  # type: ignore
             }
@@ -1419,15 +1426,15 @@ class Patcher(AbstractPatcher):
     def add_dict(
         self,
         name: Optional[str] = None,
-        dictionary: Optional[dict] = None,
+        dictionary: Optional[Dict[Any, Any]] = None,
         embed: int = 1,
         patching_rect: Optional[Rect] = None,
         text: Optional[str] = None,
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
-    ):
+        **kwds: Any,
+    ) -> "Box":
         """Add a dict object with option to pre-populate from a py dictionary."""
         extra = {
             "saved_object_attributes": {
@@ -1465,9 +1472,9 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        tilde=False,
-        **kwds,
-    ):
+        tilde: bool = False,
+        **kwds: Any,
+    ) -> "Box":
         """Add a table object with option to pre-populate from a py list."""
 
         extra = {
@@ -1514,8 +1521,8 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
-    ):
+        **kwds: Any,
+    ) -> "Box":
         """Add a table~ object with option to pre-populate from a py list."""
 
         return self.add_table(
@@ -1540,8 +1547,8 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
-    ):
+        **kwds: Any,
+    ) -> "Box":
         """Add a itable object with option to pre-populate from a py list."""
 
         extra = {
@@ -1575,12 +1582,12 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
-    ):
+        **kwds: Any,
+    ) -> "Box":
         """Add a umenu object with option to pre-populate items from a py list."""
 
         # interleave commas in a list
-        def _commas(xs):
+        def _commas(xs: List[str]) -> List[str]:
             return [i for pair in zip(xs, [","] * len(xs)) for i in pair]
 
         return self.add_box(
@@ -1592,7 +1599,7 @@ class Patcher(AbstractPatcher):
                 outlettype=["int", "", ""],
                 autopopulate=autopopulate or 1,
                 depth=depth or 1,
-                items=_commas(items) or [],
+                items=_commas(cast(List[str], items)) or [],
                 prefix=prefix or "",
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds,
@@ -1619,8 +1626,8 @@ class Patcher(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds,
-    ):
+        **kwds: Any,
+    ) -> "Box":
         """Add a bpatcher object -- name or patch of bpatcher .maxpat is required."""
 
         return self.add_box(
@@ -1646,7 +1653,7 @@ class Patcher(AbstractPatcher):
             comment_pos,
         )
 
-    def add_beap(self, name: str, **kwds):
+    def add_beap(self, name: str, **kwds: Any) -> "Box":
         """Add a beap bpatcher object."""
 
         _varname = name if ".maxpat" not in name else name.rstrip(".maxpat")

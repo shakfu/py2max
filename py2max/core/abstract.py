@@ -6,7 +6,7 @@ between core.py and layout.py modules.
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Dict, Iterator, Optional, Union
 
 from .common import Rect
 
@@ -60,7 +60,7 @@ class AbstractBox(ABC):
     id: Optional[str]
     maxclass: str
     patching_rect: Rect
-    _kwds: dict
+    _kwds: Dict[str, Any]
 
     @abstractmethod
     def render(self) -> None:
@@ -68,12 +68,12 @@ class AbstractBox(ABC):
         ...
 
     @abstractmethod
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the box to a dictionary representation."""
         ...
 
     @abstractmethod
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """Make the box iterable."""
         ...
 
@@ -99,7 +99,7 @@ class AbstractPatchline(ABC):
         ...
 
     @abstractmethod
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the patchline to a dictionary representation."""
         ...
 

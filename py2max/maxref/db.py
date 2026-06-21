@@ -5,7 +5,8 @@ import sqlite3
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from types import TracebackType
+from typing import Any, Dict, Iterator, List, Optional, Type, Union
 
 from .parser import (
     get_all_jit_objects,
@@ -101,7 +102,12 @@ class MaxRefDB:
         """Context manager entry"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         """Context manager exit - close connection"""
         self.close()
 
@@ -152,7 +158,7 @@ class MaxRefDB:
         return db
 
     @contextmanager
-    def _get_cursor(self):
+    def _get_cursor(self) -> Iterator[sqlite3.Cursor]:
         """Context manager for database cursor"""
         if self._conn is not None:
             # Use persistent connection for in-memory databases
@@ -177,7 +183,7 @@ class MaxRefDB:
             finally:
                 conn.close()
 
-    def _init_schema(self):
+    def _init_schema(self) -> None:
         """Create database schema"""
         with self._get_cursor() as cursor:
             # Main objects table
@@ -382,7 +388,7 @@ class MaxRefDB:
 
     def populate(
         self, object_names: Optional[List[str]] = None, category: Optional[str] = None
-    ):
+    ) -> None:
         """Populate database from .maxref.xml files
 
         Args:
@@ -412,7 +418,7 @@ class MaxRefDB:
                 self.insert_object(name, data)
 
     # Deprecated methods - use populate() instead
-    def populate_from_maxref(self, object_names: Optional[List[str]] = None):
+    def populate_from_maxref(self, object_names: Optional[List[str]] = None) -> None:
         """Populate database from .maxref.xml files (deprecated: use populate())
 
         Args:
@@ -420,23 +426,23 @@ class MaxRefDB:
         """
         self.populate(object_names)
 
-    def populate_all_objects(self):
+    def populate_all_objects(self) -> None:
         """Populate database with all available Max objects (deprecated: use populate())"""
         self.populate(category=None)
 
-    def populate_all_max_objects(self):
+    def populate_all_max_objects(self) -> None:
         """Populate database with all Max objects (deprecated: use populate(category='max'))"""
         self.populate(category="max")
 
-    def populate_all_jit_objects(self):
+    def populate_all_jit_objects(self) -> None:
         """Populate database with all Jitter objects (deprecated: use populate(category='jit'))"""
         self.populate(category="jit")
 
-    def populate_all_msp_objects(self):
+    def populate_all_msp_objects(self) -> None:
         """Populate database with all MSP objects (deprecated: use populate(category='msp'))"""
         self.populate(category="msp")
 
-    def populate_all_m4l_objects(self):
+    def populate_all_m4l_objects(self) -> None:
         """Populate database with all Max for Live objects (deprecated: use populate(category='m4l'))"""
         self.populate(category="m4l")
 
@@ -525,7 +531,11 @@ class MaxRefDB:
                 )
 
     def _insert_inlets_outlets(
-        self, cursor: sqlite3.Cursor, object_id: int, items: List[Dict], table: str
+        self,
+        cursor: sqlite3.Cursor,
+        object_id: int,
+        items: List[Dict[str, Any]],
+        table: str,
     ) -> None:
         """Insert inlet or outlet records."""
         id_col = "inlet_id" if table == "inlets" else "outlet_id"
@@ -549,7 +559,7 @@ class MaxRefDB:
             )
 
     def _insert_objargs(
-        self, cursor: sqlite3.Cursor, object_id: int, objargs: List[Dict]
+        self, cursor: sqlite3.Cursor, object_id: int, objargs: List[Dict[str, Any]]
     ) -> None:
         """Insert object argument records."""
         exclude = ["name", "optional", "type", "digest", "description"]
@@ -571,7 +581,10 @@ class MaxRefDB:
             )
 
     def _insert_methods(
-        self, cursor: sqlite3.Cursor, object_id: int, methods: Dict[str, Dict]
+        self,
+        cursor: sqlite3.Cursor,
+        object_id: int,
+        methods: Dict[str, Dict[str, Any]],
     ) -> None:
         """Insert method records and their arguments."""
         method_exclude = ["digest", "description", "args", "attributes"]
@@ -609,7 +622,10 @@ class MaxRefDB:
                 )
 
     def _insert_attributes(
-        self, cursor: sqlite3.Cursor, object_id: int, attributes: Dict[str, Dict]
+        self,
+        cursor: sqlite3.Cursor,
+        object_id: int,
+        attributes: Dict[str, Dict[str, Any]],
     ) -> None:
         """Insert attribute records and their enum values."""
         attr_exclude = [
@@ -661,7 +677,7 @@ class MaxRefDB:
                 )
 
     def _insert_examples(
-        self, cursor: sqlite3.Cursor, object_id: int, examples: List[Dict]
+        self, cursor: sqlite3.Cursor, object_id: int, examples: List[Dict[str, Any]]
     ) -> None:
         """Insert example records."""
         exclude = ["name", "caption"]
@@ -855,7 +871,8 @@ class MaxRefDB:
         cursor.execute("SELECT attrs FROM parameter WHERE object_id = ?", (object_id,))
         row = cursor.fetchone()
         if row and row["attrs"]:
-            return json.loads(row["attrs"])
+            result: Dict[str, Any] = json.loads(row["attrs"])
+            return result
         return {}
 
     def get_object(self, name: str) -> Optional[Dict[str, Any]]:
@@ -983,7 +1000,8 @@ class MaxRefDB:
         """Total number of objects in database"""
         with self._get_cursor() as cursor:
             cursor.execute("SELECT COUNT(*) as count FROM objects")
-            return cursor.fetchone()["count"]
+            count: int = cursor.fetchone()["count"]
+            return count
 
     @property
     def objects(self) -> List[str]:
@@ -1000,7 +1018,7 @@ class MaxRefDB:
         """
         return self.count
 
-    def export(self, output_path: Path):
+    def export(self, output_path: Path) -> None:
         """Export entire database to JSON file
 
         Args:
@@ -1008,7 +1026,7 @@ class MaxRefDB:
         """
         with self._get_cursor() as cursor:
             cursor.execute("SELECT name FROM objects ORDER BY name")
-            all_objects = {}
+            all_objects: Dict[str, Optional[Dict[str, Any]]] = {}
 
             for row in cursor.fetchall():
                 name = row["name"]
@@ -1016,7 +1034,7 @@ class MaxRefDB:
 
             output_path.write_text(json.dumps(all_objects, indent=2))
 
-    def export_to_json(self, output_path: Path):
+    def export_to_json(self, output_path: Path) -> None:
         """Export entire database to JSON file (deprecated: use export())
 
         Args:
@@ -1024,7 +1042,7 @@ class MaxRefDB:
         """
         self.export(output_path)
 
-    def load(self, input_path: Path):
+    def load(self, input_path: Path) -> None:
         """Import objects from JSON file
 
         Args:
@@ -1034,7 +1052,7 @@ class MaxRefDB:
         for name, obj_data in data.items():
             self.insert_object(name, obj_data)
 
-    def import_from_json(self, input_path: Path):
+    def import_from_json(self, input_path: Path) -> None:
         """Import objects from JSON file (deprecated: use load())
 
         Args:
@@ -1068,7 +1086,7 @@ class MaxRefDB:
             location = str(self.db_path)
         return f"MaxRefDB({location}, {self.count} objects)"
 
-    def _auto_populate_cache(self):
+    def _auto_populate_cache(self) -> None:
         """Auto-populate cache database with all Max objects"""
         import sys
 

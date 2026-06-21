@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import textwrap
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 from ..core import Patcher
 from ..maxref.db import MaxRefDB
@@ -57,7 +57,7 @@ def _format_value(value: object) -> str:
 
 
 def _build_subpatch_function(
-    name: str, patcher_dict: dict, ctx: _CodeGenContext
+    name: str, patcher_dict: dict[str, Any], ctx: _CodeGenContext
 ) -> str:
     attr_block, box_block, line_block, _ = _build_patcher_sections(
         patcher_dict, ctx, "sp", f"{name}_obj", "    "
@@ -72,7 +72,7 @@ def _build_subpatch_function(
 
 
 def _build_patcher_attribute_lines(
-    patcher_dict: dict, patcher_var: str, indent: str
+    patcher_dict: dict[str, Any], patcher_var: str, indent: str
 ) -> str:
     lines: list[str] = []
     keys_present: set[str] = set()
@@ -95,7 +95,7 @@ def _build_patcher_attribute_lines(
     return "\n".join(lines) + ("\n" if lines else "")
 
 
-def _format_box(box: dict) -> tuple[str, dict[str, object]]:
+def _format_box(box: dict[str, Any]) -> tuple[str, dict[str, object]]:
     if "patcher" in box:
         raise NotImplementedError("Subpatcher conversion is not yet supported")
 
@@ -147,7 +147,7 @@ class _CodeGenContext:
 
 
 def _build_patcher_sections(
-    patcher_dict: dict,
+    patcher_dict: dict[str, Any],
     ctx: _CodeGenContext,
     patcher_var: str,
     obj_prefix: str,
@@ -164,7 +164,7 @@ def _build_patcher_sections(
 
 
 def _build_boxes_block(
-    box_entries: list,
+    box_entries: list[dict[str, Any]],
     ctx: _CodeGenContext,
     patcher_var: str,
     obj_prefix: str,
@@ -192,7 +192,10 @@ def _build_boxes_block(
 
 
 def _build_lines_block(
-    lines_data: list, id_var_map: dict[str, str], patcher_var: str, indent: str
+    lines_data: list[dict[str, Any]],
+    id_var_map: dict[str, str],
+    patcher_var: str,
+    indent: str,
 ) -> str:
     lines_out: list[str] = []
     for idx, entry in enumerate(lines_data, start=1):
@@ -276,7 +279,7 @@ def maxpat_to_python(
 __all__ = ["maxpat_to_python", "maxref_to_sqlite"]
 
 
-def _infer_category(ref_path: Path, data: dict) -> str:
+def _infer_category(ref_path: Path, data: dict[str, Any]) -> str:
     parts = {part.lower() for part in ref_path.parts}
     if "jit-ref" in parts or "jit" in parts:
         return "jit"

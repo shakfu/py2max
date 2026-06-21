@@ -1,10 +1,14 @@
+from pathlib import Path
+
 from py2max import Patcher, Box
+
+DATA_DIR = Path(__file__).parent / "data"
 
 
 def test_nested():
     boxes = []
     patchers = []
-    p = Patcher.from_file("tests/data/nested.maxpat")
+    p = Patcher.from_file(DATA_DIR / "nested.maxpat")
     for obj in p:  # recursive iteration
         if isinstance(obj, Box):
             boxes.append(obj)
@@ -14,5 +18,5 @@ def test_nested():
 
 
 def test_find_in_nested():
-    p = Patcher.from_file("tests/data/nested.maxpat")
+    p = Patcher.from_file(DATA_DIR / "nested.maxpat")
     assert p.find("phasor").text == "phasor~"

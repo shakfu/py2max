@@ -70,3 +70,9 @@ module-name = "py2max"
 module-root = ""
 source-include = ["CHANGELOG.md", "tests/**"]
 
+[tool.mypy]
+# Full strict checking, backing the shipped py.typed marker. The whole package
+# is annotated to pass `mypy --strict`.
+python_version = "3.9"
+strict = true
+

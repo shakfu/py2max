@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from py2max import Patcher
 import json
+
+DATA_DIR = Path(__file__).parent / "data"
 
 
 def test_patcher_basics():
@@ -20,7 +24,7 @@ def test_patcher_basics():
 
 def test_patcher_from_file():
     p = Patcher.from_file(
-        "tests/data/complex.maxpat", save_to="outputs/test_complex.maxpat"
+        DATA_DIR / "complex.maxpat", save_to="outputs/test_complex.maxpat"
     )
     assert len(p._boxes) == len(p.boxes) == 53
     assert len(list(p)) == 60
@@ -30,14 +34,14 @@ def test_patcher_from_file():
 
 
 def test_patcher_from_file_comparison_complex():
-    pd = Patcher.from_file("tests/data/complex.maxpat").to_dict()
-    with open("tests/data/complex.maxpat") as f:
+    pd = Patcher.from_file(DATA_DIR / "complex.maxpat").to_dict()
+    with open(DATA_DIR / "complex.maxpat") as f:
         d = json.load(f)
     assert pd == d
 
 
 def test_patcher_from_file_comparison_simple():
-    pd = Patcher.from_file("tests/data/simple.maxpat").to_dict()
-    with open("tests/data/simple.maxpat") as f:
+    pd = Patcher.from_file(DATA_DIR / "simple.maxpat").to_dict()
+    with open(DATA_DIR / "simple.maxpat") as f:
         d = json.load(f)
     assert pd == d

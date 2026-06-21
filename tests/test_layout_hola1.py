@@ -59,7 +59,10 @@ def test_build_graph():
 
 @pytest.mark.skipif(not HAS_ADAPTAGRAMS, reason="requires adaptagrams")
 def test_hola_from_random_graph():
-    g = buildGraphFromTglfFile("tests/graphs/random/v30e33.tglf")
+    from pathlib import Path
+
+    graph_file = Path(__file__).parent / "graphs" / "random" / "v30e33.tglf"
+    g = buildGraphFromTglfFile(str(graph_file))
     assert g.getNumNodes() == 30
     assert g.getNumEdges() == 33
 

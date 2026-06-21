@@ -6,7 +6,7 @@ import platform
 from pathlib import Path
 from textwrap import fill
 from xml.etree import ElementTree
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from ..core.common import Rect
 from ..log import get_logger, log_exception, log_warning_once
@@ -233,7 +233,9 @@ class MaxRefCache:
 
         return data
 
-    def _extract_metadata(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_metadata(
+        self, root: ElementTree.Element, data: Dict[str, Any]
+    ) -> None:
         """Extract metadata information"""
         metadatalist = root.find("metadatalist")
         if metadatalist is not None:
@@ -248,7 +250,9 @@ class MaxRefCache:
                     else:
                         data["metadata"][name] = metadata.text.strip()
 
-    def _extract_inlets_outlets(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_inlets_outlets(
+        self, root: ElementTree.Element, data: Dict[str, Any]
+    ) -> None:
         """Extract inlet and outlet information"""
         data["inlets"] = []
         inletlist = root.find("inletlist")
@@ -278,13 +282,13 @@ class MaxRefCache:
                     outlet_data["description"] = desc_elem.text.strip()
                 data["outlets"].append(outlet_data)
 
-    def _extract_palette(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_palette(self, root: ElementTree.Element, data: Dict[str, Any]) -> None:
         """Extract palette information"""
         palette = root.find("palette")
         if palette is not None:
             data["palette"] = dict(palette.attrib)
 
-    def _extract_objargs(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_objargs(self, root: ElementTree.Element, data: Dict[str, Any]) -> None:
         """Extract object arguments"""
         objarglist = root.find("objarglist")
         if objarglist is not None:
@@ -298,20 +302,24 @@ class MaxRefCache:
                     arg_data["description"] = desc_elem.text.strip()
                 data["objargs"].append(arg_data)
 
-    def _extract_parameter(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_parameter(
+        self, root: ElementTree.Element, data: Dict[str, Any]
+    ) -> None:
         """Extract parameter information"""
         parameter = root.find("parameter")
         if parameter is not None:
             data["parameter"] = dict(parameter.attrib)
 
-    def _extract_examples(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_examples(
+        self, root: ElementTree.Element, data: Dict[str, Any]
+    ) -> None:
         """Extract example information"""
         examplelist = root.find("examplelist")
         if examplelist is not None:
             for example in examplelist.findall("example"):
                 data["examples"].append(dict(example.attrib))
 
-    def _extract_seealso(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_seealso(self, root: ElementTree.Element, data: Dict[str, Any]) -> None:
         """Extract see also references"""
         seealsolist = root.find("seealsolist")
         if seealsolist is not None:
@@ -320,7 +328,7 @@ class MaxRefCache:
                 if name:
                     data["seealso"].append(name)
 
-    def _extract_misc(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_misc(self, root: ElementTree.Element, data: Dict[str, Any]) -> None:
         """Extract misc information like Output and Connections"""
         for misc in root.findall("misc"):
             misc_name = misc.get("name")
@@ -333,7 +341,9 @@ class MaxRefCache:
                         if desc_elem is not None and desc_elem.text:
                             data["misc"][misc_name][entry_name] = desc_elem.text.strip()
 
-    def _extract_attributes(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_attributes(
+        self, root: ElementTree.Element, data: Dict[str, Any]
+    ) -> None:
         """Extract attribute information with full nested structure"""
         attributelist = root.find("attributelist")
         if attributelist is not None:
@@ -381,7 +391,7 @@ class MaxRefCache:
 
                     data["attributes"][name] = attr_data
 
-    def _extract_methods(self, root: ElementTree.Element, data: Dict[str, Any]):
+    def _extract_methods(self, root: ElementTree.Element, data: Dict[str, Any]) -> None:
         """Extract method information with full argument and attribute support"""
         methodlist = root.find("methodlist")
         if methodlist is not None:
@@ -706,39 +716,50 @@ def get_outlet_types(maxclass: str) -> List[str]:
     return []
 
 
-# Build a compatibility layer for the old MAXCLASS_DEFAULTS
+# Two-layer object-defaults lookup exposed under the historical
+# MAXCLASS_DEFAULTS name.
 class MaxClassDefaults:
-    """Compatibility wrapper that provides legacy MAXCLASS_DEFAULTS interface
-    while using dynamic .maxref.xml loading"""
+    """Object-defaults lookup with two layers.
+
+    1. Curated overrides (``legacy.MAXCLASS_DEFAULTS``) -- authoritative,
+       hand-tuned defaults for common/UI objects, including the correct
+       ``patching_rect`` geometry the XML cannot provide.
+    2. Dynamic maxref discovery (``get_legacy_defaults`` over ``.maxref.xml``)
+       -- the fallback for the long tail of objects not in layer 1.
+
+    Curated overrides win on purpose: maxref-derived defaults use a generic
+    60x22 box and cannot infer UI sizes, so an object present in both layers
+    must use its curated entry.
+    """
 
     def __contains__(self, key: str) -> bool:
-        """Check if object exists in .maxref.xml files or legacy defaults"""
+        """True if the object has curated defaults or a known .maxref.xml entry."""
         from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
         return key in LEGACY_DEFAULTS or get_object_info(key) is not None
 
     def __getitem__(self, key: str) -> Dict[str, Any]:
-        """Get defaults for an object, preferring legacy, falling back to .maxref.xml"""
+        """Get defaults: curated override first, then dynamic maxref discovery."""
         from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
         if key in LEGACY_DEFAULTS:
             return LEGACY_DEFAULTS[key]
 
-        # Try to get from .maxref.xml
-        legacy_defaults = get_legacy_defaults(key)
-        if legacy_defaults:
-            return legacy_defaults
+        # Fall back to defaults derived dynamically from .maxref.xml.
+        derived_defaults = get_legacy_defaults(key)
+        if derived_defaults:
+            return derived_defaults
 
         raise KeyError(f"No defaults found for maxclass '{key}'")
 
-    def get(self, key: str, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         """Get defaults with fallback"""
         try:
             return self[key]
         except KeyError:
             return default
 
-    def keys(self):
+    def keys(self) -> Set[str]:
         """Get all available keys"""
         from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
