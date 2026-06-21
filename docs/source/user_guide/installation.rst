@@ -61,13 +61,16 @@ To verify the installation works correctly:
 Optional Dependencies
 ---------------------
 
-For the interactive server and REPL features:
+The interactive browser-based server and REPL now live in the separate
+``py2max-server`` package:
 
 .. code-block:: bash
 
-   pip install py2max[server]
+   pip install py2max-server
 
-This installs ``websockets`` and ``ptpython`` for the live editing server and interactive REPL.
+This pulls in ``py2max`` plus ``websockets`` and ``ptpython`` for the live
+editing server and interactive REPL. See
+https://github.com/shakfu/py2max-server.
 
 For enhanced layout algorithms, you can optionally install:
 

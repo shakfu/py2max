@@ -6,20 +6,10 @@ import platform
 from pathlib import Path
 from textwrap import fill
 from xml.etree import ElementTree
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..core.common import Rect
 from ..log import get_logger, log_exception, log_warning_once
-
-# Prefer defusedxml so parsing untrusted .maxref.xml content cannot trigger
-# entity-expansion ("billion laughs") or external-entity attacks. It returns the
-# same xml.etree Element type used throughout this module; the annotation lets the
-# stdlib fallback share one type despite the differing keyword signatures.
-_xml_fromstring: Callable[..., ElementTree.Element]
-try:
-    from defusedxml.ElementTree import fromstring as _xml_fromstring
-except ImportError:  # pragma: no cover - defusedxml is a declared dependency
-    _xml_fromstring = ElementTree.fromstring
 
 # Module logger
 logger = get_logger(__name__)
@@ -158,7 +148,7 @@ class MaxRefCache:
             logger.debug(f"Parsing MaxRef XML for '{name}' from {filename}")
 
             cleaned = self._clean_text(filename.read_text())
-            root = _xml_fromstring(cleaned)
+            root = ElementTree.fromstring(cleaned)
 
             data = self._parse_maxref(root)
             self._cache[name] = data

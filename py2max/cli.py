@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from pprint import pprint
@@ -640,112 +639,16 @@ def cmd_db_cache(args: argparse.Namespace) -> int:
 
 
 def cmd_serve(args: argparse.Namespace) -> int:
-    """Start interactive WebSocket server for a patcher."""
-    import asyncio
-
-    input_path = Path(args.input)
-
-    if not input_path.exists():
-        print(f"Input file not found: {input_path}", file=sys.stderr)
-        return 1
-
-    # Check if websockets is installed
-    import importlib.util
-
-    if importlib.util.find_spec("websockets") is None:
-        print("Error: websockets package required for server.", file=sys.stderr)
-        print("Install with: pip install websockets", file=sys.stderr)
-        return 1
-
-    # Check if ptpython is installed (if --repl requested)
-    if args.repl:
-        if importlib.util.find_spec("ptpython") is None:
-            print("Error: ptpython package required for REPL.", file=sys.stderr)
-            print(
-                "Install with: pip install ptpython or uv add ptpython", file=sys.stderr
-            )
-            return 1
-
-    # Load patcher
-    patcher = Patcher.from_file(input_path)
-    _coerce_rect(patcher)
-
-    # Start interactive server
-    try:
-        print(f"Starting server for: {input_path}")
-        print(f"HTTP server: http://localhost:{args.port}")
-        print(f"WebSocket server: ws://localhost:{args.port + 1}")
-        print("Interactive editing enabled - changes sync bidirectionally")
-        if not args.no_save:
-            print(f"Auto-save enabled: changes will be saved to {input_path}")
-        if args.repl:
-            print("REPL mode enabled - type 'commands()' for help")
-        print("Press Ctrl+C to stop")
-
-        async def run_server():
-            # Check if using single-terminal mode (Option 2b)
-            if args.repl and args.log_file:
-                # Option 2b: Single terminal with log redirection
-                from .server.inline import start_background_server_repl
-
-                log_file_path = Path(args.log_file)
-                await start_background_server_repl(
-                    patcher, port=args.port, log_file=log_file_path
-                )
-                return
-
-            # Option 2a: Client-server mode (default)
-            server = await patcher.serve(port=args.port, auto_open=not args.no_open)
-
-            # Start REPL server (always running, can connect remotely)
-            from .server.rpc import start_repl_server
-
-            repl_port = args.port + 2  # HTTP=8000, WS=8001, REPL=8002
-            repl_server = await start_repl_server(patcher, server, port=repl_port)
-            token = getattr(server.handler, "session_token", None)
-            connect_cmd = f"py2max repl localhost:{repl_port}"
-            if token:
-                connect_cmd += f" --token {token}"
-
-            print()
-            print("=" * 70)
-            print("REPL server started")
-            print(f"Connect with: {connect_cmd}")
-            print("=" * 70)
-            print()
-
-            if args.repl:
-                # Show deprecation warning if --repl used without --log-file
-                print("WARNING: --repl flag without --log-file is deprecated.")
-                print("For single-terminal mode, use: --repl --log-file server.log")
-                print(
-                    "For client-server mode (recommended), in a separate terminal run:"
-                )
-                print(f"  {connect_cmd}")
-                print()
-
-            # Keep running until interrupted
-            try:
-                while True:
-                    await asyncio.sleep(1)
-            except KeyboardInterrupt:
-                print("\nStopping server...")
-                repl_server.close()
-                await repl_server.wait_closed()
-                await server.stop()
-
-        asyncio.run(run_server())
-        return 0
-
-    except KeyboardInterrupt:
-        print("\nStopping server...")
-        return 0
-    except Exception as e:
-        print(f"Error starting server: {e}", file=sys.stderr)
-        import traceback
-
-        traceback.print_exc()
-        return 1
+    """The interactive server moved to the separate py2max-server package."""
+    target = getattr(args, "input", None) or "<patch.maxpat>"
+    print(
+        "The interactive server has moved to the separate 'py2max-server' package.\n"
+        "Install it and use its CLI instead:\n"
+        "    pip install py2max-server\n"
+        f"    py2max-server serve {target}",
+        file=sys.stderr,
+    )
+    return 1
 
 
 def cmd_preview(args: argparse.Namespace) -> int:
@@ -795,58 +698,16 @@ def cmd_preview(args: argparse.Namespace) -> int:
 
 
 def cmd_repl(args: argparse.Namespace) -> int:
-    """Connect to remote REPL server."""
-    import asyncio
-
-    # Parse server address
-    server = args.server
-    if ":" in server:
-        host, port_str = server.rsplit(":", 1)
-        try:
-            port = int(port_str)
-        except ValueError:
-            print(f"Invalid port number: {port_str}", file=sys.stderr)
-            return 1
-    else:
-        host = server
-        port = 9000
-
-    # Check if websockets is installed
-    import importlib.util
-
-    if importlib.util.find_spec("websockets") is None:
-        print("Error: websockets package required for REPL client.", file=sys.stderr)
-        print("Install with: pip install websockets", file=sys.stderr)
-        return 1
-
-    # Check if ptpython is installed
-    if importlib.util.find_spec("ptpython") is None:
-        print("Error: ptpython package required for REPL.", file=sys.stderr)
-        print("Install with: pip install ptpython or uv add ptpython", file=sys.stderr)
-        return 1
-
-    # Resolve the session token (CLI flag takes precedence over env var)
-    token = args.token or os.environ.get("PY2MAX_REPL_TOKEN")
-    if not token:
-        print(
-            "Error: a session token is required. Pass --token <token> "
-            "(printed by the server) or set PY2MAX_REPL_TOKEN.",
-            file=sys.stderr,
-        )
-        return 1
-
-    # Start REPL client
-    try:
-        from .server.client import start_repl_client
-
-        return asyncio.run(start_repl_client(host, port, token=token))
-
-    except KeyboardInterrupt:
-        print("\nDisconnected.")
-        return 0
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
+    """The remote REPL moved to the separate py2max-server package."""
+    target = getattr(args, "server", None) or "localhost:9000"
+    print(
+        "The remote REPL has moved to the separate 'py2max-server' package.\n"
+        "Install it and use its CLI instead:\n"
+        "    pip install py2max-server\n"
+        f"    py2max-server repl {target}",
+        file=sys.stderr,
+    )
+    return 1
 
 
 def cmd_maxref(args: argparse.Namespace) -> int:

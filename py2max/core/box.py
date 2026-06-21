@@ -71,8 +71,14 @@ class Box(AbstractBox):
 
         Provides rich colored output when displaying objects in the ptpython REPL.
         Shows object type, ID, position, and text content in a readable format.
+
+        prompt_toolkit is not a dependency of py2max core; this hook only fires
+        under ptpython (which provides it). Fall back to plain repr otherwise.
         """
-        from prompt_toolkit.formatted_text import HTML
+        try:
+            from prompt_toolkit.formatted_text import HTML  # type: ignore[import-not-found]
+        except ImportError:
+            return repr(self)
 
         # Get object details
         obj_type = self.maxclass or "newobj"

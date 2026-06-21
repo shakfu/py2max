@@ -11,9 +11,13 @@ If you are looking for Python 3 externals for Max/MSP, check out the [py-js](htt
 
 ```bash
 pip install py2max
+```
 
-# With interactive server support
-pip install py2max[server]
+For the browser-based live editor and remote REPL, install the companion
+[`py2max-server`](https://github.com/shakfu/py2max-server) package:
+
+```bash
+pip install py2max-server
 ```
 
 For development:
@@ -50,12 +54,15 @@ That's it! Open `my-synth.maxpat` in Max to see your patch.
 - **Universal Object Support** - Works with any Max/MSP/Jitter object
 - **99% Test Coverage** - 418+ tests ensure reliability
 
-### Interactive Server (New in 0.2.x)
+### Interactive Server (separate package)
 
-Real-time browser-based patch editing with bidirectional sync:
+Real-time browser-based patch editing with bidirectional sync lives in the
+companion [`py2max-server`](https://github.com/shakfu/py2max-server) package, so
+the core library stays small and offline:
 
 ```bash
-py2max serve my-patch.maxpat
+pip install py2max-server
+py2max-server serve my-patch.maxpat
 # Opens browser at http://localhost:8000
 ```
 
@@ -250,12 +257,15 @@ py2max validate demo.maxpat
 
 ### Interactive Server
 
+Provided by the separate [`py2max-server`](https://github.com/shakfu/py2max-server)
+package (`pip install py2max-server`):
+
 ```bash
 # Start server with browser editing
-py2max serve my-patch.maxpat
+py2max-server serve my-patch.maxpat
 
 # With REPL in same terminal
-py2max serve my-patch.maxpat --repl
+py2max-server serve my-patch.maxpat --repl
 ```
 
 ### MaxRef Database
@@ -315,7 +325,7 @@ All classes are extendable via `**kwargs`, allowing any Max object configuration
 
 ## Caveats
 
-- Max doesn't refresh from file when open - close and reopen to see changes, or use `py2max serve` for live editing
+- Max doesn't refresh from file when open - close and reopen to see changes, or use `py2max-server serve` (from the separate `py2max-server` package) for live editing
 - For tilde variants, use the `_tilde` suffix: `p.add_gen()` vs `p.add_gen_tilde()`
 - API docs in progress - see `CLAUDE.md` for comprehensive usage
 

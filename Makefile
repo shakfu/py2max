@@ -9,7 +9,7 @@ help: ## Show this help message
 	@echo "Available commands:"
 	@awk 'BEGIN {FS = ":.*##"; printf "\033[36m%-12s\033[0m %s\n", "Command", "Description"} /^[a-zA-Z_-]+:.*?##/ { printf "\033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-all: quality test docs ## Run all checks and build everything
+all: qa docs ## Run all checks and build everything
 
 build: ## Build wheel
 	@uv build
@@ -28,15 +28,12 @@ lint: ## Run code linting
 	@uv run ruff check py2max --fix
 
 format: ## Run code formatting
-	@uv run ruff format .
+	@uv run ruff format py2max/
 
 typecheck: ## Run type checking
-	@uv run mypy py2max
+	@uv run mypy py2max/
 
-qa: ## Run all quality checks (lint + formatcheck + typecheck)
-	@uv run ruff check py2max
-	@uv run ruff format --check
-	@uv run mypy py2max
+qa: lint test typecheck format 
 
 docs: ## Build documentation
 	@cd docs && uv run sphinx-build -b html source build

@@ -123,40 +123,22 @@ Note: `'unsafe-inline'` for scripts is required only for the authentication toke
 
 ---
 
-## 4. Secure XML Parsing (MODERATE Priority - FIXED)
+## 4. XML Parsing (REVIEWED - stdlib is intentional)
 
-### Issue
+### Decision
 
-Used standard `xml.etree.ElementTree` which is vulnerable to:
+`py2max/maxref/parser.py` parses `.maxref.xml` with the standard library
+`xml.etree.ElementTree`, by design. XXE and XML-bomb defenses (e.g. `defusedxml`)
+were considered and deliberately not adopted: `.maxref.xml` files are read only
+from a trusted local Max installation (`Max.app/.../refpages`), or from the
+prebuilt bundle we generate from that same source. There is no untrusted XML
+input path, so hardening the parser would add a runtime dependency without
+mitigating a real threat. Keeping core dependency-free is the higher priority.
 
-- XXE (XML External Entity) attacks
-- XML bomb attacks (billion laughs)
+If a future feature parses XML from an untrusted source, revisit this and route
+that path through a hardened parser.
 
-### Fix Implemented
-
-- **File:** `py2max/maxref.py`
-- Replaced with `defusedxml.ElementTree` when available
-- Falls back to standard library with clear warning
-- Added proper error handling with logging
-
-### Changes
-
-```python
-# Use defusedxml for secure XML parsing
-try:
-    import defusedxml.ElementTree as ElementTree
-except ImportError:
-    from xml.etree import ElementTree
-    import warnings
-    warnings.warn(
-        "defusedxml not installed. XML parsing may be vulnerable to XXE and XML bomb attacks. "
-        "Install with: pip install defusedxml",
-        UserWarning,
-        stacklevel=2
-    )
-```
-
-### Error Handling Improved
+### Error Handling
 
 ```python
 try:
@@ -227,32 +209,13 @@ $ uv run pytest tests/ -k "not graph and not layout" --tb=short -q
 250 passed, 3 skipped, 87 deselected, 1 warning in 5.09s
 ```
 
-The warning is expected and intentional (defusedxml not installed in test environment).
-
 ---
 
 ## Installation Requirements
 
-For maximum security, install the optional security dependencies:
-
-```bash
-pip install defusedxml
-```
-
-Or add to `pyproject.toml`:
-
-```toml
-[project.optional-dependencies]
-security = [
-    "defusedxml>=0.7.1"
-]
-```
-
-Then install with:
-
-```bash
-pip install py2max[security]
-```
+None. py2max core has no runtime dependencies. XML parsing uses the standard
+library because `.maxref.xml` comes only from a trusted Max installation (see
+section 4).
 
 ---
 
@@ -331,7 +294,7 @@ If you were directly importing or extending the WebSocket handler, note the new 
 
 - [x] **WebSocket Authentication** - Token-based auth with constant-time comparison
 - [x] **XSS Protection** - CSP headers implemented
-- [x] **XML Parsing Security** - defusedxml integration with fallback warnings
+- [x] **XML Parsing** - reviewed; stdlib parsing kept intentionally (trusted source, see section 4)
 - [x] **Path Traversal Protection** - Path validation and normalization
 - [x] **Error Handling** - Proper error logging instead of silent failures
 - [x] **Security Headers** - X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
