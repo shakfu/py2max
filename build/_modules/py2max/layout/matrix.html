@@ -1,0 +1,764 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max.layout.matrix &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/abstract.html">py2max.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/common.html">py2max.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">py2max.layout.matrix</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for py2max.layout.matrix</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Matrix/columnar layout manager for py2max patches.</span>
+
+<span class="sd">This module provides MatrixLayoutManager for matrix and columnar-based layouts.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.core.abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractPatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.core.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.maxref</span><span class="w"> </span><span class="kn">import</span> <span class="n">category</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayoutManager</span>
+
+
+<div class="viewcode-block" id="MatrixLayoutManager">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.MatrixLayoutManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MatrixLayoutManager</span><span class="p">(</span><span class="n">LayoutManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unified matrix/columnar layout manager with configurable flow direction.</span>
+
+<span class="sd">    This layout manager can organize objects in two different patterns based on flow_direction:</span>
+
+<span class="sd">    When flow_direction=&quot;column&quot; (Columnar Layout):</span>
+<span class="sd">    ```</span>
+<span class="sd">    Column 0: Controls/Inputs  | Column 1: Generators | Column 2: Processors | Column 3: Outputs</span>
+<span class="sd">    [control0]                 | [gen0]               | [proc0]              | [output0]</span>
+<span class="sd">    [input0]                   | [gen1]               | [proc1]              | [output1]</span>
+<span class="sd">    [control1]                 | [gen2]               | [proc2]              | [output2]</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    When flow_direction=&quot;row&quot; (Matrix Layout):</span>
+<span class="sd">    ```</span>
+<span class="sd">    Row 0 (Inputs/Controls): [input0/control0] [input1/control1] [input2/control2] ...</span>
+<span class="sd">    Row 1 (Generators):     [gen0]             [gen1]             [gen2]             ...</span>
+<span class="sd">    Row 2 (Processors):     [proc0]            [proc1]            [proc2]            ...</span>
+<span class="sd">    Row 3 (Outputs):        [output0]          [output1]          [output2]          ...</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    In column mode, objects are grouped by functional category into vertical columns.</span>
+<span class="sd">    In row mode, signal chains form columns while functional categories form rows.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        parent: The parent patcher object.</span>
+<span class="sd">        pad: Padding between objects (default: 48.0).</span>
+<span class="sd">        box_width: Default object width (default: 66.0).</span>
+<span class="sd">        box_height: Default object height (default: 22.0).</span>
+<span class="sd">        comment_pad: Padding for comments (default: 2).</span>
+<span class="sd">        flow_direction: Layout direction - &quot;column&quot; or &quot;row&quot; (default: &quot;row&quot;).</span>
+<span class="sd">        num_dimensions: Number of columns (in column mode) or rows (in row mode) (default: 4).</span>
+<span class="sd">        dimension_spacing: Extra spacing between dimensions (default: 100.0).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MatrixLayoutManager.__init__">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.MatrixLayoutManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">AbstractPatcher</span><span class="p">,</span>
+        <span class="n">pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">comment_pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">flow_direction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span>
+        <span class="n">num_dimensions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">dimension_spacing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+        <span class="c1"># Legacy parameters for backward compatibility</span>
+        <span class="n">num_rows</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">row_spacing</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">column_spacing</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># Handle legacy parameters</span>
+        <span class="k">if</span> <span class="n">num_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">num_dimensions</span> <span class="o">=</span> <span class="n">num_rows</span>
+        <span class="k">if</span> <span class="n">row_spacing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dimension_spacing</span> <span class="o">=</span> <span class="n">row_spacing</span>
+        <span class="k">elif</span> <span class="n">column_spacing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dimension_spacing</span> <span class="o">=</span> <span class="n">column_spacing</span>
+
+        <span class="c1"># Initialize parent layout manager</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">box_width</span><span class="p">,</span> <span class="n">box_height</span><span class="p">,</span> <span class="n">comment_pad</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">flow_direction</span> <span class="o">=</span> <span class="n">flow_direction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span> <span class="o">=</span> <span class="n">num_dimensions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span> <span class="o">=</span> <span class="n">dimension_spacing</span>
+
+        <span class="c1"># Legacy properties for backward compatibility</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">=</span> <span class="n">num_dimensions</span>
+
+        <span class="c1"># Layout-specific properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signal_chains</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span>
+            <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Each inner list is a connected signal chain (used in row mode)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chain_assignments</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># object_id -&gt; chain_index (used in row mode)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_column_assignments</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># object_id -&gt; column/category assignment (used in both modes)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">column_spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get column spacing (legacy property).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span>
+
+    <span class="nd">@column_spacing</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">column_spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set column spacing and update dimension_spacing (legacy property).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">row_spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get row spacing (legacy property).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span>
+
+    <span class="nd">@row_spacing</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">row_spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set row spacing and update dimension_spacing (legacy property).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_signal_chains</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze connections to identify separate signal chains.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of signal chains, where each chain is a list of connected object IDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build directed connection graph</span>
+        <span class="n">connections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># obj_id -&gt; [connected_obj_ids]</span>
+        <span class="n">reverse_connections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># obj_id -&gt; [objects_connecting_to_this]</span>
+
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">reverse_connections</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_lines</span><span class="p">:</span>
+            <span class="n">src_id</span><span class="p">,</span> <span class="n">dst_id</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">dst</span>
+            <span class="k">if</span> <span class="n">src_id</span> <span class="ow">and</span> <span class="n">dst_id</span> <span class="ow">and</span> <span class="n">src_id</span> <span class="ow">in</span> <span class="n">connections</span> <span class="ow">and</span> <span class="n">dst_id</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">src_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dst_id</span><span class="p">)</span>
+                <span class="n">reverse_connections</span><span class="p">[</span><span class="n">dst_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">src_id</span><span class="p">)</span>
+
+        <span class="c1"># Find signal chains by tracing from sources to sinks</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">chains</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">trace_chain</span><span class="p">(</span><span class="n">start_obj</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Trace a signal chain from a starting object.&quot;&quot;&quot;</span>
+            <span class="n">chain</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">current</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_obj</span>
+            <span class="n">chain_visited</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+            <span class="k">while</span> <span class="n">current</span> <span class="ow">and</span> <span class="n">current</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chain_visited</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+                <span class="n">chain_visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+                <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+
+                <span class="c1"># Find next object in chain (prefer single output connections)</span>
+                <span class="n">next_objects</span> <span class="o">=</span> <span class="n">connections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_objects</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">current</span> <span class="o">=</span> <span class="n">next_objects</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_objects</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># Multiple outputs - choose based on object type priority</span>
+                    <span class="c1"># Prefer continuing to processors/outputs over controls</span>
+                    <span class="n">next_current</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">for</span> <span class="n">next_obj</span> <span class="ow">in</span> <span class="n">next_objects</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">next_obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+                            <span class="n">next_obj_category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_object</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">[</span><span class="n">next_obj</span><span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="n">next_obj_category</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Processors or outputs</span>
+                                <span class="n">next_current</span> <span class="o">=</span> <span class="n">next_obj</span>
+                                <span class="k">break</span>
+                    <span class="n">current</span> <span class="o">=</span> <span class="n">next_current</span> <span class="ow">or</span> <span class="n">next_objects</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">current</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">return</span> <span class="n">chain</span>
+
+        <span class="c1"># Start from objects with no inputs (sources) or minimal inputs</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">obj_id</span> <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">inputs</span> <span class="ow">in</span> <span class="n">reverse_connections</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+        <span class="p">]</span>
+
+        <span class="c1"># If no clear sources, start from input/control objects</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sources</span><span class="p">:</span>
+            <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">obj_id</span>
+                <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="p">]</span>  <span class="c1"># Input/Control objects</span>
+
+        <span class="c1"># Trace chains from sources</span>
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">source</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                <span class="n">chain</span> <span class="o">=</span> <span class="n">trace_chain</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">chain</span><span class="p">:</span>
+                    <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+
+        <span class="c1"># Handle remaining unvisited objects (disconnected or in cycles)</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj_id</span> <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span> <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">remaining</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                <span class="n">chain</span> <span class="o">=</span> <span class="n">trace_chain</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">chain</span><span class="p">:</span>
+                    <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Single disconnected object - create a chain with just this object</span>
+                    <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">obj_id</span><span class="p">])</span>
+                    <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">chains</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_assign_objects_to_matrix_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assign each object to a (row, column) position in the matrix.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping object_id -&gt; (row, column) tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Group objects by signal chain and category</span>
+        <span class="k">for</span> <span class="n">chain_idx</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_signal_chains</span><span class="p">):</span>
+            <span class="c1"># Within each chain, group by category (row)</span>
+            <span class="n">chain_by_category</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">i</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span><span class="p">)</span>
+            <span class="p">}</span>
+
+            <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span>
+                    <span class="n">obj_category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                    <span class="n">obj_category</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="n">obj_category</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="p">)</span>  <span class="c1"># Ensure valid row</span>
+                    <span class="n">chain_by_category</span><span class="p">[</span><span class="n">obj_category</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_chain_assignments</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">chain_idx</span>
+
+            <span class="c1"># Assign positions within this chain (column)</span>
+            <span class="k">for</span> <span class="n">cat</span><span class="p">,</span> <span class="n">obj_ids</span> <span class="ow">in</span> <span class="n">chain_by_category</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">obj_ids</span><span class="p">):</span>
+                    <span class="c1"># If multiple objects of same category in one chain, spread them slightly</span>
+                    <span class="n">col_offset</span> <span class="o">=</span> <span class="n">chain_idx</span> <span class="o">+</span> <span class="p">(</span>
+                        <span class="n">i</span> <span class="o">*</span> <span class="mf">0.1</span>
+                    <span class="p">)</span>  <span class="c1"># Small offset for multiple objects</span>
+                    <span class="n">positions</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cat</span><span class="p">,</span> <span class="n">col_offset</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">positions</span>
+
+<div class="viewcode-block" id="MatrixLayoutManager.get_relative_pos">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.MatrixLayoutManager.get_relative_pos">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_relative_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a position based on flow_direction setting.&quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+
+        <span class="c1"># For initial positioning during object creation, use simple grid</span>
+        <span class="c1"># Real positioning happens in optimize_layout()</span>
+        <span class="n">num_created</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow_direction</span> <span class="o">==</span> <span class="s2">&quot;column&quot;</span><span class="p">:</span>
+            <span class="c1"># Columnar layout: cycle through columns first</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="n">num_created</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">num_created</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span>
+
+            <span class="c1"># Calculate column-based position</span>
+            <span class="n">column_width</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span>
+                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">*</span> <span class="mi">2</span>
+                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">column</span> <span class="o">*</span> <span class="p">(</span><span class="n">column_width</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Matrix layout: cycle through rows first</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">num_created</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">num_created</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span>
+
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">col</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MatrixLayoutManager.optimize_layout">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.MatrixLayoutManager.optimize_layout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize the layout based on flow_direction setting.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow_direction</span> <span class="o">==</span> <span class="s2">&quot;column&quot;</span><span class="p">:</span>
+            <span class="c1"># Use columnar layout (functional categories as columns)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_optimize_columnar_layout</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use matrix layout (signal chains as columns, categories as rows)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_optimize_matrix_layout</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_optimize_matrix_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize the layout by organizing objects into a signal chain matrix.&quot;&quot;&quot;</span>
+        <span class="c1"># Step 1: Classify all objects into categories</span>
+        <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_assignments</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_column_assignments</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="c1"># Step 2: Analyze signal chains</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_signal_chains</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_signal_chains</span><span class="p">()</span>
+
+        <span class="c1"># Step 3: Assign matrix positions</span>
+        <span class="n">matrix_positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assign_objects_to_matrix_positions</span><span class="p">()</span>
+
+        <span class="c1"># Step 4: Apply matrix layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_matrix_layout</span><span class="p">(</span><span class="n">matrix_positions</span><span class="p">)</span>
+
+        <span class="c1"># Step 5: Prevent any remaining overlaps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prevent_overlaps</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_optimize_columnar_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize the layout by organizing objects into functional columns.&quot;&quot;&quot;</span>
+        <span class="c1"># Step 1: Classify all objects into columns</span>
+        <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_assignments</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_column_assignments</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="c1"># Step 2: Refine assignments based on signal flow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_refine_column_assignments_by_flow</span><span class="p">()</span>
+
+        <span class="c1"># Step 3: Apply columnar layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_columnar_layout</span><span class="p">()</span>
+
+        <span class="c1"># Step 4: Prevent any remaining overlaps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prevent_overlaps</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_matrix_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply the matrix layout to all objects.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            positions: Dictionary mapping object_id -&gt; (row, column) tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">positions</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Calculate grid dimensions</span>
+        <span class="n">max_row</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">positions</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">positions</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">max_col</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">positions</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">positions</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="c1"># Calculate spacing to fit in patcher window</span>
+        <span class="n">available_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+        <span class="n">available_height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+
+        <span class="k">if</span> <span class="n">max_col</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">col_spacing</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_spacing</span><span class="p">,</span> <span class="n">available_width</span> <span class="o">/</span> <span class="p">(</span><span class="n">max_col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">col_spacing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_spacing</span>
+
+        <span class="k">if</span> <span class="n">max_row</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">row_spacing</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">row_spacing</span><span class="p">,</span> <span class="n">available_height</span> <span class="o">/</span> <span class="p">(</span><span class="n">max_row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">row_spacing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_spacing</span>
+
+        <span class="c1"># Position each object</span>
+        <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="ow">in</span> <span class="n">positions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span>
+
+                <span class="c1"># Calculate position</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">col</span> <span class="o">*</span> <span class="n">col_spacing</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">row</span> <span class="o">*</span> <span class="n">row_spacing</span>
+
+                <span class="c1"># Ensure bounds</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                    <span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+                <span class="p">)</span>
+
+                <span class="n">obj</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MatrixLayoutManager.get_signal_chain_info">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.MatrixLayoutManager.get_signal_chain_info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_signal_chain_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get information about detected signal chains.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with signal chain analysis results.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;num_chains&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_signal_chains</span><span class="p">),</span>
+            <span class="s2">&quot;chains&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_signal_chains</span><span class="p">,</span>
+            <span class="s2">&quot;chain_assignments&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chain_assignments</span><span class="p">,</span>
+            <span class="s2">&quot;matrix_size&quot;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_rows</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_signal_chains</span><span class="p">)),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_columnar_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply the columnar layout to all objects.&quot;&quot;&quot;</span>
+        <span class="c1"># Group objects by column</span>
+        <span class="n">column_objects</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_assignments</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Ensure valid column</span>
+            <span class="n">column_objects</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+        <span class="c1"># Calculate column dimensions</span>
+        <span class="n">column_width</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">*</span> <span class="mi">2</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span>
+
+        <span class="c1"># Position objects within each column</span>
+        <span class="k">for</span> <span class="n">column_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_dimensions</span><span class="p">):</span>
+            <span class="n">objects_in_column</span> <span class="o">=</span> <span class="n">column_objects</span><span class="p">[</span><span class="n">column_idx</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">objects_in_column</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Calculate column base x position</span>
+            <span class="n">column_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">column_idx</span> <span class="o">*</span> <span class="p">(</span><span class="n">column_width</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_spacing</span><span class="p">)</span>
+
+            <span class="c1"># Sort objects within column by their connections to maintain flow</span>
+            <span class="n">objects_in_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sort_objects_in_column</span><span class="p">(</span><span class="n">objects_in_column</span><span class="p">)</span>
+
+            <span class="c1"># Handle horizontal replication if column has too many objects</span>
+            <span class="n">objects_per_column</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span>
+                <span class="nb">int</span><span class="p">(</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">)</span>
+                    <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">objects_in_column</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span>
+
+                    <span class="c1"># Calculate position within column</span>
+                    <span class="n">sub_column</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="n">objects_per_column</span>  <span class="c1"># Horizontal replication index</span>
+                    <span class="n">row_in_sub_column</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">objects_per_column</span>
+
+                    <span class="c1"># Calculate x position (with horizontal replication)</span>
+                    <span class="n">sub_column_width</span> <span class="o">=</span> <span class="n">column_width</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span>
+                        <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objects_in_column</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">objects_per_column</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="p">)</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">column_x</span> <span class="o">+</span> <span class="n">sub_column</span> <span class="o">*</span> <span class="n">sub_column_width</span>
+
+                    <span class="c1"># Calculate y position (top-down flow)</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">+</span> <span class="n">row_in_sub_column</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+
+                    <span class="c1"># Ensure bounds</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+                    <span class="p">)</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="n">obj</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sort_objects_in_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sort objects within a column to maintain logical flow order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj_ids: List of object IDs to sort.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Sorted list of object IDs based on connection flow.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">obj_ids</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Build simplified connection graph for this column</span>
+        <span class="n">connections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_lines</span><span class="p">:</span>
+            <span class="n">src</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">dst</span>
+            <span class="k">if</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">obj_ids</span> <span class="ow">and</span> <span class="n">dst</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+
+        <span class="c1"># Topologically sort using DFS to maintain signal flow order</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">dfs</span><span class="p">(</span><span class="n">obj_id</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+            <span class="c1"># Visit connected objects first (deeper in signal chain)</span>
+            <span class="k">for</span> <span class="n">connected_id</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">connections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj_id</span><span class="p">,</span> <span class="p">[])):</span>
+                <span class="n">dfs</span><span class="p">(</span><span class="n">connected_id</span><span class="p">)</span>
+
+            <span class="c1"># Add current object after its dependencies</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+        <span class="c1"># Start DFS from objects with no incoming connections (sources)</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">obj_id</span>
+            <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">obj_ids</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">connections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">other_id</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span> <span class="k">for</span> <span class="n">other_id</span> <span class="ow">in</span> <span class="n">obj_ids</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sources</span><span class="p">:</span>
+            <span class="n">sources</span> <span class="o">=</span> <span class="n">obj_ids</span>  <span class="c1"># If no clear sources, use all objects</span>
+
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
+            <span class="n">dfs</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+        <span class="c1"># Add any remaining objects (shouldn&#39;t happen with proper DFS)</span>
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classify_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Classify an object and assign it to the appropriate column/row.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: The Box object to classify.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Category index (0-3) for the object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the actual object name for classification</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">maxclass</span> <span class="o">==</span> <span class="s2">&quot;newobj&quot;</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">_kwds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+                <span class="n">object_name</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">else</span> <span class="n">obj</span><span class="o">.</span><span class="n">maxclass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">object_name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">maxclass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">object_name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">maxclass</span>
+
+        <span class="c1"># Check each category in order</span>
+        <span class="c1"># Check for input objects first (they take priority over controls)</span>
+        <span class="k">if</span> <span class="n">object_name</span> <span class="ow">in</span> <span class="n">category</span><span class="o">.</span><span class="n">INPUT_OBJECTS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># Controls/Inputs category</span>
+        <span class="k">elif</span> <span class="n">object_name</span> <span class="ow">in</span> <span class="n">category</span><span class="o">.</span><span class="n">CONTROL_OBJECTS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># Controls category</span>
+        <span class="k">elif</span> <span class="n">object_name</span> <span class="ow">in</span> <span class="n">category</span><span class="o">.</span><span class="n">GENERATOR_OBJECTS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>  <span class="c1"># Generators category</span>
+        <span class="k">elif</span> <span class="n">object_name</span> <span class="ow">in</span> <span class="n">category</span><span class="o">.</span><span class="n">PROCESSOR_OBJECTS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">2</span>  <span class="c1"># Processors category</span>
+        <span class="k">elif</span> <span class="n">object_name</span> <span class="ow">in</span> <span class="n">category</span><span class="o">.</span><span class="n">OUTPUT_OBJECTS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">3</span>  <span class="c1"># Outputs category</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># For unknown objects, try to infer from connections or name patterns</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infer_column_from_context</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">object_name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_infer_column_from_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">object_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Infer category assignment from object name patterns and context.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: The Box object.</span>
+<span class="sd">            object_name: The object&#39;s name/type.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Category index (0-3) for the object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check specific patterns first (regardless of ~ suffix)</span>
+
+        <span class="c1"># Output-like patterns (check first because they can end with ~)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">out_word</span> <span class="ow">in</span> <span class="n">object_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">out_word</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;dac&quot;</span><span class="p">,</span> <span class="s2">&quot;record&quot;</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">,</span> <span class="s2">&quot;send&quot;</span><span class="p">,</span> <span class="s2">&quot;print&quot;</span><span class="p">,</span> <span class="s2">&quot;meter&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="mi">3</span>  <span class="c1"># Outputs</span>
+
+        <span class="c1"># Input-like patterns</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">input_word</span> <span class="ow">in</span> <span class="n">object_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">input_word</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="s2">&quot;adc&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;in&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;inlet&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;receive&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;midiin&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;notein&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;ctlin&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;bendin&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pgmin&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;touchin&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># Inputs/Controls</span>
+
+        <span class="c1"># UI/control-like patterns</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">ctrl_word</span> <span class="ow">in</span> <span class="n">object_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">ctrl_word</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;button&quot;</span><span class="p">,</span> <span class="s2">&quot;slider&quot;</span><span class="p">,</span> <span class="s2">&quot;dial&quot;</span><span class="p">,</span> <span class="s2">&quot;knob&quot;</span><span class="p">,</span> <span class="s2">&quot;fader&quot;</span><span class="p">,</span> <span class="s2">&quot;param&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># Controls</span>
+
+        <span class="c1"># Audio objects (end with ~) are likely processors unless clearly generators</span>
+        <span class="k">if</span> <span class="n">object_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">):</span>
+            <span class="c1"># Look for generator patterns</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">gen_word</span> <span class="ow">in</span> <span class="n">object_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">gen_word</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;osc&quot;</span><span class="p">,</span> <span class="s2">&quot;cycle&quot;</span><span class="p">,</span> <span class="s2">&quot;saw&quot;</span><span class="p">,</span> <span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="s2">&quot;play&quot;</span><span class="p">,</span> <span class="s2">&quot;sample&quot;</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="mi">1</span>  <span class="c1"># Generators</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">2</span>  <span class="c1"># Processors (default for audio objects)</span>
+
+        <span class="c1"># Default to processors category for unknown objects</span>
+        <span class="k">return</span> <span class="mi">2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_signal_flow</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze signal flow to refine column assignments.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping object IDs to their connected object IDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">connections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Initialize all objects with empty connection sets</span>
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Build connection graph</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_lines</span><span class="p">:</span>
+            <span class="n">src_id</span><span class="p">,</span> <span class="n">dst_id</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">dst</span>
+            <span class="k">if</span> <span class="n">src_id</span> <span class="ow">and</span> <span class="n">dst_id</span> <span class="ow">and</span> <span class="n">src_id</span> <span class="ow">in</span> <span class="n">connections</span> <span class="ow">and</span> <span class="n">dst_id</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">src_id</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">dst_id</span><span class="p">)</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">dst_id</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">src_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">connections</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_refine_column_assignments_by_flow</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Refine column assignments based on signal flow analysis.&quot;&quot;&quot;</span>
+        <span class="c1"># For now, disable flow refinement to keep objects in their initial classifications</span>
+        <span class="c1"># The initial classification should be sufficient for most cases</span>
+
+        <span class="c1"># This method can be expanded later to handle more complex refinement scenarios</span>
+        <span class="c1"># where the initial classification might be wrong based by actual connections</span>
+        <span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

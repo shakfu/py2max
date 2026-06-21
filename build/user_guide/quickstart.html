@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Start Guide &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#your-first-patch">Your First Patch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#understanding-the-basics">Understanding the Basics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#patcher">Patcher</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adding-objects">Adding Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#making-connections">Making Connections</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#working-with-layout">Working with Layout</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grid-layout">Grid Layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flow-layout">Flow Layout</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-object-help">Getting Object Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#connection-validation">Connection Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#loading-existing-patches">Loading Existing Patches</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/abstract.html">py2max.core.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quick Start Guide</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/shakfu/py2max/blob/main/docs/source/user_guide/quickstart.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quick-start-guide">
+<h1>Quick Start Guide<a class="headerlink" href="#quick-start-guide" title="Link to this heading"></a></h1>
+<p>This guide will get you up and running with py2max in just a few minutes.</p>
+<section id="your-first-patch">
+<h2>Your First Patch<a class="headerlink" href="#your-first-patch" title="Link to this heading"></a></h2>
+<p>Let’s create a simple oscillator patch:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span>
+
+<span class="c1"># Create a new patcher</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;my-first-patch.maxpat&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add a sine wave oscillator</span>
+<span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add a gain control</span>
+<span class="n">gain</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;gain~ 0.5&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add audio output</span>
+<span class="n">dac</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Connect the objects</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>    <span class="c1"># oscillator -&gt; gain</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">gain</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>    <span class="c1"># gain -&gt; output</span>
+
+<span class="c1"># Save the patch</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This creates a .maxpat file that you can open in Max/MSP!</p>
+</section>
+<section id="understanding-the-basics">
+<h2>Understanding the Basics<a class="headerlink" href="#understanding-the-basics" title="Link to this heading"></a></h2>
+<section id="patcher">
+<h3>Patcher<a class="headerlink" href="#patcher" title="Link to this heading"></a></h3>
+<p>The <a class="reference internal" href="../api/py2max.html#py2max.Patcher" title="py2max.Patcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Patcher</span></code></a> is the main container for your Max patch. It handles:</p>
+<ul class="simple">
+<li><p>Adding Max objects</p></li>
+<li><p>Managing connections between objects</p></li>
+<li><p>Layout and positioning</p></li>
+<li><p>Saving and loading patches</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create with automatic layout</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create with flow-based layout</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="adding-objects">
+<h3>Adding Objects<a class="headerlink" href="#adding-objects" title="Link to this heading"></a></h3>
+<p>py2max provides several methods for adding Max objects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generic text-based objects</span>
+<span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;biquad~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Specialized UI objects</span>
+<span class="n">button</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_message</span><span class="p">(</span><span class="s1">&#39;bang&#39;</span><span class="p">)</span>
+<span class="n">comment</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_comment</span><span class="p">(</span><span class="s1">&#39;This is a comment&#39;</span><span class="p">)</span>
+<span class="n">number</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_floatbox</span><span class="p">(</span><span class="mf">440.0</span><span class="p">)</span>
+
+<span class="c1"># Container objects</span>
+<span class="n">table</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="s1">&#39;wavetable&#39;</span><span class="p">)</span>
+<span class="n">coll</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_coll</span><span class="p">(</span><span class="s1">&#39;sequence-data&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="making-connections">
+<h3>Making Connections<a class="headerlink" href="#making-connections" title="Link to this heading"></a></h3>
+<p>Connect objects using the <a class="reference internal" href="../api/py2max.html#py2max.Patcher.add_line" title="py2max.Patcher.add_line"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_line()</span></code></a> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simple connection (outlet 0 to inlet 0)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+
+<span class="c1"># Specify outlet and inlet indices</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">inlet</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Multiple connections from one object</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="nb">filter</span><span class="p">)</span>  <span class="c1"># Send same signal to both</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="working-with-layout">
+<h2>Working with Layout<a class="headerlink" href="#working-with-layout" title="Link to this heading"></a></h2>
+<p>py2max provides intelligent layout managers:</p>
+<section id="grid-layout">
+<h3>Grid Layout<a class="headerlink" href="#grid-layout" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Horizontal grid with automatic clustering</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>
+
+<span class="c1"># Add several objects</span>
+<span class="n">objects</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cycle~ </span><span class="si">{</span><span class="mi">440</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">110</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+<span class="c1"># Connect them in sequence</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">objects</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">objects</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># Optimize layout to cluster connected objects</span>
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="flow-layout">
+<h3>Flow Layout<a class="headerlink" href="#flow-layout" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Signal flow-based layout</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create a signal processing chain</span>
+<span class="n">input_obj</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;adc~&#39;</span><span class="p">)</span>
+<span class="n">eq</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;filtergraph~&#39;</span><span class="p">)</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;delay~ 500&#39;</span><span class="p">)</span>
+<span class="n">reverb</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;freeverb~&#39;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;dac~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Connect in signal flow order</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">input_obj</span><span class="p">,</span> <span class="n">eq</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">eq</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">reverb</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">reverb</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="c1"># Layout will arrange objects hierarchically</span>
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="getting-object-help">
+<h2>Getting Object Help<a class="headerlink" href="#getting-object-help" title="Link to this heading"></a></h2>
+<p>py2max provides rich documentation for Max objects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add an object</span>
+<span class="n">umenu</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;umenu&#39;</span><span class="p">)</span>
+
+<span class="c1"># Get formatted help</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">umenu</span><span class="o">.</span><span class="n">help</span><span class="p">())</span>
+
+<span class="c1"># Get detailed object information</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">umenu</span><span class="o">.</span><span class="n">get_info</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Methods: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;methods&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attributes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inlets: </span><span class="si">{</span><span class="n">umenu</span><span class="o">.</span><span class="n">get_inlet_count</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Outlets: </span><span class="si">{</span><span class="n">umenu</span><span class="o">.</span><span class="n">get_outlet_count</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="connection-validation">
+<h2>Connection Validation<a class="headerlink" href="#connection-validation" title="Link to this heading"></a></h2>
+<p>py2max can validate connections to prevent errors:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">InvalidConnectionError</span>
+
+<span class="c1"># Enable validation (default)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">validate_connections</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<span class="n">gain</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;gain~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Valid connection</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+
+<span class="c1"># This would raise an error (cycle~ only has 1 outlet)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">InvalidConnectionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid connection: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="loading-existing-patches">
+<h2>Loading Existing Patches<a class="headerlink" href="#loading-existing-patches" title="Link to this heading"></a></h2>
+<p>You can load and modify existing .maxpat files:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load an existing patch</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;existing-patch.maxpat&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add new objects</span>
+<span class="n">new_obj</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;delay~ 1000&#39;</span><span class="p">)</span>
+
+<span class="c1"># Save with a new name</span>
+<span class="n">p</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="s1">&#39;modified-patch.maxpat&#39;</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Read the <a class="reference internal" href="tutorial.html"><span class="doc">Tutorial</span></a> for more detailed examples</p></li>
+<li><p>Explore <a class="reference internal" href="layout_managers.html"><span class="doc">Layout Managers</span></a> for advanced positioning</p></li>
+<li><p>Check the <a class="reference internal" href="../api/py2max.html"><span class="doc">py2max Package</span></a> for complete API reference</p></li>
+<li><p>See <a class="reference internal" href="advanced_usage.html"><span class="doc">Advanced Usage</span></a> for complex scenarios</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial.html" class="btn btn-neutral float-right" title="Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

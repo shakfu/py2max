@@ -1,0 +1,505 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contributing &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Testing" href="testing.html" />
+    <link rel="prev" title="py2max.utils Module" href="../api/utils.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/abstract.html">py2max.core.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#development-setup">Development Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#project-structure">Project Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#development-workflow">Development Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#making-changes">Making Changes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing">Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#coding-standards">Coding Standards</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#code-style">Code Style</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#type-hints">Type Hints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#documentation-standards">Documentation Standards</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#api-documentation">API Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-guide-documentation">User Guide Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#contribution-types">Contribution Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bug-fixes">Bug Fixes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#new-features">New Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#performance-improvements">Performance Improvements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#documentation-improvements">Documentation Improvements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#code-review-process">Code Review Process</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pull-request-guidelines">Pull Request Guidelines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#review-criteria">Review Criteria</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-help">Getting Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#issue-guidelines">Issue Guidelines</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bug-reports">Bug Reports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#feature-requests">Feature Requests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#security-issues">Security Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#release-process">Release Process</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Contributing</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/shakfu/py2max/blob/main/docs/source/development/contributing.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h1>
+<p>We welcome contributions to py2max! This guide explains how to contribute effectively.</p>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<section id="development-setup">
+<h3>Development Setup<a class="headerlink" href="#development-setup" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Fork and clone the repository</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/your-username/py2max.git
+<span class="nb">cd</span><span class="w"> </span>py2max
+</pre></div>
+</div>
+</li>
+<li><p><strong>Set up development environment</strong> (recommended with uv):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</pre></div>
+</div>
+<p>Or with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev,docs]&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Verify the setup</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>pytest
+uv<span class="w"> </span>run<span class="w"> </span>mypy<span class="w"> </span>py2max
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>py2max
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="project-structure">
+<h3>Project Structure<a class="headerlink" href="#project-structure" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>py2max/
+├── py2max/              # Main package
+│   ├── __init__.py      # Package exports
+│   ├── core.py          # Core classes (Patcher, Box, Patchline)
+│   ├── layout.py        # Layout managers
+│   ├── maxref.py        # MaxRef integration system
+│   ├── abstract.py      # Abstract base classes
+│   ├── common.py        # Common utilities (Rect)
+│   └── utils.py         # Utility functions
+├── tests/               # Comprehensive test suite
+├── docs/                # Sphinx documentation
+├── scripts/             # Development scripts
+└── pyproject.toml       # Project configuration
+</pre></div>
+</div>
+</section>
+</section>
+<section id="development-workflow">
+<h2>Development Workflow<a class="headerlink" href="#development-workflow" title="Link to this heading"></a></h2>
+<section id="making-changes">
+<h3>Making Changes<a class="headerlink" href="#making-changes" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Create a feature branch</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/your-feature-name
+</pre></div>
+</div>
+</li>
+<li><p><strong>Make your changes</strong> following the coding standards below</p></li>
+<li><p><strong>Add tests</strong> for new functionality:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add tests in tests/test_your_feature.py</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_your_feature.py<span class="w"> </span>-v
+</pre></div>
+</div>
+</li>
+<li><p><strong>Run the full test suite</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>pytest
+</pre></div>
+</div>
+</li>
+<li><p><strong>Check code quality</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>py2max
+uv<span class="w"> </span>run<span class="w"> </span>mypy<span class="w"> </span>py2max
+</pre></div>
+</div>
+</li>
+<li><p><strong>Build and test documentation</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+uv<span class="w"> </span>run<span class="w"> </span>sphinx-build<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span><span class="nb">source</span><span class="w"> </span>build
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="testing">
+<h3>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h3>
+<p>py2max has extensive test coverage (~97%). When contributing:</p>
+<ul class="simple">
+<li><p><strong>Write tests</strong> for all new functionality</p></li>
+<li><p><strong>Update existing tests</strong> if changing behavior</p></li>
+<li><p><strong>Test with different Python versions</strong> if possible</p></li>
+<li><p><strong>Include edge cases</strong> and error conditions</p></li>
+</ul>
+<p>Test categories:</p>
+<ul class="simple">
+<li><p><strong>Unit tests</strong>: Individual class/function testing</p></li>
+<li><p><strong>Integration tests</strong>: Full patch creation workflows</p></li>
+<li><p><strong>Layout tests</strong>: Layout manager algorithms</p></li>
+<li><p><strong>MaxRef tests</strong>: Object discovery and validation</p></li>
+<li><p><strong>Abstract tests</strong>: Abstract base class coverage</p></li>
+</ul>
+<p>Running specific test categories:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run layout tests</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_layout*<span class="w"> </span>-v
+
+<span class="c1"># Run MaxRef tests</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_maxref.py<span class="w"> </span>-v
+
+<span class="c1"># Run with coverage</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>--cov<span class="o">=</span>py2max<span class="w"> </span>--cov-report<span class="o">=</span>html
+</pre></div>
+</div>
+</section>
+</section>
+<section id="coding-standards">
+<h2>Coding Standards<a class="headerlink" href="#coding-standards" title="Link to this heading"></a></h2>
+<section id="code-style">
+<h3>Code Style<a class="headerlink" href="#code-style" title="Link to this heading"></a></h3>
+<p>We use <strong>ruff</strong> for code formatting and linting:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check code style</span>
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>py2max
+
+<span class="c1"># Auto-fix issues</span>
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>py2max<span class="w"> </span>--fix
+</pre></div>
+</div>
+<p>Key style guidelines:</p>
+<ul class="simple">
+<li><p><strong>PEP 8 compliance</strong> with 88-character line limit</p></li>
+<li><p><strong>No trailing whitespace</strong></p></li>
+<li><p><strong>Consistent import ordering</strong></p></li>
+<li><p><strong>Clear variable names</strong></p></li>
+<li><p><strong>Minimal comments</strong> - prefer self-documenting code</p></li>
+</ul>
+</section>
+<section id="type-hints">
+<h3>Type Hints<a class="headerlink" href="#type-hints" title="Link to this heading"></a></h3>
+<p>All code must include <strong>complete type hints</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">add_textbox</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a text-based Max object.&quot;&quot;&quot;</span>
+    <span class="c1"># Implementation</span>
+</pre></div>
+</div>
+<p>Run type checking:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>mypy<span class="w"> </span>py2max
+</pre></div>
+</div>
+</section>
+<section id="docstrings">
+<h3>Docstrings<a class="headerlink" href="#docstrings" title="Link to this heading"></a></h3>
+<p>Use <strong>clear, concise docstrings</strong> for all public APIs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">add_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Box</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="n">Box</span><span class="p">,</span>
+             <span class="n">outlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">inlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Patchline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect two Max objects with a patchline.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        source: Source Max object</span>
+<span class="sd">        destination: Destination Max object</span>
+<span class="sd">        outlet: Source outlet index (default: 0)</span>
+<span class="sd">        inlet: Destination inlet index (default: 0)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The created patchline object</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        InvalidConnectionError: If connection is invalid</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="documentation-standards">
+<h2>Documentation Standards<a class="headerlink" href="#documentation-standards" title="Link to this heading"></a></h2>
+<p>All public APIs must be documented:</p>
+<ul class="simple">
+<li><p><strong>Module docstrings</strong> explaining purpose</p></li>
+<li><p><strong>Class docstrings</strong> with usage examples</p></li>
+<li><p><strong>Method docstrings</strong> with parameters and return values</p></li>
+<li><p><strong>Type hints</strong> for all parameters and returns</p></li>
+<li><p><strong>Examples</strong> in user guide documentation</p></li>
+</ul>
+<section id="api-documentation">
+<h3>API Documentation<a class="headerlink" href="#api-documentation" title="Link to this heading"></a></h3>
+<p>API docs are auto-generated from docstrings using Sphinx autodoc:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+uv<span class="w"> </span>run<span class="w"> </span>sphinx-build<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span><span class="nb">source</span><span class="w"> </span>build
+</pre></div>
+</div>
+</section>
+<section id="user-guide-documentation">
+<h3>User Guide Documentation<a class="headerlink" href="#user-guide-documentation" title="Link to this heading"></a></h3>
+<p>Add examples to user guide for significant new features:</p>
+<ul class="simple">
+<li><p><strong>docs/source/user_guide/tutorial.rst</strong> - Tutorial examples</p></li>
+<li><p><strong>docs/source/user_guide/advanced_usage.rst</strong> - Advanced features</p></li>
+<li><p><strong>docs/source/user_guide/layout_managers.rst</strong> - Layout documentation</p></li>
+</ul>
+</section>
+</section>
+<section id="contribution-types">
+<h2>Contribution Types<a class="headerlink" href="#contribution-types" title="Link to this heading"></a></h2>
+<section id="bug-fixes">
+<h3>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Create an issue</strong> describing the bug</p></li>
+<li><p><strong>Include minimal reproduction case</strong></p></li>
+<li><p><strong>Add regression test</strong> to prevent recurrence</p></li>
+<li><p><strong>Fix the bug</strong> with minimal changes</p></li>
+<li><p><strong>Verify fix</strong> with existing and new tests</p></li>
+</ol>
+</section>
+<section id="new-features">
+<h3>New Features<a class="headerlink" href="#new-features" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Discuss the feature</strong> in an issue first</p></li>
+<li><p><strong>Design the API</strong> with backwards compatibility in mind</p></li>
+<li><p><strong>Implement with tests</strong> and documentation</p></li>
+<li><p><strong>Add user guide examples</strong> for significant features</p></li>
+<li><p><strong>Update CHANGELOG.md</strong></p></li>
+</ol>
+</section>
+<section id="performance-improvements">
+<h3>Performance Improvements<a class="headerlink" href="#performance-improvements" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Benchmark current performance</strong> with realistic data</p></li>
+<li><p><strong>Implement optimization</strong> maintaining correctness</p></li>
+<li><p><strong>Verify performance improvement</strong> with benchmarks</p></li>
+<li><p><strong>Ensure no regression</strong> in functionality</p></li>
+</ol>
+</section>
+<section id="documentation-improvements">
+<h3>Documentation Improvements<a class="headerlink" href="#documentation-improvements" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Fix typos and unclear explanations</strong></p></li>
+<li><p><strong>Add missing examples</strong></p></li>
+<li><p><strong>Improve API documentation</strong></p></li>
+<li><p><strong>Update user guides</strong> for new workflows</p></li>
+</ol>
+</section>
+</section>
+<section id="code-review-process">
+<h2>Code Review Process<a class="headerlink" href="#code-review-process" title="Link to this heading"></a></h2>
+<section id="pull-request-guidelines">
+<h3>Pull Request Guidelines<a class="headerlink" href="#pull-request-guidelines" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>One feature per PR</strong> - keep changes focused</p></li>
+<li><p><strong>Descriptive title and description</strong></p></li>
+<li><p><strong>Reference related issues</strong></p></li>
+<li><p><strong>Include tests and documentation</strong></p></li>
+<li><p><strong>Ensure CI passes</strong> (tests, linting, type checking)</p></li>
+</ul>
+</section>
+<section id="review-criteria">
+<h3>Review Criteria<a class="headerlink" href="#review-criteria" title="Link to this heading"></a></h3>
+<p>Reviews will check for:</p>
+<ul class="simple">
+<li><p><strong>Functionality</strong> - Does it work as intended?</p></li>
+<li><p><strong>Tests</strong> - Are there adequate tests?</p></li>
+<li><p><strong>Documentation</strong> - Is the API documented?</p></li>
+<li><p><strong>Style</strong> - Does it follow coding standards?</p></li>
+<li><p><strong>Performance</strong> - Are there any regressions?</p></li>
+<li><p><strong>Backwards compatibility</strong> - Does it break existing APIs?</p></li>
+</ul>
+</section>
+</section>
+<section id="getting-help">
+<h2>Getting Help<a class="headerlink" href="#getting-help" title="Link to this heading"></a></h2>
+<p>If you need help with contributing:</p>
+<ul class="simple">
+<li><p><strong>Create an issue</strong> for questions about features</p></li>
+<li><p><strong>Join discussions</strong> on existing issues</p></li>
+<li><p><strong>Check the documentation</strong> for API usage</p></li>
+<li><p><strong>Look at existing tests</strong> for examples</p></li>
+</ul>
+</section>
+<section id="issue-guidelines">
+<h2>Issue Guidelines<a class="headerlink" href="#issue-guidelines" title="Link to this heading"></a></h2>
+<section id="bug-reports">
+<h3>Bug Reports<a class="headerlink" href="#bug-reports" title="Link to this heading"></a></h3>
+<p>Include:</p>
+<ul class="simple">
+<li><p><strong>py2max version</strong></p></li>
+<li><p><strong>Python version</strong></p></li>
+<li><p><strong>Operating system</strong></p></li>
+<li><p><strong>Minimal reproduction case</strong></p></li>
+<li><p><strong>Expected vs actual behavior</strong></p></li>
+<li><p><strong>Error messages and stack traces</strong></p></li>
+</ul>
+</section>
+<section id="feature-requests">
+<h3>Feature Requests<a class="headerlink" href="#feature-requests" title="Link to this heading"></a></h3>
+<p>Include:</p>
+<ul class="simple">
+<li><p><strong>Use case description</strong></p></li>
+<li><p><strong>Proposed API design</strong></p></li>
+<li><p><strong>Alternative approaches considered</strong></p></li>
+<li><p><strong>Backwards compatibility impact</strong></p></li>
+</ul>
+</section>
+<section id="security-issues">
+<h3>Security Issues<a class="headerlink" href="#security-issues" title="Link to this heading"></a></h3>
+<p>For security-related issues:</p>
+<ul class="simple">
+<li><p><strong>Do not create public issues</strong></p></li>
+<li><p><strong>Email maintainers privately</strong></p></li>
+<li><p><strong>Include detailed description</strong></p></li>
+<li><p><strong>Wait for response before disclosure</strong></p></li>
+</ul>
+</section>
+</section>
+<section id="release-process">
+<h2>Release Process<a class="headerlink" href="#release-process" title="Link to this heading"></a></h2>
+<p>Releases follow semantic versioning:</p>
+<ul class="simple">
+<li><p><strong>Major (1.0.0)</strong>: Breaking API changes</p></li>
+<li><p><strong>Minor (0.1.0)</strong>: New features, backwards compatible</p></li>
+<li><p><strong>Patch (0.0.1)</strong>: Bug fixes, backwards compatible</p></li>
+</ul>
+<p>Maintainers handle releases, but contributors should:</p>
+<ul class="simple">
+<li><p><strong>Update CHANGELOG.md</strong> for significant changes</p></li>
+<li><p><strong>Maintain backwards compatibility</strong> when possible</p></li>
+<li><p><strong>Add deprecation warnings</strong> before removing features</p></li>
+</ul>
+<p>Thank you for contributing to py2max!</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../api/utils.html" class="btn btn-neutral float-left" title="py2max.utils Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="testing.html" class="btn btn-neutral float-right" title="Testing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

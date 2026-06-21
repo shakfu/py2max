@@ -1,0 +1,528 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Changelog &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Testing" href="testing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/abstract.html">py2max.core.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased">[Unreleased]</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">[0.1.2] - 2025-01-15</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fixed">Fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">[0.1.1] - 2025-01-15</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Fixed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Changed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">[0.1.0] - 2025-01-10</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Fixed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Changed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">[0.0.1] - 2024-12-01</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Added</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#development-changes">Development Changes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#documentation-release-v0-1-2">[2025-01-15] - Documentation Release (v0.1.2)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id11">Added</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#technical-improvements">Technical Improvements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#migration-guide">Migration Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#from-0-0-1-to-0-1-0">From 0.0.1 to 0.1.0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#from-0-1-1-to-0-1-2">From 0.1.1 to 0.1.2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#from-0-1-0-to-0-1-1">From 0.1.0 to 0.1.1</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#future-plans">Future Plans</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#planned-for-0-2-0">Planned for 0.2.0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#planned-for-0-3-0">Planned for 0.3.0</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Changelog</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/shakfu/py2max/blob/main/docs/source/development/changelog.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading"></a></h1>
+<p>All notable changes to py2max will be documented in this file.</p>
+<p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<section id="unreleased">
+<h2>[Unreleased]<a class="headerlink" href="#unreleased" title="Link to this heading"></a></h2>
+</section>
+<section id="id1">
+<h2>[0.1.2] - 2025-01-15<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="added">
+<h3>Added<a class="headerlink" href="#added" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Comprehensive Sphinx API Documentation</strong>: Complete documentation system with autodoc</p>
+<ul>
+<li><p><strong>API Reference</strong>: Full autodoc-generated documentation for all modules</p></li>
+<li><p><strong>User Guide</strong>: Installation, quickstart, tutorial, and advanced usage guides</p></li>
+<li><p><strong>Layout Manager Documentation</strong>: In-depth coverage of positioning algorithms</p></li>
+<li><p><strong>Development Documentation</strong>: Contributing guidelines and testing information</p></li>
+<li><p><strong>Professional Theme</strong>: Sphinx RTD theme with navigation and search</p></li>
+<li><p><strong>Type Hints Display</strong>: Complete type information in documentation</p></li>
+<li><p><strong>Cross-references</strong>: Proper linking between modules and classes</p></li>
+<li><p><strong>Code Examples</strong>: Extensive examples throughout all documentation</p></li>
+</ul>
+</li>
+<li><p><strong>Enhanced Build System</strong>: Improved development workflow</p>
+<ul>
+<li><p><strong>Enhanced Makefile</strong>: Added documentation build commands (docs, docs-clean, docs-serve)</p></li>
+<li><p><strong>Documentation Dependencies</strong>: Added docs dependency group in pyproject.toml</p></li>
+<li><p><strong>CI Integration</strong>: Documentation builds as part of CI process</p></li>
+<li><p><strong>Help System</strong>: Comprehensive Makefile help with command descriptions</p></li>
+</ul>
+</li>
+<li><p><strong>Documentation Content</strong>: Comprehensive coverage of all features</p>
+<ul>
+<li><p><strong>Tutorial Series</strong>: 4 detailed tutorials from basic synthesis to generative music</p></li>
+<li><p><strong>Layout Guide</strong>: Complete coverage of Grid, Flow, and legacy layout managers</p></li>
+<li><p><strong>Advanced Usage</strong>: Complex patterns, subpatchers, data containers, and custom extensions</p></li>
+<li><p><strong>API Examples</strong>: Practical examples for every major feature</p></li>
+<li><p><strong>Migration Guides</strong>: Clear upgrade paths between versions</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Development Workflow</strong>: Streamlined documentation and development processes</p></li>
+<li><p><strong>Quality Assurance</strong>: Enhanced CI checks including documentation building</p></li>
+<li><p><strong>Documentation Dependencies</strong>: Added sphinx, sphinx-rtd-theme, sphinx-autodoc-typehints, myst-parser</p></li>
+</ul>
+</section>
+<section id="fixed">
+<h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Documentation Build</strong>: Resolved all critical Sphinx configuration issues</p></li>
+<li><p><strong>Type Safety Display</strong>: Proper rendering of type hints in documentation</p></li>
+<li><p><strong>Cross-platform Compatibility</strong>: Documentation builds work across different environments</p></li>
+</ul>
+</section>
+</section>
+<section id="id2">
+<h2>[0.1.1] - 2025-01-15<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3>Fixed<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Type Safety</strong>: Resolved all mypy type checking errors</p></li>
+<li><p><strong>Abstract Interfaces</strong>: Enhanced abstract base classes with proper method signatures</p></li>
+<li><p><strong>Connection Validation</strong>: Fixed property override issues in AbstractPatchline</p></li>
+<li><p><strong>Test Coverage</strong>: Updated abstract coverage tests for new interface requirements</p></li>
+</ul>
+</section>
+<section id="id4">
+<h3>Changed<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Type Annotations</strong>: Added complete type annotations to all functions</p></li>
+<li><p><strong>Layout Manager Types</strong>: Improved type safety in layout manager interfaces</p></li>
+<li><p><strong>Iterator Support</strong>: Added proper __iter__ methods to abstract base classes</p></li>
+</ul>
+</section>
+</section>
+<section id="id5">
+<h2>[0.1.0] - 2025-01-10<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="id6">
+<h3>Added<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MaxRef Integration System</strong>: Dynamic Max object information using .maxref.xml files</p>
+<ul>
+<li><p>1157+ Max objects automatically discovered and parsed</p></li>
+<li><p>Complete documentation including methods, attributes, inlets, outlets</p></li>
+<li><p>Dynamic help system via Box.help() and Box.get_info() methods</p></li>
+<li><p>Backwards compatibility with existing MAXCLASS_DEFAULTS</p></li>
+<li><p>Intelligent caching for performance</p></li>
+<li><p>Cross-platform support for Max installations</p></li>
+</ul>
+</li>
+<li><p><strong>Connection Validation</strong>: Comprehensive inlet/outlet validation system</p>
+<ul>
+<li><p>validate_connection() function with detailed error messages</p></li>
+<li><p>InvalidConnectionError exception for invalid connection attempts</p></li>
+<li><p>Patcher validate_connections parameter (default: True)</p></li>
+<li><p>Object introspection methods: get_inlet_count(), get_outlet_count(), get_inlet_types(), get_outlet_types()</p></li>
+<li><p>Smart object name extraction from ‘newobj’ text fields</p></li>
+<li><p>Basic signal/control type compatibility validation</p></li>
+</ul>
+</li>
+<li><p><strong>Advanced Layout Managers</strong>: Intelligent positioning algorithms</p>
+<ul>
+<li><p><strong>GridLayoutManager</strong>: Unified grid layout with configurable flow direction</p>
+<ul>
+<li><p>Connection-aware clustering to group related objects</p></li>
+<li><p>Horizontal and vertical flow directions</p></li>
+<li><p>optimize_layout() method for post-connection positioning</p></li>
+<li><p>Cluster detection using graph connectivity algorithms</p></li>
+<li><p>Type-based subdivision for large clusters</p></li>
+</ul>
+</li>
+<li><p><strong>FlowLayoutManager</strong>: Signal flow-based layout</p>
+<ul>
+<li><p>Signal flow analysis using patchline connections</p></li>
+<li><p>Hierarchical positioning organizing objects in flow levels</p></li>
+<li><p>Dual layout modes (horizontal and vertical)</p></li>
+<li><p>Topology-based arrangement based on functional relationships</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Enhanced API</strong>: Expanded object creation and manipulation</p>
+<ul>
+<li><p>Specialized add_&lt;type&gt; methods for Max objects</p></li>
+<li><p>Rich object introspection and help system</p></li>
+<li><p>Comprehensive error handling and validation</p></li>
+<li><p>Layout optimization methods</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id7">
+<h3>Fixed<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>MaxClass Assignment Bug</strong>: Fixed incorrect maxclass assignment preventing patchline connections</p>
+<ul>
+<li><p>Most objects (like cycle~) now correctly use maxclass=”newobj”</p></li>
+<li><p>UI/specialized objects (like ezdac~) use their own name as maxclass</p></li>
+<li><p>Enhanced logic in add_textbox() to check defaults properly</p></li>
+</ul>
+</li>
+<li><p><strong>Layout Algorithm Issues</strong>: Fixed clustering implementation problems</p>
+<ul>
+<li><p>Resolved early exit conditions in optimize_layout()</p></li>
+<li><p>Fixed flow_direction handling in clustered layouts</p></li>
+<li><p>Ensured clustered and unclustered layouts produce visibly different results</p></li>
+<li><p>Implemented proper spatial separation for cluster types</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id8">
+<h3>Changed<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Layout Manager API</strong>: Unified consistent API across layout types</p>
+<ul>
+<li><p>Grid and Flow layouts now use same parameter interface</p></li>
+<li><p>Consistent flow_direction parameter (“horizontal”/”vertical”)</p></li>
+<li><p>Legacy layout managers maintained as aliases for compatibility</p></li>
+</ul>
+</li>
+<li><p><strong>Backwards Compatibility</strong>: Maintained full API compatibility</p>
+<ul>
+<li><p>All existing code continues to work unchanged</p></li>
+<li><p>Legacy MAXCLASS_DEFAULTS still supported</p></li>
+<li><p>Original layout manager names still work</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="id9">
+<h2>[0.0.1] - 2024-12-01<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<section id="id10">
+<h3>Added<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Core Functionality</strong>: Initial implementation of py2max library</p>
+<ul>
+<li><p>Patcher class for Max patch containers</p></li>
+<li><p>Box class for Max objects</p></li>
+<li><p>Patchline class for object connections</p></li>
+<li><p>Round-trip conversion between Python objects and .maxpat JSON files</p></li>
+</ul>
+</li>
+<li><p><strong>Basic Layout System</strong>: Simple object positioning</p>
+<ul>
+<li><p>HorizontalLayoutManager for left-to-right layout</p></li>
+<li><p>VerticalLayoutManager for top-to-bottom layout</p></li>
+<li><p>Basic positioning and spacing algorithms</p></li>
+</ul>
+</li>
+<li><p><strong>Object Creation</strong>: Methods for adding Max objects</p>
+<ul>
+<li><p>add_textbox() for generic text-based objects</p></li>
+<li><p>Specialized methods for common Max objects</p></li>
+<li><p>Basic parameter and positioning support</p></li>
+</ul>
+</li>
+<li><p><strong>File Operations</strong>: Load and save Max patcher files</p>
+<ul>
+<li><p>from_file() class method for loading existing patches</p></li>
+<li><p>save() method for writing .maxpat files</p></li>
+<li><p>JSON serialization and deserialization</p></li>
+</ul>
+</li>
+<li><p><strong>Testing Framework</strong>: Comprehensive test suite</p>
+<ul>
+<li><p>~99% code coverage</p></li>
+<li><p>Tests for all major functionality</p></li>
+<li><p>Property-based and parametrized testing</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="development-changes">
+<h2>Development Changes<a class="headerlink" href="#development-changes" title="Link to this heading"></a></h2>
+<section id="documentation-release-v0-1-2">
+<h3>[2025-01-15] - Documentation Release (v0.1.2)<a class="headerlink" href="#documentation-release-v0-1-2" title="Link to this heading"></a></h3>
+<section id="id11">
+<h4>Added<a class="headerlink" href="#id11" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>Comprehensive Sphinx Documentation System</strong></p>
+<ul>
+<li><p>Complete API reference with autodoc for all modules</p></li>
+<li><p>User guide with installation, quickstart, tutorial, and advanced usage</p></li>
+<li><p>Layout manager documentation with detailed examples</p></li>
+<li><p>Development and contributing guides</p></li>
+<li><p>Testing framework documentation</p></li>
+<li><p>Automated documentation building with CI integration</p></li>
+</ul>
+</li>
+<li><p><strong>Enhanced Developer Experience</strong></p>
+<ul>
+<li><p>Enhanced Makefile with documentation commands and help system</p></li>
+<li><p>Documentation dependency management in pyproject.toml</p></li>
+<li><p>CI integration with documentation building</p></li>
+<li><p>Professional Sphinx RTD theme with navigation and search</p></li>
+<li><p>Type checking with mypy (zero errors)</p></li>
+<li><p>Code quality with ruff (zero violations)</p></li>
+<li><p>Comprehensive test coverage reporting (97%)</p></li>
+</ul>
+</li>
+<li><p><strong>Documentation Content Quality</strong></p>
+<ul>
+<li><p>4 comprehensive tutorials from basic synthesis to generative music</p></li>
+<li><p>Complete API examples for every major feature</p></li>
+<li><p>Migration guides between versions</p></li>
+<li><p>Cross-references and proper linking throughout documentation</p></li>
+<li><p>Extensive code examples and usage patterns</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="technical-improvements">
+<h4>Technical Improvements<a class="headerlink" href="#technical-improvements" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>Documentation System</strong>: Professional Sphinx-based documentation with RTD theme</p></li>
+<li><p><strong>Build Process</strong>: Streamlined development and documentation build workflows</p></li>
+<li><p><strong>Quality Assurance</strong>: Enhanced CI checks including documentation building</p></li>
+<li><p><strong>Developer Workflow</strong>: Improved onboarding and contribution processes</p></li>
+<li><p><strong>Type Safety</strong>: Complete type annotation coverage with proper display in docs</p></li>
+<li><p><strong>Cross-platform Support</strong>: Documentation builds work across different environments</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="migration-guide">
+<h2>Migration Guide<a class="headerlink" href="#migration-guide" title="Link to this heading"></a></h2>
+<section id="from-0-0-1-to-0-1-0">
+<h3>From 0.0.1 to 0.1.0<a class="headerlink" href="#from-0-0-1-to-0-1-0" title="Link to this heading"></a></h3>
+<p>No breaking changes - all existing code continues to work. New features are opt-in:</p>
+<p><strong>To use MaxRef system</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get object help (new feature)</span>
+<span class="n">box</span> <span class="o">=</span> <span class="n">patcher</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;umenu&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">box</span><span class="o">.</span><span class="n">help</span><span class="p">())</span>  <span class="c1"># Rich documentation</span>
+</pre></div>
+</div>
+<p><strong>To use connection validation</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enable validation (now default)</span>
+<span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">validate_connections</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>To use new layout managers</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># New unified API (recommended)</span>
+<span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>
+<span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">)</span>
+
+<span class="c1"># Legacy API still works</span>
+<span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>  <span class="c1"># unchanged</span>
+</pre></div>
+</div>
+<p><strong>To use clustering</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enable clustering (default for grid layout)</span>
+<span class="n">patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">cluster_connected</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Add objects and connections</span>
+<span class="c1"># ...</span>
+
+<span class="c1"># Optimize layout to cluster connected objects</span>
+<span class="n">patcher</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="from-0-1-1-to-0-1-2">
+<h3>From 0.1.1 to 0.1.2<a class="headerlink" href="#from-0-1-1-to-0-1-2" title="Link to this heading"></a></h3>
+<p>No breaking changes - all existing code continues to work. This release focused on:</p>
+<ul class="simple">
+<li><p><strong>Documentation</strong>: Complete Sphinx-based documentation system</p></li>
+<li><p><strong>Developer Experience</strong>: Enhanced build system and development workflow</p></li>
+<li><p><strong>Quality Assurance</strong>: Comprehensive guides for contributors and users</p></li>
+</ul>
+<p>No API changes required for existing code. New documentation provides:</p>
+<p><strong>For Users</strong>:
+- Comprehensive installation and quickstart guides
+- Detailed tutorials from basic to advanced usage
+- Complete API reference with examples</p>
+<p><strong>For Developers</strong>:
+- Contributing guidelines and development setup
+- Testing framework documentation
+- Enhanced build system with documentation commands</p>
+</section>
+<section id="from-0-1-0-to-0-1-1">
+<h3>From 0.1.0 to 0.1.1<a class="headerlink" href="#from-0-1-0-to-0-1-1" title="Link to this heading"></a></h3>
+<p>No breaking changes - all existing code continues to work. This release focused on:</p>
+<ul class="simple">
+<li><p><strong>Type Safety</strong>: All mypy errors resolved</p></li>
+<li><p><strong>Developer Experience</strong>: Better IDE support with complete type annotations</p></li>
+<li><p><strong>Test Reliability</strong>: Enhanced test coverage for edge cases</p></li>
+</ul>
+<p>No API changes required for existing code.</p>
+</section>
+</section>
+<section id="future-plans">
+<h2>Future Plans<a class="headerlink" href="#future-plans" title="Link to this heading"></a></h2>
+<section id="planned-for-0-2-0">
+<h3>Planned for 0.2.0<a class="headerlink" href="#planned-for-0-2-0" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Enhanced MaxRef Integration</strong>: More sophisticated object discovery</p></li>
+<li><p><strong>Advanced Layout Algorithms</strong>: Graph-based layout options</p></li>
+<li><p><strong>Subpatcher Support</strong>: Better nested patcher handling</p></li>
+<li><p><strong>Performance Optimizations</strong>: Faster layout algorithms for large patches</p></li>
+</ul>
+</section>
+<section id="planned-for-0-3-0">
+<h3>Planned for 0.3.0<a class="headerlink" href="#planned-for-0-3-0" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Real-time Integration</strong>: Live patch modification capabilities</p></li>
+<li><p><strong>Visual Patch Editor</strong>: Optional GUI for patch creation</p></li>
+<li><p><strong>Advanced Validation</strong>: More sophisticated connection type checking</p></li>
+<li><p><strong>Template System</strong>: Reusable patch templates and components</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="testing.html" class="btn btn-neutral float-left" title="Testing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

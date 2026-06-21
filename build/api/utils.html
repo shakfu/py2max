@@ -1,0 +1,243 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max.utils Module &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing" href="../development/contributing.html" />
+    <link rel="prev" title="py2max.core.common Module" href="common.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="abstract.html">py2max.core.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">py2max.utils Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#py2max.utils.pitch2freq"><code class="docutils literal notranslate"><span class="pre">pitch2freq()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage-examples">Usage Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pitch-to-frequency-conversion">Pitch to Frequency Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#integration-with-patcher-creation">Integration with Patcher Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#supported-pitch-notation">Supported Pitch Notation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">py2max.utils Module</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/shakfu/py2max/blob/main/docs/source/api/utils.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-py2max.utils">
+<span id="py2max-utils-module"></span><h1>py2max.utils Module<a class="headerlink" href="#module-py2max.utils" title="Link to this heading"></a></h1>
+<p>Utility functions for py2max.</p>
+<p>This module provides helper functions for common Max/MSP operations
+such as pitch-to-frequency conversion and other musical calculations.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="py2max.utils.pitch2freq">
+<span class="sig-prename descclassname"><span class="pre">py2max.utils.</span></span><span class="sig-name descname"><span class="pre">pitch2freq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pitch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">440</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/utils.html#pitch2freq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.utils.pitch2freq" title="Link to this definition"></a></dt>
+<dd><p>Convert a pitch name to a frequency in Hz.</p>
+<p>Converts standard pitch notation (e.g., “C4”, “A#3”) to frequency
+values using equal temperament tuning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pitch</strong> – Pitch name in format like “C4”, “A#3”, “Bb2”.</p></li>
+<li><p><strong>A4</strong> – Reference frequency for A4 (default: 440 Hz).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Frequency in Hz as a float.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;C3&quot;</span><span class="p">)</span>
+<span class="go">130.8127826502993</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;A4&quot;</span><span class="p">)</span>
+<span class="go">440.0</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Based on: <a class="reference external" href="https://gist.github.com/CGrassin/26a1fdf4fc5de788da9b376ff717516e">https://gist.github.com/CGrassin/26a1fdf4fc5de788da9b376ff717516e</a></p>
+</div>
+</dd></dl>
+
+<p>The utils module contains utility functions for common operations in music and audio programming.</p>
+<p>The main utility is the <strong>pitch2freq</strong> function which converts musical pitch notation to frequency values, useful for generating oscillator frequencies and musical calculations.</p>
+<section id="usage-examples">
+<h2>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading"></a></h2>
+<section id="pitch-to-frequency-conversion">
+<h3>Pitch to Frequency Conversion<a class="headerlink" href="#pitch-to-frequency-conversion" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">py2max.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">pitch2freq</span>
+
+<span class="c1"># Convert various pitches to frequencies</span>
+<span class="n">c3_freq</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;C3&quot;</span><span class="p">)</span>  <span class="c1"># 130.81 Hz</span>
+<span class="n">a4_freq</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;A4&quot;</span><span class="p">)</span>  <span class="c1"># 440.0 Hz (concert pitch)</span>
+<span class="n">c5_freq</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;C5&quot;</span><span class="p">)</span>  <span class="c1"># 523.25 Hz</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;C3: </span><span class="si">{</span><span class="n">c3_freq</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A4: </span><span class="si">{</span><span class="n">a4_freq</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;C5: </span><span class="si">{</span><span class="n">c5_freq</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+
+<span class="c1"># Use with different tuning</span>
+<span class="n">a4_442</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;A4&quot;</span><span class="p">,</span> <span class="n">A4</span><span class="o">=</span><span class="mi">442</span><span class="p">)</span>  <span class="c1"># 442 Hz tuning</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A4 at 442 Hz tuning: </span><span class="si">{</span><span class="n">a4_442</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="integration-with-patcher-creation">
+<h3>Integration with Patcher Creation<a class="headerlink" href="#integration-with-patcher-creation" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">pitch2freq</span>
+
+<span class="c1"># Create a patch with musically tuned oscillators</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;musical-patch.maxpat&#39;</span><span class="p">)</span>
+
+<span class="c1"># Create oscillators for a C major chord</span>
+<span class="n">c_freq</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;C4&quot;</span><span class="p">)</span>
+<span class="n">e_freq</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;E4&quot;</span><span class="p">)</span>
+<span class="n">g_freq</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="s2">&quot;G4&quot;</span><span class="p">)</span>
+
+<span class="n">osc_c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cycle~ </span><span class="si">{</span><span class="n">c_freq</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">osc_e</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cycle~ </span><span class="si">{</span><span class="n">e_freq</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">osc_g</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cycle~ </span><span class="si">{</span><span class="n">g_freq</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="c1"># Mix and output</span>
+<span class="n">mixer</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;*~ 0.3&#39;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Connect all oscillators to mixer</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc_c</span><span class="p">,</span> <span class="n">mixer</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc_e</span><span class="p">,</span> <span class="n">mixer</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc_g</span><span class="p">,</span> <span class="n">mixer</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">mixer</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="supported-pitch-notation">
+<h3>Supported Pitch Notation<a class="headerlink" href="#supported-pitch-notation" title="Link to this heading"></a></h3>
+<p>The pitch2freq function supports standard pitch notation:</p>
+<ul class="simple">
+<li><p><strong>Note names</strong>: A, Bb, B, C, Db, D, Eb, E, F, Gb, G, Ab</p></li>
+<li><p><strong>Octave numbers</strong>: Any integer (typically 0-9)</p></li>
+<li><p><strong>Examples</strong>: “C3”, “Bb4”, “F#5” (use “Gb5” instead of “F#5”)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Various pitch examples</span>
+<span class="n">pitches</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;C0&quot;</span><span class="p">,</span> <span class="s2">&quot;A1&quot;</span><span class="p">,</span> <span class="s2">&quot;Bb2&quot;</span><span class="p">,</span> <span class="s2">&quot;C3&quot;</span><span class="p">,</span> <span class="s2">&quot;Db4&quot;</span><span class="p">,</span> <span class="s2">&quot;E4&quot;</span><span class="p">,</span> <span class="s2">&quot;Gb5&quot;</span><span class="p">,</span> <span class="s2">&quot;A6&quot;</span><span class="p">,</span> <span class="s2">&quot;C7&quot;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">pitch</span> <span class="ow">in</span> <span class="n">pitches</span><span class="p">:</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">pitch2freq</span><span class="p">(</span><span class="n">pitch</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pitch</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">freq</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="common.html" class="btn btn-neutral float-left" title="py2max.core.common Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../development/contributing.html" class="btn btn-neutral float-right" title="Contributing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

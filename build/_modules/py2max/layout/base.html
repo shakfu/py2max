@@ -1,0 +1,629 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max.layout.base &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/abstract.html">py2max.core.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">py2max.layout.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for py2max.layout.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Base layout manager for py2max patches.</span>
+
+<span class="sd">This module provides the base LayoutManager class that all layout managers inherit from.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.core.abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractLayoutManager</span><span class="p">,</span> <span class="n">AbstractPatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.core.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.maxref</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXCLASS_DEFAULTS</span>
+
+<span class="c1"># Threshold for incremental vs full layout (30% of total objects)</span>
+<span class="n">INCREMENTAL_THRESHOLD</span> <span class="o">=</span> <span class="mf">0.3</span>
+
+
+<div class="viewcode-block" id="LayoutManager">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LayoutManager</span><span class="p">(</span><span class="n">AbstractLayoutManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Basic horizontal layout manager.</span>
+
+<span class="sd">    Provides simple left-to-right object positioning with wrapping.</span>
+<span class="sd">    This is a legacy layout manager; consider using GridLayoutManager</span>
+<span class="sd">    for new projects.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        parent: The parent patcher object.</span>
+<span class="sd">        pad: Padding between objects (default: 48.0).</span>
+<span class="sd">        box_width: Default object width (default: 66.0).</span>
+<span class="sd">        box_height: Default object height (default: 22.0).</span>
+<span class="sd">        comment_pad: Padding for comments (default: 2).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">DEFAULT_PAD</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="mf">32.0</span>
+    <span class="n">DEFAULT_BOX_WIDTH</span> <span class="o">=</span> <span class="mf">66.0</span>
+    <span class="n">DEFAULT_BOX_HEIGHT</span> <span class="o">=</span> <span class="mf">22.0</span>
+    <span class="n">DEFAULT_COMMENT_PAD</span> <span class="o">=</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="LayoutManager.__init__">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">AbstractPatcher</span><span class="p">,</span>
+        <span class="n">pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">comment_pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">=</span> <span class="n">pad</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_PAD</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">=</span> <span class="n">box_width</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_BOX_WIDTH</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">=</span> <span class="n">box_height</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_BOX_HEIGHT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comment_pad</span> <span class="o">=</span> <span class="n">comment_pad</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_COMMENT_PAD</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_layout_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_layout_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_rect</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mclass_rect</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.get_rect_from_maxclass">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.get_rect_from_maxclass">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_rect_from_maxclass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve default rectangle for a Max object class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            maxclass: The Max object class name.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Default Rect for the object class, or None if not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MAXCLASS_DEFAULTS</span><span class="p">[</span><span class="n">maxclass</span><span class="p">][</span><span class="s2">&quot;patching_rect&quot;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.get_absolute_pos">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.get_absolute_pos">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;returns an absolute position for the object&quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+
+        <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+
+        <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span><span class="p">:</span>
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="n">pad</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">-</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span><span class="p">)</span> <span class="k">if</span> <span class="n">x1</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="k">else</span> <span class="n">x1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">pad</span>
+
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">pad</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y1</span> <span class="o">-</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="k">if</span> <span class="n">y1</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="k">else</span> <span class="n">y1</span>
+
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.get_relative_pos">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.get_relative_pos">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_relative_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;returns a relative position for the object&quot;&quot;&quot;</span>
+        <span class="c1"># Default implementation returns the same rect</span>
+        <span class="k">return</span> <span class="n">rect</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.get_pos">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.get_pos">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxclass</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the next position for object placement.</span>
+
+<span class="sd">        Calculates the next position for an object based on the current</span>
+<span class="sd">        layout state and optional object class defaults.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            maxclass: Optional Max object class for size defaults.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Rect specifying the position and size for the next object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span>  <span class="c1"># 66.0</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span>  <span class="c1"># 22.0</span>
+
+        <span class="k">if</span> <span class="n">maxclass</span><span class="p">:</span>
+            <span class="n">mclass_rect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_rect_from_maxclass</span><span class="p">(</span><span class="n">maxclass</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mclass_rect</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mclass_rect</span><span class="o">.</span><span class="n">x</span> <span class="ow">or</span> <span class="n">mclass_rect</span><span class="o">.</span><span class="n">y</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">mclass_rect</span><span class="o">.</span><span class="n">x</span><span class="p">:</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mclass_rect</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mclass_rect</span><span class="o">.</span><span class="n">y</span><span class="p">:</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mclass_rect</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+
+                <span class="n">_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">mclass_rect</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">mclass_rect</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_absolute_pos</span><span class="p">(</span><span class="n">_rect</span><span class="p">)</span>
+
+        <span class="n">_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_relative_pos</span><span class="p">(</span><span class="n">_rect</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">patcher_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;return rect coordinates of the parent patcher&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">rect</span>
+
+<div class="viewcode-block" id="LayoutManager.above">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.above">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">above</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a position of a comment above the object&quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.below">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.below">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">below</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a position of a comment below the object&quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.left">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.left">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a position of a comment left of the object&quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment_pad</span><span class="p">),</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.right">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.right">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a position of a comment right of the object&quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="n">w</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment_pad</span><span class="p">),</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.prevent_overlaps">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.prevent_overlaps">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prevent_overlaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iteratively push overlapping objects apart.</span>
+
+<span class="sd">        This method should be called after layout optimization to ensure</span>
+<span class="sd">        no objects overlap. It uses an iterative approach where overlapping</span>
+<span class="sd">        objects are pushed apart in the direction of their center offset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            min_gap: Minimum gap between objects in pixels.</span>
+<span class="sd">            max_iterations: Maximum number of iterations to prevent infinite loops.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of iterations performed (0 if no overlaps found).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">objects</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+        <span class="n">iterations_performed</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iterations</span><span class="p">):</span>
+            <span class="n">moved</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obj1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">objects</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="s2">&quot;patching_rect&quot;</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">r1</span> <span class="o">=</span> <span class="n">obj1</span><span class="o">.</span><span class="n">patching_rect</span>
+
+                <span class="k">for</span> <span class="n">obj2</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj2</span><span class="p">,</span> <span class="s2">&quot;patching_rect&quot;</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="n">r2</span> <span class="o">=</span> <span class="n">obj2</span><span class="o">.</span><span class="n">patching_rect</span>
+
+                    <span class="c1"># Check for overlap (including minimum gap)</span>
+                    <span class="n">overlap_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">r1</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">r2</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">r2</span><span class="o">.</span><span class="n">w</span> <span class="o">+</span> <span class="n">min_gap</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                        <span class="n">r2</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">r1</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">r1</span><span class="o">.</span><span class="n">w</span> <span class="o">+</span> <span class="n">min_gap</span>
+                    <span class="p">)</span>
+                    <span class="n">overlap_y</span> <span class="o">=</span> <span class="p">(</span><span class="n">r1</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="n">r2</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">r2</span><span class="o">.</span><span class="n">h</span> <span class="o">+</span> <span class="n">min_gap</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                        <span class="n">r2</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="n">r1</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">r1</span><span class="o">.</span><span class="n">h</span> <span class="o">+</span> <span class="n">min_gap</span>
+                    <span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">overlap_x</span> <span class="ow">and</span> <span class="n">overlap_y</span><span class="p">:</span>
+                        <span class="c1"># Calculate centers</span>
+                        <span class="n">c1_x</span> <span class="o">=</span> <span class="n">r1</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">r1</span><span class="o">.</span><span class="n">w</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="n">c1_y</span> <span class="o">=</span> <span class="n">r1</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">r1</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="n">c2_x</span> <span class="o">=</span> <span class="n">r2</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">r2</span><span class="o">.</span><span class="n">w</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="n">c2_y</span> <span class="o">=</span> <span class="n">r2</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">r2</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span> <span class="mi">2</span>
+
+                        <span class="c1"># Direction from obj2 to obj1</span>
+                        <span class="n">dx</span> <span class="o">=</span> <span class="n">c1_x</span> <span class="o">-</span> <span class="n">c2_x</span>
+                        <span class="n">dy</span> <span class="o">=</span> <span class="n">c1_y</span> <span class="o">-</span> <span class="n">c2_y</span>
+
+                        <span class="c1"># Avoid division by zero</span>
+                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
+                            <span class="n">dx</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Default push direction</span>
+
+                        <span class="c1"># Push amount (half the minimum gap)</span>
+                        <span class="n">push</span> <span class="o">=</span> <span class="n">min_gap</span> <span class="o">/</span> <span class="mi">2</span>
+
+                        <span class="c1"># Push in the dominant direction</span>
+                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">):</span>
+                            <span class="c1"># Push horizontally</span>
+                            <span class="n">push_dir</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">dx</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+                            <span class="n">new_x1</span> <span class="o">=</span> <span class="n">r1</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">push</span> <span class="o">*</span> <span class="n">push_dir</span>
+                            <span class="n">new_x2</span> <span class="o">=</span> <span class="n">r2</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">push</span> <span class="o">*</span> <span class="n">push_dir</span>
+
+                            <span class="c1"># Ensure bounds</span>
+                            <span class="n">new_x1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">,</span>
+                                <span class="nb">min</span><span class="p">(</span><span class="n">new_x1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">r1</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span>
+                            <span class="p">)</span>
+                            <span class="n">new_x2</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">,</span>
+                                <span class="nb">min</span><span class="p">(</span><span class="n">new_x2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">r2</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span>
+                            <span class="p">)</span>
+
+                            <span class="n">obj1</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">new_x1</span><span class="p">,</span> <span class="n">r1</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">r1</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">r1</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+                            <span class="n">obj2</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">new_x2</span><span class="p">,</span> <span class="n">r2</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">r2</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">r2</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># Push vertically</span>
+                            <span class="n">push_dir</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">dy</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+                            <span class="n">new_y1</span> <span class="o">=</span> <span class="n">r1</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">push</span> <span class="o">*</span> <span class="n">push_dir</span>
+                            <span class="n">new_y2</span> <span class="o">=</span> <span class="n">r2</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">push</span> <span class="o">*</span> <span class="n">push_dir</span>
+
+                            <span class="c1"># Ensure bounds</span>
+                            <span class="n">new_y1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">,</span>
+                                <span class="nb">min</span><span class="p">(</span><span class="n">new_y1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">r1</span><span class="o">.</span><span class="n">h</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span>
+                            <span class="p">)</span>
+                            <span class="n">new_y2</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">,</span>
+                                <span class="nb">min</span><span class="p">(</span><span class="n">new_y2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">r2</span><span class="o">.</span><span class="n">h</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">),</span>
+                            <span class="p">)</span>
+
+                            <span class="n">obj1</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">r1</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">new_y1</span><span class="p">,</span> <span class="n">r1</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">r1</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+                            <span class="n">obj2</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">r2</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">new_y2</span><span class="p">,</span> <span class="n">r2</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">r2</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+
+                        <span class="n">moved</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">moved</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">iterations_performed</span> <span class="o">=</span> <span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">iterations_performed</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.get_connected_objects">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.get_connected_objects">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_connected_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj_ids</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all objects connected to the given objects via patchlines.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj_ids: Set of object IDs to find connections for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Set of object IDs that are directly connected to the input objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">connected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_lines</span><span class="p">:</span>
+            <span class="n">src_id</span><span class="p">,</span> <span class="n">dst_id</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">dst</span>
+            <span class="k">if</span> <span class="n">src_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dst_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">src_id</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
+                <span class="n">connected</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">dst_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dst_id</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
+                <span class="n">connected</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">src_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">connected</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.get_affected_objects">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.get_affected_objects">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_affected_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all objects affected by changes to the given objects.</span>
+
+<span class="sd">        This includes the changed objects themselves plus their immediate</span>
+<span class="sd">        neighbors (objects connected via patchlines).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            changed_objects: Set of object IDs that have changed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Set of all affected object IDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">affected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">)</span>
+        <span class="n">neighbors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connected_objects</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">)</span>
+        <span class="n">affected</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">affected</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.should_use_incremental">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.should_use_incremental">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">should_use_incremental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine whether to use incremental or full layout.</span>
+
+<span class="sd">        Uses incremental layout when:</span>
+<span class="sd">        - changed_objects is provided</span>
+<span class="sd">        - The number of affected objects is less than INCREMENTAL_THRESHOLD</span>
+<span class="sd">          of total objects</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            changed_objects: Set of changed object IDs, or None for full layout.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if incremental layout should be used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">changed_objects</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">total_objects</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">total_objects</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">affected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_affected_objects</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">affected</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">total_objects</span> <span class="o">*</span> <span class="n">INCREMENTAL_THRESHOLD</span></div>
+
+
+<div class="viewcode-block" id="LayoutManager.optimize_layout">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.LayoutManager.optimize_layout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize the layout of objects.</span>
+
+<span class="sd">        If changed_objects is provided and the number of affected objects</span>
+<span class="sd">        is small relative to the total, only those objects and their</span>
+<span class="sd">        neighbors will be repositioned (incremental layout). Otherwise,</span>
+<span class="sd">        a full layout recalculation is performed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            changed_objects: Optional set of object IDs that have changed.</span>
+<span class="sd">                If None, performs full layout optimization.</span>
+
+<span class="sd">        Subclasses should override _full_layout() and optionally</span>
+<span class="sd">        _incremental_layout() to implement specific algorithms.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_use_incremental</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">):</span>
+            <span class="c1"># changed_objects is guaranteed non-None here since should_use_incremental</span>
+            <span class="c1"># returns False when changed_objects is None</span>
+            <span class="k">assert</span> <span class="n">changed_objects</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">affected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_affected_objects</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_incremental_layout</span><span class="p">(</span><span class="n">affected</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_full_layout</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_full_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform full layout optimization.</span>
+
+<span class="sd">        Subclasses should override this method to implement their</span>
+<span class="sd">        full layout algorithm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_incremental_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">affected_objects</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform incremental layout optimization for affected objects.</span>
+
+<span class="sd">        This method repositions only the affected objects while keeping</span>
+<span class="sd">        other objects in their current positions. The default implementation</span>
+<span class="sd">        finds optimal positions for affected objects that minimize overlap</span>
+<span class="sd">        with existing objects.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            affected_objects: Set of object IDs to reposition.</span>
+
+<span class="sd">        Subclasses can override this for more sophisticated incremental layouts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">affected_objects</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Get current positions of non-affected objects (these are fixed)</span>
+        <span class="n">fixed_positions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">affected_objects</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;patching_rect&quot;</span><span class="p">):</span>
+                    <span class="n">fixed_positions</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">patching_rect</span>
+
+        <span class="c1"># For each affected object, find a position that doesn&#39;t overlap</span>
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">affected_objects</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;patching_rect&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">current_rect</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">patching_rect</span>
+
+            <span class="c1"># Try to find a nearby position that doesn&#39;t overlap</span>
+            <span class="n">best_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_non_overlapping_position</span><span class="p">(</span>
+                <span class="n">current_rect</span><span class="p">,</span> <span class="n">fixed_positions</span><span class="p">,</span> <span class="n">affected_objects</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">best_pos</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">best_pos</span>
+                <span class="c1"># Add to fixed positions for subsequent objects</span>
+                <span class="n">fixed_positions</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_pos</span>
+
+        <span class="c1"># Final overlap prevention pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prevent_overlaps</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_non_overlapping_position</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">,</span>
+        <span class="n">fixed_positions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Rect</span><span class="p">],</span>
+        <span class="n">exclude_ids</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find a position for rect that doesn&#39;t overlap with fixed positions.</span>
+
+<span class="sd">        Tries positions in a spiral pattern around the current position.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            rect: The rectangle to position.</span>
+<span class="sd">            fixed_positions: Dictionary of fixed object positions.</span>
+<span class="sd">            exclude_ids: Object IDs to exclude from overlap checking.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A non-overlapping Rect, or the original rect if no better position found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+        <span class="n">min_gap</span> <span class="o">=</span> <span class="mf">10.0</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">overlaps_any</span><span class="p">(</span><span class="n">test_rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">fixed_rect</span> <span class="ow">in</span> <span class="n">fixed_positions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">exclude_ids</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="c1"># Check overlap</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">test_rect</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">fixed_rect</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">fixed_rect</span><span class="o">.</span><span class="n">w</span> <span class="o">+</span> <span class="n">min_gap</span>
+                    <span class="ow">and</span> <span class="n">fixed_rect</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">test_rect</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">test_rect</span><span class="o">.</span><span class="n">w</span> <span class="o">+</span> <span class="n">min_gap</span>
+                    <span class="ow">and</span> <span class="n">test_rect</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="n">fixed_rect</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">fixed_rect</span><span class="o">.</span><span class="n">h</span> <span class="o">+</span> <span class="n">min_gap</span>
+                    <span class="ow">and</span> <span class="n">fixed_rect</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="n">test_rect</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">test_rect</span><span class="o">.</span><span class="n">h</span> <span class="o">+</span> <span class="n">min_gap</span>
+                <span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># If current position doesn&#39;t overlap, keep it</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">overlaps_any</span><span class="p">(</span><span class="n">rect</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">rect</span>
+
+        <span class="c1"># Try positions in a spiral pattern</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="n">pad</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">max_radius</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="k">for</span> <span class="n">radius</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_radius</span> <span class="o">/</span> <span class="n">step</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">step</span>
+            <span class="c1"># Try 8 directions</span>
+            <span class="k">for</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="n">offset</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset</span><span class="p">),</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">offset</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="n">offset</span><span class="p">,</span> <span class="n">offset</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="n">offset</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">),</span>
+            <span class="p">]:</span>
+                <span class="n">new_x</span> <span class="o">=</span> <span class="n">rect</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">dx</span>
+                <span class="n">new_y</span> <span class="o">=</span> <span class="n">rect</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">dy</span>
+
+                <span class="c1"># Ensure within bounds</span>
+                <span class="n">new_x</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">new_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="n">pad</span><span class="p">))</span>
+                <span class="n">new_y</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">new_y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">h</span> <span class="o">-</span> <span class="n">pad</span><span class="p">))</span>
+
+                <span class="n">test_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">new_x</span><span class="p">,</span> <span class="n">new_y</span><span class="p">,</span> <span class="n">rect</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">rect</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">overlaps_any</span><span class="p">(</span><span class="n">test_rect</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">test_rect</span>
+
+        <span class="c1"># No non-overlapping position found, return original</span>
+        <span class="k">return</span> <span class="n">rect</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

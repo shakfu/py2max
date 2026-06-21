@@ -1,0 +1,794 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max.maxref &mdash; py2max 0.1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=92734c54"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/abstract.html">py2max.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/common.html">py2max.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">py2max.maxref</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for py2max.maxref</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;maxref.py - Dynamic Max object information using .maxref.xml files&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">textwrap</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">xml.etree</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElementTree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
+
+
+<div class="viewcode-block" id="replace_tags">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.replace_tags">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">replace_tags</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">tags</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Replace XML tags with substitution string&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&gt;&quot;</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;/</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&gt;&quot;</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">text</span></div>
+
+
+
+<div class="viewcode-block" id="MaxRefCache">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.MaxRefCache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaxRefCache</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cache for parsed MaxRef data&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MaxRefCache.__init__">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.MaxRefCache.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_refdict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get dictionary of available .maxref.xml files&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refdict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_refdict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_refdict</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refdict</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_refpages</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find Max refpages directory&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Darwin&quot;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/Applications&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;**/Max.app&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="s2">&quot;Ableton&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                    <span class="n">refpages_path</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;Contents/Resources/C74/docs/refpages&quot;</span>
+                    <span class="k">if</span> <span class="n">refpages_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                        <span class="k">return</span> <span class="n">refpages_path</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_refdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build dictionary of all available .maxref.xml files&quot;&quot;&quot;</span>
+        <span class="n">refdict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">refpages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_refpages</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">refpages</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;jit&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="s2">&quot;msp&quot;</span><span class="p">,</span> <span class="s2">&quot;m4l&quot;</span><span class="p">]:</span>
+                <span class="n">ref_dir</span> <span class="o">=</span> <span class="n">refpages</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">-ref&quot;</span>
+                <span class="k">if</span> <span class="n">ref_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">ref_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.maxref.xml&quot;</span><span class="p">):</span>
+                            <span class="n">name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.maxref.xml&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                            <span class="n">refdict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="k">return</span> <span class="n">refdict</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean XML text for parsing&quot;&quot;&quot;</span>
+        <span class="n">backtick</span> <span class="o">=</span> <span class="s2">&quot;`&quot;</span>
+        <span class="k">return</span> <span class="n">replace_tags</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">backtick</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="s2">&quot;at&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="s2">&quot;&amp;quot;&quot;</span><span class="p">,</span> <span class="n">backtick</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="MaxRefCache.get_object_data">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.MaxRefCache.get_object_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get parsed data for Max object by name&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">refdict</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Parse the .maxref.xml file</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">refdict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">cleaned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_text</span><span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">cleaned</span><span class="p">)</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_maxref</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1"># If parsing fails, return None</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_maxref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a .maxref.xml root element into structured data&quot;&quot;&quot;</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;methods&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;attributes&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;objargs&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;palette&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;parameter&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;seealso&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;misc&quot;</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Basic info</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+
+        <span class="c1"># Ensure complex fields maintain their proper types after update</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;methods&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;methods&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attributes&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;objargs&quot;</span><span class="p">),</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;objargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;palette&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;palette&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;parameter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;examples&quot;</span><span class="p">),</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;examples&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;seealso&quot;</span><span class="p">),</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;seealso&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;misc&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;misc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">digest_elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;digest&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">digest_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="c1"># Extract all sections</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metadata</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_inlets_outlets</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_palette</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_objargs</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_parameter</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_methods</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_attributes</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_examples</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_seealso</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_misc</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract metadata information&quot;&quot;&quot;</span>
+        <span class="n">metadatalist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;metadatalist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">metadatalist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="n">metadatalist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">metadata</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]:</span>
+                        <span class="c1"># Handle multiple entries (like multiple tags)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]]</span>
+                        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_inlets_outlets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract inlet and outlet information&quot;&quot;&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;inlets&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">inletlist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;inletlist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inletlist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">inlet</span> <span class="ow">in</span> <span class="n">inletlist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;inlet&quot;</span><span class="p">):</span>
+                <span class="n">inlet_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">inlet</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                <span class="n">digest_elem</span> <span class="o">=</span> <span class="n">inlet</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;digest&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">digest_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="n">inlet_data</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">inlet</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="n">inlet_data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;inlets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inlet_data</span><span class="p">)</span>
+
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;outlets&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">outletlist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;outletlist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">outletlist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">outlet</span> <span class="ow">in</span> <span class="n">outletlist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;outlet&quot;</span><span class="p">):</span>
+                <span class="n">outlet_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">outlet</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                <span class="n">digest_elem</span> <span class="o">=</span> <span class="n">outlet</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;digest&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">digest_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span> <span class="ow">and</span> <span class="n">outlet</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="n">outlet_data</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">outlet_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="s2">&quot;digest&quot;</span><span class="p">,</span> <span class="n">outlet</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="p">)</span>
+                <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">outlet</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="n">outlet_data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;outlets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outlet_data</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_palette</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract palette information&quot;&quot;&quot;</span>
+        <span class="n">palette</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;palette&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">palette</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;palette&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">palette</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_objargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract object arguments&quot;&quot;&quot;</span>
+        <span class="n">objarglist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;objarglist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">objarglist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">objarg</span> <span class="ow">in</span> <span class="n">objarglist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;objarg&quot;</span><span class="p">):</span>
+                <span class="n">arg_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">objarg</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                <span class="n">digest_elem</span> <span class="o">=</span> <span class="n">objarg</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;digest&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">digest_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">objarg</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;objargs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg_data</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract parameter information&quot;&quot;&quot;</span>
+        <span class="n">parameter</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;parameter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">parameter</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_examples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract example information&quot;&quot;&quot;</span>
+        <span class="n">examplelist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;examplelist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">examplelist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">examplelist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;example&quot;</span><span class="p">):</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;examples&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">attrib</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_seealso</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract see also references&quot;&quot;&quot;</span>
+        <span class="n">seealsolist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;seealsolist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">seealsolist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">seealso</span> <span class="ow">in</span> <span class="n">seealsolist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;seealso&quot;</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">seealso</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;seealso&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_misc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract misc information like Output and Connections&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">misc</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;misc&quot;</span><span class="p">):</span>
+            <span class="n">misc_name</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">misc_name</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;misc&quot;</span><span class="p">][</span><span class="n">misc_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">misc</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;entry&quot;</span><span class="p">):</span>
+                    <span class="n">entry_name</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">entry_name</span><span class="p">:</span>
+                        <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;misc&quot;</span><span class="p">][</span><span class="n">misc_name</span><span class="p">][</span><span class="n">entry_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract attribute information with full nested structure&quot;&quot;&quot;</span>
+        <span class="n">attributelist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;attributelist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attributelist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attributelist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;attribute&quot;</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="c1"># Build attr_data properly, avoiding conflicts with nested structures</span>
+                    <span class="n">attr_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+
+                    <span class="c1"># Extract digest</span>
+                    <span class="n">digest_elem</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;digest&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">digest_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                        <span class="n">attr_data</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+                    <span class="c1"># Extract description</span>
+                    <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                        <span class="n">attr_data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+                    <span class="c1"># Extract nested attributelist (meta-attributes)</span>
+                    <span class="n">nested_attrs</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;attributelist&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">nested_attrs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="c1"># Ensure attributes is a dict (in case it was set as a string in XML)</span>
+                        <span class="n">attr_data</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                        <span class="k">for</span> <span class="n">nested_attr</span> <span class="ow">in</span> <span class="n">nested_attrs</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;attribute&quot;</span><span class="p">):</span>
+                            <span class="n">nested_name</span> <span class="o">=</span> <span class="n">nested_attr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">nested_name</span><span class="p">:</span>
+                                <span class="n">nested_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nested_attr</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                                <span class="n">attr_data</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">][</span><span class="n">nested_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nested_data</span>
+
+                    <span class="c1"># Extract enumlist if present</span>
+                    <span class="n">enumlist</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;.//enumlist&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">enumlist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="c1"># Ensure enumlist is a list (in case it was set as a string in XML)</span>
+                        <span class="n">attr_data</span><span class="p">[</span><span class="s2">&quot;enumlist&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="k">for</span> <span class="n">enum</span> <span class="ow">in</span> <span class="n">enumlist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;enum&quot;</span><span class="p">):</span>
+                            <span class="n">enum_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                            <span class="n">digest_elem</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;digest&quot;</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">digest_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                                <span class="n">enum_data</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                            <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                                <span class="n">enum_data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                            <span class="n">attr_data</span><span class="p">[</span><span class="s2">&quot;enumlist&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">enum_data</span><span class="p">)</span>
+
+                    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ElementTree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract method information with full argument and attribute support&quot;&quot;&quot;</span>
+        <span class="n">methodlist</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;methodlist&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">methodlist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methodlist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;method&quot;</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="c1"># Build method_data properly, avoiding conflicts with nested structures</span>
+                    <span class="n">method_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+
+                    <span class="c1"># Extract arguments</span>
+                    <span class="n">arglist</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;arglist&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">arglist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="c1"># Ensure args is a list (in case it was set as a string in XML)</span>
+                        <span class="n">method_data</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arglist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;arg&quot;</span><span class="p">):</span>
+                            <span class="n">method_data</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">attrib</span><span class="p">))</span>
+
+                        <span class="c1"># Handle argument groups</span>
+                        <span class="k">for</span> <span class="n">arggroup</span> <span class="ow">in</span> <span class="n">arglist</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;arggroup&quot;</span><span class="p">):</span>
+                            <span class="n">group_attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">arggroup</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arggroup</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;arg&quot;</span><span class="p">):</span>
+                                <span class="n">arg_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                                <span class="n">arg_data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">group_attrs</span><span class="p">)</span>  <span class="c1"># Add group attributes</span>
+                                <span class="n">method_data</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg_data</span><span class="p">)</span>
+
+                    <span class="c1"># Extract digest</span>
+                    <span class="n">digest_elem</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;digest&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">digest_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                        <span class="n">method_data</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">digest_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+                    <span class="c1"># Extract description</span>
+                    <span class="n">desc_elem</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">desc_elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                        <span class="n">method_data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+                    <span class="c1"># Extract nested attributelist (method attributes like &#39;introduced&#39;)</span>
+                    <span class="n">nested_attrs</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;attributelist&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">nested_attrs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="c1"># Ensure attributes is a dict (in case it was set as a string in XML)</span>
+                        <span class="n">method_data</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                        <span class="k">for</span> <span class="n">nested_attr</span> <span class="ow">in</span> <span class="n">nested_attrs</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;attribute&quot;</span><span class="p">):</span>
+                            <span class="n">nested_name</span> <span class="o">=</span> <span class="n">nested_attr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">nested_name</span><span class="p">:</span>
+                                <span class="n">nested_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nested_attr</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+                                <span class="n">method_data</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">][</span><span class="n">nested_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nested_data</span>
+
+                    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;methods&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">method_data</span></div>
+
+
+
+<span class="c1"># Global cache instance</span>
+<span class="n">_maxref_cache</span> <span class="o">=</span> <span class="n">MaxRefCache</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="get_object_info">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_object_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_object_info</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get information about a Max object from its .maxref.xml file</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: Max object name (e.g., &#39;umenu&#39;, &#39;cycle~&#39;, &#39;gain~&#39;)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dictionary with complete object information or None if not found</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_maxref_cache</span><span class="o">.</span><span class="n">get_object_data</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_object_help">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_object_help">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_object_help</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get formatted help text for a Max object</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: Max object name</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Formatted help text string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;No help available for &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;=== </span><span class="si">{</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;digest&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Digest: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;digest&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;description&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Description:&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fill</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">&quot;  &quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;inlets&quot;</span><span class="p">):</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Inlets:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">inlet</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;inlets&quot;</span><span class="p">]):</span>
+            <span class="n">inlet_info</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">inlet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">inlet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="s2">&quot;digest&quot;</span> <span class="ow">in</span> <span class="n">inlet</span><span class="p">:</span>
+                <span class="n">inlet_info</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; - </span><span class="si">{</span><span class="n">inlet</span><span class="p">[</span><span class="s1">&#39;digest&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inlet_info</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;outlets&quot;</span><span class="p">):</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Outlets:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">outlet</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;outlets&quot;</span><span class="p">]):</span>
+            <span class="n">outlet_info</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">outlet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">outlet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="s2">&quot;digest&quot;</span> <span class="ow">in</span> <span class="n">outlet</span><span class="p">:</span>
+                <span class="n">outlet_info</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; - </span><span class="si">{</span><span class="n">outlet</span><span class="p">[</span><span class="s1">&#39;digest&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outlet_info</span><span class="p">)</span>
+
+    <span class="c1"># Show some key methods</span>
+    <span class="n">methods</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;methods&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="n">methods</span><span class="p">:</span>
+        <span class="n">method_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">methods</span><span class="o">.</span><span class="n">keys</span><span class="p">())[:</span><span class="mi">5</span><span class="p">]</span>  <span class="c1"># Show first 5 methods</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Key Methods: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">method_names</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">methods</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  (and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">methods</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">5</span><span class="si">}</span><span class="s2"> more...)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;seealso&quot;</span><span class="p">):</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">See Also: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;seealso&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_available_objects">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_available_objects">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_available_objects</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get list of all available Max objects with .maxref.xml files&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_maxref_cache</span><span class="o">.</span><span class="n">refdict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+
+
+<span class="c1"># Legacy compatibility - generate defaults from .maxref.xml when available</span>
+<div class="viewcode-block" id="get_legacy_defaults">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_legacy_defaults">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_legacy_defaults</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get legacy-compatible defaults for a Max object</span>
+
+<span class="sd">    This function extracts basic information needed for backwards compatibility</span>
+<span class="sd">    with the old MAXCLASS_DEFAULTS structure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="c1"># Only set maxclass to the object name for objects that had explicit</span>
+    <span class="c1"># maxclass entries in the legacy database. All other objects should</span>
+    <span class="c1"># use &quot;newobj&quot; as maxclass (handled by fallback in core.py)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.maxclassdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXCLASS_DEFAULTS</span> <span class="k">as</span> <span class="n">LEGACY_DEFAULTS</span>
+
+    <span class="n">defaults</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">LEGACY_DEFAULTS</span><span class="p">:</span>
+        <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;maxclass&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="c1"># Extract inlet/outlet counts and types</span>
+    <span class="n">inlets</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;inlets&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">outlets</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;outlets&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="k">if</span> <span class="n">inlets</span><span class="p">:</span>
+        <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;numinlets&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inlets</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">outlets</span><span class="p">:</span>
+        <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;numoutlets&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">outlets</span><span class="p">)</span>
+        <span class="n">outlet_types</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">outlet</span> <span class="ow">in</span> <span class="n">outlets</span><span class="p">:</span>
+            <span class="n">outlet_type</span> <span class="o">=</span> <span class="n">outlet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;OUTLET_TYPE&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">outlet_type</span><span class="p">:</span>
+                <span class="n">outlet_type</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">outlet_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outlet_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">outlet_types</span><span class="p">:</span>
+            <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;outlettype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">outlet_types</span>
+
+    <span class="c1"># Set a default patching rect - this could be improved by analyzing</span>
+    <span class="c1"># the palette info or other attributes in the future</span>
+    <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;patching_rect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">22.0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">defaults</span></div>
+
+
+
+<div class="viewcode-block" id="validate_connection">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.validate_connection">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_connection</span><span class="p">(</span>
+    <span class="n">src_maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">src_outlet</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dst_maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dst_inlet</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a connection between two Max objects using maxref data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        src_maxclass: Source object&#39;s maxclass</span>
+<span class="sd">        src_outlet: Source outlet index (0-based)</span>
+<span class="sd">        dst_maxclass: Destination object&#39;s maxclass</span>
+<span class="sd">        dst_inlet: Destination inlet index (0-based)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple of (is_valid: bool, error_message: str)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get object information</span>
+    <span class="n">src_info</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">src_maxclass</span><span class="p">)</span>
+    <span class="n">dst_info</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">dst_maxclass</span><span class="p">)</span>
+
+    <span class="c1"># If we don&#39;t have maxref data, allow connection (backwards compatibility)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">src_info</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dst_info</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="c1"># Check source outlet exists</span>
+    <span class="n">src_outlets</span> <span class="o">=</span> <span class="n">src_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;outlets&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">src_outlets</span> <span class="ow">and</span> <span class="n">src_outlet</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_outlets</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="kc">False</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Object &#39;</span><span class="si">{</span><span class="n">src_maxclass</span><span class="si">}</span><span class="s2">&#39; only has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">src_outlets</span><span class="p">)</span><span class="si">}</span><span class="s2"> outlet(s), cannot connect from outlet </span><span class="si">{</span><span class="n">src_outlet</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Check destination inlet exists</span>
+    <span class="n">dst_inlets</span> <span class="o">=</span> <span class="n">dst_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;inlets&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">dst_inlets</span> <span class="ow">and</span> <span class="n">dst_inlet</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dst_inlets</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="kc">False</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Object &#39;</span><span class="si">{</span><span class="n">dst_maxclass</span><span class="si">}</span><span class="s2">&#39; only has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dst_inlets</span><span class="p">)</span><span class="si">}</span><span class="s2"> inlet(s), cannot connect to inlet </span><span class="si">{</span><span class="n">dst_inlet</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Type checking (optional - could be enhanced)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">src_outlets</span>
+        <span class="ow">and</span> <span class="n">dst_inlets</span>
+        <span class="ow">and</span> <span class="n">src_outlet</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_outlets</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">dst_inlet</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">dst_inlets</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="n">src_outlet_type</span> <span class="o">=</span> <span class="n">src_outlets</span><span class="p">[</span><span class="n">src_outlet</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">dst_inlet_type</span> <span class="o">=</span> <span class="n">dst_inlets</span><span class="p">[</span><span class="n">dst_inlet</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Basic type compatibility checking</span>
+        <span class="k">if</span> <span class="n">src_outlet_type</span> <span class="ow">and</span> <span class="n">dst_inlet_type</span><span class="p">:</span>
+            <span class="c1"># Signal connections</span>
+            <span class="k">if</span> <span class="s2">&quot;signal&quot;</span> <span class="ow">in</span> <span class="n">src_outlet_type</span> <span class="ow">and</span> <span class="s2">&quot;signal&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dst_inlet_type</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="kc">False</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Cannot connect signal outlet from &#39;</span><span class="si">{</span><span class="n">src_maxclass</span><span class="si">}</span><span class="s2">&#39; to non-signal inlet of &#39;</span><span class="si">{</span><span class="n">dst_maxclass</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Could add more sophisticated type checking here</span>
+
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="get_inlet_count">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_inlet_count">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_inlet_count</span><span class="p">(</span><span class="n">maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the number of inlets for a Max object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        maxclass: The Max object class name</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Number of inlets or None if unknown</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">maxclass</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">info</span> <span class="ow">and</span> <span class="s2">&quot;inlets&quot;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;inlets&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="get_outlet_count">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_outlet_count">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_outlet_count</span><span class="p">(</span><span class="n">maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the number of outlets for a Max object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        maxclass: The Max object class name</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Number of outlets or None if unknown</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">maxclass</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">info</span> <span class="ow">and</span> <span class="s2">&quot;outlets&quot;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;outlets&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="get_inlet_types">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_inlet_types">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_inlet_types</span><span class="p">(</span><span class="n">maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the inlet types for a Max object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        maxclass: The Max object class name</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of inlet type strings</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">maxclass</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">info</span> <span class="ow">and</span> <span class="s2">&quot;inlets&quot;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">inlet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">inlet</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;inlets&quot;</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="get_outlet_types">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.get_outlet_types">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_outlet_types</span><span class="p">(</span><span class="n">maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the outlet types for a Max object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        maxclass: The Max object class name</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of outlet type strings</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">maxclass</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">info</span> <span class="ow">and</span> <span class="s2">&quot;outlets&quot;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">outlet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">outlet</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;outlets&quot;</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="p">[]</span></div>
+
+
+
+<span class="c1"># Build a compatibility layer for the old MAXCLASS_DEFAULTS</span>
+<div class="viewcode-block" id="MaxClassDefaults">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.MaxClassDefaults">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaxClassDefaults</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compatibility wrapper that provides legacy MAXCLASS_DEFAULTS interface</span>
+<span class="sd">    while using dynamic .maxref.xml loading&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if object exists in .maxref.xml files or legacy defaults&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.maxclassdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXCLASS_DEFAULTS</span> <span class="k">as</span> <span class="n">LEGACY_DEFAULTS</span>
+
+        <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">LEGACY_DEFAULTS</span> <span class="ow">or</span> <span class="n">get_object_info</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get defaults for an object, preferring legacy, falling back to .maxref.xml&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.maxclassdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXCLASS_DEFAULTS</span> <span class="k">as</span> <span class="n">LEGACY_DEFAULTS</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">LEGACY_DEFAULTS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">LEGACY_DEFAULTS</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="c1"># Try to get from .maxref.xml</span>
+        <span class="n">legacy_defaults</span> <span class="o">=</span> <span class="n">get_legacy_defaults</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">legacy_defaults</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">legacy_defaults</span>
+
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No defaults found for maxclass &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MaxClassDefaults.get">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.MaxClassDefaults.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get defaults with fallback&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default</span></div>
+
+
+<div class="viewcode-block" id="MaxClassDefaults.keys">
+<a class="viewcode-back" href="../../api/maxref.html#py2max.maxref.MaxClassDefaults.keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all available keys&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.maxclassdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXCLASS_DEFAULTS</span> <span class="k">as</span> <span class="n">LEGACY_DEFAULTS</span>
+
+        <span class="n">legacy_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">LEGACY_DEFAULTS</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">maxref_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">get_available_objects</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">legacy_keys</span> <span class="o">|</span> <span class="n">maxref_keys</span></div>
+</div>
+
+
+
+<span class="c1"># Create the compatibility instance</span>
+<span class="n">MAXCLASS_DEFAULTS</span> <span class="o">=</span> <span class="n">MaxClassDefaults</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

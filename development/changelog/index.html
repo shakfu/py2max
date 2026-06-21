@@ -1,0 +1,2829 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Offline generation of Max/MSP patcher files in pure Python.">
+      
+      
+      
+        <link rel="canonical" href="https://shakfu.github.io/py2max/development/changelog/">
+      
+      
+        <link rel="prev" href="../testing/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Changelog - py2max</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="py2max" class="md-header__button md-logo" aria-label="py2max" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            py2max
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/shakfu/py2max" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    shakfu/py2max
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="py2max" class="md-nav__button md-logo" aria-label="py2max" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    py2max
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/shakfu/py2max" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    shakfu/py2max
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/layout_managers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout Managers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/advanced_usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/py2max/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core (Patcher, Box, Patchline)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/maxref/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    maxref
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/colors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    colors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/common/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    common
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/abstract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    abstract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.3.0]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.0]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removed-interactive-server-split-into-py2max-server-breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed: Interactive Server Split Into py2max-server (breaking)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-patcherencapsulate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Patcher.encapsulate()
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-preset-pattrstorage-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Preset / pattrstorage Scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-keyword-attribute-validation-validate_attrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Keyword-Attribute Validation (validate_attrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-multichannel-mc-polyphony-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Multichannel (mc.) / Polyphony Helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-svg-export-max-faithful-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: SVG Export (Max-faithful preview)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-color-theme-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Color / Theme Helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typed-full-mypy-strict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typed: Full mypy --strict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-lighter-core-imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed: Lighter Core Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-patcher-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal: Patcher Decomposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing &amp; Tooling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-max-for-live-support-py2maxm4l" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Max for Live Support (py2max.m4l)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-m4l-module-layout-imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed: M4L Module Layout &amp; Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-prebuilt-maxref-bundle-linux-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Prebuilt MaxRef Bundle (Linux Support)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-01-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.1] - 2026-01-11
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.1] - 2026-01-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-dagre-layout-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Dagre Layout Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-interactive-editor-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: Interactive Editor Visualization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-flowlayoutmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: FlowLayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-gridlayoutmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: GridLayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-websocket-server-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: WebSocket Server Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-save-as-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Save As Dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-elk-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed: ELK Layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-static-file-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed: Static File Paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-base-layoutmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: Base LayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.0]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.0]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updated-optional-layout-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updated: Optional Layout Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simplified-optional-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplified: Optional Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-interactive-editor-advanced-layout-with-svgjs-webcola-and-d3js" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Interactive Editor - Advanced Layout with SVG.js, WebCola, and D3.js
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-interactive-editor-nested-patcher-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Interactive Editor - Nested Patcher Navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-svg-preview-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: SVG Preview Feature
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-sqlite-database-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: SQLite Database Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-maxrefdb-api-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: MaxRefDB API Enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-automatic-cache-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Automatic Cache System
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.2]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.2]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-type-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Type Safety
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-max-object-introspection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Max Object Introspection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-project-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Project Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.1]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.0]
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.3.0]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.0]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removed-interactive-server-split-into-py2max-server-breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed: Interactive Server Split Into py2max-server (breaking)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-patcherencapsulate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Patcher.encapsulate()
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-preset-pattrstorage-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Preset / pattrstorage Scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-keyword-attribute-validation-validate_attrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Keyword-Attribute Validation (validate_attrs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-multichannel-mc-polyphony-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Multichannel (mc.) / Polyphony Helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-svg-export-max-faithful-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: SVG Export (Max-faithful preview)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-color-theme-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Color / Theme Helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typed-full-mypy-strict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typed: Full mypy --strict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-lighter-core-imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed: Lighter Core Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-patcher-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal: Patcher Decomposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing &amp; Tooling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-max-for-live-support-py2maxm4l" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Max for Live Support (py2max.m4l)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-m4l-module-layout-imports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed: M4L Module Layout &amp; Imports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-prebuilt-maxref-bundle-linux-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Prebuilt MaxRef Bundle (Linux Support)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-01-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.1] - 2026-01-11
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.1] - 2026-01-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-dagre-layout-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Dagre Layout Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-interactive-editor-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: Interactive Editor Visualization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-flowlayoutmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: FlowLayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-gridlayoutmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: GridLayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-websocket-server-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: WebSocket Server Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-save-as-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Save As Dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-elk-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed: ELK Layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-static-file-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed: Static File Paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-base-layoutmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: Base LayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.2.0]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.0]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updated-optional-layout-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updated: Optional Layout Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simplified-optional-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplified: Optional Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-interactive-editor-advanced-layout-with-svgjs-webcola-and-d3js" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Interactive Editor - Advanced Layout with SVG.js, WebCola, and D3.js
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-interactive-editor-nested-patcher-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Interactive Editor - Nested Patcher Navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-svg-preview-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: SVG Preview Feature
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-sqlite-database-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: SQLite Database Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improved-maxrefdb-api-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved: MaxRefDB API Enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-automatic-cache-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Automatic Cache System
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.2]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.2]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-type-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Type Safety
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-max-object-introspection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Max Object Introspection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-in-project-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improvements in Project Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.1]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.0]
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<h2 id="unreleased">[Unreleased]<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h2 id="030">[0.3.0]<a class="headerlink" href="#030" title="Permanent link">&para;</a></h2>
+<h3 id="removed-interactive-server-split-into-py2max-server-breaking">Removed: Interactive Server Split Into <code>py2max-server</code> (breaking)<a class="headerlink" href="#removed-interactive-server-split-into-py2max-server-breaking" title="Permanent link">&para;</a></h3>
+<p>The browser-based live editor and remote REPL have moved to a separate companion package, <a href="https://github.com/shakfu/py2max-server"><code>py2max-server</code></a>, so the core library stays small, offline, and dependency-free.</p>
+<ul>
+<li>Removed <code>Patcher.serve()</code> and the <code>py2max serve</code> / <code>py2max repl</code> CLI commands; those CLI subcommands now print a pointer to <code>py2max-server</code>.</li>
+<li>Removed the <code>[server]</code> optional-dependency extra (<code>websockets</code>, <code>ptpython</code>) and the bundled browser assets (<code>py2max/static/</code>).</li>
+<li>Install the server features with <code>pip install py2max-server</code> and use <code>py2max-server serve &lt;patch&gt;</code> / <code>py2max-server repl …</code>. The remote REPL now requires token authentication (passed via <code>--token</code> or <code>PY2MAX_REPL_TOKEN</code>).</li>
+</ul>
+<h3 id="new-patcherencapsulate">New: <code>Patcher.encapsulate()</code><a class="headerlink" href="#new-patcherencapsulate" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Patcher.encapsulate(boxes, text="p sub")</code> wraps a selection of boxes into a subpatcher, auto-generating <code>inlet</code>/<code>outlet</code> objects for any connections that cross the selection boundary and rewiring the parent through the new subpatcher box. Connections wholly inside the selection move into the subpatcher; connections wholly outside it are untouched. Ports are de-duplicated by source, matching how patches are built by hand. Returns the new subpatcher <code>Box</code>.</li>
+</ul>
+<h3 id="new-preset-pattrstorage-scaffolding">New: Preset / <code>pattrstorage</code> Scaffolding<a class="headerlink" href="#new-preset-pattrstorage-scaffolding" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Patcher.add_pattrstorage(name)</code>, <code>Patcher.add_autopattr()</code>, and <code>Patcher.add_preset_system(name)</code> (which adds both and wires <code>autopattr</code> -&gt; <code>pattrstorage</code>) scaffold a Max preset system. Any object with a scripting name (<code>varname</code>) or <code>parameter_enable=1</code> participates.</li>
+<li><code>Patcher.enable_parameter(box, longname, shortname="", ptype=0, initial=None)</code> turns an existing UI box into a Max parameter (sets <code>parameter_enable</code> and the <code>saved_attribute_attributes</code>), so it participates in presets and, in a Max for Live device, appears as an automatable parameter.</li>
+</ul>
+<h3 id="new-keyword-attribute-validation-validate_attrs">New: Keyword-Attribute Validation (<code>validate_attrs</code>)<a class="headerlink" href="#new-keyword-attribute-validation-validate_attrs" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Patcher(validate_attrs=True)</code> warns (<code>UserWarning</code>) when an object is given a keyword that is not a known attribute for its Max class -- catching typos like <code>inital=</code> for <code>initial=</code>. The known set is the object's maxref attributes plus a universal box-attribute whitelist; objects with no maxref entry are skipped. Off by default and warn-only, so it never changes generated output.</li>
+</ul>
+<h3 id="new-multichannel-mc-polyphony-helpers">New: Multichannel (<code>mc.</code>) / Polyphony Helpers<a class="headerlink" href="#new-multichannel-mc-polyphony-helpers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Patcher.add_mc(text, chans=None)</code> adds a multichannel object, prefixing <code>mc.</code> and appending <code>@chans</code> (e.g. <code>add_mc("cycle~ 440", chans=4)</code> -&gt; <code>mc.cycle~ 440 @chans 4</code>).</li>
+<li><code>Patcher.add_poly(target, voices=1)</code> adds a <code>poly~</code> object hosting N voices of a target patch.</li>
+</ul>
+<h3 id="improved-svg-export-max-faithful-preview">Improved: SVG Export (Max-faithful preview)<a class="headerlink" href="#improved-svg-export-max-faithful-preview" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The <code>preview</code> / <code>to_svg</code> output now approximates Max's look: a light patcher background, signal vs message/control <strong>ports colored distinctly</strong> (signal green, control dark), signal <strong>cables drawn thicker and in a distinct color</strong>, and subpatcher boxes tinted so they stand out. Object text is intentionally not truncated, matching Max (objects size to their text).</li>
+</ul>
+<h3 id="new-color-theme-helpers">New: Color / Theme Helpers<a class="headerlink" href="#new-color-theme-helpers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Box.set_color(bg=..., text=..., border=...)</code> sets a box's <code>bgcolor</code>/<code>textcolor</code>/<code>bordercolor</code>; each accepts a named color (e.g. <code>"red"</code>), a hex string (<code>"#ff8800"</code>), or an <code>[r, g, b(, a)]</code> float sequence. Returns the box for chaining.</li>
+<li><code>Patcher.apply_theme(theme)</code> applies a color theme to every box (recursing into subpatchers). Built-in themes: <code>"light"</code>, <code>"dark"</code>, <code>"blue"</code>, <code>"high-contrast"</code>; or pass a dict of <code>bg</code>/<code>text</code>/<code>border</code> colors.</li>
+<li><code>py2max.core.colors</code> exposes the <code>MAX_COLORS</code> named palette and <code>resolve_color()</code>.</li>
+</ul>
+<h3 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Removed a misleading path-traversal check</strong> in <code>Patcher.save_as()</code>. The previous <code>..</code>/<code>/etc</code> allowlist was trivially bypassable and gave a false sense of safety; for an offline file generator it provided no real protection. Genuinely unresolvable paths still raise <code>PatcherIOError</code>.</li>
+</ul>
+<h3 id="typed-full-mypy-strict">Typed: Full <code>mypy --strict</code><a class="headerlink" href="#typed-full-mypy-strict" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The entire package is now annotated and passes <code>mypy --strict</code>, backing the shipped <code>py.typed</code> marker. <code>[tool.mypy]</code> enforces <code>strict = true</code>. Core has <strong>no runtime dependencies</strong>.</li>
+</ul>
+<h3 id="changed-lighter-core-imports">Changed: Lighter Core Imports<a class="headerlink" href="#changed-lighter-core-imports" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>import py2max</code> no longer eagerly imports <code>sqlite3</code>, the maxref database layer, or <code>py2max.m4l</code>. <code>MaxRefDB</code> is now available lazily via <code>from py2max.maxref import MaxRefDB</code> (removed from the top-level <code>py2max</code> namespace).</li>
+</ul>
+<h3 id="internal-patcher-decomposition">Internal: <code>Patcher</code> Decomposition<a class="headerlink" href="#internal-patcher-decomposition" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Split the ~1660-line <code>Patcher</code> class into focused mixins composed via inheritance: object creation (<code>BoxFactoryMixin</code> in <code>core/factory.py</code>) and serialization (<code>SerializationMixin</code> in <code>core/serialization.py</code>). The public API is unchanged; adding a new object type now means editing <code>core/factory.py</code> rather than the core class.</li>
+</ul>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Object-name resolution (used by connection validation and object classification) now reads the box <code>text</code> property, so it resolves correctly for boxes loaded from a file. Previously it inspected only programmatic kwargs and returned <code>newobj</code> for loaded boxes.</li>
+<li><code>Box.oid</code> now returns the trailing numeric part of any id (e.g. <code>cycle_1</code> -&gt; 1) instead of raising <code>ValueError</code> under <code>semantic_ids=True</code>.</li>
+<li>The <code>py2max</code> CLI now reports all <code>Py2MaxError</code>s (not just <code>InvalidConnectionError</code>) as a clean error message instead of leaking a traceback.</li>
+<li>Fixed an <code>inital</code> -&gt; <code>initial</code> keyword typo in the simple-synthesis tutorial.</li>
+</ul>
+<h3 id="testing-tooling">Testing &amp; Tooling<a class="headerlink" href="#testing-tooling" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The test suite is now hermetic: a <code>conftest.py</code> autouse fixture isolates each test in a temporary working directory, so relative <code>outputs/</code> writes no longer accumulate in the repo. Fixture reads are anchored at the test file.</li>
+<li>Promoted the <code>.amxd</code> byte-for-byte fixtures from the gitignored <code>outputs/</code> into tracked <code>tests/data/</code>, so that verification runs in CI and on fresh checkouts instead of only on the author's machine.</li>
+<li>Repo-wide <code>ruff</code> lint and format cleanup.</li>
+</ul>
+<h3 id="new-max-for-live-support-py2maxm4l">New: Max for Live Support (<code>py2max.m4l</code>)<a class="headerlink" href="#new-max-for-live-support-py2maxm4l" title="Permanent link">&para;</a></h3>
+<p>Implements <a href="https://github.com/shakfu/py2max/issues/9">issue #9</a>. See <a href="https://github.com/shakfu/py2max/blob/main/docs/notes/amxd.md"><code>docs/notes/amxd.md</code></a> for the on-disk format, embedded-project block, and verification details.</p>
+<ul>
+<li><strong><code>.amxd</code> read/write</strong>: byte-for-byte compatible with Max-exported devices; verified against real fixtures and end-to-end in Live 12.</li>
+<li><strong>Device-type discrimination</strong>: Audio Effect / Instrument / MIDI Effect via <code>Patcher(device_type=...)</code> or the <code>pack_amxd</code> / <code>write_amxd</code> <code>device_type</code> argument.</li>
+<li><strong>Presentation-mode helpers</strong>: <code>Patcher.enable_presentation(devicewidth=...)</code>, <code>Patcher.enforce_integer_coords()</code>, <code>Box.add_to_presentation([x, y, w, h])</code> (rejects M4L infrastructure objects, rounds fractional coords with a warning).</li>
+<li><code>Patcher.save()</code> / <code>Patcher.from_file()</code> auto-detect the <code>.amxd</code> extension; <code>.maxpat</code> path is unchanged.</li>
+</ul>
+<h3 id="changed-m4l-module-layout-imports">Changed: M4L Module Layout &amp; Imports<a class="headerlink" href="#changed-m4l-module-layout-imports" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All M4L code (binary format + presentation helpers) lives in a single module <code>py2max/m4l.py</code>. Previously briefly split as <code>py2max/amxd.py</code>.</li>
+<li>M4L symbols are reachable only via <code>from py2max.m4l import …</code>; nothing is re-exported from the top-level <code>py2max</code> namespace.</li>
+</ul>
+<h3 id="new-prebuilt-maxref-bundle-linux-support">New: Prebuilt MaxRef Bundle (Linux Support)<a class="headerlink" href="#new-prebuilt-maxref-bundle-linux-support" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ship <code>py2max/maxref/data/bundle.json.gz</code> in the wheel (1175 objects, ~1 MiB compressed, ~7 MiB raw).</li>
+<li><code>MaxRefCache._get_refdict()</code> falls back to the bundle when no local Max installation is found, pre-seeding the parser cache so <code>Box.help()</code>, <code>get_inlet_count</code>, <code>get_outlet_count</code>, and connection validation work identically on Linux.</li>
+<li>Regenerate with <code>uv run python scripts/build_maxref_bundle.py</code> on a machine with Max installed; commit the result.</li>
+<li>Bundle stores full parsed data (methods, attributes, inlets/outlets, digests, descriptions) — not a trimmed subset — so introspection parity with macOS/Windows is preserved.</li>
+</ul>
+<h2 id="021-2026-01-11">[0.2.1] - 2026-01-11<a class="headerlink" href="#021-2026-01-11" title="Permanent link">&para;</a></h2>
+<h3 id="new-dagre-layout-algorithm">New: Dagre Layout Algorithm<a class="headerlink" href="#new-dagre-layout-algorithm" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added Dagre (Directed Acyclic Graph) as third layout algorithm option alongside WebCola and ELK</li>
+<li>Integrated <code>dagre-bundle.js</code> combining graphlib with require shim for browser compatibility</li>
+<li>Added Dagre-specific controls: Ranker (network-simplex, longest-path, tight-tree) and Align options</li>
+<li>Supports all flow directions: top-bottom, bottom-top, left-right, right-left</li>
+</ul>
+<h3 id="improved-interactive-editor-visualization">Improved: Interactive Editor Visualization<a class="headerlink" href="#improved-interactive-editor-visualization" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>ViewBox Scaling</strong>: Dynamic padding (10% of content, min 30px, max 100px) with aspect ratio preservation</li>
+<li><strong>Port Position Safety</strong>: Added bounds checking with <code>safeIndex</code> clamping to prevent invalid port positions</li>
+<li><strong>Patchline Animation</strong>: Added <code>animatePatchlines()</code> method for smooth patchline transitions during layout</li>
+<li><strong>Layout Centering</strong>: Added <code>centerLayout()</code> helper method - all three algorithms now center content within canvas</li>
+<li><strong>Delta Updates</strong>: Position updates now send only changed box data instead of full patcher state</li>
+<li>Added <code>updateBoxPosition()</code> for efficient single-box DOM updates</li>
+<li>Added <code>updateConnectedLines()</code> to update patchlines without full re-render</li>
+<li>Significantly reduces bandwidth during drag operations</li>
+</ul>
+<h3 id="improved-flowlayoutmanager">Improved: FlowLayoutManager<a class="headerlink" href="#improved-flowlayoutmanager" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Line Crossing Minimization</strong>: Added <code>_minimize_crossings()</code> method using barycenter heuristic</li>
+<li>Objects within each level are reordered based on average position of connected objects in previous level</li>
+<li>Reduces visual line crossings for cleaner layouts</li>
+<li><strong>Negative Position Prevention</strong>: Added bounds clamping and auto-scaling when content exceeds available space</li>
+<li><strong>Incremental Layout</strong>: Supports <code>optimize_layout(changed_objects)</code> for efficient partial updates</li>
+</ul>
+<h3 id="improved-gridlayoutmanager">Improved: GridLayoutManager<a class="headerlink" href="#improved-gridlayoutmanager" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fixed integer division to float division for consistent cluster positioning</li>
+<li>Now uses consistent float spacing within clusters</li>
+<li><strong>Incremental Layout</strong>: Supports <code>optimize_layout(changed_objects)</code> for efficient partial updates</li>
+</ul>
+<h3 id="improved-websocket-server-security">Improved: WebSocket Server Security<a class="headerlink" href="#improved-websocket-server-security" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Input Validation</strong>: Added comprehensive schema-based message validation</li>
+<li><code>MESSAGE_SCHEMAS</code> defines required fields and types for each message type</li>
+<li><code>MAX_STRING_LENGTHS</code> prevents abuse (256 chars for IDs, 10000 for text, 4096 for filepaths)</li>
+<li><code>COORDINATE_BOUNDS</code> validates positions (-100000 to 100000)</li>
+<li>Checks for control characters in strings</li>
+<li>Validates optional fields (outlet/inlet indices 0-255)</li>
+<li>Validation errors sent back to client as error messages</li>
+</ul>
+<h3 id="new-save-as-dialog">New: Save As Dialog<a class="headerlink" href="#new-save-as-dialog" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added <code>save_as_required</code> message type when patcher has no filepath</li>
+<li>Added <code>handle_save_as()</code> handler for saving with specified filepath</li>
+<li>Added <code>showSaveAsDialog()</code> in JavaScript with filename prompt</li>
+<li>Automatically adds <code>.maxpat</code> extension if not provided</li>
+</ul>
+<h3 id="fixed-elk-layout">Fixed: ELK Layout<a class="headerlink" href="#fixed-elk-layout" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fixed "Referenced shape does not exist" errors by validating edges before creating ports</li>
+<li>Ports now created based on actual connections, not just declared counts</li>
+</ul>
+<h3 id="fixed-static-file-paths">Fixed: Static File Paths<a class="headerlink" href="#fixed-static-file-paths" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fixed 404 error for <code>interactive.html</code> by correcting static file path resolution</li>
+</ul>
+<h3 id="improved-base-layoutmanager">Improved: Base LayoutManager<a class="headerlink" href="#improved-base-layoutmanager" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added <code>prevent_overlaps()</code> method for iterative overlap prevention</li>
+<li><strong>Incremental Layout System</strong>: Added smart layout optimization that only repositions affected objects</li>
+<li><code>optimize_layout(changed_objects)</code> accepts optional set of changed object IDs</li>
+<li><code>should_use_incremental()</code> determines when to use incremental vs full layout (30% threshold)</li>
+<li><code>get_affected_objects()</code> finds changed objects plus their connected neighbors</li>
+<li><code>_incremental_layout()</code> repositions only affected objects using spiral search</li>
+<li><code>_find_non_overlapping_position()</code> finds nearby positions that don't overlap with fixed objects</li>
+<li><code>_full_layout()</code> for complete layout recalculation (subclasses override)</li>
+</ul>
+<h2 id="020">[0.2.0]<a class="headerlink" href="#020" title="Permanent link">&para;</a></h2>
+<h3 id="updated-optional-layout-dependencies">Updated: Optional Layout Dependencies<a class="headerlink" href="#updated-optional-layout-dependencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Updated <code>pycola</code> dependency to <code>graph-layout</code> package (<a href="https://github.com/shakfu/graph-layout">https://github.com/shakfu/graph-layout</a>)</li>
+<li>Renamed test file from <code>test_layout_pycola.py</code> to <code>test_layout_graph_layout.py</code></li>
+<li>
+<p>Updated API to use <code>ColaLayoutAdapter</code> from <code>graph_layout</code> module</p>
+</li>
+<li>
+<p>Updated <code>pyhola</code> dependency to <code>hola-graph</code> package (<a href="https://github.com/shakfu/hola-graph">https://github.com/shakfu/hola-graph</a>)</p>
+</li>
+<li>Renamed test file from <code>test_layout_pyhola.py</code> to <code>test_layout_hola_graph.py</code></li>
+<li>
+<p>Updated imports to use <code>hola_graph._core</code> module</p>
+</li>
+<li>
+<p>Fixed <code>test_layout_networkx2.py</code> to properly check for <code>pygraphviz</code> dependency</p>
+</li>
+<li>Test now correctly skips when pygraphviz is not installed</li>
+</ul>
+<h3 id="simplified-optional-dependencies">Simplified: Optional Dependencies<a class="headerlink" href="#simplified-optional-dependencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Consolidated optional dependencies in <code>pyproject.toml</code> to single <code>server</code> option</li>
+<li>Removed <code>repl</code> and <code>all</code> options</li>
+<li><code>server</code> now includes both <code>websockets</code> and <code>ptpython</code></li>
+<li>Install with: <code>pip install py2max[server]</code></li>
+</ul>
+<h3 id="new-interactive-editor-advanced-layout-with-svgjs-webcola-and-d3js">New: Interactive Editor - Advanced Layout with SVG.js, WebCola, and D3.js<a class="headerlink" href="#new-interactive-editor-advanced-layout-with-svgjs-webcola-and-d3js" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Added complete SVG.js (v3.2.5) integration for all SVG manipulation and animation in the interactive editor</p>
+</li>
+<li>
+<p>Added WebCola constraint-based force-directed graph layout engine with D3.js (v7) integration</p>
+</li>
+<li>
+<p>Added interactive auto-layout controls panel with real-time parameter adjustment</p>
+</li>
+<li>
+<p>Added 5 adjustable layout parameters via sliders and controls:</p>
+</li>
+<li><strong>Link Distance</strong> (50-300): Controls spacing between connected objects</li>
+<li><strong>Iterations</strong> (10-200): Controls layout quality and convergence</li>
+<li><strong>Canvas Width</strong> (400-1600): Adjustable layout area width</li>
+<li><strong>Canvas Height</strong> (300-1200): Adjustable layout area height</li>
+<li>
+<p><strong>Avoid Overlaps</strong> (checkbox): Toggle automatic overlap prevention</p>
+</li>
+<li>
+<p>Added constraint-based layout system with 4 presets:</p>
+</li>
+<li><strong>None</strong>: Natural force-directed layout without alignment constraints</li>
+<li><strong>Horizontal Flow</strong>: Aligns objects in horizontal rows (left-to-right signal flow)</li>
+<li><strong>Vertical Flow</strong>: Aligns objects in vertical columns (top-to-bottom signal flow)</li>
+<li>
+<p><strong>Grid</strong>: Strict grid alignment with both row and column constraints</p>
+</li>
+<li>
+<p>Added smooth SVG.js animations (500ms ease-in-out) for layout transitions</p>
+</li>
+<li>
+<p>Added constraint generation algorithm that analyzes object positions and creates alignment constraints</p>
+</li>
+<li>
+<p>Added collapsible controls panel with "Apply Layout" and "Hide" buttons</p>
+</li>
+<li>
+<p>Added visual feedback showing active parameters and constraint count</p>
+</li>
+</ul>
+<p><strong>SVG.js Implementation:</strong></p>
+<ul>
+<li>Refactored all SVG rendering to use SVG.js declarative API instead of native DOM manipulation</li>
+<li><code>initializeSVG()</code>: Creates SVG canvas and layer groups using SVG.js</li>
+<li><code>createBox()</code>: Renders boxes with rectangles, text, and clipping paths using SVG.js</li>
+<li><code>createLine()</code>: Renders connection lines with hitboxes using SVG.js</li>
+<li><code>addPorts()</code>: Renders inlet/outlet circles using SVG.js</li>
+<li><code>autoLayout()</code>: Animates box movements using SVG.js transforms</li>
+</ul>
+<p><strong>WebCola Integration:</strong></p>
+<ul>
+<li>Force-directed graph layout with configurable parameters</li>
+<li>Constraint-based positioning using alignment constraints</li>
+<li>Automatic overlap avoidance with adjustable node dimensions</li>
+<li>Handles disconnected graph components gracefully</li>
+<li>Jaccard link lengths for natural connection spacing</li>
+</ul>
+<p><strong>Constraint System:</strong></p>
+<ul>
+<li>Automatic constraint generation based on object proximity (50px threshold)</li>
+<li>Alignment constraints for horizontal rows (Y-axis alignment)</li>
+<li>Alignment constraints for vertical columns (X-axis alignment)</li>
+<li>Grid constraints combining both row and column alignment</li>
+<li>Real-time constraint application with visual feedback</li>
+</ul>
+<p><strong>Documentation:</strong></p>
+<ul>
+<li>Added comprehensive <code>docs/LIBRARIES_INTEGRATION.md</code> (518 lines)</li>
+<li>Detailed parameter descriptions and effects</li>
+<li>Constraint preset usage examples</li>
+<li>Testing procedures and expected behavior</li>
+<li>Code examples and API documentation</li>
+<li>Performance considerations for different patch sizes</li>
+</ul>
+<p><strong>Demo Scripts:</strong></p>
+<ul>
+<li>Added <code>examples/auto_layout_demo.py</code>: Complex synthesizer with randomized positions (13 objects, 16 connections)</li>
+<li>Hierarchical layout demo: Tree structure with multiple processing layers (12 objects)</li>
+</ul>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>Professional animated transitions for all layout operations</li>
+<li>Interactive experimentation with layout parameters</li>
+<li>Structured layouts matching typical Max patch patterns</li>
+<li>Clean, maintainable SVG.js codebase</li>
+<li>Four layout presets for different use cases</li>
+<li>Real-time visual feedback</li>
+<li>Minimal overhead (234KB total: D3 + SVG.js + WebCola, minified)</li>
+</ul>
+<p><strong>Example Usage:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Start interactive editor</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>py2max<span class="w"> </span>serve<span class="w"> </span>outputs/auto_layout_demo.maxpat
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># In browser:</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># 1. Click &quot;Auto-Layout&quot; to show controls</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># 2. Adjust Link Distance slider (50-300)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># 3. Select Constraint Preset (Grid/Horizontal/Vertical/None)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># 4. Adjust Iterations for convergence quality</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># 5. Click &quot;Apply Layout&quot; to see smooth animations</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># 6. Experiment with different parameter combinations</span>
+</code></pre></div>
+<h3 id="new-interactive-editor-nested-patcher-navigation">New: Interactive Editor - Nested Patcher Navigation<a class="headerlink" href="#new-interactive-editor-nested-patcher-navigation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added full nested patcher (subpatcher) navigation support in interactive editor</li>
+<li>Double-click on subpatcher boxes (blue dashed border) to navigate into them</li>
+<li>Navigate back using "Parent" button or ESC key</li>
+<li>Breadcrumb navigation displays current location (e.g., "Main / Oscillator / Envelope")</li>
+<li>Subpatcher boxes are fully interactive: draggable, connectable, deletable</li>
+<li>Visual distinction: subpatcher boxes have blue dashed borders and bold blue text</li>
+<li>Event delegation for reliable double-click detection even with dynamic DOM updates</li>
+<li>Automatic parent reference restoration when loading patches from files</li>
+</ul>
+<p><strong>Server-Side Changes:</strong></p>
+<ul>
+<li>Modified <code>get_patcher_state_json()</code> to include <code>has_subpatcher</code> flag and <code>patcher_path</code> breadcrumb</li>
+<li>Added <code>handle_navigate_to_subpatcher()</code>, <code>handle_navigate_to_parent()</code>, <code>handle_navigate_to_root()</code> handlers</li>
+<li>Fixed inlet/outlet count detection to use <code>numinlets</code>/<code>numoutlets</code> attributes from loaded files</li>
+<li>Handler now tracks both <code>root_patcher</code> (for saving) and <code>patcher</code> (current view)</li>
+</ul>
+<p><strong>Client-Side Changes:</strong></p>
+<ul>
+<li>Added breadcrumb UI showing patcher hierarchy</li>
+<li>Implemented event delegation for double-click handling on dynamically created boxes</li>
+<li>Fixed object positioning by flattening <code>patching_rect</code> into <code>x</code>, <code>y</code>, <code>width</code>, <code>height</code></li>
+<li>CSS styling for subpatcher boxes with distinct visual appearance</li>
+<li>ESC key navigation support</li>
+</ul>
+<p><strong>Core Changes:</strong></p>
+<ul>
+<li>Modified <code>Patcher.from_dict()</code> to set <code>_parent</code> references for nested subpatchers when loading from files</li>
+<li>Ensures bidirectional parent-child relationships for proper navigation</li>
+</ul>
+<p><strong>Tests:</strong></p>
+<ul>
+<li>Added 14 comprehensive tests in <code>tests/test_nested_patchers.py</code></li>
+<li>All tests passing (326 passed, 14 skipped)</li>
+</ul>
+<p><strong>Demo:</strong></p>
+<ul>
+<li>Added <code>examples/nested_patcher_demo.py</code> with three demonstration patches:</li>
+<li>Synthesizer with nested envelope subpatcher</li>
+<li>Effects chain with parallel subpatchers</li>
+<li>Deeply nested hierarchy (6 levels)</li>
+</ul>
+<h3 id="new-svg-preview-feature">New: SVG Preview Feature<a class="headerlink" href="#new-svg-preview-feature" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Added <code>py2max preview</code> CLI command for offline visual validation of Max patches</p>
+</li>
+<li>
+<p>Added <code>py2max.svg</code> module with complete SVG rendering engine (330 lines)</p>
+</li>
+<li>
+<p>Added <code>export_svg()</code> and <code>export_svg_string()</code> functions for programmatic SVG generation</p>
+</li>
+<li>
+<p>Added SVG rendering for boxes with type-specific styling:</p>
+</li>
+<li>Regular objects: Light gray fill</li>
+<li>Comments: Yellow fill (#ffffd0)</li>
+<li>
+<p>Messages: Medium gray fill</p>
+</li>
+<li>
+<p>Added patchline rendering with correct inlet/outlet connection points</p>
+</li>
+<li>
+<p>Added optional inlet/outlet port visualization (blue inlets, orange outlets)</p>
+</li>
+<li>
+<p>Added automatic port detection from MaxRef metadata via <code>get_inlet_count()</code> and <code>get_outlet_count()</code></p>
+</li>
+<li>
+<p>Added support for both Rect objects and list/tuple coordinate formats</p>
+</li>
+<li>
+<p>Added proper XML text escaping for special characters</p>
+</li>
+<li>
+<p>Added automatic viewBox calculation with padding</p>
+</li>
+<li>
+<p>Added browser integration with <code>--open</code> flag</p>
+</li>
+<li>
+<p>Added 17 comprehensive tests covering all SVG functionality</p>
+</li>
+<li>
+<p>Added <code>tests/examples/preview/svg_preview_demo.py</code> demonstration script</p>
+</li>
+<li>
+<p>Added <code>docs/SVG_PREVIEW.md</code> complete documentation</p>
+</li>
+</ul>
+<p><strong>CLI Usage:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Basic preview (saves to /tmp)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>py2max<span class="w"> </span>preview<span class="w"> </span>my-patch.maxpat
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Specify output path</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>py2max<span class="w"> </span>preview<span class="w"> </span>my-patch.maxpat<span class="w"> </span>-o<span class="w"> </span>output.svg
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Custom title</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>py2max<span class="w"> </span>preview<span class="w"> </span>my-patch.maxpat<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;My Synth&quot;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Hide inlet/outlet ports</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>py2max<span class="w"> </span>preview<span class="w"> </span>my-patch.maxpat<span class="w"> </span>--no-ports
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Open in browser automatically</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>py2max<span class="w"> </span>preview<span class="w"> </span>my-patch.maxpat<span class="w"> </span>--open
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># Combine options</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>py2max<span class="w"> </span>preview<span class="w"> </span>synth.maxpat<span class="w"> </span>-o<span class="w"> </span>docs/synth.svg<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Synth&quot;</span><span class="w"> </span>--open
+</code></pre></div>
+<p><strong>Python API:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span><span class="p">,</span> <span class="n">export_svg</span><span class="p">,</span> <span class="n">export_svg_string</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Create and export</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;synth.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;grid&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">dac</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">export_svg</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;synth.svg&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Simple Synth&quot;</span><span class="p">,</span> <span class="n">show_ports</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Export to string</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">svg_content</span> <span class="o">=</span> <span class="n">export_svg_string</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">show_ports</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>No Max installation required for visual validation</li>
+<li>High-quality, scalable vector graphics</li>
+<li>Works with all py2max layout managers</li>
+<li>Perfect for CI/CD, documentation, and version control</li>
+<li>Pure Python implementation with no binary dependencies</li>
+<li>Viewable in any web browser</li>
+</ul>
+<h3 id="new-sqlite-database-support">New: SQLite Database Support<a class="headerlink" href="#new-sqlite-database-support" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Added <code>py2max.db</code> module with comprehensive SQLite database support for Max object reference data</p>
+</li>
+<li>
+<p>Added <code>MaxRefDB</code> class for creating, querying, and managing Max object databases</p>
+</li>
+<li>
+<p>Added 14 normalized database tables: objects, metadata, inlets, outlets, methods, method_args, attributes, attribute_enums, objargs, examples, seealso, misc, palette, parameter</p>
+</li>
+<li>
+<p>Added support for both in-memory and file-based databases</p>
+</li>
+<li>
+<p>Added database query API: <code>search_objects()</code>, <code>get_objects_by_category()</code>, <code>get_all_categories()</code></p>
+</li>
+<li>
+<p>Added bidirectional conversion: .maxref.xml → SQLite → JSON</p>
+</li>
+<li>
+<p>Added <code>export_to_json()</code> and <code>import_from_json()</code> methods for database portability</p>
+</li>
+<li>
+<p>Added <code>create_database()</code> convenience function for database creation and population</p>
+</li>
+<li>
+<p>Added category-based population methods: <code>populate_all_objects()</code>, <code>populate_all_max_objects()</code>, <code>populate_all_jit_objects()</code>, <code>populate_all_msp_objects()</code>, <code>populate_all_m4l_objects()</code></p>
+</li>
+<li>
+<p>Added maxref category helper functions: <code>get_all_max_objects()</code>, <code>get_all_jit_objects()</code>, <code>get_all_msp_objects()</code>, <code>get_all_m4l_objects()</code>, <code>get_objects_by_category()</code></p>
+</li>
+<li>
+<p>Added category tracking to maxref module (462 Max, 448 MSP, 210 Jitter, 37 M4L objects)</p>
+</li>
+<li>
+<p>Added complete test suite with 17 test cases</p>
+</li>
+<li>
+<p>Added <code>examples/maxref_db_demo.py</code> demonstration script</p>
+</li>
+<li>
+<p>Added <code>examples/category_db_demo.py</code> category-specific examples</p>
+</li>
+<li>
+<p>Added <code>docs/database.md</code> API documentation</p>
+</li>
+</ul>
+<h3 id="improved-maxrefdb-api-enhancements">Improved: MaxRefDB API Enhancements<a class="headerlink" href="#improved-maxrefdb-api-enhancements" title="Permanent link">&para;</a></h3>
+<p><strong>Python API Improvements:</strong></p>
+<ul>
+<li>Added Pythonic properties: <code>.count</code>, <code>.categories</code>, <code>.objects</code> for cleaner access</li>
+<li>Added magic methods: <code>len(db)</code>, <code>'obj' in db</code>, <code>db['obj']</code>, <code>repr(db)</code> for natural Python usage</li>
+<li>Added simplified methods: <code>populate()</code>, <code>search()</code>, <code>by_category()</code>, <code>export()</code>, <code>load()</code> with cleaner naming</li>
+<li>Added <code>summary()</code> method for database statistics with category breakdown</li>
+<li>Maintained full backward compatibility with deprecated methods</li>
+<li>All 18 database tests pass</li>
+</ul>
+<p><strong>CLI Improvements:</strong></p>
+<ul>
+<li>Added comprehensive <code>py2max db</code> subcommand with 7 operations:</li>
+<li><code>db create</code> - Create new databases with optional category filtering</li>
+<li><code>db populate</code> - Add objects to existing databases</li>
+<li><code>db info</code> - Show database information with summary and listing options</li>
+<li><code>db search</code> - Search objects by text or category with verbose mode</li>
+<li><code>db query</code> - Get detailed object information (JSON, dict, or human-readable)</li>
+<li><code>db export</code> - Export database to JSON</li>
+<li><code>db import</code> - Import JSON data into database</li>
+<li>Updated <code>convert maxref-to-sqlite</code> to use MaxRefDB internally</li>
+<li>Added 7 new CLI tests covering all db subcommands</li>
+<li>All 272 tests pass (258 passed, 14 skipped)</li>
+</ul>
+<p><strong>Example Usage:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># New Pythonic API</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">db</span> <span class="o">=</span> <span class="n">MaxRefDB</span><span class="p">(</span><span class="s1">&#39;maxref.db&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">db</span><span class="o">.</span><span class="n">populate</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s1">&#39;msp&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">db</span><span class="p">))</span>  <span class="c1"># Total objects</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">if</span> <span class="s1">&#39;cycle~&#39;</span> <span class="ow">in</span> <span class="n">db</span><span class="p">:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">cycle</span> <span class="o">=</span> <span class="n">db</span><span class="p">[</span><span class="s1">&#39;cycle~&#39;</span><span class="p">]</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">results</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;filter&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">db</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s1">&#39;backup.json&#39;</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># New CLI commands</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>py2max<span class="w"> </span>db<span class="w"> </span>create<span class="w"> </span>msp.db<span class="w"> </span>--category<span class="w"> </span>msp
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>py2max<span class="w"> </span>db<span class="w"> </span>info<span class="w"> </span>msp.db<span class="w"> </span>--summary
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>py2max<span class="w"> </span>db<span class="w"> </span>search<span class="w"> </span>msp.db<span class="w"> </span><span class="s2">&quot;oscillator&quot;</span><span class="w"> </span>-v
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>py2max<span class="w"> </span>db<span class="w"> </span>query<span class="w"> </span>msp.db<span class="w"> </span>cycle~<span class="w"> </span>--json
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>py2max<span class="w"> </span>db<span class="w"> </span><span class="nb">export</span><span class="w"> </span>msp.db<span class="w"> </span>backup.json
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Cache management</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>py2max<span class="w"> </span>db<span class="w"> </span>cache<span class="w"> </span>location
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>py2max<span class="w"> </span>db<span class="w"> </span>cache<span class="w"> </span>init
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>py2max<span class="w"> </span>db<span class="w"> </span>cache<span class="w"> </span>clear
+</code></pre></div>
+<h3 id="new-automatic-cache-system">New: Automatic Cache System<a class="headerlink" href="#new-automatic-cache-system" title="Permanent link">&para;</a></h3>
+<p><strong>Platform-Specific Cache:</strong></p>
+<p>MaxRefDB now automatically creates and populates a cache database on first use:</p>
+<ul>
+<li><strong>macOS</strong>: <code>~/Library/Caches/py2max/maxref.db</code></li>
+<li><strong>Linux</strong>: <code>~/.cache/py2max/maxref.db</code></li>
+<li><strong>Windows</strong>: <code>~/AppData/Local/py2max/Cache/maxref.db</code></li>
+</ul>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>One-time population of all 1157 Max objects</li>
+<li>Instant access on subsequent use</li>
+<li>No manual setup required</li>
+<li>Platform-appropriate cache location</li>
+</ul>
+<p><strong>New Static Methods:</strong></p>
+<ul>
+<li><code>MaxRefDB.get_cache_dir()</code> - Get platform-specific cache directory</li>
+<li><code>MaxRefDB.get_default_db_path()</code> - Get default database path</li>
+</ul>
+<p><strong>Updated API:</strong></p>
+<ul>
+<li><code>MaxRefDB()</code> - Now uses cache by default</li>
+<li><code>MaxRefDB(db_path, auto_populate=True)</code> - Control auto-population</li>
+<li><code>MaxRefDB(':memory:')</code> - In-memory database (no caching)</li>
+</ul>
+<p><strong>New CLI Commands:</strong></p>
+<ul>
+<li><code>py2max db cache location</code> - Show cache location and status</li>
+<li><code>py2max db cache init</code> - Manually initialize cache</li>
+<li><code>py2max db cache clear</code> - Clear cache database</li>
+</ul>
+<p><strong>Example Usage:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Automatic caching (default)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaxRefDB</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">db</span> <span class="o">=</span> <span class="n">MaxRefDB</span><span class="p">()</span>  <span class="c1"># Auto-populates cache on first use</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objects: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">db</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># 1157</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Get cache location</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cache: </span><span class="si">{</span><span class="n">MaxRefDB</span><span class="o">.</span><span class="n">get_default_db_path</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="012">[0.1.2]<a class="headerlink" href="#012" title="Permanent link">&para;</a></h2>
+<h3 id="improvements-in-type-safety">Improvements in Type Safety<a class="headerlink" href="#improvements-in-type-safety" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added type safety improvements via compliance with <code>mypy</code> checks</li>
+</ul>
+<h3 id="improvements-in-layout">Improvements in Layout<a class="headerlink" href="#improvements-in-layout" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Added <code>optimize_layout()</code> method for post-connection layout optimization</p>
+</li>
+<li>
+<p>Added <code>cluster_connected</code> parameter to <code>GridLayoutManager</code> for connection-aware object clustering</p>
+</li>
+<li>
+<p>Added <code>flow_direction</code> parameter support for both horizontal and vertical layouts in all layout managers</p>
+</li>
+<li>
+<p>Added backward compatibility for legacy layout manager APIs</p>
+</li>
+<li>
+<p>Enhanced layout performance with connection-aware clustering algorithms</p>
+</li>
+<li>
+<p>Improved layout manager consistency with unified <code>GridLayoutManager</code> and <code>FlowLayoutManager</code> APIs</p>
+</li>
+<li>
+<p>Added <code>FlowLayoutManager</code> with intelligent signal flow analysis and hierarchical positioning</p>
+</li>
+<li>
+<p>Added <code>GridLayoutManager</code> with connection-aware clustering and configurable flow direction</p>
+</li>
+</ul>
+<h3 id="improvements-in-max-object-introspection">Improvements in Max Object Introspection<a class="headerlink" href="#improvements-in-max-object-introspection" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Added optional connection validation system with inlet/outlet validation and <code>InvalidConnectionError</code>. This is early stages, and may have some false positives, but planned improvements in handling of excepttions should make this accurate and useful.</p>
+</li>
+<li>
+<p>Added object introspection methods: <code>get_inlet_count()</code>, <code>get_outlet_count()</code>, <code>get_inlet_types()</code>, <code>get_outlet_types()</code></p>
+</li>
+<li>
+<p>Added <code>Box.help()</code>, <code>Box.help_text()</code> and <code>Box.get_info()</code> methods for rich object documentation.</p>
+</li>
+<li>
+<p>Added <code>maxref</code> integration system with dynamic help for 1157 Max objects using <code>.maxref.xml</code> files</p>
+</li>
+</ul>
+<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fixed <code>maxclass</code> assignment bug that was preventing patchlines from connecting properly</li>
+</ul>
+<h3 id="improvements-in-project-management">Improvements in Project Management<a class="headerlink" href="#improvements-in-project-management" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Converted to <a href="https://github.com/astral-sh/uv">uv</a> for project and dependency management.</li>
+</ul>
+<h2 id="011">[0.1.1]<a class="headerlink" href="#011" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>Added <code>Makefile</code> frontend</p>
+</li>
+<li>
+<p>Changed package manager to <code>uv</code></p>
+</li>
+<li>
+<p>Improved compatibility with Python 3.7</p>
+</li>
+<li>
+<p>Improved core Coverage: 99%</p>
+</li>
+<li>
+<p>Added clean script: <code>./scripts/clean.sh</code></p>
+</li>
+<li>
+<p>Added coverage script and reporting: <code>./scripts/coverage.sh</code></p>
+</li>
+<li>
+<p>Moved <code>tests</code> folder from <code>py2max/py2max/tests</code> to <code>py2max/tests</code></p>
+</li>
+<li>
+<p>Added gradual types to <code>py2max/core</code>, no errors with <code>mypy</code></p>
+</li>
+<li>
+<p>Added <code>number_tilde</code> test</p>
+</li>
+<li>
+<p>Fixed <code>comment</code> positioning</p>
+</li>
+<li>
+<p>Added <code>pyhola</code> layout.</p>
+</li>
+<li>
+<p>Added <code>graphviz</code> layouts.</p>
+</li>
+<li>
+<p>Fixed <code>Adaptagrams</code> layout.</p>
+</li>
+<li>
+<p>Added graph layout comparison and additional layouts.</p>
+</li>
+<li>
+<p>Added vertical layout variant.</p>
+</li>
+<li>
+<p>Added boolean <code>tilde</code> parameter for objects which have a tilde sibling.</p>
+</li>
+<li>
+<p>Added preliminary support for <code>rnbo~</code> include rnbo codebox</p>
+</li>
+</ul>
+<h2 id="010">[0.1.0]<a class="headerlink" href="#010" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>Added a generic <code>.add</code> method to <code>Patcher</code> objects which include some logic to to figure out to which specialized method to dispatch to. See: <code>tests/test_add.py</code> for examples of this.</p>
+</li>
+<li>
+<p>Major refactoring after <code>test_tree_builder</code> design experiment, so we have now only one simple extendable Box class, and there is round trip conversion between .maxpat files and patchers.</p>
+</li>
+<li>
+<p>Added <code>test_tree_builder.py</code> which shows that the json tree can be converted to a python object tree which corresponds to it on a one-on-one basis, which itself can be used to generate the json tree for round-trip conversion.</p>
+</li>
+<li>
+<p>Added <code>from_file</code> classmethod to <code>Patcher</code> to populate object from <code>.maxpat</code> file.</p>
+</li>
+<li>
+<p>Added <code>coll</code>, <code>dict</code> and <code>table</code> objects and tests</p>
+</li>
+<li>
+<p>Added some tests which try to use generic layout algorithm in Networkx but the results are quite terrible using builtin algorithms so probably better to try to create something fit-for-purpose.</p>
+</li>
+<li>
+<p>Added <code>gen</code> subpatcher</p>
+</li>
+<li>
+<p>Moved <code>varname</code> to optional kwds instead of being an explicit parameter since it's optional and its inclusion when not populated is sometimes problematic.</p>
+</li>
+<li>
+<p>Renamed odb to maxclassdb since it only relates to defaults per <code>maxclass</code></p>
+</li>
+<li>
+<p>Added smarter textbox which uses odb to improve object creation.</p>
+</li>
+<li>
+<p>Added separate test folder</p>
+</li>
+<li>
+<p>Added <code>odb.py</code> in package with a number of default configs of objects</p>
+</li>
+<li>
+<p>Converted to package.</p>
+</li>
+<li>
+<p>Added some notes on graph drawing and layout algorithms</p>
+</li>
+<li>
+<p>Added comments keyword in box objects + PositionManager for easy documentation</p>
+</li>
+<li>
+<p>Added Comments objects</p>
+</li>
+<li>
+<p>Refactor: MaxPatch and Patcher objects are now one.</p>
+</li>
+<li>
+<p>Initial release</p>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.tracking", "content.code.copy", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

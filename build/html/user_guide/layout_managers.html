@@ -1,0 +1,575 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Layout Managers &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Advanced Usage" href="advanced_usage.html" />
+    <link rel="prev" title="Tutorial" href="tutorial.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Layout Managers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grid-layout-manager">Grid Layout Manager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-grid-layout">Basic Grid Layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grid-layout-with-clustering">Grid Layout with Clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clustering-configuration">Clustering Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#flow-layout-manager">Flow Layout Manager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#signal-flow-analysis">Signal Flow Analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertical-flow-layout">Vertical Flow Layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#complex-flow-patterns">Complex Flow Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#legacy-layout-managers">Legacy Layout Managers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#horizontal-layout">Horizontal Layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertical-layout">Vertical Layout</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#layout-manager-comparison">Layout Manager Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-layout-techniques">Advanced Layout Techniques</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#custom-positioning">Custom Positioning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#layout-parameters">Layout Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mixed-layout-strategies">Mixed Layout Strategies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#choosing-the-right-layout">Choosing the Right Layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#layout-workflow">Layout Workflow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/abstract.html">py2max.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/common.html">py2max.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Layout Managers</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/shakfu/py2max/blob/main/docs/source/user_guide/layout_managers.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="layout-managers">
+<h1>Layout Managers<a class="headerlink" href="#layout-managers" title="Link to this heading"></a></h1>
+<p>py2max provides sophisticated layout managers to automatically position Max objects in patches. This guide covers all available layout managers and their features.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Layout managers handle the automatic positioning of objects in your patches, eliminating the need to manually specify coordinates for every object. py2max offers several layout strategies:</p>
+<ul class="simple">
+<li><p><strong>Grid Layout</strong> - Arranges objects in a grid pattern with optional clustering</p></li>
+<li><p><strong>Flow Layout</strong> - Intelligent positioning based on signal flow topology</p></li>
+<li><p><strong>Legacy Layouts</strong> - Horizontal and vertical layouts (maintained for compatibility)</p></li>
+</ul>
+</section>
+<section id="grid-layout-manager">
+<h2>Grid Layout Manager<a class="headerlink" href="#grid-layout-manager" title="Link to this heading"></a></h2>
+<p>The GridLayoutManager is the recommended layout system, offering both simple grid arrangement and intelligent clustering of connected objects.</p>
+<section id="basic-grid-layout">
+<h3>Basic Grid Layout<a class="headerlink" href="#basic-grid-layout" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span>
+
+<span class="c1"># Horizontal grid layout (default)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;grid-horizontal.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>
+
+<span class="c1"># Add objects - they&#39;ll be arranged left-to-right, wrapping when needed</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cycle~ </span><span class="si">{</span><span class="mi">440</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">55</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+<span class="c1"># Vertical grid layout</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;grid-vertical.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">)</span>
+
+<span class="c1"># Objects arranged top-to-bottom, wrapping when needed</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cycle~ </span><span class="si">{</span><span class="mi">440</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">55</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="grid-layout-with-clustering">
+<h3>Grid Layout with Clustering<a class="headerlink" href="#grid-layout-with-clustering" title="Link to this heading"></a></h3>
+<p>The most powerful feature of GridLayoutManager is connection-aware clustering:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enable clustering (default)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;clustered-patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">cluster_connected</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Create several signal chains</span>
+<span class="n">chains</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">chain_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="c1"># Create a signal processing chain</span>
+    <span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cycle~ </span><span class="si">{</span><span class="mi">220</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">chain_num</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">filter_obj</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;biquad~&#39;</span><span class="p">)</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;delay~ 500&#39;</span><span class="p">)</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;*~ 0.3&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Connect the chain</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">filter_obj</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+
+    <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">osc</span><span class="p">,</span> <span class="n">filter_obj</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">gain</span><span class="p">])</span>
+
+<span class="c1"># Add some control objects</span>
+<span class="n">master_vol</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_floatbox</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;master_volume&#39;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Connect all chains to output</span>
+<span class="k">for</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">chains</span><span class="p">:</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">chain</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">output</span><span class="p">)</span>  <span class="c1"># Connect last object in each chain</span>
+
+<span class="c1"># Optimize layout - connected objects will be clustered together</span>
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Clustering works by:</p>
+<ol class="arabic simple">
+<li><p><strong>Analyzing connections</strong> - Identifies groups of connected objects</p></li>
+<li><p><strong>Creating clusters</strong> - Groups objects that are connected together</p></li>
+<li><p><strong>Spatial organization</strong> - Positions clusters in separate areas of the patch</p></li>
+<li><p><strong>Type-based subdivision</strong> - Splits large clusters by object type for clarity</p></li>
+</ol>
+</section>
+<section id="clustering-configuration">
+<h3>Clustering Configuration<a class="headerlink" href="#clustering-configuration" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enable clustering (default)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;clustered.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">cluster_connected</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Disable clustering for simple grid</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;simple-grid.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">cluster_connected</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Different flow directions affect clustering arrangement</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;vertical-clusters.maxpat&#39;</span><span class="p">,</span>
+           <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span>
+           <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">,</span>
+           <span class="n">cluster_connected</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="flow-layout-manager">
+<h2>Flow Layout Manager<a class="headerlink" href="#flow-layout-manager" title="Link to this heading"></a></h2>
+<p>The FlowLayoutManager provides intelligent positioning based on signal flow topology, perfect for audio and control signal chains.</p>
+<section id="signal-flow-analysis">
+<h3>Signal Flow Analysis<a class="headerlink" href="#signal-flow-analysis" title="Link to this heading"></a></h3>
+<p>Flow layout analyzes your patchline connections to understand signal flow:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Horizontal signal flow (left-to-right)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;flow-horizontal.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create a signal processing chain</span>
+<span class="n">input_obj</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;adc~&#39;</span><span class="p">)</span>
+<span class="n">eq</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;eq~&#39;</span><span class="p">)</span>
+<span class="n">compressor</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;compressor~&#39;</span><span class="p">)</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;delay~ 250&#39;</span><span class="p">)</span>
+<span class="n">reverb</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;freeverb~&#39;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;dac~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Connect in signal flow order</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">input_obj</span><span class="p">,</span> <span class="n">eq</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">eq</span><span class="p">,</span> <span class="n">compressor</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">compressor</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">reverb</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">reverb</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="c1"># Layout will arrange objects in hierarchical levels</span>
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="vertical-flow-layout">
+<h3>Vertical Flow Layout<a class="headerlink" href="#vertical-flow-layout" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertical signal flow (top-to-bottom)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;flow-vertical.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create control flow</span>
+<span class="n">metro</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;metro 500&#39;</span><span class="p">)</span>
+<span class="n">counter</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;counter 0 7&#39;</span><span class="p">)</span>
+<span class="n">select</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;select 0 1 2 3 4 5 6 7&#39;</span><span class="p">)</span>
+
+<span class="c1"># Create multiple outputs</span>
+<span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+    <span class="n">outlet</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;outlet </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outlet</span><span class="p">)</span>
+
+<span class="c1"># Connect control flow</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">metro</span><span class="p">,</span> <span class="n">counter</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="n">select</span><span class="p">)</span>
+
+<span class="c1"># Connect to all outputs</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">outlet</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">select</span><span class="p">,</span> <span class="n">outlet</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">inlet</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Vertical layout will create clear top-to-bottom hierarchy</span>
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="complex-flow-patterns">
+<h3>Complex Flow Patterns<a class="headerlink" href="#complex-flow-patterns" title="Link to this heading"></a></h3>
+<p>Flow layout handles complex topologies with multiple signal paths:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;complex-flow.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">)</span>
+
+<span class="c1"># Multiple sources</span>
+<span class="n">source1</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 220&#39;</span><span class="p">)</span>
+<span class="n">source2</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 330&#39;</span><span class="p">)</span>
+<span class="n">source3</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;noise~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Processing layers</span>
+<span class="n">mixer1</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;+~&#39;</span><span class="p">)</span>
+<span class="n">mixer2</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;+~&#39;</span><span class="p">)</span>
+<span class="n">main_filter</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;svf~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Multiple effects</span>
+<span class="n">chorus</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;chorus~&#39;</span><span class="p">)</span>
+<span class="n">delay</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;delay~ 375&#39;</span><span class="p">)</span>
+<span class="n">reverb</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;freeverb~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Final mixing</span>
+<span class="n">wet_dry</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;crossfade~&#39;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Complex connection pattern</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">source1</span><span class="p">,</span> <span class="n">mixer1</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">source2</span><span class="p">,</span> <span class="n">mixer1</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">source3</span><span class="p">,</span> <span class="n">mixer2</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">mixer1</span><span class="p">,</span> <span class="n">main_filter</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">mixer2</span><span class="p">,</span> <span class="n">main_filter</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">main_filter</span><span class="p">,</span> <span class="n">chorus</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">chorus</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">reverb</span><span class="p">)</span>
+
+<span class="c1"># Wet/dry mixing</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">main_filter</span><span class="p">,</span> <span class="n">wet_dry</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">inlet</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># dry</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">reverb</span><span class="p">,</span> <span class="n">wet_dry</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">inlet</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>       <span class="c1"># wet</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">wet_dry</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="legacy-layout-managers">
+<h2>Legacy Layout Managers<a class="headerlink" href="#legacy-layout-managers" title="Link to this heading"></a></h2>
+<p>For backward compatibility, py2max maintains the original layout managers:</p>
+<section id="horizontal-layout">
+<h3>Horizontal Layout<a class="headerlink" href="#horizontal-layout" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Legacy horizontal layout (equivalent to grid + horizontal)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;legacy-horizontal.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;object</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="vertical-layout">
+<h3>Vertical Layout<a class="headerlink" href="#vertical-layout" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Legacy vertical layout (equivalent to grid + vertical)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;legacy-vertical.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;object</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="layout-manager-comparison">
+<h2>Layout Manager Comparison<a class="headerlink" href="#layout-manager-comparison" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Feature</p></th>
+<th class="head"><p>Grid Layout</p></th>
+<th class="head"><p>Flow Layout</p></th>
+<th class="head"><p>Horizontal Legacy</p></th>
+<th class="head"><p>Vertical Legacy</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Direction</p></td>
+<td><p>H + V</p></td>
+<td><p>H + V</p></td>
+<td><p>H only</p></td>
+<td><p>V only</p></td>
+</tr>
+<tr class="row-odd"><td><p>Clustering</p></td>
+<td><p>Yes</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p>Flow Analysis</p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p>Simple Grid</p></td>
+<td><p>Yes</p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p>Optimization</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+<td><p>Limited</p></td>
+<td><p>Limited</p></td>
+</tr>
+<tr class="row-odd"><td><p>Best For</p></td>
+<td><p>General use</p></td>
+<td><p>Signal chains</p></td>
+<td><p>Simple layouts</p></td>
+<td><p>Simple layouts</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="advanced-layout-techniques">
+<h2>Advanced Layout Techniques<a class="headerlink" href="#advanced-layout-techniques" title="Link to this heading"></a></h2>
+<section id="custom-positioning">
+<h3>Custom Positioning<a class="headerlink" href="#custom-positioning" title="Link to this heading"></a></h3>
+<p>You can override automatic layout for specific objects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">py2max.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;custom-positions.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span>
+
+<span class="c1"># Most objects use automatic layout</span>
+<span class="n">auto_obj1</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<span class="n">auto_obj2</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;gain~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Override position for specific object</span>
+<span class="n">custom_obj</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">,</span> <span class="n">patching_rect</span><span class="o">=</span><span class="n">Rect</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">66</span><span class="p">,</span> <span class="mi">22</span><span class="p">))</span>
+
+<span class="c1"># Automatic objects continue with layout</span>
+<span class="n">auto_obj3</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;scope~&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>  <span class="c1"># Affects only auto-positioned objects</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="layout-parameters">
+<h3>Layout Parameters<a class="headerlink" href="#layout-parameters" title="Link to this heading"></a></h3>
+<p>Customize layout manager behavior:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access layout manager for customization</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;custom-layout.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span>
+
+<span class="c1"># Modify layout parameters</span>
+<span class="n">p</span><span class="o">.</span><span class="n">_layout_mgr</span><span class="o">.</span><span class="n">pad</span> <span class="o">=</span> <span class="mf">80.0</span>           <span class="c1"># Increase spacing between objects</span>
+<span class="n">p</span><span class="o">.</span><span class="n">_layout_mgr</span><span class="o">.</span><span class="n">box_width</span> <span class="o">=</span> <span class="mf">100.0</span>    <span class="c1"># Wider default box width</span>
+<span class="n">p</span><span class="o">.</span><span class="n">_layout_mgr</span><span class="o">.</span><span class="n">box_height</span> <span class="o">=</span> <span class="mf">30.0</span>    <span class="c1"># Taller default box height</span>
+
+<span class="c1"># Add objects with custom spacing</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;object</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="mixed-layout-strategies">
+<h3>Mixed Layout Strategies<a class="headerlink" href="#mixed-layout-strategies" title="Link to this heading"></a></h3>
+<p>Combine different layout approaches in the same patch:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;mixed-layout.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create manually positioned control section</span>
+<span class="n">control_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">300</span><span class="p">)</span>
+<span class="n">controls</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">ctrl</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_floatbox</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;control</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                        <span class="n">patching_rect</span><span class="o">=</span><span class="n">Rect</span><span class="p">(</span><span class="n">control_rect</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                                          <span class="n">control_rect</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="mi">40</span><span class="p">,</span>
+                                          <span class="mi">60</span><span class="p">,</span> <span class="mi">22</span><span class="p">))</span>
+    <span class="n">controls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)</span>
+
+<span class="c1"># Let remaining objects use automatic layout</span>
+<span class="n">processors</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;biquad~ </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">200</span><span class="si">}</span><span class="s1"> 0.707&#39;</span><span class="p">)</span>
+    <span class="n">processors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proc</span><span class="p">)</span>
+
+<span class="c1"># Connect controls to processors</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">proc</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">controls</span><span class="p">,</span> <span class="n">processors</span><span class="p">)):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">proc</span><span class="p">)</span>
+
+<span class="c1"># Only auto-positioned objects affected by optimization</span>
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<section id="choosing-the-right-layout">
+<h3>Choosing the Right Layout<a class="headerlink" href="#choosing-the-right-layout" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Grid Layout</strong>: Best for general use, UI-heavy patches, or mixed content</p></li>
+<li><p><strong>Flow Layout</strong>: Ideal for signal processing chains and audio effects</p></li>
+<li><p><strong>Clustering</strong>: Enable for patches with distinct functional groups</p></li>
+<li><p><strong>Manual Positioning</strong>: Use sparingly for special cases or fine-tuning</p></li>
+</ul>
+</section>
+<section id="performance-considerations">
+<h3>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Large patches</strong>: Grid clustering and flow analysis can be slow with 100+ objects</p></li>
+<li><p><strong>Optimize timing</strong>: Call <cite>optimize_layout()</cite> after adding all objects and connections</p></li>
+<li><p><strong>Disable clustering</strong>: For simple patches where speed is critical</p></li>
+</ul>
+</section>
+<section id="layout-workflow">
+<h3>Layout Workflow<a class="headerlink" href="#layout-workflow" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Choose layout type</strong> based on patch structure</p></li>
+<li><p><strong>Add all objects</strong> first</p></li>
+<li><p><strong>Create all connections</strong></p></li>
+<li><p><strong>Call optimize_layout()</strong> once at the end</p></li>
+<li><p><strong>Fine-tune manually</strong> if needed</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Recommended workflow</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="n">cluster_connected</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># 1. Add all objects</span>
+<span class="n">objects</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;object</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+<span class="c1"># 2. Create all connections</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Create some connection pattern</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">objects</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">objects</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># 3. Optimize once at the end</span>
+<span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
+
+<span class="c1"># 4. Manual adjustments if needed</span>
+<span class="c1"># special_obj.patching_rect = Rect(x, y, w, h)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This approach ensures the best performance and most coherent layout results.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tutorial.html" class="btn btn-neutral float-left" title="Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="advanced_usage.html" class="btn btn-neutral float-right" title="Advanced Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

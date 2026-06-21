@@ -1,0 +1,361 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max.core.abstract Module &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="py2max.core.common Module" href="common.html" />
+    <link rel="prev" title="py2max.maxref Module" href="maxref.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">py2max.core.abstract Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#purpose-and-design">Purpose and Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#py2max.core.abstract.AbstractLayoutManager"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractLayoutManager.box_height"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager.box_height</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractLayoutManager.get_rect_from_maxclass"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager.get_rect_from_maxclass()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractLayoutManager.get_relative_pos"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager.get_relative_pos()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractLayoutManager.get_absolute_pos"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager.get_absolute_pos()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractLayoutManager.get_pos"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager.get_pos()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractLayoutManager.above"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager.above()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#py2max.core.abstract.AbstractBox"><code class="docutils literal notranslate"><span class="pre">AbstractBox</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractBox.id"><code class="docutils literal notranslate"><span class="pre">AbstractBox.id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractBox.maxclass"><code class="docutils literal notranslate"><span class="pre">AbstractBox.maxclass</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractBox.patching_rect"><code class="docutils literal notranslate"><span class="pre">AbstractBox.patching_rect</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractBox.render"><code class="docutils literal notranslate"><span class="pre">AbstractBox.render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractBox.to_dict"><code class="docutils literal notranslate"><span class="pre">AbstractBox.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#py2max.core.abstract.AbstractPatchline"><code class="docutils literal notranslate"><span class="pre">AbstractPatchline</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractPatchline.src"><code class="docutils literal notranslate"><span class="pre">AbstractPatchline.src</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractPatchline.dst"><code class="docutils literal notranslate"><span class="pre">AbstractPatchline.dst</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractPatchline.to_dict"><code class="docutils literal notranslate"><span class="pre">AbstractPatchline.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#py2max.core.abstract.AbstractPatcher"><code class="docutils literal notranslate"><span class="pre">AbstractPatcher</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractPatcher.width"><code class="docutils literal notranslate"><span class="pre">AbstractPatcher.width</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractPatcher.height"><code class="docutils literal notranslate"><span class="pre">AbstractPatcher.height</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#py2max.core.abstract.AbstractPatcher.rect"><code class="docutils literal notranslate"><span class="pre">AbstractPatcher.rect</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">py2max.core.abstract Module</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/shakfu/py2max/blob/main/docs/source/api/abstract.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="py2max-core-abstract-module">
+<h1>py2max.core.abstract Module<a class="headerlink" href="#py2max-core-abstract-module" title="Link to this heading"></a></h1>
+<section id="purpose-and-design">
+<h2>Purpose and Design<a class="headerlink" href="#purpose-and-design" title="Link to this heading"></a></h2>
+<p>These abstract base classes serve to:</p>
+<ul class="simple">
+<li><p><strong>Break circular imports</strong> between core and layout modules</p></li>
+<li><p><strong>Define clear interfaces</strong> for extensibility</p></li>
+<li><p><strong>Enable type checking</strong> with proper inheritance</p></li>
+<li><p><strong>Maintain separation of concerns</strong> in the architecture</p></li>
+</ul>
+<p>The abstract classes include:</p>
+<ul class="simple">
+<li><p><strong>AbstractLayoutManager</strong> - Interface for layout managers with position calculation methods, rectangle manipulation, and Max object class handling</p></li>
+<li><p><strong>AbstractBox</strong> - Interface for Max object boxes with required attributes (id, maxclass, patching_rect, _kwds), rendering capabilities, dictionary serialization, and iterator support</p></li>
+<li><p><strong>AbstractPatchline</strong> - Interface for patchline connections with source and destination properties and dictionary serialization</p></li>
+<li><p><strong>AbstractPatcher</strong> - Interface for patcher containers with size properties (width, height) and required attributes for object and connection management</p></li>
+</ul>
+<p>The abstract classes are not intended for direct use but provide the foundation for the concrete implementations in the core module.</p>
+<p id="module-py2max.core.abstract">Abstract base classes for py2max core objects.</p>
+<p>This module defines abstract base classes to break circular dependencies
+between core.py and layout.py modules.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractLayoutManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">py2max.core.abstract.</span></span><span class="sig-name descname"><span class="pre">AbstractLayoutManager</span></span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractLayoutManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractLayoutManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>Abstract base class for LayoutManager objects.</p>
+<p>This class defines the interface that layout managers expect from
+a LayoutManager object, allowing layout.py to reference LayoutManager without
+creating circular imports.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractLayoutManager.box_height">
+<span class="sig-name descname"><span class="pre">box_height</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractLayoutManager.box_height" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractLayoutManager.get_rect_from_maxclass">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_rect_from_maxclass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxclass</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractLayoutManager.get_rect_from_maxclass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractLayoutManager.get_rect_from_maxclass" title="Link to this definition"></a></dt>
+<dd><p>retrieves default patching_rect from defaults dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="common.html#py2max.core.common.Rect" title="py2max.core.common.Rect"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rect</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractLayoutManager.get_relative_pos">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_relative_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rect</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractLayoutManager.get_relative_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractLayoutManager.get_relative_pos" title="Link to this definition"></a></dt>
+<dd><p>returns a relative position for the object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="common.html#py2max.core.common.Rect" title="py2max.core.common.Rect"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rect</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractLayoutManager.get_absolute_pos">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_absolute_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rect</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractLayoutManager.get_absolute_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractLayoutManager.get_absolute_pos" title="Link to this definition"></a></dt>
+<dd><p>returns an absolute position for the object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="common.html#py2max.core.common.Rect" title="py2max.core.common.Rect"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rect</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractLayoutManager.get_pos">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxclass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractLayoutManager.get_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractLayoutManager.get_pos" title="Link to this definition"></a></dt>
+<dd><p>get box rect (position) via maxclass or layout_manager</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="common.html#py2max.core.common.Rect" title="py2max.core.common.Rect"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rect</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractLayoutManager.above">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">above</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rect</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractLayoutManager.above"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractLayoutManager.above" title="Link to this definition"></a></dt>
+<dd><p>Return a position of a comment above the object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="common.html#py2max.core.common.Rect" title="py2max.core.common.Rect"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rect</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractBox">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">py2max.core.abstract.</span></span><span class="sig-name descname"><span class="pre">AbstractBox</span></span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractBox"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractBox" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>Abstract base class for Box objects.</p>
+<p>This class defines the interface that layout managers expect from
+a Box object, allowing layout.py to reference Box without
+creating circular imports.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractBox.id">
+<span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> <span class="pre">|</span> <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractBox.id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractBox.maxclass">
+<span class="sig-name descname"><span class="pre">maxclass</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractBox.maxclass" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractBox.patching_rect">
+<span class="sig-name descname"><span class="pre">patching_rect</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="common.html#py2max.core.common.Rect" title="py2max.core.common.Rect"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rect</span></code></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractBox.patching_rect" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractBox.render">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractBox.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractBox.render" title="Link to this definition"></a></dt>
+<dd><p>Render the box object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractBox.to_dict">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractBox.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractBox.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Convert the box to a dictionary representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatchline">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">py2max.core.abstract.</span></span><span class="sig-name descname"><span class="pre">AbstractPatchline</span></span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractPatchline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractPatchline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>Abstract base class for Patchline objects.</p>
+<p>This class defines the interface that layout managers expect from
+a Patchline object, allowing layout.py to reference Patchline without
+creating circular imports.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatchline.src">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">src</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractPatchline.src" title="Link to this definition"></a></dt>
+<dd><p>Source object identifier.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatchline.dst">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dst</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractPatchline.dst" title="Link to this definition"></a></dt>
+<dd><p>Destination object identifier.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatchline.to_dict">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractPatchline.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractPatchline.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Convert the patchline to a dictionary representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatcher">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">py2max.core.abstract.</span></span><span class="sig-name descname"><span class="pre">AbstractPatcher</span></span><a class="reference internal" href="../_modules/py2max/core/abstract.html#AbstractPatcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#py2max.core.abstract.AbstractPatcher" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<p>Abstract base class for Patcher objects.</p>
+<p>This class defines the interface that layout managers expect from
+a Patcher object, allowing layout.py to reference Patcher without
+creating circular imports.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatcher.width">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractPatcher.width" title="Link to this definition"></a></dt>
+<dd><p>Width of patcher window.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatcher.height">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">height</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractPatcher.height" title="Link to this definition"></a></dt>
+<dd><p>Height of patcher window.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="py2max.core.abstract.AbstractPatcher.rect">
+<span class="sig-name descname"><span class="pre">rect</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="common.html#py2max.core.common.Rect" title="py2max.core.common.Rect"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rect</span></code></a></em><a class="headerlink" href="#py2max.core.abstract.AbstractPatcher.rect" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="maxref.html" class="btn btn-neutral float-left" title="py2max.maxref Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="common.html" class="btn btn-neutral float-right" title="py2max.core.common Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

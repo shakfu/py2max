@@ -1,0 +1,388 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max.core.box &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/abstract.html">py2max.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/common.html">py2max.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">py2max.core.box</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for py2max.core.box</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Box class for representing Max objects in a patch.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractBox</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.patcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span>
+
+
+<div class="viewcode-block" id="Box">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Box</span><span class="p">(</span><span class="n">AbstractBox</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a Max object in a patch.</span>
+
+<span class="sd">    The Box class encapsulates a single Max object with its properties,</span>
+<span class="sd">    position, and connections. It provides methods for introspection</span>
+<span class="sd">    and help information.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        maxclass: Max object class name (e.g., &#39;newobj&#39;, &#39;flonum&#39;).</span>
+<span class="sd">        numinlets: Number of input connections.</span>
+<span class="sd">        numoutlets: Number of output connections.</span>
+<span class="sd">        id: Unique identifier for the object.</span>
+<span class="sd">        patching_rect: Position and size rectangle.</span>
+<span class="sd">        **kwds: Additional Max object properties.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        id: Unique identifier for the object.</span>
+<span class="sd">        maxclass: Max object class name.</span>
+<span class="sd">        numinlets: Number of input connections.</span>
+<span class="sd">        numoutlets: Number of output connections.</span>
+<span class="sd">        patching_rect: Position and size as Rect.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Box.__init__">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">maxclass</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">numinlets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">numoutlets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwds</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span> <span class="o">=</span> <span class="n">maxclass</span> <span class="ow">or</span> <span class="s2">&quot;newobj&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numinlets</span> <span class="o">=</span> <span class="n">numinlets</span> <span class="ow">or</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numoutlets</span> <span class="o">=</span> <span class="n">numoutlets</span> <span class="ow">or</span> <span class="mi">1</span>
+        <span class="c1"># self.outlettype = outlettype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">patching_rect</span> <span class="ow">or</span> <span class="n">Rect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kwds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_none_entries</span><span class="p">(</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_patcher</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Patcher&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;patcher&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_remove_none_entries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwds</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;removes items in the dict which have None values.</span>
+
+<span class="sd">        TODO: make recursive in case of nested dicts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_patcher</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_patcher</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(id=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&#39;, maxclass=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__pt_repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Custom representation for ptpython REPL.</span>
+
+<span class="sd">        Provides rich colored output when displaying objects in the ptpython REPL.</span>
+<span class="sd">        Shows object type, ID, position, and text content in a readable format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">prompt_toolkit.formatted_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span>
+
+        <span class="c1"># Get object details</span>
+        <span class="n">obj_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span> <span class="ow">or</span> <span class="s2">&quot;newobj&quot;</span>
+        <span class="n">obj_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="ow">or</span> <span class="s2">&quot;unknown&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="c1"># Get position</span>
+        <span class="n">rect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patching_rect</span>
+        <span class="k">if</span> <span class="n">rect</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">rect</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">rect</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="s2">&quot;[?, ?]&quot;</span>
+
+        <span class="c1"># Build colored representation</span>
+        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HTML</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&lt;ansigreen&gt;</span><span class="si">{</span><span class="n">obj_type</span><span class="si">}</span><span class="s2">&lt;/ansigreen&gt; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&lt;ansicyan&gt;</span><span class="si">{</span><span class="n">obj_id</span><span class="si">}</span><span class="s2">&lt;/ansicyan&gt; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;at </span><span class="si">{</span><span class="n">pos</span><span class="si">}</span><span class="s2">: &lt;ansiyellow&gt;&#39;</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&#39;&lt;/ansiyellow&gt;&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HTML</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&lt;ansigreen&gt;</span><span class="si">{</span><span class="n">obj_type</span><span class="si">}</span><span class="s2">&lt;/ansigreen&gt; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&lt;ansicyan&gt;</span><span class="si">{</span><span class="n">obj_id</span><span class="si">}</span><span class="s2">&lt;/ansicyan&gt; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;at </span><span class="si">{</span><span class="n">pos</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="Box.render">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.render">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;convert self and children to dictionary.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_patcher</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_patcher</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">patcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_patcher</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Box.to_dict">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;create dict from object with extra kwds included&quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">to_del</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">to_del</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_kwds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">box</span><span class="o">=</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Box.from_dict">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj_dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;create instance from dict&quot;&quot;&quot;</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">box</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="s2">&quot;patcher&quot;</span><span class="p">):</span>
+            <span class="c1"># Lazy import to avoid circular dependency</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.patcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span>
+
+            <span class="n">box</span><span class="o">.</span><span class="n">_patcher</span> <span class="o">=</span> <span class="n">Patcher</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="s2">&quot;patcher&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">box</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">oid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;numerical part of object id as int&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subpatcher</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;synonym for parent patcher object&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_patcher</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the text content of the box.&quot;&quot;&quot;</span>
+        <span class="c1"># Check if text is stored as a direct attribute (from file loading)</span>
+        <span class="k">if</span> <span class="s2">&quot;text&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span>
+        <span class="c1"># Otherwise get from _kwds (from programmatic creation)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kwds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Box.help_text">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.help_text">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">help_text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get formatted help documentation for this Max object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Formatted help string with object documentation from .maxref.xml files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">maxref</span>
+
+        <span class="k">return</span> <span class="n">maxref</span><span class="o">.</span><span class="n">get_object_help</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Box.help">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.help">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">help</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print formatted help documentation for this Max object.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">help_text</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="Box.get_info">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.get_info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get complete object information from .maxref.xml files.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with complete object information or None if not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">maxref</span>
+
+        <span class="k">return</span> <span class="n">maxref</span><span class="o">.</span><span class="n">get_object_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Box.get_inlet_count">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.get_inlet_count">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inlet_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the number of inlets for this object from maxref data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of inlets or None if unknown.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">py2max.maxref</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_inlet_count</span>
+
+        <span class="n">object_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_name</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">get_inlet_count</span><span class="p">(</span><span class="n">object_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Box.get_outlet_count">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.get_outlet_count">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_outlet_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the number of outlets for this object from maxref data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of outlets or None if unknown.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">py2max.maxref</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_outlet_count</span>
+
+        <span class="n">object_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_name</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">get_outlet_count</span><span class="p">(</span><span class="n">object_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Box.get_inlet_types">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.get_inlet_types">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inlet_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the inlet types for this object from maxref data</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of inlet type strings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">py2max.maxref</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_inlet_types</span>
+
+        <span class="n">object_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_name</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">get_inlet_types</span><span class="p">(</span><span class="n">object_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Box.get_outlet_types">
+<a class="viewcode-back" href="../../../api/py2max.html#py2max.core.Box.get_outlet_types">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_outlet_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the outlet types for this object from maxref data</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of outlet type strings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">py2max.maxref</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_outlet_types</span>
+
+        <span class="n">object_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_name</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">get_outlet_types</span><span class="p">(</span><span class="n">object_name</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_object_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the actual object name for this Box.</span>
+
+<span class="sd">        For &#39;newobj&#39; maxclass objects, extract the first word from the text field.</span>
+<span class="sd">        For other objects, use the maxclass directly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span> <span class="o">==</span> <span class="s2">&quot;newobj&quot;</span><span class="p">:</span>
+            <span class="c1"># Text is stored in _kwds for Box objects</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kwds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+                <span class="c1"># Extract the first word from text (the object name)</span>
+                <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxclass</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

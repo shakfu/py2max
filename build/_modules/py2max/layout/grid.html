@@ -1,0 +1,519 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max.layout.grid &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/abstract.html">py2max.core.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">py2max.layout.grid</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for py2max.layout.grid</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Grid-based layout manager for py2max patches.</span>
+
+<span class="sd">This module provides GridLayoutManager and legacy aliases for grid-based layouts.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.core.abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractPatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">py2max.core.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayoutManager</span>
+
+
+<div class="viewcode-block" id="GridLayoutManager">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.GridLayoutManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GridLayoutManager</span><span class="p">(</span><span class="n">LayoutManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Utility class to help with object layout in a grid pattern.</span>
+
+<span class="sd">    This layout manager supports both horizontal and vertical grid layouts:</span>
+<span class="sd">    - Horizontal: objects fill from left to right and wrap to next row</span>
+<span class="sd">    - Vertical: objects fill from top to bottom and wrap to next column</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GridLayoutManager.__init__">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.GridLayoutManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">AbstractPatcher</span><span class="p">,</span>
+        <span class="n">pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">comment_pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">flow_direction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;horizontal&quot;</span><span class="p">,</span>
+        <span class="n">cluster_connected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">box_width</span><span class="p">,</span> <span class="n">box_height</span><span class="p">,</span> <span class="n">comment_pad</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flow_direction</span> <span class="o">=</span> <span class="n">flow_direction</span>  <span class="c1"># &quot;horizontal&quot; or &quot;vertical&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_connected</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">cluster_connected</span>  <span class="c1"># Whether to cluster connected objects</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GridLayoutManager.get_relative_pos">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.GridLayoutManager.get_relative_pos">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_relative_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a relative position for the object based on flow direction.&quot;&quot;&quot;</span>
+        <span class="c1"># Always use simple grid positioning during object creation</span>
+        <span class="c1"># Clustering will be applied later via optimize_layout()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow_direction</span> <span class="o">==</span> <span class="s2">&quot;vertical&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_vertical_position</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_horizontal_position</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_horizontal_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a relative horizontal position for the object.</span>
+<span class="sd">        Objects fill from left to right and wrap horizontally.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+
+        <span class="n">x_shift</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">pad</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_layout_counter</span>
+        <span class="n">y_shift</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">pad</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_layout_counter</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">pad</span> <span class="o">+</span> <span class="n">x_shift</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_layout_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">+</span> <span class="n">w</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pad</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_layout_counter</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_layout_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="n">pad</span> <span class="o">+</span> <span class="n">y_shift</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_vertical_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">Rect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rect</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a relative vertical position for the object.</span>
+<span class="sd">        Objects fill from top to bottom and wrap vertically.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+
+        <span class="n">x_shift</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">pad</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_layout_counter</span>
+        <span class="n">y_shift</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">pad</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_layout_counter</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">pad</span> <span class="o">+</span> <span class="n">y_shift</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_layout_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="o">+</span> <span class="n">h</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pad</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_layout_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_layout_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">pad</span> <span class="o">+</span> <span class="n">x_shift</span>
+        <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_object_connections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze connections between objects to understand clustering patterns.&quot;&quot;&quot;</span>
+        <span class="n">connections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># {obj_id: set(connected_obj_ids)}</span>
+
+        <span class="c1"># Initialize all objects with empty connection sets</span>
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+            <span class="n">connections</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Build bidirectional connection graph</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_lines</span><span class="p">:</span>
+            <span class="n">src_id</span><span class="p">,</span> <span class="n">dst_id</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">dst</span>
+            <span class="c1"># Skip if either ID is None</span>
+            <span class="k">if</span> <span class="n">src_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dst_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">src_id</span> <span class="ow">in</span> <span class="n">connections</span> <span class="ow">and</span> <span class="n">dst_id</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">src_id</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">dst_id</span><span class="p">)</span>
+                <span class="n">connections</span><span class="p">[</span><span class="n">dst_id</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">src_id</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">connections</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_connected_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connections</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find clusters of connected objects using depth-first search.&quot;&quot;&quot;</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">dfs</span><span class="p">(</span><span class="n">obj_id</span><span class="p">,</span> <span class="n">current_cluster</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+            <span class="n">current_cluster</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+            <span class="c1"># Visit all connected objects</span>
+            <span class="k">for</span> <span class="n">connected_id</span> <span class="ow">in</span> <span class="n">connections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj_id</span><span class="p">,</span> <span class="nb">set</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="n">connected_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                    <span class="n">dfs</span><span class="p">(</span><span class="n">connected_id</span><span class="p">,</span> <span class="n">current_cluster</span><span class="p">)</span>
+
+        <span class="c1"># Find all connected components</span>
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                <span class="n">cluster</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">dfs</span><span class="p">(</span><span class="n">obj_id</span><span class="p">,</span> <span class="n">cluster</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cluster</span><span class="p">:</span>  <span class="c1"># Only add non-empty clusters</span>
+                    <span class="n">clusters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">clusters</span>
+
+<div class="viewcode-block" id="GridLayoutManager.optimize_layout">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.GridLayoutManager.optimize_layout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize the layout to cluster connected objects together.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            changed_objects: Optional set of object IDs that have changed.</span>
+<span class="sd">                If provided and small relative to total objects, only</span>
+<span class="sd">                affected objects will be repositioned (incremental layout).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Use parent&#39;s incremental layout decision logic</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_use_incremental</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="n">changed_objects</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">affected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_affected_objects</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_incremental_layout</span><span class="p">(</span><span class="n">affected</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_full_layout</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_full_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform full layout optimization.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_connected</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Even without clustering, prevent overlaps</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prevent_overlaps</span><span class="p">()</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Analyze connections and create clusters</span>
+        <span class="n">connections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_object_connections</span><span class="p">()</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_connected_components</span><span class="p">(</span><span class="n">connections</span><span class="p">)</span>
+
+        <span class="c1"># Even single clusters can benefit from reorganization</span>
+        <span class="c1"># Apply optimized positions to existing objects based on clusters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_clustered_layout</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+
+        <span class="c1"># Prevent any remaining overlaps after clustering</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prevent_overlaps</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_clustered_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply cluster-based positioning to all objects.&quot;&quot;&quot;</span>
+        <span class="c1"># pad = self.pad</span>
+
+        <span class="c1"># If there&#39;s only one large cluster, try to create sub-clusters based on object types</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="n">clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subdivide_large_cluster</span><span class="p">(</span><span class="n">clusters</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Sort clusters by size (largest first) for better space utilization</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Use flow_direction to determine cluster arrangement</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow_direction</span> <span class="o">==</span> <span class="s2">&quot;vertical&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_vertical_clustered_layout</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_horizontal_clustered_layout</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_horizontal_clustered_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply horizontal cluster-based positioning (clusters arranged left-to-right).&quot;&quot;&quot;</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+        <span class="n">num_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+
+        <span class="c1"># Calculate cluster layout for horizontal arrangement</span>
+        <span class="k">if</span> <span class="n">num_clusters</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">cluster_cols</span> <span class="o">=</span> <span class="n">num_clusters</span>
+            <span class="n">cluster_rows</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">num_clusters</span> <span class="o">&lt;=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">cluster_cols</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="n">cluster_rows</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cluster_cols</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">num_clusters</span><span class="p">)</span>
+            <span class="n">cluster_rows</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_clusters</span> <span class="o">+</span> <span class="n">cluster_cols</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">cluster_cols</span>
+
+        <span class="c1"># Use float division for consistent spacing</span>
+        <span class="n">cluster_width</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">cluster_cols</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">cluster_height</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">cluster_rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Consistent spacing between objects (use float)</span>
+        <span class="n">object_spacing</span> <span class="o">=</span> <span class="n">pad</span> <span class="o">*</span> <span class="mf">0.5</span>
+
+        <span class="c1"># Position each cluster in its designated area</span>
+        <span class="k">for</span> <span class="n">cluster_idx</span><span class="p">,</span> <span class="n">cluster_objects</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+            <span class="n">cluster_objects_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cluster_objects</span><span class="p">))</span>  <span class="c1"># Consistent ordering</span>
+
+            <span class="c1"># Calculate cluster&#39;s base position</span>
+            <span class="n">cluster_col</span> <span class="o">=</span> <span class="n">cluster_idx</span> <span class="o">%</span> <span class="n">cluster_cols</span>
+            <span class="n">cluster_row</span> <span class="o">=</span> <span class="n">cluster_idx</span> <span class="o">//</span> <span class="n">cluster_cols</span>
+
+            <span class="n">cluster_x_base</span> <span class="o">=</span> <span class="n">cluster_col</span> <span class="o">*</span> <span class="n">cluster_width</span> <span class="o">+</span> <span class="n">pad</span>
+            <span class="n">cluster_y_base</span> <span class="o">=</span> <span class="n">cluster_row</span> <span class="o">*</span> <span class="n">cluster_height</span> <span class="o">+</span> <span class="n">pad</span>
+
+            <span class="c1"># Position objects within this cluster&#39;s designated area (horizontal priority)</span>
+            <span class="n">objects_per_row</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">cluster_width</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">+</span> <span class="n">object_spacing</span><span class="p">)))</span>
+
+            <span class="k">for</span> <span class="n">obj_idx</span><span class="p">,</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cluster_objects_list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;patching_rect&quot;</span><span class="p">):</span>
+                        <span class="c1"># Calculate position within cluster (horizontal flow)</span>
+                        <span class="n">obj_col</span> <span class="o">=</span> <span class="n">obj_idx</span> <span class="o">%</span> <span class="n">objects_per_row</span>
+                        <span class="n">obj_row</span> <span class="o">=</span> <span class="n">obj_idx</span> <span class="o">//</span> <span class="n">objects_per_row</span>
+
+                        <span class="n">x</span> <span class="o">=</span> <span class="n">cluster_x_base</span> <span class="o">+</span> <span class="n">obj_col</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">+</span> <span class="n">object_spacing</span><span class="p">)</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="n">cluster_y_base</span> <span class="o">+</span> <span class="n">obj_row</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">+</span> <span class="n">object_spacing</span><span class="p">)</span>
+
+                        <span class="c1"># Ensure bounds (stay within cluster area)</span>
+                        <span class="n">x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                            <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">cluster_x_base</span><span class="p">),</span>
+                            <span class="n">cluster_x_base</span> <span class="o">+</span> <span class="n">cluster_width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">-</span> <span class="n">pad</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                            <span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">cluster_y_base</span><span class="p">),</span>
+                            <span class="n">cluster_y_base</span> <span class="o">+</span> <span class="n">cluster_height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">-</span> <span class="n">pad</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+                        <span class="c1"># Ensure overall patcher bounds</span>
+                        <span class="n">x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pad</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">-</span> <span class="n">pad</span><span class="p">)</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">pad</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">-</span> <span class="n">pad</span><span class="p">)</span>
+
+                        <span class="n">obj</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_vertical_clustered_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply vertical cluster-based positioning (clusters arranged top-to-bottom).&quot;&quot;&quot;</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pad</span>
+        <span class="n">num_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+
+        <span class="c1"># Calculate cluster layout for vertical arrangement (prefer vertical stacking)</span>
+        <span class="k">if</span> <span class="n">num_clusters</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">cluster_cols</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">cluster_rows</span> <span class="o">=</span> <span class="n">num_clusters</span>
+        <span class="k">elif</span> <span class="n">num_clusters</span> <span class="o">&lt;=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">cluster_cols</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="n">cluster_rows</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cluster_rows</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">num_clusters</span><span class="p">)</span>
+            <span class="n">cluster_cols</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_clusters</span> <span class="o">+</span> <span class="n">cluster_rows</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">cluster_rows</span>
+
+        <span class="c1"># Use float division for consistent spacing</span>
+        <span class="n">cluster_width</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">cluster_cols</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">cluster_height</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">cluster_rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Consistent spacing between objects (use float)</span>
+        <span class="n">object_spacing</span> <span class="o">=</span> <span class="n">pad</span> <span class="o">*</span> <span class="mf">0.5</span>
+
+        <span class="c1"># Position each cluster in its designated area</span>
+        <span class="k">for</span> <span class="n">cluster_idx</span><span class="p">,</span> <span class="n">cluster_objects</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">clusters</span><span class="p">):</span>
+            <span class="n">cluster_objects_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cluster_objects</span><span class="p">))</span>  <span class="c1"># Consistent ordering</span>
+
+            <span class="c1"># Calculate cluster&#39;s base position (fill vertically first)</span>
+            <span class="n">cluster_row</span> <span class="o">=</span> <span class="n">cluster_idx</span> <span class="o">%</span> <span class="n">cluster_rows</span>
+            <span class="n">cluster_col</span> <span class="o">=</span> <span class="n">cluster_idx</span> <span class="o">//</span> <span class="n">cluster_rows</span>
+
+            <span class="n">cluster_x_base</span> <span class="o">=</span> <span class="n">cluster_col</span> <span class="o">*</span> <span class="n">cluster_width</span> <span class="o">+</span> <span class="n">pad</span>
+            <span class="n">cluster_y_base</span> <span class="o">=</span> <span class="n">cluster_row</span> <span class="o">*</span> <span class="n">cluster_height</span> <span class="o">+</span> <span class="n">pad</span>
+
+            <span class="c1"># Position objects within this cluster&#39;s designated area (vertical priority)</span>
+            <span class="n">objects_per_col</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">cluster_height</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">+</span> <span class="n">object_spacing</span><span class="p">))</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">obj_idx</span><span class="p">,</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cluster_objects_list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="p">[</span><span class="n">obj_id</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;patching_rect&quot;</span><span class="p">):</span>
+                        <span class="c1"># Calculate position within cluster (vertical flow)</span>
+                        <span class="n">obj_row</span> <span class="o">=</span> <span class="n">obj_idx</span> <span class="o">%</span> <span class="n">objects_per_col</span>
+                        <span class="n">obj_col</span> <span class="o">=</span> <span class="n">obj_idx</span> <span class="o">//</span> <span class="n">objects_per_col</span>
+
+                        <span class="n">x</span> <span class="o">=</span> <span class="n">cluster_x_base</span> <span class="o">+</span> <span class="n">obj_col</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">+</span> <span class="n">object_spacing</span><span class="p">)</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="n">cluster_y_base</span> <span class="o">+</span> <span class="n">obj_row</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">+</span> <span class="n">object_spacing</span><span class="p">)</span>
+
+                        <span class="c1"># Ensure bounds (stay within cluster area)</span>
+                        <span class="n">x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                            <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">cluster_x_base</span><span class="p">),</span>
+                            <span class="n">cluster_x_base</span> <span class="o">+</span> <span class="n">cluster_width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">-</span> <span class="n">pad</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                            <span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">cluster_y_base</span><span class="p">),</span>
+                            <span class="n">cluster_y_base</span> <span class="o">+</span> <span class="n">cluster_height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">-</span> <span class="n">pad</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+                        <span class="c1"># Ensure overall patcher bounds</span>
+                        <span class="n">x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pad</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span> <span class="o">-</span> <span class="n">pad</span><span class="p">)</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">pad</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span> <span class="o">-</span> <span class="n">pad</span><span class="p">)</span>
+
+                        <span class="n">obj</span><span class="o">.</span><span class="n">patching_rect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_height</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subdivide_large_cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">:</span> <span class="nb">set</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Subdivide a large cluster into smaller logical groups based on object types.&quot;&quot;&quot;</span>
+        <span class="c1"># Group objects by type</span>
+        <span class="n">type_groups</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">cluster</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="c1"># Group by maxclass</span>
+                <span class="n">obj_type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">maxclass</span>
+                <span class="k">if</span> <span class="n">obj_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">type_groups</span><span class="p">:</span>
+                    <span class="n">type_groups</span><span class="p">[</span><span class="n">obj_type</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">type_groups</span><span class="p">[</span><span class="n">obj_type</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+        <span class="c1"># Convert type groups to clusters, combining small ones</span>
+        <span class="n">subclusters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">small_cluster</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">obj_type</span><span class="p">,</span> <span class="n">obj_set</span> <span class="ow">in</span> <span class="n">type_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># Large enough to be its own cluster</span>
+                <span class="n">subclusters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj_set</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># Too small, add to combined cluster</span>
+                <span class="n">small_cluster</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_set</span><span class="p">)</span>
+
+        <span class="c1"># Add the small objects cluster if it exists</span>
+        <span class="k">if</span> <span class="n">small_cluster</span><span class="p">:</span>
+            <span class="n">subclusters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">small_cluster</span><span class="p">)</span>
+
+        <span class="c1"># If we didn&#39;t create meaningful subdivisions, return original cluster</span>
+        <span class="k">return</span> <span class="n">subclusters</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subclusters</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">[</span><span class="n">cluster</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># Legacy aliases for backward compatibility</span>
+<div class="viewcode-block" id="HorizontalLayoutManager">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.HorizontalLayoutManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HorizontalLayoutManager</span><span class="p">(</span><span class="n">GridLayoutManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Legacy horizontal layout manager. Use GridLayoutManager with flow_direction=&quot;horizontal&quot; instead.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HorizontalLayoutManager.__init__">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.HorizontalLayoutManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">AbstractPatcher</span><span class="p">,</span>
+        <span class="n">pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">comment_pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">box_width</span><span class="p">,</span> <span class="n">box_height</span><span class="p">,</span> <span class="n">comment_pad</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="VerticalLayoutManager">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.VerticalLayoutManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VerticalLayoutManager</span><span class="p">(</span><span class="n">GridLayoutManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Legacy vertical layout manager. Use GridLayoutManager with flow_direction=&quot;vertical&quot; instead.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="VerticalLayoutManager.__init__">
+<a class="viewcode-back" href="../../../api/layout.html#py2max.layout.VerticalLayoutManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">AbstractPatcher</span><span class="p">,</span>
+        <span class="n">pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">box_height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">comment_pad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">box_width</span><span class="p">,</span> <span class="n">box_height</span><span class="p">,</span> <span class="n">comment_pad</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

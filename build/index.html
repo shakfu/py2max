@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2max Documentation &mdash; py2max 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="user_guide/installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            py2max
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/layout_managers.html">Layout Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/advanced_usage.html">Advanced Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/py2max.html">py2max Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">py2max.core Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/layout.html">py2max.layout Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/maxref.html">py2max.maxref Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/abstract.html">py2max.core.abstract Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/common.html">py2max.core.common Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/utils.html">py2max.utils Module</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development/changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">py2max</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">py2max Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/shakfu/py2max/blob/main/docs/source/index.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="py2max-documentation">
+<h1>py2max Documentation<a class="headerlink" href="#py2max-documentation" title="Link to this heading"></a></h1>
+<p><strong>py2max</strong> is a pure Python library for offline generation of Max/MSP patcher files (.maxpat, .maxhelp, .rbnopat). It provides a Python object model that mirrors Max’s patch organization with round-trip conversion capabilities.</p>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Scripted offline generation</strong> of Max patcher files using Python objects</p></li>
+<li><p><strong>Round-trip conversion</strong> between JSON .maxpat files and corresponding Python objects</p></li>
+<li><p><strong>Dynamic Max object help system</strong> using .maxref.xml files with 1157+ Max objects</p></li>
+<li><p><strong>Connection validation</strong> to prevent invalid patchline connections</p></li>
+<li><p><strong>Intelligent layout algorithms</strong> including grid, flow, columnar, and matrix layouts</p></li>
+<li><p><strong>SQLite database</strong> for Max object metadata with automatic caching</p></li>
+<li><p><strong>SVG preview generation</strong> for offline visual validation</p></li>
+<li><p><strong>Interactive server</strong> with WebSocket-based live editing</p></li>
+<li><p><strong>Comprehensive API</strong> with specialized methods for Max objects</p></li>
+<li><p><strong>High test coverage</strong> (~99%) with 400+ tests</p></li>
+</ul>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span>
+
+<span class="c1"># Create a simple patch</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;my-patch.maxpat&#39;</span><span class="p">)</span>
+<span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<span class="n">gain</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;gain~&#39;</span><span class="p">)</span>
+<span class="n">dac</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+
+<span class="c1"># Connect objects</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">gain</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+
+<span class="c1"># Save the patch</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>py2max
+</pre></div>
+</div>
+</section>
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#install-from-pypi">Install from PyPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#install-from-source">Install from Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#development-installation">Development Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#optional-dependencies">Optional Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#max-msp-integration">Max/MSP Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#your-first-patch">Your First Patch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#understanding-the-basics">Understanding the Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#working-with-layout">Working with Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#getting-object-help">Getting Object Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#connection-validation">Connection Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#loading-existing-patches">Loading Existing Patches</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/tutorial.html">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial.html#tutorial-1-simple-synthesis">Tutorial 1: Simple Synthesis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial.html#tutorial-2-signal-processing-chain">Tutorial 2: Signal Processing Chain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial.html#tutorial-3-interactive-controller">Tutorial 3: Interactive Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial.html#tutorial-4-generative-music-system">Tutorial 4: Generative Music System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial.html#advanced-techniques">Advanced Techniques</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/layout_managers.html">Layout Managers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/layout_managers.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/layout_managers.html#grid-layout-manager">Grid Layout Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/layout_managers.html#flow-layout-manager">Flow Layout Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/layout_managers.html#legacy-layout-managers">Legacy Layout Managers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/layout_managers.html#layout-manager-comparison">Layout Manager Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/layout_managers.html#advanced-layout-techniques">Advanced Layout Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/layout_managers.html#best-practices">Best Practices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/advanced_usage.html">Advanced Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/advanced_usage.html#working-with-subpatchers">Working with Subpatchers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/advanced_usage.html#data-containers-and-persistence">Data Containers and Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/advanced_usage.html#advanced-connection-patterns">Advanced Connection Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/advanced_usage.html#error-handling-and-robustness">Error Handling and Robustness</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/advanced_usage.html#performance-optimization">Performance Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/advanced_usage.html#custom-extensions">Custom Extensions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/py2max.html">py2max Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.Patcher"><code class="docutils literal notranslate"><span class="pre">Patcher</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.Box"><code class="docutils literal notranslate"><span class="pre">Box</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.Patchline"><code class="docutils literal notranslate"><span class="pre">Patchline</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.MaxRefDB"><code class="docutils literal notranslate"><span class="pre">MaxRefDB</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.Py2MaxError"><code class="docutils literal notranslate"><span class="pre">Py2MaxError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.InvalidConnectionError"><code class="docutils literal notranslate"><span class="pre">InvalidConnectionError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.InvalidObjectError"><code class="docutils literal notranslate"><span class="pre">InvalidObjectError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.InvalidPatchError"><code class="docutils literal notranslate"><span class="pre">InvalidPatchError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.PatcherIOError"><code class="docutils literal notranslate"><span class="pre">PatcherIOError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.MaxRefError"><code class="docutils literal notranslate"><span class="pre">MaxRefError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.LayoutError"><code class="docutils literal notranslate"><span class="pre">LayoutError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#py2max.DatabaseError"><code class="docutils literal notranslate"><span class="pre">DatabaseError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#main-classes">Main Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#exceptions">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#example-usage">Example Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/py2max.html#using-maxrefdb">Using MaxRefDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">py2max.core Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.Patcher"><code class="docutils literal notranslate"><span class="pre">Patcher</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.Box"><code class="docutils literal notranslate"><span class="pre">Box</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.Patchline"><code class="docutils literal notranslate"><span class="pre">Patchline</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.Rect"><code class="docutils literal notranslate"><span class="pre">Rect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.AbstractPatcher"><code class="docutils literal notranslate"><span class="pre">AbstractPatcher</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.AbstractBox"><code class="docutils literal notranslate"><span class="pre">AbstractBox</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.AbstractPatchline"><code class="docutils literal notranslate"><span class="pre">AbstractPatchline</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.AbstractLayoutManager"><code class="docutils literal notranslate"><span class="pre">AbstractLayoutManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#py2max.core.InvalidConnectionError"><code class="docutils literal notranslate"><span class="pre">InvalidConnectionError</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/layout.html">py2max.layout Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#py2max.layout.LayoutManager"><code class="docutils literal notranslate"><span class="pre">LayoutManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#py2max.layout.GridLayoutManager"><code class="docutils literal notranslate"><span class="pre">GridLayoutManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#py2max.layout.HorizontalLayoutManager"><code class="docutils literal notranslate"><span class="pre">HorizontalLayoutManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#py2max.layout.VerticalLayoutManager"><code class="docutils literal notranslate"><span class="pre">VerticalLayoutManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#py2max.layout.FlowLayoutManager"><code class="docutils literal notranslate"><span class="pre">FlowLayoutManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#py2max.layout.MatrixLayoutManager"><code class="docutils literal notranslate"><span class="pre">MatrixLayoutManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#layout-manager-classes">Layout Manager Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layout.html#usage-examples">Usage Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/maxref.html">py2max.maxref Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.MaxRefCache"><code class="docutils literal notranslate"><span class="pre">MaxRefCache</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.MaxClassDefaults"><code class="docutils literal notranslate"><span class="pre">MaxClassDefaults</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_object_info"><code class="docutils literal notranslate"><span class="pre">get_object_info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_object_help"><code class="docutils literal notranslate"><span class="pre">get_object_help()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_available_objects"><code class="docutils literal notranslate"><span class="pre">get_available_objects()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_objects_by_category"><code class="docutils literal notranslate"><span class="pre">get_objects_by_category()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_all_max_objects"><code class="docutils literal notranslate"><span class="pre">get_all_max_objects()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_all_jit_objects"><code class="docutils literal notranslate"><span class="pre">get_all_jit_objects()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_all_msp_objects"><code class="docutils literal notranslate"><span class="pre">get_all_msp_objects()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_all_m4l_objects"><code class="docutils literal notranslate"><span class="pre">get_all_m4l_objects()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_legacy_defaults"><code class="docutils literal notranslate"><span class="pre">get_legacy_defaults()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.validate_connection"><code class="docutils literal notranslate"><span class="pre">validate_connection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_inlet_count"><code class="docutils literal notranslate"><span class="pre">get_inlet_count()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_outlet_count"><code class="docutils literal notranslate"><span class="pre">get_outlet_count()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_inlet_types"><code class="docutils literal notranslate"><span class="pre">get_inlet_types()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.get_outlet_types"><code class="docutils literal notranslate"><span class="pre">get_outlet_types()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.replace_tags"><code class="docutils literal notranslate"><span class="pre">replace_tags()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#py2max.maxref.MaxRefDB"><code class="docutils literal notranslate"><span class="pre">MaxRefDB</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#maxref-system-overview">MaxRef System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/maxref.html#usage-examples">Usage Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/abstract.html">py2max.core.abstract Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/abstract.html#purpose-and-design">Purpose and Design</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/common.html">py2max.core.common Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#py2max.core.common.Rect"><code class="docutils literal notranslate"><span class="pre">Rect</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#usage-examples">Usage Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/utils.html">py2max.utils Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#py2max.utils.pitch2freq"><code class="docutils literal notranslate"><span class="pre">pitch2freq()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#usage-examples">Usage Examples</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="development/contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development/testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development/changelog.html">Changelog</a></li>
+</ul>
+</div>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="user_guide/installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Shakeeb Alireza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
