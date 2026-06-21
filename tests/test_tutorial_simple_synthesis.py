@@ -27,7 +27,7 @@ for i in range(3):
 
 
 # Add master volume and output
-master_vol = p.add_floatparam("master", inital=0.5)
+master_vol = p.add_floatparam("master", initial=0.5)
 master_mult = p.add_textbox("*~")
 output = p.add_textbox("ezdac~")
 

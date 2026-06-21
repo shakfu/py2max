@@ -331,12 +331,15 @@ All classes are extendable via `**kwargs`, allowing any Max object configuration
 
 ## Examples
 
-See the `examples/` directory for demonstrations:
+The [`tests/examples/`](tests/examples/) directory contains working, tested
+examples organized by topic (see its [README](tests/examples/README.md)):
 
-- `auto_layout_demo.py` - Complex synthesizer with layout optimization
-- `nested_patcher_demo.py` - Subpatcher navigation
-- `columnar_layout_demo.py` - Functional column organization
-- `matrix_layout_demo.py` - Signal chain matrix layout
+- `quickstart/basic_patch.py` - Simple oscillator patch
+- `tutorial/signal_processing_chain.py` - Complex audio processing chain
+- `tutorial/generative_music.py` - Generative music system with patterns
+- `layout/grid_layout_examples.py` - Grid layout with clustering
+- `advanced/data_containers.py` - Tables, collections, and dictionaries
+- `api/patcher_api_examples.py` - Patcher API reference examples
 
 External usage:
 

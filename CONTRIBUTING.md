@@ -59,7 +59,7 @@ Thank you for your interest in contributing to py2max! This document provides gu
 3. **Run quality checks**:
 
    ```bash
-   make quality  # Runs linting and type checking
+   make qa  # Lint, format, typecheck, and test
    ```
 
 4. **Run tests**:
@@ -81,7 +81,7 @@ Thank you for your interest in contributing to py2max! This document provides gu
 ### Code Style
 
 - **Linter**: We use `ruff` for linting
-- **Auto-fix**: Run `make lint-fix` to automatically fix issues
+- **Auto-fix**: Run `make lint` to automatically fix issues
 - **Line length**: Maximum 100 characters (configured in `pyproject.toml`)
 
 ### Type Hints
@@ -286,7 +286,7 @@ py2max/
 
 ```bash
 # Run all quality checks
-make quality
+make qa
 
 # Individual checks
 make lint          # Code linting with auto-fix
