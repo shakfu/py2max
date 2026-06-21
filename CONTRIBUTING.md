@@ -296,12 +296,14 @@ make typecheck     # Type checking
 ### Building Documentation
 
 ```bash
-# Build Sphinx documentation
+# Build the MkDocs documentation
 make docs
 
-# Serve documentation
+# Serve documentation locally with live reload
 make docs-serve
-# Then open docs/build/index.html
+
+# Deploy to GitHub Pages
+make docs-deploy
 ```
 
 ### Building Package
@@ -317,7 +319,7 @@ make build
 
 - **Issues**: Open an issue on GitHub for bugs or feature requests
 - **Discussions**: Use GitHub Discussions for questions
-- **Documentation**: Check the [docs](docs/) directory
+- **Documentation**: Check the [docs](https://github.com/shakfu/py2max/tree/main/docs) directory
 
 ## License
 

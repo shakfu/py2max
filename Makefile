@@ -2,7 +2,7 @@
 # Makefile for py2max project
 
 .PHONY: help all build test test-verbose coverage lint \
-		typecheck qa docs docs-clean docs-serve install \
+		typecheck qa docs docs-clean docs-serve docs-deploy install \
 		dev clean reset ci format check-wheel publish-test publish
 
 help: ## Show this help message
@@ -36,14 +36,16 @@ typecheck: ## Run type checking
 qa: lint test typecheck format 
 
 docs: ## Build documentation
-	@cd docs && uv run sphinx-build -b html source build
+	@uv run --group docs mkdocs build --strict
 
 docs-clean: ## Clean documentation build
-	@rm -rf docs/build
+	@rm -rf site
 
-docs-serve: docs ## Build and serve documentation locally
-	@echo "Documentation built. Open docs/build/index.html in your browser"
-	@echo "Or run: python -m http.server 8000 --directory docs/build"
+docs-serve: ## Build and serve documentation locally (live reload)
+	@uv run --group docs mkdocs serve
+
+docs-deploy: ## Build and deploy docs to GitHub Pages (gh-pages branch)
+	@uv run --group docs mkdocs gh-deploy --force
 
 install: ## Install package in development mode
 	@uv sync
@@ -61,7 +63,7 @@ clean: ## Clean build artifacts
 	@rm -rf __pycache__/
 	@find . -name "*.pyc" -delete
 	@find . -name "__pycache__" -type d -exec rm -rf {} +
-	@rm -rf docs/build
+	@rm -rf site
 	@rm -rf outputs/
 
 reset: clean ## Reset development environment
@@ -71,7 +73,7 @@ ci: ## Run CI-like checks locally
 	@uv run pytest --cov=py2max
 	@uv run mypy py2max
 	@uv run ruff check py2max
-	@cd docs && uv run sphinx-build -b html source build
+	@uv run --group docs mkdocs build --strict
 
 check-wheel: build ## Check wheel with twine
 	@uv run twine check dist/*

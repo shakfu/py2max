@@ -34,6 +34,10 @@ The browser-based live editor and remote REPL have moved to a separate companion
 
 - The `preview` / `to_svg` output now approximates Max's look: a light patcher background, signal vs message/control **ports colored distinctly** (signal green, control dark), signal **cables drawn thicker and in a distinct color**, and subpatcher boxes tinted so they stand out. Object text is intentionally not truncated, matching Max (objects size to their text).
 
+### Changed: Documentation moved to MkDocs
+
+- Documentation migrated from Sphinx/reStructuredText to **MkDocs + Material + mkdocstrings** (all Markdown, matching the rest of the repo). The API reference is generated from the (now fully typed) docstrings, including `Patcher`'s mixin-provided methods. The changelog and contributing pages are single-source includes of `CHANGELOG.md` / `CONTRIBUTING.md`. Build with `make docs`, preview with `make docs-serve`, publish with `make docs-deploy`. `docs/notes/` is retained as a historical journal but excluded from the published site.
+
 ### New: Color / Theme Helpers
 
 - `Box.set_color(bg=..., text=..., border=...)` sets a box's `bgcolor`/`textcolor`/`bordercolor`; each accepts a named color (e.g. `"red"`), a hex string (`"#ff8800"`), or an `[r, g, b(, a)]` float sequence. Returns the box for chaining.
@@ -71,7 +75,7 @@ The browser-based live editor and remote REPL have moved to a separate companion
 
 ### New: Max for Live Support (`py2max.m4l`)
 
-Implements [issue #9](https://github.com/shakfu/py2max/issues/9). See [`docs/notes/amxd.md`](docs/notes/amxd.md) for the on-disk format, embedded-project block, and verification details.
+Implements [issue #9](https://github.com/shakfu/py2max/issues/9). See [`docs/notes/amxd.md`](https://github.com/shakfu/py2max/blob/main/docs/notes/amxd.md) for the on-disk format, embedded-project block, and verification details.
 
 - **`.amxd` read/write**: byte-for-byte compatible with Max-exported devices; verified against real fixtures and end-to-end in Live 12.
 - **Device-type discrimination**: Audio Effect / Instrument / MIDI Effect via `Patcher(device_type=...)` or the `pack_amxd` / `write_amxd` `device_type` argument.

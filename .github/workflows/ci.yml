@@ -104,4 +104,4 @@ jobs:
         run: uv sync --group docs
 
       - name: Build docs
-        run: cd docs && uv run sphinx-build -b html source build
+        run: uv run mkdocs build --strict

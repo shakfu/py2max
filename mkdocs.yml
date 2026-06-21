@@ -1,0 +1,83 @@
+site_name: py2max
+site_description: Offline generation of Max/MSP patcher files in pure Python.
+site_url: https://shakfu.github.io/py2max/
+repo_url: https://github.com/shakfu/py2max
+repo_name: shakfu/py2max
+docs_dir: docs
+
+# docs/notes/ is a historical dev journal and docs/js/ holds vendored editor
+# assets -- neither is part of the published site.
+exclude_docs: |
+  notes/
+  js/
+  restructured.md
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["."]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_signature_annotations: true
+            separate_signature: true
+            members_order: source
+            filters: ["!^_"]
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+
+nav:
+  - Home: index.md
+  - User Guide:
+      - Installation: user_guide/installation.md
+      - Quickstart: user_guide/quickstart.md
+      - Tutorial: user_guide/tutorial.md
+      - Layout Managers: user_guide/layout_managers.md
+      - Advanced Usage: user_guide/advanced_usage.md
+  - API Reference:
+      - Package: api/py2max.md
+      - Core (Patcher, Box, Patchline): api/core.md
+      - maxref: api/maxref.md
+      - layout: api/layout.md
+      - colors: api/colors.md
+      - common: api/common.md
+      - utils: api/utils.md
+      - abstract: api/abstract.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Testing: development/testing.md
+      - Changelog: development/changelog.md

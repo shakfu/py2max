@@ -19,7 +19,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -42,10 +41,8 @@ dev = [
     "twine>=6.2.0",
 ]
 docs = [
-    "sphinx>=4.0.0",
-    "sphinx-autodoc-typehints>=1.12.0",
-    "sphinx-rtd-theme>=1.0.0",
-    "myst-parser>=0.18.0",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
 ]
 
 [project.urls]
@@ -62,7 +59,7 @@ py2max = "py2max.__main__:main"
 # python-preference = "only-system" # comment this out to use managed python
 
 [build-system]
-requires = ["uv_build>=0.9.23,<0.10.0"]
+requires = ["uv_build>=0.11.23,<0.12"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
