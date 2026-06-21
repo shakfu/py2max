@@ -8,13 +8,23 @@ no API change -- adding a new object type means editing this file, not the
 core class.
 """
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from py2max import maxref
 
 from ..exceptions import InvalidConnectionError
 from ..log import get_logger
-from .abstract import AbstractBox, AbstractPatcher
+from .abstract import AbstractBox, AbstractPatcher, AbstractPatchline
 from .box import Box
 from .common import Rect
 from .patchline import Patchline
@@ -718,6 +728,153 @@ class BoxFactoryMixin(AbstractPatcher):
                 **kwds,
             )
         )
+
+    def _drop_line(self, line: AbstractPatchline) -> None:
+        """Remove a patchline (and its edge id) from this patcher."""
+        if line in self._lines:
+            self._lines.remove(line)
+        edge = (line.src, line.dst)
+        if edge in self._edge_ids:
+            self._edge_ids.remove(edge)
+
+    def encapsulate(
+        self, boxes: "Iterable[Box]", text: str = "p subpatch", **kwds: Any
+    ) -> "Box":
+        """Wrap the given boxes into a subpatcher, auto-generating inlet/outlet
+        objects for connections that cross the selection boundary.
+
+        - Connections wholly inside the selection move into the subpatcher.
+        - Connections crossing in/out are rewired through generated ``inlet`` /
+          ``outlet`` objects and the new subpatcher box's ports.
+        - Connections wholly outside the selection are left untouched.
+
+        Inlets/outlets are de-duplicated by source port, so multiple wires from
+        the same outlet share a single port, matching how patches are usually
+        built by hand.
+
+        Args:
+            boxes: boxes belonging to this patcher to move into a subpatcher.
+            text: the subpatcher box text (e.g. ``"p voice"``).
+            **kwds: forwarded to ``add_subpatcher`` (e.g. ``patching_rect``).
+
+        Returns:
+            The new subpatcher Box added to this patcher.
+        """
+        from .patcher import Patcher
+
+        selected = list(boxes)
+        id_set = {b.id for b in selected if b.id}
+        if not id_set:
+            raise ValueError("encapsulate() requires at least one box with an id")
+
+        # Partition existing connections relative to the selection.
+        internal: List[Patchline] = []
+        incoming: List[Patchline] = []
+        outgoing: List[Patchline] = []
+        for raw in list(self._lines):
+            line = cast(Patchline, raw)
+            s_in, d_in = line.src in id_set, line.dst in id_set
+            if s_in and d_in:
+                internal.append(line)
+            elif d_in:
+                incoming.append(line)
+            elif s_in:
+                outgoing.append(line)
+
+        sub = Patcher(parent=self)
+        # Avoid id collisions between moved boxes and objects created in the sub.
+        moved_oids = [b.oid for b in selected if b.oid is not None]
+        if moved_oids:
+            sub._id_counter = max(moved_oids)
+
+        # Move the selected boxes into the subpatcher.
+        for b in selected:
+            if b in self._boxes:
+                self._boxes.remove(b)
+            if b.id:
+                self._objects.pop(b.id, None)
+                if b.id in self._node_ids:
+                    self._node_ids.remove(b.id)
+            child = getattr(b, "_patcher", None)
+            if child is not None:
+                child._parent = sub
+            sub.add_box(b)
+
+        # Move fully-internal connections into the subpatcher.
+        for line in internal:
+            self._drop_line(line)
+            sub._lines.append(line)
+            sub._edge_ids.append((line.src, line.dst))
+
+        # Generated connections are correct by construction; skip validation.
+        saved = (self._validate_connections, sub._validate_connections)
+        self._validate_connections = sub._validate_connections = False
+        try:
+            # Crossing-in: one inlet per unique external (source_id, outlet).
+            inlets: Dict[Tuple[Any, Any], Tuple[int, str]] = {}
+            for line in incoming:
+                key = (line.source[0], line.source[1])
+                if key not in inlets:
+                    idx = len(inlets)
+                    ibox = sub.add_textbox(
+                        "inlet",
+                        numinlets=0,
+                        numoutlets=1,
+                        outlettype=[""],
+                        patching_rect=Rect(20.0 + idx * 60, 20.0, 30.0, 30.0),
+                    )
+                    inlets[key] = (idx, cast(str, ibox.id))
+                sub.add_patchline(inlets[key][1], 0, line.dst, int(line.destination[1]))
+
+            # Crossing-out: one outlet per unique internal (source_id, outlet).
+            outlets: Dict[Tuple[Any, Any], Tuple[int, str]] = {}
+            for line in outgoing:
+                key = (line.source[0], line.source[1])
+                if key not in outlets:
+                    idx = len(outlets)
+                    obox = sub.add_textbox(
+                        "outlet",
+                        numinlets=1,
+                        numoutlets=0,
+                        outlettype=[],
+                        patching_rect=Rect(20.0 + idx * 60, 320.0, 30.0, 30.0),
+                    )
+                    outlets[key] = (idx, cast(str, obox.id))
+                sub.add_patchline(
+                    str(line.source[0]), int(line.source[1]), outlets[key][1], 0
+                )
+
+            # The crossing lines are now represented inside the sub; drop them.
+            for line in incoming + outgoing:
+                self._drop_line(line)
+
+            n_in, n_out = len(inlets), len(outlets)
+            sub_box = self.add_subpatcher(
+                text,
+                patcher=sub,
+                numinlets=n_in or 1,
+                numoutlets=n_out,
+                outlettype=[""] * n_out if n_out else None,
+                **kwds,
+            )
+            # add_subpatcher floors inlets at 1; set the exact crossing counts.
+            sub_box.numinlets = n_in
+            sub_box.numoutlets = n_out
+            sub_box_id = cast(str, sub_box.id)
+
+            # Rewire the parent through the new subpatcher box's ports.
+            for line in incoming:
+                idx = inlets[(line.source[0], line.source[1])][0]
+                self.add_patchline(
+                    str(line.source[0]), int(line.source[1]), sub_box_id, idx
+                )
+            for line in outgoing:
+                idx = outlets[(line.source[0], line.source[1])][0]
+                self.add_patchline(sub_box_id, idx, line.dst, int(line.destination[1]))
+        finally:
+            self._validate_connections, sub._validate_connections = saved
+
+        return sub_box
 
     def add_gen(
         self, text: Optional[str] = None, tilde: bool = False, **kwds: Any

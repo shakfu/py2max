@@ -1,5 +1,6 @@
 """Box class for representing Max objects in a patch."""
 
+import re
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional
 
 from .abstract import AbstractBox
@@ -135,10 +136,15 @@ class Box(AbstractBox):
 
     @property
     def oid(self) -> Optional[int]:
-        """numerical part of object id as int"""
-        if self.id:
-            return int(self.id[4:])
-        return None
+        """Trailing numeric part of the object id, or None if it has none.
+
+        Works for numeric ids (``obj-5`` -> 5) and semantic ids
+        (``cycle_1`` -> 1).
+        """
+        if not self.id:
+            return None
+        match = re.search(r"\d+$", self.id)
+        return int(match.group()) if match else None
 
     @property
     def subpatcher(self) -> Optional["Patcher"]:

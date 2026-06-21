@@ -12,6 +12,10 @@ The browser-based live editor and remote REPL have moved to a separate companion
 - Removed the `[server]` optional-dependency extra (`websockets`, `ptpython`) and the bundled browser assets (`py2max/static/`).
 - Install the server features with `pip install py2max-server` and use `py2max-server serve <patch>` / `py2max-server repl …`. The remote REPL now requires token authentication (passed via `--token` or `PY2MAX_REPL_TOKEN`).
 
+### New: `Patcher.encapsulate()`
+
+- `Patcher.encapsulate(boxes, text="p sub")` wraps a selection of boxes into a subpatcher, auto-generating `inlet`/`outlet` objects for any connections that cross the selection boundary and rewiring the parent through the new subpatcher box. Connections wholly inside the selection move into the subpatcher; connections wholly outside it are untouched. Ports are de-duplicated by source, matching how patches are built by hand. Returns the new subpatcher `Box`.
+
 ### Security
 
 - **Removed a misleading path-traversal check** in `Patcher.save_as()`. The previous `..`/`/etc` allowlist was trivially bypassable and gave a false sense of safety; for an offline file generator it provided no real protection. Genuinely unresolvable paths still raise `PatcherIOError`.
@@ -31,6 +35,8 @@ The browser-based live editor and remote REPL have moved to a separate companion
 ### Fixed
 
 - Object-name resolution (used by connection validation and object classification) now reads the box `text` property, so it resolves correctly for boxes loaded from a file. Previously it inspected only programmatic kwargs and returned `newobj` for loaded boxes.
+- `Box.oid` now returns the trailing numeric part of any id (e.g. `cycle_1` -> 1) instead of raising `ValueError` under `semantic_ids=True`.
+- The `py2max` CLI now reports all `Py2MaxError`s (not just `InvalidConnectionError`) as a clean error message instead of leaking a traceback.
 - Fixed an `inital` -> `initial` keyword typo in the simple-synthesis tutorial.
 
 ### Testing & Tooling

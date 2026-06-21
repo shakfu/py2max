@@ -17,7 +17,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 from .core import Patcher, Patchline
 from .core.common import Rect
-from .exceptions import InvalidConnectionError
+from .exceptions import Py2MaxError
 from .export import export_svg
 from .export.converters import maxpat_to_python, maxref_to_sqlite
 from .maxref import MaxRefCache, MaxRefDB, validate_connection
@@ -1123,7 +1123,7 @@ def main(argv: List[str] | None = None) -> int:
 
     try:
         return cast(int, args.func(args))
-    except InvalidConnectionError as exc:
+    except Py2MaxError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 

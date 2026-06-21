@@ -120,6 +120,22 @@ class TestCoreCoverage:
 
         assert box.oid is None
 
+    def test_box_oid_property_numeric_and_semantic_ids(self):
+        """oid extracts the trailing number for both numeric and semantic ids."""
+        p = Patcher()
+        assert p.add_textbox("cycle~ 440").oid == 1  # obj-1
+        assert p.add_textbox("gain~").oid == 2  # obj-2
+
+        ps = Patcher(semantic_ids=True)
+        assert ps.add_textbox("cycle~ 440").oid == 1  # cycle_1
+        assert ps.add_textbox("cycle~ 220").oid == 2  # cycle_2
+        assert ps.add_textbox("gain~").oid == 1  # gain_1
+
+    def test_box_oid_property_no_trailing_digits(self):
+        """oid is None when the id ends in no digits."""
+        box = Box("test", id="weird-id", patching_rect=Rect(0, 0, 100, 100))
+        assert box.oid is None
+
     def test_box_help_text(self):
         """Test Box.help_text method."""
         p = Patcher()
