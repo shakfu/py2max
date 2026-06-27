@@ -952,6 +952,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#031" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.3.1]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.1]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-standalone-gencodebox-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Standalone gen.codebox~ Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#030" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1023,6 +1051,17 @@
     <span class="md-ellipsis">
       
         Improved: SVG Export (Max-faithful preview)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-documentation-moved-to-mkdocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed: Documentation moved to MkDocs
       
     </span>
   </a>
@@ -1513,6 +1552,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#031" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.3.1]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.1]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-standalone-gencodebox-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New: Standalone gen.codebox~ Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#030" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1584,6 +1651,17 @@
     <span class="md-ellipsis">
       
         Improved: SVG Export (Max-faithful preview)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-documentation-moved-to-mkdocs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed: Documentation moved to MkDocs
       
     </span>
   </a>
@@ -2042,6 +2120,14 @@
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
 <h2 id="unreleased">[Unreleased]<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h2 id="031">[0.3.1]<a class="headerlink" href="#031" title="Permanent link">&para;</a></h2>
+<h3 id="new-standalone-gencodebox-support">New: Standalone <code>gen.codebox~</code> Support<a class="headerlink" href="#new-standalone-gencodebox-support" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Patcher.add_gen_codebox(code)</code> adds a self-contained <code>gen.codebox~</code> object -- a complete gen patch in a single box that lives directly in a regular Max patcher, distinct from the inner <code>codebox~</code> (emitted by <code>add_codebox</code>) that belongs inside a <code>gen~</code>/<code>rnbo~</code> subpatcher. This is the form emitted by gen transpilers. Code newlines are normalized to CRLF as Max expects, and <code>fontname</code>/<code>fontsize</code> default to the monospaced gen style.</li>
+<li>Inlet/outlet counts are derived automatically from the code (the highest <code>inN</code> / <code>outN</code> references, floor of 1), matching gen's dynamic-I/O semantics. Explicit <code>numinlets</code> / <code>numoutlets</code> still override.</li>
+<li>Available via the <code>add()</code> string shortcut too: <code>p.add("gen.codebox~ out1 = in1 * 0.5;")</code>. The shortcut suits single-line / <code>;</code>-terminated code; pass multi-line source to <code>add_gen_codebox()</code> directly.</li>
+<li>Connection validation for <code>gen.codebox~</code> (and <code>codebox</code> / <code>codebox~</code>) now bound-checks against the box's own declared inlet/outlet counts rather than the static <code>.maxref.xml</code> entry, since codebox I/O is code-dependent. This both allows valid connections to/from wider codeboxes (e.g. from a second outlet) and rejects genuinely out-of-range ones.</li>
+</ul>
 <h2 id="030">[0.3.0]<a class="headerlink" href="#030" title="Permanent link">&para;</a></h2>
 <h3 id="removed-interactive-server-split-into-py2max-server-breaking">Removed: Interactive Server Split Into <code>py2max-server</code> (breaking)<a class="headerlink" href="#removed-interactive-server-split-into-py2max-server-breaking" title="Permanent link">&para;</a></h3>
 <p>The browser-based live editor and remote REPL have moved to a separate companion package, <a href="https://github.com/shakfu/py2max-server"><code>py2max-server</code></a>, so the core library stays small, offline, and dependency-free.</p>
@@ -2071,6 +2157,10 @@
 <h3 id="improved-svg-export-max-faithful-preview">Improved: SVG Export (Max-faithful preview)<a class="headerlink" href="#improved-svg-export-max-faithful-preview" title="Permanent link">&para;</a></h3>
 <ul>
 <li>The <code>preview</code> / <code>to_svg</code> output now approximates Max's look: a light patcher background, signal vs message/control <strong>ports colored distinctly</strong> (signal green, control dark), signal <strong>cables drawn thicker and in a distinct color</strong>, and subpatcher boxes tinted so they stand out. Object text is intentionally not truncated, matching Max (objects size to their text).</li>
+</ul>
+<h3 id="changed-documentation-moved-to-mkdocs">Changed: Documentation moved to MkDocs<a class="headerlink" href="#changed-documentation-moved-to-mkdocs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Documentation migrated from Sphinx/reStructuredText to <strong>MkDocs + Material + mkdocstrings</strong> (all Markdown, matching the rest of the repo). The API reference is generated from the (now fully typed) docstrings, including <code>Patcher</code>'s mixin-provided methods. The changelog and contributing pages are single-source includes of <code>CHANGELOG.md</code> / <code>CONTRIBUTING.md</code>. Build with <code>make docs</code>, preview with <code>make docs-serve</code>, publish with <code>make docs-deploy</code>. <code>docs/notes/</code> is retained as a historical journal but excluded from the published site.</li>
 </ul>
 <h3 id="new-color-theme-helpers">New: Color / Theme Helpers<a class="headerlink" href="#new-color-theme-helpers" title="Permanent link">&para;</a></h3>
 <ul>

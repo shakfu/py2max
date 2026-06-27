@@ -795,6 +795,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gen-codebox-dsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gen Codebox DSP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#colors-and-theming" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1563,6 +1574,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gen-codebox-dsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gen Codebox DSP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#colors-and-theming" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2112,30 +2134,55 @@
 <a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </code></pre></div>
+<h2 id="gen-codebox-dsp">Gen Codebox DSP<a class="headerlink" href="#gen-codebox-dsp" title="Permanent link">&para;</a></h2>
+<p><code>add_gen_codebox()</code> adds a standalone <code>gen.codebox~</code> object: a complete gen patch expressed as DSP code in a single box, sitting directly in a regular Max patcher. This is distinct from <code>add_codebox()</code>, which emits the inner <code>codebox~</code> object meant to live inside a <code>gen~</code>/<code>rnbo~</code> subpatcher. The whole feedback-delay built from discrete objects in <a href="#feedback-loops">Feedback Loops</a> collapses into one box:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;fbdelay.maxpat&#39;</span><span class="p">)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># Inlet/outlet counts are derived from the highest inN/outN in the code:</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># this references in1 and out1, so the box gets 1 signal inlet and 1 outlet.</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="n">cb</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_gen_codebox</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="s1">Param feedback(0.5, min=0.0, max=0.95);</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="s1">History fb(0.0);</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="s1">out1 = in1 + fb * feedback;</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="s1">fb = out1;</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="s1">&#39;&#39;&#39;</span><span class="p">)</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="n">dac</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">cb</span><span class="p">)</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">cb</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</code></pre></div>
+<p>Pass <code>numinlets</code> / <code>numoutlets</code> explicitly to override the derived counts. Newlines in the code are normalized to CRLF as Max expects, and the font defaults to the monospaced gen style.</p>
+<p>For short, single-line code the <code>add()</code> string shortcut works too:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">cb</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;gen.codebox~ out1 = in1 * 0.5;&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p>When <code>validate_connections=True</code>, connections to and from a <code>gen.codebox~</code> (and <code>codebox</code> / <code>codebox~</code>) are bound-checked against the box's own declared inlet/outlet counts rather than a fixed maxref entry, since codebox I/O is code-dependent.</p>
 <h2 id="colors-and-theming">Colors and Theming<a class="headerlink" href="#colors-and-theming" title="Permanent link">&para;</a></h2>
 <p>Boxes accept a named color, a hex string, or an <code>[r, g, b(, a)]</code> float sequence (0..1). <code>apply_theme</code> colors every box at once.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;themed.maxpat&#39;</span><span class="p">)</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">tog</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;toggle&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">bg</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">dial</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;live.dial&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">bg</span><span class="o">=</span><span class="s1">&#39;#202020&#39;</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="s1">&#39;#808080&#39;</span><span class="p">)</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># Apply a built-in theme to every box (recurses into subpatchers).</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="n">p</span><span class="o">.</span><span class="n">apply_theme</span><span class="p">(</span><span class="s1">&#39;dark&#39;</span><span class="p">)</span>   <span class="c1"># &#39;light&#39; | &#39;dark&#39; | &#39;blue&#39; | &#39;high-contrast&#39;</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># ...or a custom theme dict:</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="n">p</span><span class="o">.</span><span class="n">apply_theme</span><span class="p">({</span><span class="s1">&#39;bg&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="s1">&#39;border&#39;</span><span class="p">:</span> <span class="s1">&#39;yellow&#39;</span><span class="p">})</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;themed.maxpat&#39;</span><span class="p">)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">tog</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;toggle&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">bg</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">dial</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;live.dial&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">bg</span><span class="o">=</span><span class="s1">&#39;#202020&#39;</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="s1">&#39;#808080&#39;</span><span class="p">)</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1"># Apply a built-in theme to every box (recurses into subpatchers).</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="n">p</span><span class="o">.</span><span class="n">apply_theme</span><span class="p">(</span><span class="s1">&#39;dark&#39;</span><span class="p">)</span>   <span class="c1"># &#39;light&#39; | &#39;dark&#39; | &#39;blue&#39; | &#39;high-contrast&#39;</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="c1"># ...or a custom theme dict:</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="n">p</span><span class="o">.</span><span class="n">apply_theme</span><span class="p">({</span><span class="s1">&#39;bg&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="s1">&#39;border&#39;</span><span class="p">:</span> <span class="s1">&#39;yellow&#39;</span><span class="p">})</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </code></pre></div>
 <p>The named palette and <code>resolve_color</code> helper are in <code>py2max.core.colors</code>.</p>
 <h2 id="catching-attribute-typos">Catching Attribute Typos<a class="headerlink" href="#catching-attribute-typos" title="Permanent link">&para;</a></h2>
 <p>Enable <code>validate_attrs</code> to get a warning when an object is given a keyword that is not a known attribute for its Max class.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;checked.maxpat&#39;</span><span class="p">,</span> <span class="n">validate_attrs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">caught</span><span class="p">:</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;always&#39;</span><span class="p">)</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="n">p</span><span class="o">.</span><span class="n">add_floatparam</span><span class="p">(</span><span class="s1">&#39;master&#39;</span><span class="p">,</span> <span class="n">inital</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>   <span class="c1"># typo for &#39;initial&#39;</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># -&gt; UserWarning: Unknown attribute &#39;inital&#39; for Max object &#39;flonum&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;checked.maxpat&#39;</span><span class="p">,</span> <span class="n">validate_attrs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">caught</span><span class="p">:</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;always&#39;</span><span class="p">)</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">p</span><span class="o">.</span><span class="n">add_floatparam</span><span class="p">(</span><span class="s1">&#39;master&#39;</span><span class="p">,</span> <span class="n">inital</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>   <span class="c1"># typo for &#39;initial&#39;</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># -&gt; UserWarning: Unknown attribute &#39;inital&#39; for Max object &#39;flonum&#39;</span>
 </code></pre></div>
 <p>Validation is off by default and warn-only, so it never changes generated output. Objects with no maxref entry are skipped.</p>
 <p>This covers the advanced features of py2max for sophisticated patch creation and management.</p>

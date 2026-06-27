@@ -820,6 +820,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#py2max.core.Patcher.add_gen_codebox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_gen_codebox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#py2max.core.Patcher.add_message" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2097,6 +2108,17 @@
     <span class="md-ellipsis">
       
         add_codebox_tilde
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#py2max.core.Patcher.add_gen_codebox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_gen_codebox
       
     </span>
   </a>
@@ -4093,6 +4115,45 @@ metro = p.add_textbox('metro 500')</p>
     <div class="doc doc-contents ">
 
         <p>Add a codebox_tilde</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="py2max.core.Patcher.add_gen_codebox" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">add_gen_codebox</span>
+
+
+<a href="#py2max.core.Patcher.add_gen_codebox" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_gen_codebox</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">numinlets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">numoutlets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">outlettype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Add a standalone <code>gen.codebox~</code> object.</p>
+<p>Unlike :meth:<code>add_codebox</code> (which emits the <code>codebox~</code> object meant to
+live <em>inside</em> a <code>gen~</code> or <code>rnbo~</code> subpatcher), this creates the
+self-contained <code>gen.codebox~</code> object that lives directly in a regular
+Max patcher -- a complete gen patch in a single box, with no subpatcher
+wrapper. This is the form emitted by gen transpilers.</p>
+<p>A gen codebox's inlet/outlet counts are dynamic: they are determined by
+the highest <code>inN</code> / <code>outN</code> references in the code. They are derived
+automatically when <code>numinlets</code> / <code>numoutlets</code> are not given (each
+defaults to at least 1).</p>
 
 
     </div>
