@@ -36,6 +36,15 @@ Implement automatic layout optimization that repositions objects as they are add
 - [ ] Add schema versioning for SQLite (enables migrations)
 - [ ] Implement FTS5 for search (replace naive `LIKE '%query%'`)
 
+### Connection Validation Default
+
+- [ ] **Make `validate_connections=True` the default** and thoroughly examine the implications before flipping it. The constructor default is currently `False`, which contradicts the docs/CLAUDE.md prose ("Validation enabled by default"). Resolve the discrepancy by changing the default, but treat it as a breaking change and audit the fallout first:
+  - **Backwards compatibility**: patches that today build invalid (or maxref-unknown) connections silently would start raising `InvalidConnectionError`. Survey the test suite, `examples/`, and any reverse-engineered/round-tripped patches for connections that would newly fail.
+  - **maxref coverage gaps**: validation no-ops when either object has no maxref entry (returns `(True, "")`), so the default would be uneven -- strict for known objects, permissive for unknown ones. Decide whether that asymmetry is acceptable or whether unknown objects should warn.
+  - **Dynamic-I/O objects**: confirm the codebox path (`DYNAMIC_IO_MAXCLASSES`) and any other code-dependent-I/O objects are handled so the stricter default does not reject legitimate patches.
+  - **Type checking**: the signal-vs-control inlet check can misfire on objects whose maxref inlet/outlet types are incomplete or generic; assess false-positive risk before making it default-on.
+  - **Migration / UX**: consider a transition window (e.g. warn-then-raise), document the opt-out (`validate_connections=False`), and add a CHANGELOG entry flagging the breaking change.
+
 ---
 
 ## Medium Priority

@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.3.1]
+
+### New: Standalone `gen.codebox~` Support
+
+- `Patcher.add_gen_codebox(code)` adds a self-contained `gen.codebox~` object -- a complete gen patch in a single box that lives directly in a regular Max patcher, distinct from the inner `codebox~` (emitted by `add_codebox`) that belongs inside a `gen~`/`rnbo~` subpatcher. This is the form emitted by gen transpilers. Code newlines are normalized to CRLF as Max expects, and `fontname`/`fontsize` default to the monospaced gen style.
+- Inlet/outlet counts are derived automatically from the code (the highest `inN` / `outN` references, floor of 1), matching gen's dynamic-I/O semantics. Explicit `numinlets` / `numoutlets` still override.
+- Available via the `add()` string shortcut too: `p.add("gen.codebox~ out1 = in1 * 0.5;")`. The shortcut suits single-line / `;`-terminated code; pass multi-line source to `add_gen_codebox()` directly.
+- Connection validation for `gen.codebox~` (and `codebox` / `codebox~`) now bound-checks against the box's own declared inlet/outlet counts rather than the static `.maxref.xml` entry, since codebox I/O is code-dependent. This both allows valid connections to/from wider codeboxes (e.g. from a second outlet) and rejects genuinely out-of-range ones.
+
 ## [0.3.0]
 
 ### Removed: Interactive Server Split Into `py2max-server` (breaking)

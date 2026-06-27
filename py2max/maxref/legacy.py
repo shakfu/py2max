@@ -41,6 +41,13 @@ MAXCLASS_DEFAULTS: Dict[str, Dict[str, Any]] = {
         "outlettype": [""],
         "patching_rect": Rect(x=191.0, y=118.0, w=200.0, h=200.0),
     },
+    "gen.codebox~": {
+        "maxclass": "gen.codebox~",
+        "numinlets": 1,
+        "numoutlets": 1,
+        "outlettype": ["signal"],
+        "patching_rect": Rect(x=60.0, y=107.0, w=688.0, h=471.0),
+    },
     "dial": {
         "maxclass": "dial",
         "numinlets": 1,

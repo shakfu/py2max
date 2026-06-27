@@ -10,6 +10,7 @@
 - **Encapsulation** -- wrap a selection of objects into a subpatcher with auto-generated inlets/outlets
 - **Parameters and presets** -- `pattrstorage` / `autopattr` scaffolding and parameter helpers
 - **Multichannel (mc.) and poly~** convenience helpers
+- **Standalone `gen.codebox~`** with inlet/outlet counts derived from the gen code
 - **Color and theme helpers** with a named Max color palette
 - **Dynamic Max object help system** using .maxref.xml files with 1175+ Max objects
 - **Connection validation** and **keyword-attribute validation** to catch wiring and typo errors

@@ -249,6 +249,34 @@ p.link(sbox, dac)
 p.save()
 ```
 
+### Gen Codebox
+
+`add_gen_codebox()` adds a standalone `gen.codebox~` object -- a complete gen
+patch in a single box that sits directly in a regular Max patcher (unlike the
+inner `codebox~` from `add_codebox()`, which belongs inside a `gen~`/`rnbo~`
+subpatcher). Inlet/outlet counts are derived automatically from the highest
+`inN`/`outN` references in the code:
+
+```python
+p = Patcher('fbdelay.maxpat')
+
+# 1 inlet (in1), 1 outlet (out1)
+osc = p.add('cycle~ 440')
+cb = p.add_gen_codebox('''
+Param feedback(0.5, min=0.0, max=0.95);
+History fb(0.0);
+out1 = in1 + fb * feedback;
+fb = out1;
+''')
+dac = p.add('ezdac~')
+p.link(osc, cb)
+p.link(cb, dac)
+p.save()
+
+# Or via the add() string shortcut (single-line / `;`-terminated code)
+cb = p.add('gen.codebox~ out1 = in1 * 0.5;')
+```
+
 ### Object Search
 
 ```python

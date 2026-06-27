@@ -8,6 +8,7 @@ no API change -- adding a new object type means editing this file, not the
 core class.
 """
 
+import re
 import warnings
 from typing import (
     TYPE_CHECKING,
@@ -34,6 +35,23 @@ if TYPE_CHECKING:
     from .patcher import Patcher
 
 logger = get_logger(__name__)
+
+# Max objects whose inlet/outlet counts are determined by their code rather
+# than by a fixed maxref entry. Connection validation for these consults the
+# box's own declared numinlets/numoutlets instead of the static maxref data.
+DYNAMIC_IO_MAXCLASSES = frozenset({"gen.codebox~", "codebox", "codebox~"})
+
+
+def _max_gen_io_index(code: str, kind: str) -> int:
+    """Highest ``in<N>`` / ``out<N>`` index referenced in gen ``code``.
+
+    gen codeboxes derive their inlet/outlet count from the code: ``in1``,
+    ``in2``, ... and ``out1``, ``out2``, .... Returns at least 1 since a gen
+    codebox always has one signal inlet and one signal outlet.
+    """
+    indices = [int(m) for m in re.findall(rf"\b{kind}(\d+)\b", code)]
+    return max([1, *indices])
+
 
 # Box attributes valid on (nearly) every Max object, independent of an object's
 # own maxref attribute set. Used by add_box when validate_attrs is enabled to
@@ -260,9 +278,41 @@ class BoxFactoryMixin(AbstractPatcher):
             src_name = self._get_object_name(src_obj)
             dst_name = self._get_object_name(dst_obj)
 
-            is_valid, error_msg = maxref.validate_connection(
-                src_name, src_outlet, dst_name, dst_inlet
-            )
+            src_dynamic = src_obj.maxclass in DYNAMIC_IO_MAXCLASSES
+            dst_dynamic = dst_obj.maxclass in DYNAMIC_IO_MAXCLASSES
+
+            if src_dynamic or dst_dynamic:
+                # Codeboxes derive their inlet/outlet counts from their code,
+                # so bound-check indices against the box's own declared counts
+                # rather than the fixed maxref entry. Type checking is skipped
+                # because codebox I/O is always signal.
+                src_outlets = (
+                    src_obj.numoutlets
+                    if src_dynamic
+                    else maxref.get_outlet_count(src_name)
+                )
+                dst_inlets = (
+                    dst_obj.numinlets
+                    if dst_dynamic
+                    else maxref.get_inlet_count(dst_name)
+                )
+                error_msg = ""
+                if src_outlets is not None and src_outlet >= src_outlets:
+                    error_msg = (
+                        f"Object '{src_name}' only has {src_outlets} outlet(s), "
+                        f"cannot connect from outlet {src_outlet}"
+                    )
+                elif dst_inlets is not None and dst_inlet >= dst_inlets:
+                    error_msg = (
+                        f"Object '{dst_name}' only has {dst_inlets} inlet(s), "
+                        f"cannot connect to inlet {dst_inlet}"
+                    )
+                is_valid = not error_msg
+            else:
+                is_valid, error_msg = maxref.validate_connection(
+                    src_name, src_outlet, dst_name, dst_inlet
+                )
+
             if not is_valid:
                 logger.warning(
                     f"Connection validation failed: {src_name}[{src_outlet}] -> {dst_name}[{dst_inlet}]: {error_msg}"
@@ -473,6 +523,11 @@ class BoxFactoryMixin(AbstractPatcher):
             return self.add_subpatcher(value, **kwds)
         if maxclass == "gen~":
             return self.add_gen_tilde(**kwds)
+        if maxclass == "gen.codebox~":
+            # Tail is the gen code. value.split() collapses whitespace, so this
+            # shortcut suits single-line/`;`-terminated code; for multi-line
+            # source pass it to add_gen_codebox() directly.
+            return self.add_gen_codebox(txt, **kwds)
         if maxclass == "rnbo~":
             return self.add_rnbo(value, **kwds)
         return self.add_textbox(text=value, **kwds)
@@ -540,6 +595,57 @@ class BoxFactoryMixin(AbstractPatcher):
         """Add a codebox_tilde"""
         return self.add_codebox(
             code, patching_rect, id, comment, comment_pos, tilde=True, **kwds
+        )
+
+    def add_gen_codebox(
+        self,
+        code: str,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        numinlets: Optional[int] = None,
+        numoutlets: Optional[int] = None,
+        outlettype: Optional[List[str]] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds: Any,
+    ) -> "Box":
+        """Add a standalone ``gen.codebox~`` object.
+
+        Unlike :meth:`add_codebox` (which emits the ``codebox~`` object meant to
+        live *inside* a ``gen~`` or ``rnbo~`` subpatcher), this creates the
+        self-contained ``gen.codebox~`` object that lives directly in a regular
+        Max patcher -- a complete gen patch in a single box, with no subpatcher
+        wrapper. This is the form emitted by gen transpilers.
+
+        A gen codebox's inlet/outlet counts are dynamic: they are determined by
+        the highest ``inN`` / ``outN`` references in the code. They are derived
+        automatically when ``numinlets`` / ``numoutlets`` are not given (each
+        defaults to at least 1).
+        """
+        if "\r" not in code:
+            code = code.replace("\n", "\r\n")
+
+        if numinlets is None:
+            numinlets = _max_gen_io_index(code, "in")
+        if numoutlets is None:
+            numoutlets = _max_gen_io_index(code, "out")
+
+        kwds.setdefault("fontname", "<Monospaced>")
+        kwds.setdefault("fontsize", 12.0)
+
+        return self.add_box(
+            Box(
+                id=id or self.get_id("gen.codebox~"),
+                code=code,
+                maxclass="gen.codebox~",
+                numinlets=numinlets,
+                numoutlets=numoutlets,
+                outlettype=outlettype or ["signal"] * numoutlets,
+                patching_rect=patching_rect or self.get_pos(),
+                **kwds,
+            ),
+            comment,
+            comment_pos,
         )
 
     def add_message(

@@ -567,6 +567,40 @@ voices = p.add_poly('mysynth', 8)        # -> "poly~ mysynth 8"
 p.save()
 ```
 
+## Gen Codebox DSP
+
+`add_gen_codebox()` adds a standalone `gen.codebox~` object: a complete gen patch expressed as DSP code in a single box, sitting directly in a regular Max patcher. This is distinct from `add_codebox()`, which emits the inner `codebox~` object meant to live inside a `gen~`/`rnbo~` subpatcher. The whole feedback-delay built from discrete objects in [Feedback Loops](#feedback-loops) collapses into one box:
+
+``` python
+p = Patcher('fbdelay.maxpat')
+
+osc = p.add('cycle~ 440')
+
+# Inlet/outlet counts are derived from the highest inN/outN in the code:
+# this references in1 and out1, so the box gets 1 signal inlet and 1 outlet.
+cb = p.add_gen_codebox('''
+Param feedback(0.5, min=0.0, max=0.95);
+History fb(0.0);
+out1 = in1 + fb * feedback;
+fb = out1;
+''')
+
+dac = p.add('ezdac~')
+p.add_line(osc, cb)
+p.add_line(cb, dac)
+p.save()
+```
+
+Pass `numinlets` / `numoutlets` explicitly to override the derived counts. Newlines in the code are normalized to CRLF as Max expects, and the font defaults to the monospaced gen style.
+
+For short, single-line code the `add()` string shortcut works too:
+
+``` python
+cb = p.add('gen.codebox~ out1 = in1 * 0.5;')
+```
+
+When `validate_connections=True`, connections to and from a `gen.codebox~` (and `codebox` / `codebox~`) are bound-checked against the box's own declared inlet/outlet counts rather than a fixed maxref entry, since codebox I/O is code-dependent.
+
 ## Colors and Theming
 
 Boxes accept a named color, a hex string, or an `[r, g, b(, a)]` float sequence (0..1). `apply_theme` colors every box at once.
