@@ -22,14 +22,34 @@ except ImportError:
 
 def test_table():
     p = Patcher("outputs/test_table.maxpat")
-    p.add_table("bob", array=list(range(128)))
+    table = p.add_table("bob", array=list(range(128)))
     p.save()
+
+    assert len(p._boxes) == 1
+    assert table.maxclass == "newobj"
+    assert table.text == "table bob @embed 1"
+
+    d = table.to_dict()["box"]
+    assert d["embed"] == 1
+    assert d["saved_object_attributes"]["name"] == "bob"
+    assert d["saved_object_attributes"]["size"] == 128
+    assert d["table_data"] == list(range(128))
 
 
 def test_table_tilde():
     p = Patcher("outputs/test_table_tilde.maxpat")
-    p.add_table_tilde("bob", array=list(range(128)))
+    table = p.add_table_tilde("bob", array=list(range(128)))
     p.save()
+
+    assert len(p._boxes) == 1
+    assert table.maxclass == "newobj"
+    assert table.text == "table~ bob @embed 1"
+
+    d = table.to_dict()["box"]
+    assert d["embed"] == 1
+    assert d["saved_object_attributes"]["name"] == "bob"
+    assert d["saved_object_attributes"]["size"] == 128
+    assert d["table_data"] == list(range(128))
 
 
 @pytest.mark.skipif(not HAS_NUMPY, reason="needs numpy to be installed")
@@ -49,6 +69,11 @@ def test_table_wavetable1():
     p._boxes[itable_index] = itable
 
     p.save_as("outputs/test_table_wavetable1.maxpat")
+
+    assert "table~" in table.text
+    assert table.to_dict()["box"]["table_data"] == list(arr)
+    assert itable.maxclass == "itable"
+    assert itable.to_dict()["box"]["table_data"] == list(arr)
 
 
 @pytest.mark.skipif(
@@ -70,3 +95,8 @@ def test_table_wavetable2():
     # p._objects[itable.id] = itable
 
     p.save_as("outputs/test_table_wavetable2.maxpat")
+
+    assert "table~" in table.text
+    assert table.to_dict()["box"]["table_data"] == list(arr)
+    assert itable.maxclass == "itable"
+    assert itable.to_dict()["box"]["table_data"] == list(arr)

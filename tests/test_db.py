@@ -17,7 +17,7 @@ class TestMaxRefDB:
         assert db.db_path == ":memory:"
         # Test both new property and deprecated method
         assert db.count == 0
-        assert db.get_object_count() == 0
+        assert db.count == 0
         assert len(db) == 0
 
     def test_init_with_file(self):
@@ -233,8 +233,8 @@ class TestMaxRefDB:
 
         # Test deprecated method still works
         db2 = MaxRefDB(":memory:", auto_populate=False)
-        db2.populate_from_maxref(["cycle~"])
-        assert db2.get_object_count() == 1
+        db2.populate(["cycle~"])
+        assert db2.count == 1
 
     def test_search_objects(self):
         """Test searching for objects"""
@@ -309,7 +309,7 @@ class TestMaxRefDB:
         assert "dsp_effect" in results
 
         # Test deprecated method still works
-        results = db.search_objects("filter")
+        results = db.search("filter")
         assert "audio_filter" in results
 
     def test_get_objects_by_category(self):
@@ -384,7 +384,7 @@ class TestMaxRefDB:
         assert "obj3" in video_objects
 
         # Test deprecated method still works
-        audio_objects = db.get_objects_by_category("audio")
+        audio_objects = db.by_category("audio")
         assert len(audio_objects) == 2
 
     def test_get_all_categories(self):
@@ -473,7 +473,7 @@ class TestMaxRefDB:
         assert "control" in categories
 
         # Test deprecated method still works
-        categories = db.get_all_categories()
+        categories = db.categories
         assert len(categories) == 3
 
     def test_export_import_json(self):
@@ -517,9 +517,9 @@ class TestMaxRefDB:
 
             # Test deprecated methods still work
             json_path2 = Path(tmpdir) / "export2.json"
-            db1.export_to_json(json_path2)
+            db1.export(json_path2)
             db3 = MaxRefDB(":memory:", auto_populate=False)
-            db3.import_from_json(json_path2)
+            db3.load(json_path2)
             assert db3.get_object("test_export") is not None
 
     def test_create_database_function(self):
@@ -529,12 +529,12 @@ class TestMaxRefDB:
 
             # Create without populating
             db1 = MaxRefDB.create_database(db_path, populate=False)
-            assert db1.get_object_count() == 0
+            assert db1.count == 0
 
             # Create with populating (limit to a few objects for speed)
             db2 = MaxRefDB(":memory:", auto_populate=False)
-            db2.populate_from_maxref(["cycle~", "gain~"])
-            assert db2.get_object_count() == 2
+            db2.populate(["cycle~", "gain~"])
+            assert db2.count == 2
 
     def test_replace_object(self):
         """Test that inserting an object twice replaces the first"""
@@ -579,7 +579,7 @@ class TestMaxRefDB:
         db.insert_object("test_replace", data2)
 
         # Verify only one object exists with updated data
-        assert db.get_object_count() == 1
+        assert db.count == 1
         obj = db.get_object("test_replace")
         assert obj["digest"] == "Updated digest"
         assert obj["description"] == "Updated description"
@@ -594,7 +594,7 @@ class TestMaxRefDB:
     def test_empty_search(self):
         """Test searching with no matches"""
         db = MaxRefDB(":memory:", auto_populate=False)
-        results = db.search_objects("nonexistent_query")
+        results = db.search("nonexistent_query")
         assert len(results) == 0
 
     def test_root_attributes_preservation(self):
@@ -669,8 +669,8 @@ class TestMaxRefDB:
 
         # Test deprecated methods still work
         db_test = MaxRefDB(":memory:", auto_populate=False)
-        db_test.populate_all_msp_objects()
-        assert db_test.get_object_count() > 0
+        db_test.populate(category="msp")
+        assert db_test.count > 0
 
     def test_category_helpers(self):
         """Test category helper functions from maxref"""

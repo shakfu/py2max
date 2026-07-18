@@ -42,6 +42,28 @@ def test_attrui():
     p.add_line(phase, osc)
     p.save()
 
+    fd = freq.to_dict()["box"]
+    assert fd["maxclass"] == "attrui"
+    assert fd["attr"] == "frequency"
+    assert fd["parameter_enable"] == 1
+    assert fd["saved_attribute_attributes"]["valueof"]["parameter_initial"] == [
+        "frequency",
+        440.0,
+    ]
+    pd = phase.to_dict()["box"]
+    assert pd["attr"] == "phase"
+    assert pd["saved_attribute_attributes"]["valueof"]["parameter_initial"] == [
+        "phase",
+        0.6,
+    ]
+
+    # both attrui feed the oscillator
+    assert len(p._lines) == 2
+    assert p._lines[0].source == [freq.id, 0]
+    assert p._lines[0].destination == [osc.id, 0]
+    assert p._lines[1].source == [phase.id, 0]
+    assert p._lines[1].destination == [osc.id, 0]
+
 
 # short-way
 def test_attr():
@@ -52,3 +74,18 @@ def test_attr():
     p.add_line(freq, osc)
     p.add_line(phase, osc)
     p.save()
+
+    fd = freq.to_dict()["box"]
+    assert fd["maxclass"] == "attrui"
+    assert fd["attr"] == "frequency"
+    assert fd["saved_attribute_attributes"]["valueof"]["parameter_initial"] == [
+        "frequency",
+        440.0,
+    ]
+    # show_label controls the attr_display flag
+    assert freq.to_dict()["box"].get("attr_display") is False
+    assert phase.to_dict()["box"].get("attr_display") is True
+
+    assert len(p._lines) == 2
+    assert p._lines[0].destination == [osc.id, 0]
+    assert p._lines[1].destination == [osc.id, 0]

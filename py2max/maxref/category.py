@@ -22,14 +22,17 @@ INPUT_OBJECTS = set(
         "receive",
         "receive~",
         "r",
-        "route",
         "sel",
         "select",
         "touchin",
         "udpreceive",
-        "unpack",
     ]
 )
+# Note: ``route`` and ``unpack`` are message *processors*, not inputs -- they
+# live in PROCESSOR_OBJECTS. ``adc~`` and ``receive~`` are signal *sources*, so
+# they stay here (INPUT) and are intentionally absent from OUTPUT_OBJECTS. These
+# used to be duplicated across sets; since INPUT is matched first the duplicates
+# were dead. See _classify_object.
 
 CONTROL_OBJECTS = set(
     [
@@ -136,7 +139,6 @@ PROCESSOR_OBJECTS = set(
 
 OUTPUT_OBJECTS = set(
     [
-        "adc~",
         "bendout",
         "capture~",
         "ctlout",
@@ -151,7 +153,6 @@ OUTPUT_OBJECTS = set(
         "out~",
         "pgmout",
         "print",
-        "receive~",
         "record~",
         "scope~",
         "send~",

@@ -9,6 +9,7 @@ from py2max.core.abstract import AbstractPatcher
 from py2max.core.common import Rect
 
 from .base import LayoutManager
+from .graph import PatchGraph
 
 
 class GridLayoutManager(LayoutManager):
@@ -82,54 +83,6 @@ class GridLayoutManager(LayoutManager):
         x = pad + x_shift
         return Rect(x, y, w, h)
 
-    def _analyze_object_connections(self) -> Dict[str, Set[str]]:
-        """Analyze connections between objects to understand clustering patterns."""
-        connections: Dict[str, Set[str]] = {}  # {obj_id: set(connected_obj_ids)}
-
-        # Initialize all objects with empty connection sets
-        for obj_id in self.parent._objects:
-            connections[obj_id] = set()
-
-        # Build bidirectional connection graph
-        for line in self.parent._lines:
-            src_id, dst_id = line.src, line.dst
-            # Skip if either ID is None
-            if src_id is None or dst_id is None:
-                continue
-            if src_id in connections and dst_id in connections:
-                connections[src_id].add(dst_id)
-                connections[dst_id].add(src_id)
-
-        return connections
-
-    def _find_connected_components(
-        self, connections: Dict[str, Set[str]]
-    ) -> List[Set[str]]:
-        """Find clusters of connected objects using depth-first search."""
-        visited: Set[str] = set()
-        clusters: List[Set[str]] = []
-
-        def dfs(obj_id: str, current_cluster: Set[str]) -> None:
-            if obj_id in visited:
-                return
-            visited.add(obj_id)
-            current_cluster.add(obj_id)
-
-            # Visit all connected objects
-            for connected_id in connections.get(obj_id, set()):
-                if connected_id not in visited:
-                    dfs(connected_id, current_cluster)
-
-        # Find all connected components
-        for obj_id in connections:
-            if obj_id not in visited:
-                cluster: Set[str] = set()
-                dfs(obj_id, cluster)
-                if cluster:  # Only add non-empty clusters
-                    clusters.append(cluster)
-
-        return clusters
-
     def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
         """Optimize the layout to cluster connected objects together.
 
@@ -153,9 +106,10 @@ class GridLayoutManager(LayoutManager):
             self.prevent_overlaps()
             return
 
-        # Analyze connections and create clusters
-        connections = self._analyze_object_connections()
-        clusters = self._find_connected_components(connections)
+        # Analyze connections and create clusters of connected objects.
+        clusters = PatchGraph(
+            self.parent._lines, nodes=self.parent._objects
+        ).connected_components()
 
         # Even single clusters can benefit from reorganization
         # Apply optimized positions to existing objects based on clusters
@@ -247,7 +201,8 @@ class GridLayoutManager(LayoutManager):
                         x = min(max(x, pad), self.parent.width - self.box_width - pad)
                         y = min(max(y, pad), self.parent.height - self.box_height - pad)
 
-                        obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
+                        w, h = self.box_dims(obj)
+                        obj.patching_rect = Rect(x, y, w, h)
 
     def _apply_vertical_clustered_layout(self, clusters: List[Set[str]]) -> None:
         """Apply vertical cluster-based positioning (clusters arranged top-to-bottom)."""
@@ -315,7 +270,8 @@ class GridLayoutManager(LayoutManager):
                         x = min(max(x, pad), self.parent.width - self.box_width - pad)
                         y = min(max(y, pad), self.parent.height - self.box_height - pad)
 
-                        obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
+                        w, h = self.box_dims(obj)
+                        obj.patching_rect = Rect(x, y, w, h)
 
     def _subdivide_large_cluster(self, cluster: Set[str]) -> List[Set[str]]:
         """Subdivide a large cluster into smaller logical groups based on object types."""

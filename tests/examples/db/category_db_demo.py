@@ -8,7 +8,7 @@ This example shows how to:
 """
 
 from pathlib import Path
-from py2max import MaxRefDB
+from py2max.maxref import MaxRefDB
 from py2max.maxref import (
     get_all_max_objects,
     get_all_jit_objects,
@@ -48,29 +48,29 @@ def main():
 
     # Max objects only
     db_max = MaxRefDB()
-    db_max.populate_all_max_objects()
-    print(f"   Max database: {db_max.get_object_count()} objects")
+    db_max.populate(category="max")
+    print(f"   Max database: {db_max.count} objects")
 
     # MSP objects only
     db_msp = MaxRefDB()
-    db_msp.populate_all_msp_objects()
-    print(f"   MSP database: {db_msp.get_object_count()} objects")
+    db_msp.populate(category="msp")
+    print(f"   MSP database: {db_msp.count} objects")
 
     # Jitter objects only
     db_jit = MaxRefDB()
-    db_jit.populate_all_jit_objects()
-    print(f"   Jitter database: {db_jit.get_object_count()} objects")
+    db_jit.populate(category="jit")
+    print(f"   Jitter database: {db_jit.count} objects")
 
     # M4L objects only
     db_m4l = MaxRefDB()
-    db_m4l.populate_all_m4l_objects()
-    print(f"   M4L database: {db_m4l.get_object_count()} objects\n")
+    db_m4l.populate(category="m4l")
+    print(f"   M4L database: {db_m4l.count} objects\n")
 
     # Example 4: Create complete database with all objects
     print("4. Creating complete database with all categories...")
     db_all = MaxRefDB()
-    db_all.populate_all_objects()
-    print(f"   Complete database: {db_all.get_object_count()} objects\n")
+    db_all.populate()
+    print(f"   Complete database: {db_all.count} objects\n")
 
     # Example 5: Query specific objects from category databases
     print("5. Querying specific objects from category databases:")
@@ -110,15 +110,15 @@ def main():
 
         # Use the appropriate populate method
         if category == "max":
-            file_db.populate_all_max_objects()
+            file_db.populate(category="max")
         elif category == "msp":
-            file_db.populate_all_msp_objects()
+            file_db.populate(category="msp")
         elif category == "jit":
-            file_db.populate_all_jit_objects()
+            file_db.populate(category="jit")
         elif category == "m4l":
-            file_db.populate_all_m4l_objects()
+            file_db.populate(category="m4l")
 
-        print(f"   Created {db_path.name}: {file_db.get_object_count()} objects")
+        print(f"   Created {db_path.name}: {file_db.count} objects")
 
     print()
 

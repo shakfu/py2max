@@ -1,9 +1,55 @@
 """Tests for MatrixLayoutManager in both columnar and matrix modes."""
 
 from py2max import Patcher
-from py2max.layout import MatrixLayoutManager
+from py2max.layout import ColumnarLayoutManager, MatrixLayoutManager
 from py2max.core.common import Rect
 import py2max.maxref.category as category
+
+
+# --- L1: layout="columnar" is wired up -------------------------------------
+
+
+def test_columnar_layout_selectable():
+    """Patcher(layout='columnar') resolves to a ColumnarLayoutManager."""
+    p = Patcher(layout="columnar")
+    assert isinstance(p._layout_mgr, ColumnarLayoutManager)
+    assert isinstance(p._layout_mgr, MatrixLayoutManager)
+    assert p._layout_mgr.flow_direction == "column"
+    assert p._layout_mgr.num_columns == p._layout_mgr.num_dimensions
+
+
+def test_columnar_sorts_into_functional_columns():
+    """Objects land in Control/Generator/Processor/Output columns (x order)."""
+    p = Patcher(layout="columnar")
+    freq = p.add_floatbox()  # control -> col 0 (float sets osc frequency)
+    osc = p.add_textbox("cycle~ 440")  # generator -> col 1
+    filt = p.add_textbox("lores~ 1000")  # processor -> col 2
+    dac = p.add_textbox("ezdac~")  # output -> col 3
+    p.add_line(freq, osc)
+    p.add_line(osc, filt)
+    p.add_line(filt, dac)
+    p.optimize_layout()
+
+    xs = [tuple(b.patching_rect)[0] for b in (freq, osc, filt, dac)]
+    # strictly increasing x: control left-most, output right-most
+    assert xs == sorted(xs)
+    assert len(set(xs)) == 4, "each functional category should get its own column"
+
+
+def test_columnar_preserves_ui_dims():
+    """L2 fix carries through the columnar manager."""
+    p = Patcher(layout="columnar")
+    osc = p.add_textbox("cycle~ 440")
+    scope = p.add_textbox("scope~")
+    p.add_line(osc, scope)
+    p.optimize_layout()
+    assert tuple(scope.patching_rect)[2:] == (130.0, 130.0)
+
+
+def test_columnar_num_columns_setter():
+    p = Patcher(layout="columnar")
+    p._layout_mgr.num_columns = 5
+    assert p._layout_mgr.num_dimensions == 5
 
 
 def test_layout_matrix_basic():
@@ -42,24 +88,24 @@ def test_signal_chain_analysis():
 
     # Create two separate signal chains
     # Chain 1
-    metro1 = p.add_textbox("metro 500")  # Control
+    freq1 = p.add_floatbox()  # Control (float sets osc frequency)
     osc1 = p.add_textbox("cycle~ 440")  # Generator
     gain1 = p.add_textbox("gain~")  # Processor
     dac1 = p.add_textbox("ezdac~")  # Output
 
     # Chain 2
-    metro2 = p.add_textbox("metro 1000")  # Control
+    freq2 = p.add_floatbox()  # Control (float sets osc frequency)
     osc2 = p.add_textbox("saw~ 220")  # Generator
     filter2 = p.add_textbox("lores~")  # Processor
     dac2 = p.add_textbox("print")  # Output
 
     # Connect Chain 1
-    p.add_line(metro1, osc1)
+    p.add_line(freq1, osc1)
     p.add_line(osc1, gain1)
     p.add_line(gain1, dac1)
 
     # Connect Chain 2
-    p.add_line(metro2, osc2)
+    p.add_line(freq2, osc2)
     p.add_line(osc2, filter2)
     p.add_line(filter2, dac2)
 
@@ -77,9 +123,9 @@ def test_signal_chain_analysis():
     chain2_ids = set(chains[1])
 
     # Each chain should contain objects from that signal path
-    assert metro1.id in chain1_ids or metro1.id in chain2_ids
+    assert freq1.id in chain1_ids or freq1.id in chain2_ids
     assert osc1.id in chain1_ids or osc1.id in chain2_ids
-    assert metro2.id in chain1_ids or metro2.id in chain2_ids
+    assert freq2.id in chain1_ids or freq2.id in chain2_ids
     assert osc2.id in chain1_ids or osc2.id in chain2_ids
 
 
@@ -89,14 +135,14 @@ def test_layout_matrix_positioning():
 
     # Create simple two-chain patch
     # Chain 1
-    control1 = p.add_textbox("metro 500")
+    control1 = p.add_floatbox()  # float sets osc frequency
     gen1 = p.add_textbox("cycle~ 440")
     proc1 = p.add_textbox("gain~")
     out1 = p.add_textbox("ezdac~")
 
     # Chain 2
-    control2 = p.add_textbox("loadbang")
-    gen2 = p.add_textbox("noise~")
+    control2 = p.add_floatbox()  # float sets osc frequency
+    gen2 = p.add_textbox("saw~ 220")
     proc2 = p.add_textbox("lores~")
     out2 = p.add_textbox("print")
 
@@ -192,7 +238,7 @@ def test_matrix_complex_connections():
     p = Patcher(layout="matrix")
 
     # Create a more complex patch with branching
-    metro = p.add_textbox("metro 500")
+    freq = p.add_floatbox()  # float sets osc frequency
     osc1 = p.add_textbox("cycle~ 440")
     osc2 = p.add_textbox("saw~ 220")
     mixer = p.add_textbox("gain~")
@@ -200,8 +246,8 @@ def test_matrix_complex_connections():
     dac = p.add_textbox("ezdac~")
 
     # Create branching connections
-    p.add_line(metro, osc1)
-    p.add_line(metro, osc2)  # Metro drives both oscillators
+    p.add_line(freq, osc1)
+    p.add_line(freq, osc2)  # one control sets both oscillator frequencies
     p.add_line(osc1, mixer)
     p.add_line(osc2, mixer)  # Both oscillators to mixer
     p.add_line(mixer, filter)
@@ -220,7 +266,7 @@ def test_matrix_complex_connections():
     for chain in chain_info["chains"]:
         all_objects_in_chains.update(chain)
 
-    expected_objects = {metro.id, osc1.id, osc2.id, mixer.id, filter.id, dac.id}
+    expected_objects = {freq.id, osc1.id, osc2.id, mixer.id, filter.id, dac.id}
     assert expected_objects.issubset(all_objects_in_chains)
 
 
@@ -236,10 +282,10 @@ def test_layout_matrix_spacing():
 
     # Add same structure to both
     for p in [p1, p2]:
-        c1 = p.add_textbox("metro 500")
+        c1 = p.add_floatbox()  # float sets osc frequency
         g1 = p.add_textbox("cycle~ 440")
-        c2 = p.add_textbox("loadbang")
-        g2 = p.add_textbox("noise~")
+        c2 = p.add_floatbox()  # float sets osc frequency
+        g2 = p.add_textbox("saw~ 220")
 
         p.add_line(c1, g1)
         p.add_line(c2, g2)
@@ -263,11 +309,11 @@ def test_matrix_signal_chain_info():
     """Test the get_signal_chain_info method."""
     p = Patcher(layout="matrix")
 
-    metro = p.add_textbox("metro 500")
+    freq = p.add_floatbox()  # float sets osc frequency
     osc = p.add_textbox("cycle~ 440")
     gain = p.add_textbox("gain~")
 
-    p.add_line(metro, osc)
+    p.add_line(freq, osc)
     p.add_line(osc, gain)
     p.optimize_layout()
 
@@ -290,7 +336,7 @@ def test_matrix_multiple_objects_same_category():
     p = Patcher(layout="matrix")
 
     # Chain with multiple processors
-    metro = p.add_textbox("metro 500")
+    freq = p.add_floatbox()  # float sets osc frequency
     osc = p.add_textbox("cycle~ 440")
     gain1 = p.add_textbox("gain~")
     gain2 = p.add_textbox("gain~")
@@ -298,7 +344,7 @@ def test_matrix_multiple_objects_same_category():
     dac = p.add_textbox("ezdac~")
 
     # Linear chain
-    p.add_line(metro, osc)
+    p.add_line(freq, osc)
     p.add_line(osc, gain1)
     p.add_line(gain1, gain2)
     p.add_line(gain2, filter)
@@ -311,7 +357,7 @@ def test_matrix_multiple_objects_same_category():
     assert chain_info["num_chains"] >= 1
 
     # All objects should be positioned
-    for obj in [metro, osc, gain1, gain2, filter, dac]:
+    for obj in [freq, osc, gain1, gain2, filter, dac]:
         assert obj.patching_rect.x >= p._layout_mgr.pad
         assert obj.patching_rect.y >= p._layout_mgr.pad
 
@@ -351,6 +397,64 @@ def test_unknown_object_inference():
     assert layout_mgr._classify_object(out_obj) == 3  # Should be outputs
 
 
+# --- L4: classification bug fixes ------------------------------------------
+
+
+def test_category_sets_have_no_contradictions():
+    """No object may sit in both an earlier- and later-matched category set.
+
+    INPUT is matched before OUTPUT, and INPUT/CONTROL before PROCESSOR, so an
+    object appearing in both had a dead entry. adc~/receive~ are sources (INPUT
+    only); route/unpack are processors (PROCESSOR only).
+    """
+    assert "adc~" not in category.OUTPUT_OBJECTS
+    assert "receive~" not in category.OUTPUT_OBJECTS
+    assert "adc~" in category.INPUT_OBJECTS
+    assert "receive~" in category.INPUT_OBJECTS
+
+    assert "route" not in category.INPUT_OBJECTS
+    assert "unpack" not in category.INPUT_OBJECTS
+    assert "route" in category.PROCESSOR_OBJECTS
+    assert "unpack" in category.PROCESSOR_OBJECTS
+
+
+def test_route_and_unpack_classify_as_processors():
+    p = Patcher(layout="matrix", flow_direction="column")
+    m = p._layout_mgr
+    assert m._classify_object(p.add_textbox("route 1 2")) == 2
+    assert m._classify_object(p.add_textbox("unpack 0 0")) == 2
+
+
+def test_source_objects_classify_as_inputs():
+    p = Patcher(layout="matrix", flow_direction="column")
+    m = p._layout_mgr
+    assert m._classify_object(p.add_textbox("adc~")) == 0
+    assert m._classify_object(p.add_textbox("receive~ foo")) == 0
+
+
+def test_infer_uses_maxref_signal_typing():
+    """Unknown-to-category objects are classified from maxref signal typing."""
+    p = Patcher(layout="matrix", flow_direction="column")
+    m = p._layout_mgr
+    # svf~ is not in any hardcoded set, but maxref shows signal in AND out.
+    assert "svf~" not in category.PROCESSOR_OBJECTS
+    assert m._classify_object(p.add_textbox("svf~")) == 2  # processor
+    assert m._classify_object(p.add_textbox("onepole~")) == 2  # processor
+
+
+def test_infer_name_match_is_word_boundary_not_substring():
+    """A name merely *containing* 'in' (e.g. sine-like) is not called an input.
+
+    The old substring test classified any name with 'in' inside it as an input;
+    an unknown audio object should fall through to processor instead.
+    """
+    p = Patcher(layout="matrix", flow_direction="column")
+    m = p._layout_mgr
+    # not in maxref, not in any set: exercises the name-pattern fallback
+    assert m._classify_object(p.add_textbox("customsine~")) == 2  # processor, not 0
+    assert m._classify_object(p.add_textbox("customline~")) == 2
+
+
 def test_layout_columnar_with_connections():
     """Test columnar layout with connected objects."""
     p = Patcher(
@@ -360,13 +464,13 @@ def test_layout_columnar_with_connections():
     )
 
     # Create a typical signal chain
-    metro = p.add_textbox("metro 500")  # Control
+    freq = p.add_floatbox()  # Control (float sets osc frequency)
     osc = p.add_textbox("cycle~ 440")  # Generator
     gain = p.add_textbox("gain~")  # Processor
     dac = p.add_textbox("ezdac~")  # Output
 
     # Connect them in signal chain order
-    p.add_line(metro, osc)
+    p.add_line(freq, osc)
     p.add_line(osc, gain)
     p.add_line(gain, dac)
 
@@ -374,13 +478,13 @@ def test_layout_columnar_with_connections():
     p.optimize_layout()
 
     # Check that objects are positioned in columns
-    metro_x = metro.patching_rect.x
+    freq_x = freq.patching_rect.x
     osc_x = osc.patching_rect.x
     gain_x = gain.patching_rect.x
     dac_x = dac.patching_rect.x
 
     # Objects should be arranged left-to-right by function
-    assert metro_x < osc_x < gain_x < dac_x
+    assert freq_x < osc_x < gain_x < dac_x
 
     p.save()
 
@@ -394,8 +498,8 @@ def test_layout_columnar_multiple_objects():
     )
 
     # Add multiple objects to same categories
-    metro1 = p.add_textbox("metro 500")
-    metro2 = p.add_textbox("metro 1000")
+    freq1 = p.add_floatbox()  # float sets osc frequency
+    freq2 = p.add_floatbox()  # float sets osc frequency
 
     osc1 = p.add_textbox("cycle~ 440")
     osc2 = p.add_textbox("saw~ 220")
@@ -406,8 +510,8 @@ def test_layout_columnar_multiple_objects():
     dac = p.add_textbox("ezdac~")
 
     # Connect in parallel chains
-    p.add_line(metro1, osc1)
-    p.add_line(metro2, osc2)
+    p.add_line(freq1, osc1)
+    p.add_line(freq2, osc2)
     p.add_line(osc1, gain1)
     p.add_line(osc2, gain2)
     p.add_line(gain1, dac)
@@ -417,12 +521,12 @@ def test_layout_columnar_multiple_objects():
     p.optimize_layout()
 
     # Check that objects in same column have similar x positions
-    assert abs(metro1.patching_rect.x - metro2.patching_rect.x) < 100
+    assert abs(freq1.patching_rect.x - freq2.patching_rect.x) < 100
     assert abs(osc1.patching_rect.x - osc2.patching_rect.x) < 100
     assert abs(gain1.patching_rect.x - gain2.patching_rect.x) < 100
 
     # Check vertical ordering within columns
-    assert metro1.patching_rect.y != metro2.patching_rect.y
+    assert freq1.patching_rect.y != freq2.patching_rect.y
     assert osc1.patching_rect.y != osc2.patching_rect.y
 
     # save
@@ -653,12 +757,12 @@ def test_matrix_mode_signal_chains():
 
     # Create two parallel signal chains
     # Chain 1
-    metro1 = p.add_textbox("metro 250")  # Row 0 (Controls)
+    freq1 = p.add_floatbox()  # Row 0 (Controls) - float sets osc frequency
     osc1 = p.add_textbox("cycle~ 440")  # Row 1 (Generators)
     filter1 = p.add_textbox("lores~ 1000")  # Row 2 (Processors)
 
     # Chain 2
-    metro2 = p.add_textbox("metro 333")  # Row 0 (Controls)
+    freq2 = p.add_floatbox()  # Row 0 (Controls) - float sets osc frequency
     osc2 = p.add_textbox("saw~ 220")  # Row 1 (Generators)
     delay2 = p.add_textbox("delay~ 500")  # Row 2 (Processors)
 
@@ -666,9 +770,9 @@ def test_matrix_mode_signal_chains():
     dac = p.add_textbox("ezdac~")  # Row 3 (Outputs)
 
     # Connect the chains
-    p.add_line(metro1, osc1)
+    p.add_line(freq1, osc1)
     p.add_line(osc1, filter1)
-    p.add_line(metro2, osc2)
+    p.add_line(freq2, osc2)
     p.add_line(osc2, delay2)
     p.add_line(filter1, dac)
     p.add_line(delay2, dac)
@@ -678,12 +782,12 @@ def test_matrix_mode_signal_chains():
 
     # In matrix mode, objects of same category should have similar y positions
     # (they're in the same row)
-    assert abs(metro1.patching_rect.y - metro2.patching_rect.y) < 50
+    assert abs(freq1.patching_rect.y - freq2.patching_rect.y) < 50
     assert abs(osc1.patching_rect.y - osc2.patching_rect.y) < 50
     assert abs(filter1.patching_rect.y - delay2.patching_rect.y) < 50
 
     # Objects in different categories should have different y positions
-    assert metro1.patching_rect.y != osc1.patching_rect.y
+    assert freq1.patching_rect.y != osc1.patching_rect.y
     assert osc1.patching_rect.y != filter1.patching_rect.y
     assert filter1.patching_rect.y != dac.patching_rect.y
 
@@ -695,15 +799,15 @@ def test_get_signal_chain_info():
     p = Patcher(layout="matrix", flow_direction="row")
 
     # Create signal chains
-    metro = p.add_textbox("metro 500")
+    freq = p.add_floatbox()  # float sets osc frequency
     osc1 = p.add_textbox("cycle~ 440")
     osc2 = p.add_textbox("saw~ 220")
     gain = p.add_textbox("gain~")
     dac = p.add_textbox("ezdac~")
 
     # Connect in branching pattern
-    p.add_line(metro, osc1)
-    p.add_line(metro, osc2)
+    p.add_line(freq, osc1)
+    p.add_line(freq, osc2)
     p.add_line(osc1, gain)
     p.add_line(osc2, gain)
     p.add_line(gain, dac)

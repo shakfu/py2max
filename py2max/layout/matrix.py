@@ -10,6 +10,7 @@ from py2max.core.common import Rect
 from py2max.maxref import category
 
 from .base import LayoutManager
+from .graph import PatchGraph
 
 
 class MatrixLayoutManager(LayoutManager):
@@ -92,6 +93,15 @@ class MatrixLayoutManager(LayoutManager):
         ] = {}  # object_id -> column/category assignment (used in both modes)
 
     @property
+    def num_columns(self) -> int:
+        """Number of functional columns (column mode); alias of num_dimensions."""
+        return self.num_dimensions
+
+    @num_columns.setter
+    def num_columns(self, value: int) -> None:
+        self.num_dimensions = value
+
+    @property
     def column_spacing(self) -> float:
         """Get column spacing (legacy property)."""
         return self.dimension_spacing
@@ -117,21 +127,10 @@ class MatrixLayoutManager(LayoutManager):
         Returns:
             List of signal chains, where each chain is a list of connected object IDs.
         """
-        # Build directed connection graph
-        connections: Dict[str, List[str]] = {}  # obj_id -> [connected_obj_ids]
-        reverse_connections: Dict[
-            str, List[str]
-        ] = {}  # obj_id -> [objects_connecting_to_this]
-
-        for obj_id in self.parent._objects:
-            connections[obj_id] = []
-            reverse_connections[obj_id] = []
-
-        for line in self.parent._lines:
-            src_id, dst_id = line.src, line.dst
-            if src_id and dst_id and src_id in connections and dst_id in connections:
-                connections[src_id].append(dst_id)
-                reverse_connections[dst_id].append(src_id)
+        # Build directed connection graph (obj_id -> outgoing / incoming lists).
+        graph = PatchGraph(self.parent._lines, nodes=self.parent._objects)
+        connections = graph.out_lists()
+        reverse_connections = graph.in_lists()
 
         # Find signal chains by tracing from sources to sinks
         visited = set()
@@ -316,9 +315,6 @@ class MatrixLayoutManager(LayoutManager):
             if obj_id not in self._column_assignments:
                 self._column_assignments[obj_id] = self._classify_object(obj)
 
-        # Step 2: Refine assignments based on signal flow
-        self._refine_column_assignments_by_flow()
-
         # Step 3: Apply columnar layout
         self._apply_columnar_layout()
 
@@ -367,7 +363,8 @@ class MatrixLayoutManager(LayoutManager):
                     max(y, self.pad), self.parent.height - self.box_height - self.pad
                 )
 
-                obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
+                w, h = self.box_dims(obj)
+                obj.patching_rect = Rect(x, y, w, h)
 
     def get_signal_chain_info(self) -> Dict[str, Any]:
         """Get information about detected signal chains.
@@ -447,7 +444,8 @@ class MatrixLayoutManager(LayoutManager):
                         self.parent.height - self.box_height - self.pad,
                     )
 
-                    obj.patching_rect = Rect(x, y, self.box_width, self.box_height)
+                    w, h = self.box_dims(obj)
+                    obj.patching_rect = Rect(x, y, w, h)
 
     def _sort_objects_in_column(self, obj_ids: List[str]) -> List[str]:
         """Sort objects within a column to maintain logical flow order.
@@ -461,53 +459,9 @@ class MatrixLayoutManager(LayoutManager):
         if not obj_ids:
             return []
 
-        # Build simplified connection graph for this column
-        connections: Dict[str, Set[str]] = {}
-        for obj_id in obj_ids:
-            connections[obj_id] = set()
-
-        for line in self.parent._lines:
-            src, dst = line.src, line.dst
-            if src in obj_ids and dst in obj_ids:
-                connections[src].add(dst)
-
-        # Topologically sort using DFS to maintain signal flow order
-        visited = set()
-        result = []
-
-        def dfs(obj_id: str) -> None:
-            if obj_id in visited:
-                return
-            visited.add(obj_id)
-
-            # Visit connected objects first (deeper in signal chain)
-            for connected_id in sorted(connections.get(obj_id, [])):
-                dfs(connected_id)
-
-            # Add current object after its dependencies
-            result.append(obj_id)
-
-        # Start DFS from objects with no incoming connections (sources)
-        sources = [
-            obj_id
-            for obj_id in obj_ids
-            if not any(
-                obj_id in connections.get(other_id, set()) for other_id in obj_ids
-            )
-        ]
-
-        if not sources:
-            sources = obj_ids  # If no clear sources, use all objects
-
-        for source in sources:
-            dfs(source)
-
-        # Add any remaining objects (shouldn't happen with proper DFS)
-        for obj_id in obj_ids:
-            if obj_id not in result:
-                result.append(obj_id)
-
-        return result
+        # Post-order DFS from sources over the intra-column connection graph, so
+        # objects appear after the ones that feed them (signal-flow order).
+        return PatchGraph(self.parent._lines, nodes=obj_ids).topological_order()
 
     def _classify_object(self, obj: AbstractBox) -> int:
         """Classify an object and assign it to the appropriate column/row.
@@ -528,45 +482,85 @@ class MatrixLayoutManager(LayoutManager):
         else:
             object_name = obj.maxclass
 
-        # Check each category in order
-        # Check for input objects first (they take priority over controls)
-        if object_name in category.INPUT_OBJECTS:
-            return 0  # Controls/Inputs category
-        elif object_name in category.CONTROL_OBJECTS:
-            return 0  # Controls category
-        elif object_name in category.GENERATOR_OBJECTS:
-            return 1  # Generators category
-        elif object_name in category.PROCESSOR_OBJECTS:
-            return 2  # Processors category
-        elif object_name in category.OUTPUT_OBJECTS:
-            return 3  # Outputs category
-        else:
-            # For unknown objects, try to infer from connections or name patterns
-            return self._infer_column_from_context(obj, object_name)
+        return self._classify_by_name(obj, object_name)
 
-    def _infer_column_from_context(self, obj: AbstractBox, object_name: str) -> int:
-        """Infer category assignment from object name patterns and context.
+    def _signal_column(self, object_name: str) -> Optional[int]:
+        """Classify by the shipped maxref signal typing (authoritative).
 
-        Args:
-            obj: The Box object.
-            object_name: The object's name/type.
+        Returns a column index for objects that carry signal I/O, else ``None``::
 
-        Returns:
-            Category index (0-3) for the object.
+            signal out only  -> 1 (generator / source)
+            signal in only   -> 3 (output / sink)
+            signal both ways -> 2 (processor)
         """
-        # Check specific patterns first (regardless of ~ suffix)
+        from py2max import maxref
 
-        # Output-like patterns (check first because they can end with ~)
-        if any(
-            out_word in object_name.lower()
-            for out_word in ["out", "dac", "record", "write", "send", "print", "meter"]
-        ):
-            return 3  # Outputs
+        inlet_types = maxref.get_inlet_types(object_name) or []
+        outlet_types = maxref.get_outlet_types(object_name) or []
+        signal_in = any("signal" in t for t in inlet_types)
+        signal_out = any("signal" in t for t in outlet_types)
+        if not (signal_in or signal_out):
+            return None
+        if signal_out and not signal_in:
+            return 1
+        if signal_in and not signal_out:
+            return 3
+        return 2
 
-        # Input-like patterns
-        if any(
-            input_word in object_name.lower()
-            for input_word in [
+    def _classify_by_name(self, obj: AbstractBox, object_name: str) -> int:
+        """Classify an object into a functional column (0-3).
+
+        The curated functional sets in :mod:`py2max.maxref.category` take
+        precedence, then maxref signal typing, then name patterns. Curated must
+        win because functional intent does NOT map to raw signal I/O typing:
+
+        - Most generators expose a signal inlet for modulation (even ``cycle~``
+          takes a signal-rate frequency / phase), so signal typing would call
+          them processors.
+        - Signal *sources* that are semantically inputs (``adc~``, ``in~``,
+          ``receive~``) would look like generators.
+
+        maxref signal typing is therefore used only for objects the curated sets
+        do not list -- it replaces name guessing for the audio long tail with
+        ground truth (signal out only -> generator, in only -> output/sink, both
+        -> processor). Name patterns remain the final fallback.
+        """
+        if object_name in category.INPUT_OBJECTS:
+            return 0
+        if object_name in category.CONTROL_OBJECTS:
+            return 0
+        if object_name in category.GENERATOR_OBJECTS:
+            return 1
+        if object_name in category.PROCESSOR_OBJECTS:
+            return 2
+        if object_name in category.OUTPUT_OBJECTS:
+            return 3
+
+        signal_col = self._signal_column(object_name)
+        if signal_col is not None:
+            return signal_col
+
+        return self._infer_by_name(object_name)
+
+    def _infer_by_name(self, object_name: str) -> int:
+        """Infer a column from name patterns for objects nothing else knows.
+
+        Matched at word boundaries (start/end/exact) rather than as bare
+        substrings, so ``"in"`` does not match inside ``line~`` / ``sine~``.
+        """
+        name = object_name.lower().rstrip("~")
+
+        def matches(words: List[str]) -> bool:
+            return any(
+                name == w or name.startswith(w) or name.endswith(w) for w in words
+            )
+
+        # Output-like (checked first because such names can also end with ~)
+        if matches(["out", "dac", "record", "write", "send", "print", "meter"]):
+            return 3
+        # Input-like
+        if matches(
+            [
                 "adc",
                 "in",
                 "inlet",
@@ -579,55 +573,44 @@ class MatrixLayoutManager(LayoutManager):
                 "touchin",
             ]
         ):
-            return 0  # Inputs/Controls
-
-        # UI/control-like patterns
-        if any(
-            ctrl_word in object_name.lower()
-            for ctrl_word in ["button", "slider", "dial", "knob", "fader", "param"]
-        ):
-            return 0  # Controls
-
+            return 0
+        # UI/control-like
+        if matches(["button", "slider", "dial", "knob", "fader", "param"]):
+            return 0
         # Audio objects (end with ~) are likely processors unless clearly generators
         if object_name.endswith("~"):
-            # Look for generator patterns
-            if any(
-                gen_word in object_name.lower()
-                for gen_word in ["osc", "cycle", "saw", "noise", "play", "sample"]
-            ):
-                return 1  # Generators
-            else:
-                return 2  # Processors (default for audio objects)
+            if matches(["osc", "cycle", "saw", "noise", "play", "sample"]):
+                return 1
+            return 2
+        # Non-signal object nothing knows: default to controls.
+        return 0
 
-        # Default to processors category for unknown objects
-        return 2
 
-    def _analyze_signal_flow(self) -> Dict[str, Set[str]]:
-        """Analyze signal flow to refine column assignments.
+class ColumnarLayoutManager(MatrixLayoutManager):
+    """Functional-column layout: Controls -> Generators -> Processors -> Outputs.
 
-        Returns:
-            Dictionary mapping object IDs to their connected object IDs.
-        """
-        connections: Dict[str, Set[str]] = {}
+    A thin specialization of :class:`MatrixLayoutManager` pinned to column mode,
+    where objects are grouped by functional category into vertical columns rather
+    than by signal chain. Selected via ``Patcher(..., layout="columnar")``.
+    """
 
-        # Initialize all objects with empty connection sets
-        for obj_id in self.parent._objects:
-            connections[obj_id] = set()
-
-        # Build connection graph
-        for line in self.parent._lines:
-            src_id, dst_id = line.src, line.dst
-            if src_id and dst_id and src_id in connections and dst_id in connections:
-                connections[src_id].add(dst_id)
-                connections[dst_id].add(src_id)
-
-        return connections
-
-    def _refine_column_assignments_by_flow(self) -> None:
-        """Refine column assignments based on signal flow analysis."""
-        # For now, disable flow refinement to keep objects in their initial classifications
-        # The initial classification should be sufficient for most cases
-
-        # This method can be expanded later to handle more complex refinement scenarios
-        # where the initial classification might be wrong based by actual connections
-        pass
+    def __init__(
+        self,
+        parent: AbstractPatcher,
+        pad: Optional[int] = None,
+        box_width: Optional[int] = None,
+        box_height: Optional[int] = None,
+        comment_pad: Optional[int] = None,
+        num_dimensions: int = 4,
+        dimension_spacing: float = 100.0,
+    ):
+        super().__init__(
+            parent,
+            pad,
+            box_width,
+            box_height,
+            comment_pad,
+            flow_direction="column",
+            num_dimensions=num_dimensions,
+            dimension_spacing=dimension_spacing,
+        )

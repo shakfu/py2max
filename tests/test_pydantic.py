@@ -154,5 +154,34 @@ def test_pydantic():
     p.link(osc, dac)
     p.link(osc, dac, inlet=1)
 
+    # ids are assigned sequentially as strings
+    assert osc.id == "1"
+    assert dac.id == "2"
+    assert len(p.boxes) == 2
+    assert len(p.lines) == 2
+
+    # the custom model_serializer must emit the nested Max JSON structure
+    dumped = p.model_dump()
+    root = dumped["patcher"]
+    boxes = root["boxes"]
+    assert boxes[0]["box"]["text"] == "cycle~ 440"
+    assert boxes[0]["box"]["id"] == "1"
+    assert boxes[0]["box"]["maxclass"] == "newobj"
+    assert boxes[1]["box"]["text"] == "ezdac~"
+
+    lines = root["lines"]
+    assert lines[0]["patchline"]["source"] == ("1", 0)
+    assert lines[0]["patchline"]["destination"] == ("2", 0)
+    assert lines[1]["patchline"]["destination"] == ("2", 1)
+    assert lines[0]["patchline"]["order"] == 1
+    assert lines[1]["patchline"]["order"] == 2
+
+    import json
+
+    payload = json.loads(p.model_dump_json())
+    # JSON serialization coerces the source/destination tuples to lists
+    assert payload["patcher"]["lines"][0]["patchline"]["source"] == ["1", 0]
+    assert payload["patcher"]["boxes"][0]["box"]["text"] == "cycle~ 440"
+
     with open("outputs/test_pydantic.maxpat", "w") as f:
         f.write(p.model_dump_json(indent=4))

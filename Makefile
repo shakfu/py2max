@@ -1,7 +1,7 @@
 
 # Makefile for py2max project
 
-.PHONY: help all build test test-verbose coverage lint \
+.PHONY: help all build test test-verbose test-outputs coverage lint \
 		typecheck qa docs docs-clean docs-serve docs-deploy install \
 		dev clean reset ci format check-wheel publish-test publish
 
@@ -20,9 +20,13 @@ test: ## Run tests
 test-verbose: ## Run tests with verbose output
 	@uv run pytest -v
 
+test-outputs: ## Run tests writing all artifacts flat to build/test-outputs/
+	@mkdir -p build
+	@PY2MAX_TEST_OUTPUT_FLAT=1 uv run pytest
+
 coverage: ## Generate coverage report
-	@mkdir -p outputs
-	@uv run pytest --cov-report html:outputs/_covhtml --cov=py2max tests
+	@mkdir -p build
+	@uv run pytest --cov-report html:build/coverage-html --cov=py2max tests
 
 lint: ## Run code linting
 	@uv run ruff check py2max --fix
@@ -46,6 +50,9 @@ docs-serve: ## Build and serve documentation locally (live reload)
 
 docs-deploy: ## Build and deploy docs to GitHub Pages (gh-pages branch)
 	@uv run --group docs mkdocs gh-deploy --force
+
+gallery: ## Regenerate graph-layout gallery images (docs/assets/imgs)
+	@uv run --extra graph python scripts/gen_layout_gallery.py
 
 install: ## Install package in development mode
 	@uv sync

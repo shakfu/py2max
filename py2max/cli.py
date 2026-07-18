@@ -636,19 +636,6 @@ def cmd_db_cache(args: argparse.Namespace) -> int:
         return 1
 
 
-def cmd_serve(args: argparse.Namespace) -> int:
-    """The interactive server moved to the separate py2max-server package."""
-    target = getattr(args, "input", None) or "<patch.maxpat>"
-    print(
-        "The interactive server has moved to the separate 'py2max-server' package.\n"
-        "Install it and use its CLI instead:\n"
-        "    pip install py2max-server\n"
-        f"    py2max-server serve {target}",
-        file=sys.stderr,
-    )
-    return 1
-
-
 def cmd_preview(args: argparse.Namespace) -> int:
     """Generate SVG preview of a patcher."""
     import tempfile
@@ -693,19 +680,6 @@ def cmd_preview(args: argparse.Namespace) -> int:
     except Exception as e:
         print(f"Error generating SVG preview: {e}", file=sys.stderr)
         return 1
-
-
-def cmd_repl(args: argparse.Namespace) -> int:
-    """The remote REPL moved to the separate py2max-server package."""
-    target = getattr(args, "server", None) or "localhost:9000"
-    print(
-        "The remote REPL has moved to the separate 'py2max-server' package.\n"
-        "Install it and use its CLI instead:\n"
-        "    pip install py2max-server\n"
-        f"    py2max-server repl {target}",
-        file=sys.stderr,
-    )
-    return 1
 
 
 def cmd_maxref(args: argparse.Namespace) -> int:
@@ -835,33 +809,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     val_parser.add_argument("path", help="Target .maxpat path")
     val_parser.set_defaults(func=cmd_validate)
-
-    serve_parser = subparsers.add_parser(
-        "serve", help="Start interactive server with live preview"
-    )
-    serve_parser.add_argument("input", help="Input .maxpat file")
-    serve_parser.add_argument(
-        "--port",
-        type=int,
-        default=8000,
-        help="HTTP server port (default: 8000, WebSocket on port+1)",
-    )
-    serve_parser.add_argument(
-        "--no-open", action="store_true", help="Don't automatically open browser"
-    )
-    serve_parser.add_argument(
-        "--no-save", action="store_true", help="Disable auto-save on changes"
-    )
-    serve_parser.add_argument(
-        "--repl",
-        action="store_true",
-        help="Start interactive REPL for live patch editing",
-    )
-    serve_parser.add_argument(
-        "--log-file",
-        help="Redirect server logs to file (enables single-terminal REPL mode when used with --repl)",
-    )
-    serve_parser.set_defaults(func=cmd_serve)
 
     preview_parser = subparsers.add_parser(
         "preview", help="Generate SVG preview of a patcher"
@@ -1093,22 +1040,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--force", action="store_true", help="Skip confirmation prompt"
     )
     cache_clear.set_defaults(func=cmd_db)
-
-    # REPL client command
-    repl_parser = subparsers.add_parser("repl", help="Connect to remote REPL server")
-    repl_parser.add_argument(
-        "server",
-        nargs="?",
-        default="localhost:9000",
-        help="Server address (default: localhost:9000)",
-    )
-    repl_parser.add_argument(
-        "--token",
-        default=None,
-        help="Session token printed by the server "
-        "(or set PY2MAX_REPL_TOKEN). Required for authentication.",
-    )
-    repl_parser.set_defaults(func=cmd_repl)
 
     return parser
 

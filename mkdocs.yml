@@ -67,6 +67,7 @@ nav:
       - Quickstart: user_guide/quickstart.md
       - Tutorial: user_guide/tutorial.md
       - Layout Managers: user_guide/layout_managers.md
+      - Layout Gallery: user_guide/layout_gallery.md
       - Advanced Usage: user_guide/advanced_usage.md
   - API Reference:
       - Package: api/py2max.md

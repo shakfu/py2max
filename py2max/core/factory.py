@@ -325,14 +325,13 @@ class BoxFactoryMixin(AbstractPatcher):
                     inlet=dst_inlet,
                 )
 
-        # get order of lines between same pair of objects
-        if (src_id, dst_id) == self._last_link:
-            self._link_counter += 1
-        else:
-            self._link_counter = 0
-            self._last_link = (src_id, dst_id)
-
-        order = self._link_counter
+        # Order of lines between the same pair of objects: Max uses it to fan
+        # parallel wires apart. Derive it from the connections that currently
+        # exist for this (src, dst) pair rather than a single-slot memo of the
+        # last link -- the memo reset ``order`` to 0 whenever any other
+        # connection intervened, collapsing parallel wires (and it also could
+        # not account for lines restored from a loaded patch).
+        order = sum(1 for pl in self._lines if pl.src == src_id and pl.dst == dst_id)
         src, dst = [src_id, src_outlet], [dst_id, dst_inlet]
         patchline = Patchline(source=src, destination=dst, order=order)
         self._lines.append(patchline)
@@ -447,7 +446,11 @@ class BoxFactoryMixin(AbstractPatcher):
                 text=text,
                 maxclass=maxclass or "newobj",
                 numinlets=numinlets if numinlets is not None else 1,
-                numoutlets=numoutlets if numoutlets is not None else 0,
+                # An object with no maxref entry gets one outlet by default (not
+                # zero): a zero-outlet object cannot act as a connection source,
+                # which is wrong for the hand-typed long-tail objects that land
+                # here. Matches Box.__init__'s default.
+                numoutlets=numoutlets if numoutlets is not None else 1,
                 outlettype=outlettype if outlettype is not None else [""],
                 patching_rect=patching_rect,
                 **kwds,
@@ -1011,6 +1014,155 @@ class BoxFactoryMixin(AbstractPatcher):
         if edge in self._edge_ids:
             self._edge_ids.remove(edge)
 
+    @staticmethod
+    def _as_box_id(box: "Union[Box, str]") -> str:
+        """Resolve a Box or id string to its id."""
+        return box.id if isinstance(box, Box) else box  # type: ignore[return-value]
+
+    def remove_line(self, line: "Patchline") -> None:
+        """Remove a specific patchline connection from the patcher."""
+        self._drop_line(line)
+
+    def disconnect(
+        self,
+        src: "Union[Box, str]",
+        dst: "Union[Box, str]",
+        outlet: int = 0,
+        inlet: int = 0,
+    ) -> int:
+        """Remove connection(s) between ``src`` and ``dst``.
+
+        Removes every patchline from ``src[outlet]`` to ``dst[inlet]`` and
+        returns how many were removed (0 if none matched). ``src``/``dst`` may be
+        Box objects or their ids.
+
+        Example:
+            >>> p.add_line(osc, gain)
+            >>> p.disconnect(osc, gain)
+            1
+        """
+        src_id = self._as_box_id(src)
+        dst_id = self._as_box_id(dst)
+        matches = [
+            cast(Patchline, pl)
+            for pl in self._lines
+            if pl.src == src_id
+            and pl.dst == dst_id
+            and cast(Patchline, pl).source[1] == outlet
+            and cast(Patchline, pl).destination[1] == inlet
+        ]
+        for line in matches:
+            self._drop_line(line)
+        return len(matches)
+
+    def remove_box(self, box: "Union[Box, str]") -> Optional["Box"]:
+        """Remove a box and every patchline connected to it.
+
+        Accepts a Box or its id. Drops all incident patchlines, the box's entry
+        in the object map / node index, and any pending associated comment for
+        it. Returns the removed Box, or None if it was not present.
+
+        Example:
+            >>> osc = p.add_textbox('cycle~ 440')
+            >>> p.remove_box(osc)
+        """
+        box_id = self._as_box_id(box)
+
+        for line in [pl for pl in self._lines if pl.src == box_id or pl.dst == box_id]:
+            self._drop_line(line)
+
+        removed = self._objects.pop(box_id, None)
+        target = box if isinstance(box, Box) else removed
+        if target in self._boxes:
+            self._boxes.remove(target)
+        if box_id in self._node_ids:
+            self._node_ids.remove(box_id)
+        self._pending_comments = [
+            pc for pc in self._pending_comments if pc[0] != box_id
+        ]
+        return cast(Optional["Box"], target)
+
+    # alias for remove_box
+    remove = remove_box
+
+    def replace(
+        self,
+        old: "Union[Box, str]",
+        new: "Union[Box, str]",
+        **kwds: Any,
+    ) -> "Box":
+        """Replace a box in place, preserving its position and connections.
+
+        ``old`` (a Box or its id) is swapped for ``new`` -- either the text for a
+        replacement object (created with its Max-class defaults) or an
+        already-built Box. The replacement takes ``old``'s slot and window
+        position, and every patchline incident to ``old`` is rewired to it,
+        keeping the same outlet/inlet indices and connection order. Any pending
+        associated comment for ``old`` transfers to the replacement. Returns the
+        new Box.
+
+        Ports are preserved by index: if the replacement has fewer inlets/outlets
+        than the original, wires to the now-missing ports are kept as-is rather
+        than silently dropped here (Max drops them on load).
+
+        Example:
+            >>> osc = p.add('cycle~ 440')
+            >>> p.add_line(osc, gain)
+            >>> saw = p.replace(osc, 'saw~ 220')  # saw~ inherits osc's wiring
+        """
+        old_id = self._as_box_id(old)
+        old_box = self._objects.get(old_id)
+        if old_box is None:
+            raise KeyError(f"cannot replace unknown box {old_id!r}")
+
+        box_idx = self._boxes.index(old_box)
+        node_idx = self._node_ids.index(old_id) if old_id in self._node_ids else None
+        ox, oy, _, _ = old_box.patching_rect
+
+        # Build the replacement. add_box/add_textbox appends it at the end; it is
+        # relocated into old's slot after rewiring. Keep the replacement's own
+        # width/height but move it to old's window position.
+        if isinstance(new, Box):
+            if new.id is None:
+                new.id = self.get_id(new.maxclass)
+            _, _, nw, nh = new.patching_rect
+            new.patching_rect = Rect(ox, oy, nw, nh)
+            new_box = self.add_box(new)
+        else:
+            new_box = self.add_textbox(new, **kwds)
+            _, _, nw, nh = new_box.patching_rect
+            new_box.patching_rect = Rect(ox, oy, nw, nh)
+
+        new_id = new_box.id
+        assert new_id
+
+        # Rewire every incident patchline to the new box, preserving port indices
+        # and order, then rebuild the edge index to match.
+        for line in self._lines:
+            pl = cast(Patchline, line)
+            if pl.source and pl.source[0] == old_id:
+                pl.source = [new_id, pl.source[1]]
+            if pl.destination and pl.destination[0] == old_id:
+                pl.destination = [new_id, pl.destination[1]]
+        self._edge_ids = [(pl.src, pl.dst) for pl in self._lines]
+
+        # Transfer any pending associated comment from old to new.
+        self._pending_comments = [
+            (new_id if bid == old_id else bid, text, pos)
+            for (bid, text, pos) in self._pending_comments
+        ]
+
+        # Drop the old box and move the replacement into its original slot so
+        # ordering is preserved (add_* had appended it at the end).
+        del self._objects[old_id]
+        self._boxes.remove(new_box)  # drop the end-appended copy
+        self._boxes[box_idx] = new_box  # overwrite old_box in its slot
+        if node_idx is not None:
+            self._node_ids.remove(new_id)
+            self._node_ids[node_idx] = new_id
+
+        return new_box
+
     def encapsulate(
         self, boxes: "Iterable[Box]", text: str = "p subpatch", **kwds: Any
     ) -> "Box":
@@ -1241,9 +1393,8 @@ class BoxFactoryMixin(AbstractPatcher):
         return self.add_box(
             Box(
                 id=id or self.get_id("coll"),
-                text=text or f"coll {name} @embed {embed}"
-                if name
-                else f"coll @embed {embed}",
+                text=text
+                or (f"coll {name} @embed {embed}" if name else f"coll @embed {embed}"),
                 maxclass="newobj",
                 numinlets=1,
                 numoutlets=4,
@@ -1280,9 +1431,8 @@ class BoxFactoryMixin(AbstractPatcher):
         return self.add_box(
             Box(
                 id=id or self.get_id("dict"),
-                text=text or f"dict {name} @embed {embed}"
-                if name
-                else f"dict @embed {embed}",
+                text=text
+                or (f"dict {name} @embed {embed}" if name else f"dict @embed {embed}"),
                 maxclass="newobj",
                 numinlets=2,
                 numoutlets=4,
@@ -1329,9 +1479,12 @@ class BoxFactoryMixin(AbstractPatcher):
         return self.add_box(
             Box(
                 id=id or self.get_id(table_type),
-                text=text or f"{table_type} {name} @embed {embed}"
-                if name
-                else f"{table_type} @embed {embed}",
+                text=text
+                or (
+                    f"{table_type} {name} @embed {embed}"
+                    if name
+                    else f"{table_type} @embed {embed}"
+                ),
                 maxclass="newobj",
                 numinlets=2,
                 numoutlets=2,
@@ -1488,5 +1641,5 @@ class BoxFactoryMixin(AbstractPatcher):
     def add_beap(self, name: str, **kwds: Any) -> "Box":
         """Add a beap bpatcher object."""
 
-        _varname = name if ".maxpat" not in name else name.rstrip(".maxpat")
+        _varname = name if ".maxpat" not in name else name.removesuffix(".maxpat")
         return self.add_bpatcher(name=name, varname=_varname, extract=1, **kwds)

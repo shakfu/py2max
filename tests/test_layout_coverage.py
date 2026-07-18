@@ -26,37 +26,47 @@ class TestLayoutCoverage:
         result = layout_mgr.get_relative_pos(rect)
         assert result == rect
 
-    def test_analyze_connections_with_none_ids(self):
-        """Test _analyze_object_connections when line has None src or dst."""
-        p = Patcher()
-        layout_mgr = GridLayoutManager(p)
+    def test_graph_skips_lines_with_none_ids(self):
+        """PatchGraph drops patchlines whose src or dst id is None."""
+        from py2max.core import Patchline
+        from py2max.layout.graph import PatchGraph
 
-        # Add some objects
-        p.add_textbox("obj1")
+        p = Patcher()
+        obj1 = p.add_textbox("obj1")
         obj2 = p.add_textbox("obj2")
 
-        # Create a line with None src or dst
-        from py2max.core import Patchline
+        good = Patchline()
+        good.source = [obj1.id, 0]
+        good.destination = [obj2.id, 0]
+        bad = Patchline()
+        bad.source = [None, 0]
+        bad.destination = [obj2.id, 0]
+        p._lines = [good, bad]
 
+        adj = PatchGraph(p._lines, nodes=p._objects).undirected_sets()
+        # the None-endpoint line is ignored; only the good edge remains
+        assert adj[obj1.id] == {obj2.id}
+        assert adj[obj2.id] == {obj1.id}
+        assert None not in adj
+
+    def test_graph_connected_components(self):
+        """PatchGraph groups mutually-connected nodes into one component."""
+        from py2max.core import Patchline
+        from py2max.layout.graph import PatchGraph
+
+        p = Patcher()
+        a = p.add_textbox("a")
+        b = p.add_textbox("b")
+        c = p.add_textbox("c")  # isolated
         line = Patchline()
-        line.source = [None, 0]
-        line.destination = [obj2.id, 0]
+        line.source = [a.id, 0]
+        line.destination = [b.id, 0]
         p._lines = [line]
 
-        connections = layout_mgr._analyze_object_connections()
-        # Should handle None gracefully
-        assert isinstance(connections, dict)
-
-    def test_find_connected_components_visited(self):
-        """Test _find_connected_components when object already visited."""
-        p = Patcher()
-        layout_mgr = GridLayoutManager(p)
-
-        # Create connections dict
-        connections = {"obj1": {"obj2"}, "obj2": {"obj1"}}
-
-        clusters = layout_mgr._find_connected_components(connections)
-        assert isinstance(clusters, list)
+        components = PatchGraph(p._lines, nodes=p._objects).connected_components()
+        assert {a.id, b.id} in components
+        assert {c.id} in components
+        assert len(components) == 2
 
     def test_cluster_layout_horizontal_large_clusters(self):
         """Test cluster layout for horizontal with many clusters."""

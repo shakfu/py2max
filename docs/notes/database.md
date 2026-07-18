@@ -12,14 +12,14 @@ from pathlib import Path
 
 # In-memory database
 db = MaxRefDB()
-db.populate_from_maxref(['cycle~', 'gain~', 'dac~'])
+db.populate(['cycle~', 'gain~', 'dac~'])
 
 # Query objects
 cycle = db.get_object('cycle~')
 print(f"Inlets: {len(cycle['inlets'])}, Outlets: {len(cycle['outlets'])}")
 
 # Search
-results = db.search_objects('filter')
+results = db.search('filter')
 
 # Persistent database
 file_db = create_database(Path("maxref.db"), populate=True)
@@ -139,17 +139,17 @@ from py2max.maxref import (
 
 # Populate with specific categories
 db_msp = MaxRefDB()
-db_msp.populate_all_msp_objects()  # Only MSP objects
-print(f"MSP objects: {db_msp.get_object_count()}")
+db_msp.populate(category="msp")  # Only MSP objects
+print(f"MSP objects: {db_msp.count}")
 
 db_jit = MaxRefDB()
-db_jit.populate_all_jit_objects()  # Only Jitter objects
-print(f"Jitter objects: {db_jit.get_object_count()}")
+db_jit.populate(category="jit")  # Only Jitter objects
+print(f"Jitter objects: {db_jit.count}")
 
 # Populate with all objects
 db_all = MaxRefDB()
-db_all.populate_all_objects()  # All categories
-print(f"All objects: {db_all.get_object_count()}")
+db_all.populate()  # All categories
+print(f"All objects: {db_all.count}")
 
 # Get object lists by category
 max_objects = get_all_max_objects()  # Returns list of Max object names

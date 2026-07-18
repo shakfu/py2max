@@ -38,6 +38,17 @@ for i in range(12):
 p.save()
 ```
 
+The two grid directions applied to the same two-voice sample patch (generated
+by `make gallery`), for direct comparison:
+
+**Horizontal** -- objects fill left-to-right, wrapping into rows:
+
+![grid-horizontal](../assets/imgs/grid-horizontal.svg)
+
+**Vertical** -- objects fill top-to-bottom, wrapping into columns:
+
+![grid-vertical](../assets/imgs/grid-vertical.svg)
+
 ### Grid Layout with Clustering
 
 The most powerful feature of GridLayoutManager is connection-aware clustering:
@@ -130,6 +141,10 @@ p.optimize_layout()
 p.save()
 ```
 
+Horizontal flow arranges objects into signal-flow levels, left-to-right:
+
+![flow-horizontal](../assets/imgs/flow-horizontal.svg)
+
 ### Vertical Flow Layout
 
 ``` python
@@ -159,6 +174,10 @@ for i, outlet in enumerate(outputs):
 p.optimize_layout()
 p.save()
 ```
+
+The same patch with vertical flow, top-to-bottom:
+
+![flow-vertical](../assets/imgs/flow-vertical.svg)
 
 ### Complex Flow Patterns
 
@@ -245,6 +264,20 @@ p.save()
 | Simple Grid   | Yes         | No            | Yes               | Yes             |
 | Optimization  | Yes         | Yes           | Limited           | Limited         |
 | Best For      | General use | Signal chains | Simple layouts    | Simple layouts  |
+
+### Functional managers
+
+Two further managers organize objects by function. Both use the same sample
+patch as the grid/flow images above:
+
+**Columnar** -- objects sorted into functional columns (controls, generators,
+processors, outputs):
+
+![columnar](../assets/imgs/columnar.svg)
+
+**Matrix** -- signal chains as columns, functional categories as rows:
+
+![matrix](../assets/imgs/matrix.svg)
 
 ## Advanced Layout Techniques
 

@@ -1,7 +1,5 @@
 """Tests for M4L presentation-mode helpers and integer-coord guardrail."""
 
-from pathlib import Path
-
 import pytest
 
 from py2max import Patcher
@@ -12,10 +10,6 @@ from py2max.m4l import (
     is_m4l_infrastructure,
     is_presentation_ui,
 )
-
-
-OUT = Path("outputs")
-OUT.mkdir(exist_ok=True)
 
 
 def test_enable_presentation_sets_flag():

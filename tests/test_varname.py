@@ -9,3 +9,18 @@ def test_varname():
     p.add_line(osc1, gain)
     p.add_line(gain, dac)
     p.save()
+
+    assert len(p._boxes) == 3
+    assert len(p._lines) == 2
+
+    assert osc1.to_dict()["box"]["varname"] == "osc"
+    assert gain.to_dict()["box"]["varname"] == "volume"
+    # dac was created without a varname; none should be emitted
+    assert "varname" not in dac.to_dict()["box"]
+
+    varnames = {
+        b["box"].get("varname")
+        for b in p.to_dict()["patcher"]["boxes"]
+    }
+    assert "osc" in varnames
+    assert "volume" in varnames

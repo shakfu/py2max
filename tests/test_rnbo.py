@@ -5,6 +5,9 @@ out1 = in1
 out2 = in2
 """
 
+# Max serializes multi-line code with CRLF line endings.
+CODE_EMITTED = CODE.replace("\n", "\r\n")
+
 
 class Case:
     def __init__(self, output_file):
@@ -47,8 +50,19 @@ class CaseTilde(Case):
 
 def test_rnb_optimization():
     p = Patcher("outputs/test_rnbo_optimization.maxpat")
-    p.add_rnbo(saved_object_attributes=dict(optimization="O3"))
+    rnbo = p.add_rnbo(saved_object_attributes=dict(optimization="O3"))
     p.save()
+
+    # The rnbo object is a newobj wrapper around a subpatcher.
+    assert rnbo.maxclass == "newobj"
+    assert rnbo.subpatcher is not None
+    assert rnbo.subpatcher.classnamespace == "rnbo"
+    # The optimization attribute must be emitted verbatim on the box.
+    box = rnbo.to_dict()["box"]
+    assert box["saved_object_attributes"] == {"optimization": "O3"}
+    # The saved patcher embeds the inner rnbo patcher.
+    inner = p.to_dict()["patcher"]["boxes"][0]["box"]["patcher"]
+    assert inner["classnamespace"] == "rnbo"
 
 
 def test_rnb_codebox():
@@ -60,6 +74,14 @@ def test_rnb_codebox():
     )
     case.save(codebox)
 
+    assert sp.classnamespace == "rnbo"
+    assert codebox.maxclass == "codebox"
+    assert codebox.to_dict()["box"]["code"] == CODE_EMITTED
+    # 2 inports + 2 outports + codebox.
+    assert len(sp._boxes) == 5
+    # Two inputs and two outputs wired to the codebox.
+    assert len(sp._lines) == 4
+
 
 def test_rnb_codebox_tilde():
     case = CaseTilde("outputs/test_rnbo_codebox_tilde.maxpat")
@@ -70,6 +92,13 @@ def test_rnb_codebox_tilde():
     )
     case.save(codebox)
 
+    assert sp.classnamespace == "rnbo"
+    assert codebox.maxclass == "codebox~"
+    assert codebox.to_dict()["box"]["code"] == CODE_EMITTED
+    # 2 in~ + 2 out~ + codebox~.
+    assert len(sp._boxes) == 5
+    assert len(sp._lines) == 4
+
 
 def test_rnbo_textbox():
     case = Case("outputs/test_rnbo_textbox.maxpat")
@@ -77,12 +106,26 @@ def test_rnbo_textbox():
     codebox = sp.add_textbox("codebox", code=CODE)
     case.save(codebox)
 
+    assert sp.classnamespace == "rnbo"
+    assert codebox.maxclass == "codebox"
+    assert codebox.text == "codebox"
+    assert codebox.to_dict()["box"]["code"] == CODE_EMITTED
+    assert len(sp._boxes) == 5
+    assert len(sp._lines) == 4
+
 
 def test_rnbo_textbox_tilde():
     case = CaseTilde("outputs/test_rnbo_textbox_tilde.maxpat")
     sp = case.setup()
     codebox = sp.add_textbox("codebox~", code=CODE)
     case.save(codebox)
+
+    assert sp.classnamespace == "rnbo"
+    assert codebox.maxclass == "codebox~"
+    assert codebox.text == "codebox~"
+    assert codebox.to_dict()["box"]["code"] == CODE_EMITTED
+    assert len(sp._boxes) == 5
+    assert len(sp._lines) == 4
 
 
 def populate_rnbo_patch(p, rnbo):
@@ -130,7 +173,22 @@ def test_rnbo_ezdac():
         # outlettype = ['signal', 'signal', 'list'],
     )
 
+    # inletInfo/outletInfo must be emitted verbatim on the rnbo box.
+    box = rnbo.to_dict()["box"]
+    assert [io["tag"] for io in box["inletInfo"]["IOInfo"]] == ["in1", "in2"]
+    assert [io["tag"] for io in box["outletInfo"]["IOInfo"]] == ["out1", "out2"]
+    assert all(io["type"] == "signal" for io in box["inletInfo"]["IOInfo"])
+
     populate_rnbo_patch(p, rnbo)
+
+    # Parent: rnbo + cycle~ + ezdac~ with 4 connections.
+    assert len(p._boxes) == 3
+    assert len(p._lines) == 4
+    # Inner rnbo subpatcher: 2 in~ + 2 out~ + codebox~, 4 connections.
+    sp = rnbo.subpatcher
+    assert sp.classnamespace == "rnbo"
+    assert len(sp._boxes) == 5
+    assert len(sp._lines) == 4
 
 
 def test_rnbo_ezdac2():
@@ -138,8 +196,27 @@ def test_rnbo_ezdac2():
     rnbo = p.add_rnbo(numinlets=2, numoutlets=2)
     populate_rnbo_patch(p, rnbo)
 
+    assert rnbo.numinlets == 2
+    assert rnbo.numoutlets == 2
+    assert rnbo.subpatcher.classnamespace == "rnbo"
+    assert len(p._boxes) == 3
+    assert len(p._lines) == 4
+    assert len(rnbo.subpatcher._boxes) == 5
+    assert len(rnbo.subpatcher._lines) == 4
+
 
 def test_rnbo_add():
     p = Patcher("outputs/test_rnbo_add.maxpat")
     rnbo = p.add("rnbo~", numinlets=2, numoutlets=2)
     populate_rnbo_patch(p, rnbo)
+
+    # p.add("rnbo~") must produce the same rnbo subpatcher wrapper.
+    assert rnbo.maxclass == "newobj"
+    assert rnbo.numinlets == 2
+    assert rnbo.numoutlets == 2
+    assert rnbo.subpatcher is not None
+    assert rnbo.subpatcher.classnamespace == "rnbo"
+    assert len(p._boxes) == 3
+    assert len(p._lines) == 4
+    assert len(rnbo.subpatcher._boxes) == 5
+    assert len(rnbo.subpatcher._lines) == 4

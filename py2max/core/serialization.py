@@ -111,12 +111,9 @@ class SerializationMixin(AbstractPatcher):
         """Save the patch to the default file path.
 
         Uses the path specified during Patcher creation. If no path
-        was specified, this method will do nothing. Before saving,
-        processes any pending associated comments to ensure they are
-        positioned correctly relative to their boxes.
+        was specified, this method will do nothing. Pending associated
+        comments are flushed during ``render`` (called by ``save_as``), so
+        every serialization path emits them.
         """
-        # Process pending comments before saving
-        self._process_pending_comments()
-
         if self._path:
             self.save_as(self._path)

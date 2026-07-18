@@ -73,27 +73,24 @@ def create_parallel_voices_matrix():
     scope = p.add_textbox("scope~", comment="Waveform Monitor", comment_pos="above")
 
     # Connect Voice 1 signal chain
-    p.add_line(metro1, env1)  # Trigger envelope
-    p.add_line(metro1, osc1)  # Trigger oscillator
-    p.add_line(freq1, osc1, inlet=1)  # Control frequency
+    p.add_line(metro1, env1)  # Trigger envelope (bang)
+    p.add_line(freq1, osc1)  # Control frequency (left/signal inlet)
     p.add_line(osc1, gain1, inlet=0)  # Oscillator to VCA
     p.add_line(env1, gain1, inlet=1)  # Envelope to VCA amplitude
     p.add_line(gain1, filter1)  # VCA to filter
     p.add_line(filter1, mixer, inlet=0)  # Filter to mixer
 
     # Connect Voice 2 signal chain
-    p.add_line(metro2, env2)
-    p.add_line(metro2, osc2)
-    p.add_line(freq2, osc2, inlet=1)
+    p.add_line(metro2, env2)  # Trigger envelope (bang)
+    p.add_line(freq2, osc2)  # Control frequency (left/signal inlet)
     p.add_line(osc2, gain2, inlet=0)
     p.add_line(env2, gain2, inlet=1)
     p.add_line(gain2, filter2)
     p.add_line(filter2, mixer, inlet=0)  # Add to same mixer input (sum)
 
     # Connect Voice 3 signal chain
-    p.add_line(metro3, env3)
-    p.add_line(metro3, osc3)
-    p.add_line(freq3, osc3, inlet=1)
+    p.add_line(metro3, env3)  # Trigger envelope (bang)
+    p.add_line(freq3, osc3)  # Control frequency (left/signal inlet)
     p.add_line(osc3, gain3, inlet=0)
     p.add_line(env3, gain3, inlet=1)
     p.add_line(gain3, filter3)
@@ -208,9 +205,9 @@ def demonstrate_signal_chain_analysis():
     print("\nDemonstrating signal chain analysis...")
 
     # Create a patch with complex routing
-    # Source controls
-    metro1 = p.add_textbox("metro 250")
-    metro2 = p.add_textbox("metro 333")
+    # Source controls (float number boxes set oscillator frequency)
+    freq1 = p.add_floatbox()
+    freq2 = p.add_floatbox()
     volume = p.add_floatbox()
 
     # Generators
@@ -229,8 +226,8 @@ def demonstrate_signal_chain_analysis():
     scope = p.add_textbox("scope~")
 
     # Create connections with branching and merging
-    p.add_line(metro1, osc1)  # Chain 1 start
-    p.add_line(metro2, osc2)  # Chain 2 start
+    p.add_line(freq1, osc1)  # Chain 1 start (set frequency)
+    p.add_line(freq2, osc2)  # Chain 2 start (set frequency)
     p.add_line(osc1, mixer)  # Chain 1 to mixer
     p.add_line(osc2, mixer)  # Chain 2 to mixer (merge)
     p.add_line(noise, mixer)  # Chain 3 to mixer

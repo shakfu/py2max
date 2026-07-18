@@ -79,13 +79,14 @@ def test_bundle_unused_when_max_available():
     assert str(sample).endswith(".maxref.xml")
 
 
-def test_bundle_sentinel_cache_miss_returns_none(monkeypatch):
-    """Defensive: a sentinel-path entry with a missing cache entry shouldn't
-    crash by trying to read '<bundle>' as a file."""
+def test_bundle_sentinel_rematerializes_from_bundle(monkeypatch):
+    """A sentinel-path entry whose cache slot is empty is re-materialized from
+    the in-memory bundle -- never read from disk as the '<bundle>' path."""
     _force_no_max(monkeypatch)
     cache = parser.MaxRefCache()
-    # Trigger refdict population first (which also pre-seeds cache), then
-    # evict the cache entry to simulate a stale / reset scenario.
+    # Bundle mode is now lazy: refdict holds the name -> sentinel map but does
+    # not pre-seed the cache, so cycle~ starts un-cached.
     _ = cache.refdict
-    cache._cache.pop("cycle~", None)
-    assert cache.get_object_data("cycle~") is None
+    assert "cycle~" not in cache._cache
+    data = cache.get_object_data("cycle~")
+    assert data is not None and data.get("outlets")

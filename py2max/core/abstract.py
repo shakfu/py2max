@@ -60,6 +60,8 @@ class AbstractBox(ABC):
     id: Optional[str]
     maxclass: str
     patching_rect: Rect
+    numinlets: int
+    numoutlets: int
     _kwds: Dict[str, Any]
 
     @abstractmethod
@@ -135,8 +137,6 @@ class AbstractPatcher(ABC):
     _lines: list[AbstractPatchline]
     _edge_ids: list[tuple[str, str]]
     _id_counter: int = 0
-    _link_counter: int = 0
-    _last_link: Optional[tuple[str, str]]
     _reset_on_render: bool
     _flow_direction: str
     _cluster_connected: bool

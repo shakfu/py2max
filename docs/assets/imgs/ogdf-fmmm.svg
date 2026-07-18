@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.0 -20.0 626.0 576.3965517241379" width="626.0" height="576.3965517241379">
+
+<defs>
+  <style>
+    text { user-select: none; }
+  </style>
+</defs>
+
+
+<!-- Patchlines -->
+<line x1="22.0" y1="339.1551724137931" x2="105.17241379310344" y2="308.1896551724138" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="115.17241379310344" y1="330.1896551724138" x2="216.79310344827584" y2="307.06896551724134" stroke="#b58900" stroke-width="2.4" stroke-linecap="round" />
+<line x1="216.79310344827584" y1="329.06896551724134" x2="319.8965517241379" y2="268.9655172413793" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="168.8103448275862" y1="420.9655172413793" x2="249.79310344827584" y2="307.06896551724134" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="436.6551724137931" y1="22.0" x2="417.84482758620686" y2="91.89655172413792" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="499.41379310344826" y1="71.3103448275862" x2="437.84482758620686" y2="91.89655172413792" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="427.84482758620686" y1="113.89655172413792" x2="370.3275862068965" y2="172.58620689655172" stroke="#b58900" stroke-width="2.4" stroke-linecap="round" />
+<line x1="295.44827586206895" y1="119.49999999999999" x2="403.3275862068965" y2="172.58620689655172" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="370.3275862068965" y1="194.58620689655172" x2="352.8965517241379" y2="268.9655172413793" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="319.8965517241379" y1="290.9655172413793" x2="352.3275862068965" y2="342.9310344827586" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="319.8965517241379" y1="290.9655172413793" x2="367.3275862068965" y2="342.9310344827586" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="319.8965517241379" y1="290.9655172413793" x2="459.1091954022988" y2="404.56896551724134" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+<line x1="542.0" y1="536.3965517241379" x2="459.1091954022988" y2="404.56896551724134" stroke="#5a5a5a" stroke-width="1.2" stroke-linecap="round" />
+
+<!-- Boxes -->
+<rect x="0.0" y="317.1551724137931" width="66.0" height="22.0" fill="#f4f4f4" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<polygon points="3.0,325.1551724137931 3.0,331.1551724137931 7.0,328.1551724137931" fill="#8c8c8c" />
+<text x="10.0" y="332.1551724137931" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">flonum</text>
+<circle cx="33.0" cy="317.1551724137931" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="22.0" cy="339.1551724137931" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="44.0" cy="339.1551724137931" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="414.6551724137931" y="0.0" width="66.0" height="22.0" fill="#f4f4f4" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<polygon points="417.6551724137931,8.0 417.6551724137931,14.0 421.6551724137931,11.0" fill="#8c8c8c" />
+<text x="424.6551724137931" y="15.0" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">flonum</text>
+<circle cx="447.6551724137931" cy="0.0" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="436.6551724137931" cy="22.0" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="458.6551724137931" cy="22.0" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="477.41379310344826" y="49.310344827586206" width="66.0" height="22.0" fill="#f4f4f4" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<polygon points="480.41379310344826,57.310344827586206 480.41379310344826,63.310344827586206 484.41379310344826,60.310344827586206" fill="#8c8c8c" />
+<text x="487.41379310344826" y="64.3103448275862" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">flonum</text>
+<circle cx="510.41379310344826" cy="49.310344827586206" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="499.41379310344826" cy="71.3103448275862" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="521.4137931034483" cy="71.3103448275862" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="85.17241379310344" y="308.1896551724138" width="60.0" height="22.0" fill="#e2e2e2" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<text x="90.17241379310344" y="323.1896551724138" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">cycle~</text>
+<circle cx="105.17241379310344" cy="308.1896551724138" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="125.17241379310344" cy="308.1896551724138" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="115.17241379310344" cy="330.1896551724138" r="2.5" fill="#2e8b57" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="397.84482758620686" y="91.89655172413792" width="60.0" height="22.0" fill="#e2e2e2" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<text x="402.84482758620686" y="106.89655172413792" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">cycle~</text>
+<circle cx="417.84482758620686" cy="91.89655172413792" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="437.84482758620686" cy="91.89655172413792" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="427.84482758620686" cy="113.89655172413792" r="2.5" fill="#2e8b57" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="146.8103448275862" y="398.9655172413793" width="66.0" height="22.0" fill="#f4f4f4" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<polygon points="149.8103448275862,406.9655172413793 149.8103448275862,412.9655172413793 153.8103448275862,409.9655172413793" fill="#8c8c8c" />
+<text x="156.8103448275862" y="413.9655172413793" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">flonum</text>
+<circle cx="179.8103448275862" cy="398.9655172413793" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="168.8103448275862" cy="420.9655172413793" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="190.8103448275862" cy="420.9655172413793" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="273.44827586206895" y="97.49999999999999" width="66.0" height="22.0" fill="#f4f4f4" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<polygon points="276.44827586206895,105.49999999999999 276.44827586206895,111.49999999999999 280.44827586206895,108.49999999999999" fill="#8c8c8c" />
+<text x="283.44827586206895" y="112.49999999999999" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">flonum</text>
+<circle cx="306.44827586206895" cy="97.49999999999999" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="295.44827586206895" cy="119.49999999999999" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="317.44827586206895" cy="119.49999999999999" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="183.79310344827584" y="307.06896551724134" width="66.0" height="22.0" fill="#e2e2e2" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<text x="188.79310344827584" y="322.06896551724134" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">*~</text>
+<circle cx="216.79310344827584" cy="307.06896551724134" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="216.79310344827584" cy="329.06896551724134" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="337.3275862068965" y="172.58620689655172" width="66.0" height="22.0" fill="#e2e2e2" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<text x="342.3275862068965" y="187.58620689655172" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">*~</text>
+<circle cx="370.3275862068965" cy="172.58620689655172" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="370.3275862068965" cy="194.58620689655172" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="286.8965517241379" y="268.9655172413793" width="66.0" height="22.0" fill="#e2e2e2" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<text x="291.8965517241379" y="283.9655172413793" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">+~</text>
+<circle cx="319.8965517241379" cy="268.9655172413793" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="319.8965517241379" cy="290.9655172413793" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="337.3275862068965" y="342.9310344827586" width="45.0" height="45.0" fill="#e2e2e2" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<text x="342.3275862068965" y="369.4310344827586" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">ezdac~</text>
+<circle cx="352.3275862068965" cy="342.9310344827586" r="2.5" fill="#2e8b57" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="367.3275862068965" cy="342.9310344827586" r="2.5" fill="#2e8b57" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="359.8275862068965" cy="387.9310344827586" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="415.77586206896547" y="404.56896551724134" width="130.0" height="130.0" fill="#e2e2e2" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<text x="420.77586206896547" y="473.56896551724134" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">scope~</text>
+<circle cx="459.1091954022988" cy="404.56896551724134" r="2.5" fill="#2e8b57" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="502.44252873563215" cy="404.56896551724134" r="2.5" fill="#2e8b57" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="480.77586206896547" cy="534.5689655172414" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<rect x="520.0" y="514.3965517241379" width="66.0" height="22.0" fill="#f4f4f4" stroke="#8c8c8c" stroke-width="1" rx="2" />
+<polygon points="523.0,522.3965517241379 523.0,528.3965517241379 527.0,525.3965517241379" fill="#8c8c8c" />
+<text x="530.0" y="529.3965517241379" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">number</text>
+<circle cx="553.0" cy="514.3965517241379" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="542.0" cy="536.3965517241379" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+<circle cx="564.0" cy="536.3965517241379" r="2.5" fill="#1f1f1f" stroke="#8c8c8c" stroke-width="0.5" />
+
+</svg>

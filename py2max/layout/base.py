@@ -9,6 +9,8 @@ from py2max.core.abstract import AbstractLayoutManager, AbstractPatcher
 from py2max.core.common import Rect
 from py2max.maxref import MAXCLASS_DEFAULTS
 
+from .graph import PatchGraph
+
 # Threshold for incremental vs full layout (30% of total objects)
 INCREMENTAL_THRESHOLD = 0.3
 
@@ -64,6 +66,29 @@ class LayoutManager(AbstractLayoutManager):
             return cast(Rect, MAXCLASS_DEFAULTS[maxclass]["patching_rect"])
         except KeyError:
             return None
+
+    def box_dims(self, obj: object) -> tuple[float, float]:
+        """Return an object's own (width, height) for repositioning.
+
+        Optimizers place objects on a uniform grid sized by ``box_width`` /
+        ``box_height``, but they must not *write back* those defaults as the
+        object's size -- doing so squashes every UI object (``dial``, ``scope~``,
+        ``function``, ``live.*``, comments) down to text-box dimensions (L2).
+        Read the object's existing rect and keep its real w/h, falling back to
+        the manager defaults only when it has no usable rect. Works whether the
+        rect is a ``Rect`` namedtuple (programmatic) or a plain list (loaded).
+        """
+        rect = getattr(obj, "patching_rect", None)
+        try:
+            if rect is not None and len(rect) >= 4:
+                w, h = float(rect[2]), float(rect[3])
+                if w and h:
+                    return w, h
+        except (TypeError, ValueError):
+            # A malformed patching_rect (e.g. a string from a misused add_*
+            # call) must not crash layout; fall back to the manager defaults.
+            pass
+        return float(self.box_width), float(self.box_height)
 
     def get_absolute_pos(self, rect: Rect) -> Rect:
         """returns an absolute position for the object"""
@@ -157,95 +182,58 @@ class LayoutManager(AbstractLayoutManager):
         Returns:
             Number of iterations performed (0 if no overlaps found).
         """
-        objects = list(self.parent._objects.values())
+        objects = [
+            o for o in self.parent._objects.values() if hasattr(o, "patching_rect")
+        ]
         if len(objects) < 2:
             return 0
 
+        def overlapping(a: Rect, b: Rect) -> bool:
+            return (
+                a.x < b.x + b.w + min_gap
+                and b.x < a.x + a.w + min_gap
+                and a.y < b.y + b.h + min_gap
+                and b.y < a.y + a.h + min_gap
+            )
+
         iterations_performed = 0
-
         for iteration in range(max_iterations):
+            # Sweep in reading order and push each object clear of any *earlier*
+            # one it overlaps, along the axis of least penetration. Objects only
+            # move away from earlier ones (never back into them), so the total
+            # displacement is monotone and the sweep converges. A symmetric
+            # pairwise push instead oscillates on dense clusters and never
+            # settles. Real layout-manager output is already overlap-free, so
+            # this is a safety net rather than the primary placement.
+            objects.sort(key=lambda o: (o.patching_rect.y, o.patching_rect.x))
             moved = False
-
-            for i, obj1 in enumerate(objects):
-                if not hasattr(obj1, "patching_rect"):
-                    continue
-                r1 = obj1.patching_rect
-
-                for obj2 in objects[i + 1 :]:
-                    if not hasattr(obj2, "patching_rect"):
+            for i in range(1, len(objects)):
+                ri = objects[i].patching_rect
+                original = ri
+                for j in range(i):
+                    rj = objects[j].patching_rect
+                    if not overlapping(ri, rj):
                         continue
-                    r2 = obj2.patching_rect
-
-                    # Check for overlap (including minimum gap)
-                    overlap_x = (r1.x < r2.x + r2.w + min_gap) and (
-                        r2.x < r1.x + r1.w + min_gap
-                    )
-                    overlap_y = (r1.y < r2.y + r2.h + min_gap) and (
-                        r2.y < r1.y + r1.h + min_gap
-                    )
-
-                    if overlap_x and overlap_y:
-                        # Calculate centers
-                        c1_x = r1.x + r1.w / 2
-                        c1_y = r1.y + r1.h / 2
-                        c2_x = r2.x + r2.w / 2
-                        c2_y = r2.y + r2.h / 2
-
-                        # Direction from obj2 to obj1
-                        dx = c1_x - c2_x
-                        dy = c1_y - c2_y
-
-                        # Avoid division by zero
-                        if abs(dx) < 0.1 and abs(dy) < 0.1:
-                            dx = 1.0  # Default push direction
-
-                        # Push amount (half the minimum gap)
-                        push = min_gap / 2
-
-                        # Push in the dominant direction
-                        if abs(dx) > abs(dy):
-                            # Push horizontally
-                            push_dir = 1 if dx > 0 else -1
-                            new_x1 = r1.x + push * push_dir
-                            new_x2 = r2.x - push * push_dir
-
-                            # Ensure bounds
-                            new_x1 = max(
-                                self.pad,
-                                min(new_x1, self.parent.width - r1.w - self.pad),
-                            )
-                            new_x2 = max(
-                                self.pad,
-                                min(new_x2, self.parent.width - r2.w - self.pad),
-                            )
-
-                            obj1.patching_rect = Rect(new_x1, r1.y, r1.w, r1.h)
-                            obj2.patching_rect = Rect(new_x2, r2.y, r2.w, r2.h)
+                    pen_x = min(ri.x + ri.w, rj.x + rj.w) - max(ri.x, rj.x) + min_gap
+                    pen_y = min(ri.y + ri.h, rj.y + rj.h) - max(ri.y, rj.y) + min_gap
+                    if pen_x <= pen_y:
+                        if ri.x + ri.w / 2 >= rj.x + rj.w / 2:
+                            nx = rj.x + rj.w + min_gap
                         else:
-                            # Push vertically
-                            push_dir = 1 if dy > 0 else -1
-                            new_y1 = r1.y + push * push_dir
-                            new_y2 = r2.y - push * push_dir
-
-                            # Ensure bounds
-                            new_y1 = max(
-                                self.pad,
-                                min(new_y1, self.parent.height - r1.h - self.pad),
-                            )
-                            new_y2 = max(
-                                self.pad,
-                                min(new_y2, self.parent.height - r2.h - self.pad),
-                            )
-
-                            obj1.patching_rect = Rect(r1.x, new_y1, r1.w, r1.h)
-                            obj2.patching_rect = Rect(r2.x, new_y2, r2.w, r2.h)
-
-                        moved = True
-
+                            nx = max(self.pad, rj.x - ri.w - min_gap)
+                        ri = Rect(nx, ri.y, ri.w, ri.h)
+                    else:
+                        if ri.y + ri.h / 2 >= rj.y + rj.h / 2:
+                            ny = rj.y + rj.h + min_gap
+                        else:
+                            ny = max(self.pad, rj.y - ri.h - min_gap)
+                        ri = Rect(ri.x, ny, ri.w, ri.h)
+                if ri != original:
+                    objects[i].patching_rect = ri
+                    moved = True
+            iterations_performed = iteration + 1
             if not moved:
                 break
-
-            iterations_performed = iteration + 1
 
         return iterations_performed
 
@@ -258,19 +246,7 @@ class LayoutManager(AbstractLayoutManager):
         Returns:
             Set of object IDs that are directly connected to the input objects.
         """
-        connected = set()
-
-        for line in self.parent._lines:
-            src_id, dst_id = line.src, line.dst
-            if src_id is None or dst_id is None:
-                continue
-
-            if src_id in obj_ids:
-                connected.add(dst_id)
-            if dst_id in obj_ids:
-                connected.add(src_id)
-
-        return connected
+        return PatchGraph(self.parent._lines).neighbors_of(obj_ids)
 
     def get_affected_objects(self, changed_objects: Set[str]) -> Set[str]:
         """Get all objects affected by changes to the given objects.

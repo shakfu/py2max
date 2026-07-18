@@ -13,3 +13,15 @@ def test_combo_osc():
     dac = p.add_textbox("ezdac~")
     p.link(osc, dac)
     p.save()
+
+    freq = pitch2freq("C3")
+    assert osc.maxclass == "newobj"
+    assert osc.text == f"cycle~ {freq}"
+    assert dac.maxclass == "ezdac~"
+
+    assert len(p._boxes) == 2
+    assert len(p._lines) == 1
+
+    line = p._lines[0].to_dict()["patchline"]
+    assert line["source"][0] == osc.id
+    assert line["destination"][0] == dac.id

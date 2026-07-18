@@ -139,7 +139,7 @@ p.save()
 
 ### MaxRef Integration
 
-Access documentation for 1157 Max objects:
+Access documentation for 1175 Max objects:
 
 ```python
 p = Patcher('demo.maxpat')
@@ -183,10 +183,10 @@ osc = p.find_by_id('cycle_1')
 Query Max object metadata efficiently:
 
 ```python
-from py2max import MaxRefDB
+from py2max.maxref import MaxRefDB
 
 db = MaxRefDB()  # Auto-cached on first use
-print(len(db))   # 1157 objects
+print(len(db))   # 1175 objects
 
 if 'cycle~' in db:
     info = db['cycle~']

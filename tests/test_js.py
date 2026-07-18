@@ -50,6 +50,18 @@ def test_js():
     bang = p.add_textbox("button")
     js = p.add_textbox("js my.js hello")
     msg = p.add_message()
-    p.link(bang, js)
-    p.link(js, msg, 1)  # to second inlet 1
+    l1 = p.link(bang, js)
+    l2 = p.link(js, msg, 1)  # to second inlet 1
     p.save()
+
+    assert bang.maxclass == "button"
+    assert js.maxclass == "newobj"
+    assert js.text == "js my.js hello"
+    assert msg.maxclass == "message"
+
+    assert len(p._lines) == 2
+    assert l1.source[0] == bang.id
+    assert l1.destination[0] == js.id
+    assert l2.source[0] == js.id
+    assert l2.destination[0] == msg.id
+    assert l2.destination[1] == 1  # second inlet

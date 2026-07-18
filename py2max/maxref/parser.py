@@ -2,7 +2,10 @@
 
 import gzip
 import json
+import os
 import platform
+import re
+import threading
 from pathlib import Path
 from textwrap import fill
 from xml.etree import ElementTree
@@ -30,6 +33,22 @@ def replace_tags(text: str, sub: str, *tags: str) -> str:
     return text
 
 
+# Matches an ampersand that does NOT begin a valid XML entity (named, decimal,
+# or hex character reference).
+_BARE_AMP_RE = re.compile(r"&(?!#?\w+;)")
+
+
+def escape_bare_ampersands(text: str) -> str:
+    """Escape ampersands that do not begin a valid XML entity.
+
+    Max's ``.maxref.xml`` files occasionally contain a raw ``&`` in prose (e.g.
+    "attack & release"), which makes the whole document non-well-formed. Without
+    this, ``ElementTree.fromstring`` raises and the *entire* object is dropped.
+    Valid entities such as ``&amp;``, ``&quot;`` and ``&#181;`` are left intact.
+    """
+    return _BARE_AMP_RE.sub("&amp;", text)
+
+
 class MaxRefCache:
     """Cache for parsed MaxRef data"""
 
@@ -37,24 +56,56 @@ class MaxRefCache:
         self._cache: Dict[str, Dict[str, Any]] = {}
         self._refdict: Optional[Dict[str, Path]] = None
         self._category_map: Optional[Dict[str, str]] = None
+        # Raw bundle entries, materialized into _cache on demand (bundle mode).
+        self._bundle_objects: Dict[str, Any] = {}
+        # Guards lazy refdict init and cache mutation for concurrent callers.
+        self._lock = threading.RLock()
+
+    def _ensure_loaded(self) -> None:
+        """Populate refdict/category_map once, safely under concurrency."""
+        if self._refdict is None:
+            with self._lock:
+                if self._refdict is None:  # double-checked inside the lock
+                    self._refdict, self._category_map = self._get_refdict()
 
     @property
     def refdict(self) -> Dict[str, Path]:
         """Get dictionary of available .maxref.xml files"""
-        if self._refdict is None:
-            self._refdict, self._category_map = self._get_refdict()
+        self._ensure_loaded()
+        assert self._refdict is not None
         return self._refdict
 
     @property
     def category_map(self) -> Dict[str, str]:
         """Get dictionary mapping object names to categories (jit, max, msp, m4l)"""
-        if self._category_map is None:
-            self._refdict, self._category_map = self._get_refdict()
+        self._ensure_loaded()
+        assert self._category_map is not None
         return self._category_map
 
     def _get_refpages(self) -> Optional[Path]:
-        """Find Max refpages directory with logging"""
-        if platform.system() == "Darwin":
+        """Find the Max ``refpages`` directory (the folder holding ``*-ref/``).
+
+        Resolution order:
+
+        1. ``PY2MAX_MAX_REFPAGES`` -- an explicit, cross-platform override that
+           works on every OS (including Linux, and any Max install location).
+        2. Platform-specific auto-discovery of an installed Max (macOS, Windows).
+
+        Returns ``None`` if nothing is found, in which case the caller falls
+        back to the shipped offline bundle.
+        """
+        override = os.environ.get("PY2MAX_MAX_REFPAGES")
+        if override:
+            path = Path(override).expanduser()
+            if path.is_dir():
+                logger.debug("Using PY2MAX_MAX_REFPAGES override: %s", path)
+                return path
+            logger.warning(
+                "PY2MAX_MAX_REFPAGES points at a missing directory: %s", path
+            )
+
+        system = platform.system()
+        if system == "Darwin":
             logger.debug("Searching for Max installation on macOS")
             for p in Path("/Applications").glob("**/Max.app"):
                 if "Ableton" not in str(p):
@@ -63,9 +114,31 @@ class MaxRefCache:
                         logger.debug(f"Found Max refpages at: {refpages_path}")
                         return refpages_path
             logger.warning("Max installation not found in /Applications")
+        elif system == "Windows":
+            logger.debug("Searching for Max installation on Windows")
+            bases = []
+            for env in ("ProgramFiles", "ProgramFiles(x86)"):
+                root = os.environ.get(env)
+                if root:
+                    bases.append(Path(root) / "Cycling '74")
+            for base in bases:
+                if not base.is_dir():
+                    continue
+                # e.g. C:\Program Files\Cycling '74\Max 8\resources\docs\refpages
+                for max_dir in sorted(base.glob("Max*"), reverse=True):
+                    refpages_path = max_dir / "resources" / "docs" / "refpages"
+                    if refpages_path.exists():
+                        logger.debug(f"Found Max refpages at: {refpages_path}")
+                        return refpages_path
+            logger.warning(
+                "Max installation not found under Program Files; set "
+                "PY2MAX_MAX_REFPAGES to point at a refpages directory"
+            )
         else:
             logger.debug(
-                f"Max refpages lookup not implemented for platform: {platform.system()}"
+                "Max refpages auto-discovery not implemented for platform: %s; "
+                "set PY2MAX_MAX_REFPAGES to point at a refpages directory",
+                system,
             )
         return None
 
@@ -106,73 +179,84 @@ class MaxRefCache:
                 bundle.get("object_count", 0),
                 _BUNDLE_PATH.name,
             )
-            for name, entry in bundle.get("objects", {}).items():
+            objects = bundle.get("objects", {})
+            # Keep the raw entries and materialize them lazily in
+            # get_object_data() rather than pre-seeding the cache with every
+            # object on first access -- a single-object query should not
+            # build all ~1175 entries.
+            self._bundle_objects = objects
+            for name, entry in objects.items():
                 refdict[name] = _BUNDLE_SENTINEL
-                data = dict(entry)
-                category_map[name] = data.pop("_category", "")
-                # Pre-seed the parser cache so get_object_data() skips XML I/O.
-                self._cache[name] = data
+                category_map[name] = entry.get("_category", "")
 
         return refdict, category_map
 
     def _clean_text(self, text: str) -> str:
         """Clean XML text for parsing"""
         backtick = "`"
+        text = escape_bare_ampersands(text)
         return replace_tags(text, backtick, "m", "i", "g", "o", "at").replace(
             "&quot;", backtick
         )
 
     def get_object_data(self, name: str) -> Optional[Dict[str, Any]]:
         """Get parsed data for Max object by name with improved error handling"""
-        # Check cache first
-        if name in self._cache:
+        cached = self._cache.get(name)
+        if cached is not None:
             logger.debug(f"Retrieved {name} from cache")
-            return self._cache[name]
+            return cached
 
-        # Accessing refdict lazily populates it (and, in bundle mode, also
-        # pre-seeds self._cache with all bundled entries). Re-check the cache
-        # afterwards so bundle hits don't fall through to the XML-parse path.
+        # Accessing refdict lazily loads the name -> source map.
         if name not in self.refdict:
             logger.debug(f"Object '{name}' not found in MaxRef database")
             return None
-        if name in self._cache:
-            return self._cache[name]
 
-        try:
-            # Parse the .maxref.xml file
+        with self._lock:
+            # Re-check now that we hold the lock (another thread may have won).
+            cached = self._cache.get(name)
+            if cached is not None:
+                return cached
+
             filename = self.refdict[name]
             if filename == _BUNDLE_SENTINEL:
-                # Bundle-sourced entry missed the cache (likely a test reset);
-                # nothing to parse from disk.
+                # Bundle-sourced entry: materialize it from the raw bundle now.
+                entry = self._bundle_objects.get(name)
+                if entry is None:
+                    return None
+                data = {k: v for k, v in entry.items() if k != "_category"}
+                self._cache[name] = data
+                logger.debug(f"Materialized '{name}' from bundle")
+                return data
+
+            try:
+                logger.debug(f"Parsing MaxRef XML for '{name}' from {filename}")
+                cleaned = self._clean_text(filename.read_text())
+                root = ElementTree.fromstring(cleaned)
+                data = self._parse_maxref(root)
+                self._cache[name] = data
+                logger.debug(f"Successfully parsed and cached data for '{name}'")
+                return data
+
+            except ElementTree.ParseError as e:
+                # XML parsing error - log for debugging (only once per object)
+                log_warning_once(
+                    logger,
+                    f"xml_parse_{name}",
+                    f"Failed to parse XML for '{name}': {e}",
+                )
                 return None
-            logger.debug(f"Parsing MaxRef XML for '{name}' from {filename}")
 
-            cleaned = self._clean_text(filename.read_text())
-            root = ElementTree.fromstring(cleaned)
+            except IOError as e:
+                # File I/O error - log with details
+                log_exception(logger, e, f"Failed to read MaxRef file for '{name}'")
+                return None
 
-            data = self._parse_maxref(root)
-            self._cache[name] = data
-            logger.debug(f"Successfully parsed and cached data for '{name}'")
-            return data
-
-        except ElementTree.ParseError as e:
-            # XML parsing error - log for debugging (only once per object)
-            log_warning_once(
-                logger, f"xml_parse_{name}", f"Failed to parse XML for '{name}': {e}"
-            )
-            return None
-
-        except IOError as e:
-            # File I/O error - log with details
-            log_exception(logger, e, f"Failed to read MaxRef file for '{name}'")
-            return None
-
-        except Exception as e:
-            # Other unexpected errors - log for debugging
-            log_exception(
-                logger, e, f"Unexpected error loading maxref data for '{name}'"
-            )
-            return None
+            except Exception as e:
+                # Other unexpected errors - log for debugging
+                log_exception(
+                    logger, e, f"Unexpected error loading maxref data for '{name}'"
+                )
+                return None
 
     def _parse_maxref(self, root: ElementTree.Element) -> Dict[str, Any]:
         """Parse a .maxref.xml root element into structured data"""
@@ -273,10 +357,8 @@ class MaxRefCache:
             for outlet in outletlist.findall("outlet"):
                 outlet_data = dict(outlet.attrib)
                 digest_elem = outlet.find("digest")
-                if digest_elem is not None and digest_elem.text and outlet.text:
-                    outlet_data["digest"] = outlet_data.get(
-                        "digest", outlet.text.strip()
-                    )
+                if digest_elem is not None and digest_elem.text:
+                    outlet_data["digest"] = digest_elem.text.strip()
                 desc_elem = outlet.find("description")
                 if desc_elem is not None and desc_elem.text:
                     outlet_data["description"] = desc_elem.text.strip()

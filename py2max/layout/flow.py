@@ -9,6 +9,7 @@ from py2max.core.abstract import AbstractPatcher
 from py2max.core.common import Rect
 
 from .base import LayoutManager
+from .graph import PatchGraph
 
 
 class FlowLayoutManager(LayoutManager):
@@ -40,29 +41,12 @@ class FlowLayoutManager(LayoutManager):
         self.flow_direction = flow_direction  # "horizontal" or "vertical"
 
     def _analyze_connections(self) -> Dict[str, Dict[str, List[str]]]:
-        """Analyze patchline connections to build a flow graph."""
-        connections: Dict[
-            str, Dict[str, List[str]]
-        ] = {}  # {obj_id: {'inputs': [obj_ids], 'outputs': [obj_ids]}}
+        """Analyze patchline connections to build a flow graph.
 
-        for line in self.parent._lines:
-            src_id, dst_id = line.src, line.dst
-
-            # Skip if either ID is None
-            if src_id is None or dst_id is None:
-                continue
-
-            # Initialize connection tracking
-            if src_id not in connections:
-                connections[src_id] = {"inputs": [], "outputs": []}
-            if dst_id not in connections:
-                connections[dst_id] = {"inputs": [], "outputs": []}
-
-            # Track connections
-            connections[src_id]["outputs"].append(dst_id)
-            connections[dst_id]["inputs"].append(src_id)
-
-        return connections
+        Keys are the connected objects only (disconnected boxes are not seeded),
+        in first-appearance order, matching the historical behaviour.
+        """
+        return PatchGraph(self.parent._lines).io_lists()
 
     def _calculate_flow_levels(
         self, connections: Dict[str, Dict[str, List[str]]]
@@ -404,10 +388,14 @@ class FlowLayoutManager(LayoutManager):
         """Perform full layout optimization based on signal flow analysis."""
         positions = self._calculate_positions()
 
-        # Apply optimized positions to existing objects
+        # Apply optimized positions to existing objects. The computed position
+        # carries the manager's uniform grid size; keep each object's own w/h so
+        # UI objects aren't squashed to text-box size (L2).
         for obj_id, position in positions.items():
             if obj_id in self.parent._objects:
-                self.parent._objects[obj_id].patching_rect = position
+                obj = self.parent._objects[obj_id]
+                w, h = self.box_dims(obj)
+                obj.patching_rect = Rect(position[0], position[1], w, h)
 
         # Prevent any remaining overlaps after flow layout
         self.prevent_overlaps()

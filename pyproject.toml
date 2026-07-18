@@ -7,7 +7,7 @@ authors = [
 maintainers = [
     { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
 ]
-version = "0.3.1"
+version = "0.3.2"
 readme = "README.md"
 requires-python = ">=3.9"
 keywords = ["Max", "maxpat", "offline"]
@@ -30,6 +30,22 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = []
+
+[project.optional-dependencies]
+# Optional graph-layout backends. The core library ships zero runtime
+# dependencies and does not import these; they are alternative layout engines
+# exercised by tests/test_layout_graph_layout.py. Install with:
+#   pip install "py2max[graph]"    (or: uv sync --extra graph)
+#
+# These cover the useful layout families: constraint/force-directed via
+# graph-layout, OGDF's layered/orthogonal/planar via ogdf-py, and the HOLA
+# orthogonal layout via hola-graph; the older networkx/tsmpy/pygraphviz
+# experiment tests are redundant with them.
+graph = [
+    "graph-layout>=0.4",   # pure-Python constraint / force-directed layouts (COLA, ...)
+    "ogdf-py>=0.3; python_version >= '3.10'",  # OGDF (C++) bindings; wheels for 3.10+
+    "hola-graph>=0.1",     # HOLA human-like orthogonal layout (adaptagrams)
+]
 
 [dependency-groups]
 dev = [
@@ -72,4 +88,13 @@ source-include = ["CHANGELOG.md", "tests/**"]
 # is annotated to pass `mypy --strict`.
 python_version = "3.9"
 strict = true
+
+# The optional graph-layout backends are third-party and untyped, and are only
+# ever lazy-imported inside functions. Do not follow mypy into them -- they are
+# not part of py2max's typed surface, and graph-layout pulls in numpy, whose
+# modern stubs cannot be parsed under the 3.9 target.
+[[tool.mypy.overrides]]
+module = ["graph_layout.*", "ogdf", "ogdf.*", "hola_graph.*", "numpy", "numpy.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
 

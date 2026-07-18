@@ -35,10 +35,10 @@ uv run pytest
 uv run pytest -v
 
 # Run specific test file
-uv run pytest tests/test_core.py
+uv run pytest tests/test_patcher.py
 
 # Run specific test function
-uv run pytest tests/test_core.py::test_patcher_creation
+uv run pytest tests/test_patcher.py::test_patcher_basics
 
 # Run tests matching pattern
 uv run pytest -k "layout"
@@ -57,7 +57,7 @@ uv run pytest --cov=py2max --cov-report=term
 make coverage  # Equivalent to above with HTML output
 ```
 
-The HTML coverage report is generated in <span class="title-ref">outputs/\_covhtml/index.html</span>.
+The HTML coverage report is generated in <span class="title-ref">build/coverage-html/index.html</span>.
 
 ## Test Categories
 

@@ -37,15 +37,7 @@ py2max/
 │   ├── base.py          # LayoutManager base class
 │   ├── grid.py          # GridLayoutManager + legacy aliases
 │   ├── flow.py          # FlowLayoutManager
-│   └── matrix.py        # MatrixLayoutManager
-│
-├── server/              # Interactive server & REPL
-│   ├── __init__.py      # Exports: InteractivePatcherServer, etc.
-│   ├── websocket.py     # WebSocket server (was server.py)
-│   ├── repl.py          # REPL core
-│   ├── client.py        # REPL client (was repl_client.py)
-│   ├── inline.py        # Inline REPL (was repl_inline.py)
-│   └── rpc.py           # RPC server (was repl_server.py)
+│   └── matrix.py        # MatrixLayoutManager + ColumnarLayoutManager
 │
 └── export/              # Export functionality
     ├── __init__.py      # Exports: export_svg, converters
@@ -59,8 +51,6 @@ py2max/
 
 ```python
 from py2max import Patcher, Box, Patchline
-from py2max import MaxRefDB
-from py2max import export_svg, export_svg_string
 ```
 
 ### Subpackage imports (for direct module access)
@@ -73,11 +63,6 @@ from py2max.maxref import MaxRefDB, get_object_info
 from py2max.maxref.category import CONTROL_OBJECTS, GENERATOR_OBJECTS
 from py2max.maxref.legacy import MAXCLASS_DEFAULTS
 from py2max.layout import FlowLayoutManager, GridLayoutManager
-from py2max.server import InteractivePatcherServer
-from py2max.server.repl import ReplCommands, start_repl
-from py2max.server.client import ReplClient, start_repl_client
-from py2max.server.inline import start_inline_repl, BackgroundServerREPL
-from py2max.server.rpc import ReplServer, start_repl_server
 from py2max.export import export_svg
 from py2max.export.converters import maxpat_to_python, maxref_to_sqlite
 ```
@@ -87,11 +72,6 @@ from py2max.export.converters import maxpat_to_python, maxref_to_sqlite
 Within the package, relative imports are used consistently:
 
 ```python
-# From py2max/server/repl.py
-from ..core import Patcher
-from ..maxref import get_object_help
-from .websocket import InteractivePatcherServer
-
 # From py2max/export/converters.py
 from ..core import Patcher
 from ..maxref.db import MaxRefDB
@@ -109,11 +89,6 @@ from ..maxref.db import MaxRefDB
 | `py2max.category` | `py2max.maxref.category` |
 | `py2max.maxclassdb` | `py2max.maxref.legacy` |
 | `py2max.layout` | `py2max.layout` (split into base/grid/flow/matrix) |
-| `py2max.server` | `py2max.server.websocket` |
-| `py2max.repl` | `py2max.server.repl` |
-| `py2max.repl_client` | `py2max.server.client` |
-| `py2max.repl_inline` | `py2max.server.inline` |
-| `py2max.repl_server` | `py2max.server.rpc` |
 | `py2max.svg` | `py2max.export.svg` |
 | `py2max.converters` | `py2max.export.converters` |
 

@@ -154,7 +154,7 @@ class MaxRefDB:
         """
         db = cls(db_path)
         if populate:
-            db.populate_from_maxref()
+            db.populate()
         return db
 
     @contextmanager
@@ -416,35 +416,6 @@ class MaxRefDB:
             data = get_object_info(name)
             if data:
                 self.insert_object(name, data)
-
-    # Deprecated methods - use populate() instead
-    def populate_from_maxref(self, object_names: Optional[List[str]] = None) -> None:
-        """Populate database from .maxref.xml files (deprecated: use populate())
-
-        Args:
-            object_names: List of object names to import. If None, imports all available objects.
-        """
-        self.populate(object_names)
-
-    def populate_all_objects(self) -> None:
-        """Populate database with all available Max objects (deprecated: use populate())"""
-        self.populate(category=None)
-
-    def populate_all_max_objects(self) -> None:
-        """Populate database with all Max objects (deprecated: use populate(category='max'))"""
-        self.populate(category="max")
-
-    def populate_all_jit_objects(self) -> None:
-        """Populate database with all Jitter objects (deprecated: use populate(category='jit'))"""
-        self.populate(category="jit")
-
-    def populate_all_msp_objects(self) -> None:
-        """Populate database with all MSP objects (deprecated: use populate(category='msp'))"""
-        self.populate(category="msp")
-
-    def populate_all_m4l_objects(self) -> None:
-        """Populate database with all Max for Live objects (deprecated: use populate(category='m4l'))"""
-        self.populate(category="m4l")
 
     # -------------------------------------------------------------------------
     # Insert helpers
@@ -938,20 +909,6 @@ class MaxRefDB:
             cursor.execute(sql, tuple([f"%{query}%" for _ in conditions]))
             return [row["name"] for row in cursor.fetchall()]
 
-    def search_objects(
-        self, query: str, fields: Optional[List[str]] = None
-    ) -> List[str]:
-        """Search for objects by name, digest, or description (deprecated: use search())
-
-        Args:
-            query: Search query string
-            fields: List of fields to search in. Default: ['name', 'digest', 'description']
-
-        Returns:
-            List of matching object names
-        """
-        return self.search(query, fields)
-
     def by_category(self, category: str) -> List[str]:
         """Get all objects in a category
 
@@ -967,17 +924,6 @@ class MaxRefDB:
             )
             return [row["name"] for row in cursor.fetchall()]
 
-    def get_objects_by_category(self, category: str) -> List[str]:
-        """Get all objects in a category (deprecated: use by_category())
-
-        Args:
-            category: Category name
-
-        Returns:
-            List of object names
-        """
-        return self.by_category(category)
-
     @property
     def categories(self) -> List[str]:
         """All unique categories in database"""
@@ -986,14 +932,6 @@ class MaxRefDB:
                 "SELECT DISTINCT category FROM objects WHERE category IS NOT NULL ORDER BY category"
             )
             return [row["category"] for row in cursor.fetchall()]
-
-    def get_all_categories(self) -> List[str]:
-        """Get all unique categories (deprecated: use .categories property)
-
-        Returns:
-            List of category names
-        """
-        return self.categories
 
     @property
     def count(self) -> int:
@@ -1009,14 +947,6 @@ class MaxRefDB:
         with self._get_cursor() as cursor:
             cursor.execute("SELECT name FROM objects ORDER BY name")
             return [row["name"] for row in cursor.fetchall()]
-
-    def get_object_count(self) -> int:
-        """Get total number of objects in database (deprecated: use .count property)
-
-        Returns:
-            Object count
-        """
-        return self.count
 
     def export(self, output_path: Path) -> None:
         """Export entire database to JSON file
@@ -1034,14 +964,6 @@ class MaxRefDB:
 
             output_path.write_text(json.dumps(all_objects, indent=2))
 
-    def export_to_json(self, output_path: Path) -> None:
-        """Export entire database to JSON file (deprecated: use export())
-
-        Args:
-            output_path: Path to output JSON file
-        """
-        self.export(output_path)
-
     def load(self, input_path: Path) -> None:
         """Import objects from JSON file
 
@@ -1051,14 +973,6 @@ class MaxRefDB:
         data = json.loads(input_path.read_text())
         for name, obj_data in data.items():
             self.insert_object(name, obj_data)
-
-    def import_from_json(self, input_path: Path) -> None:
-        """Import objects from JSON file (deprecated: use load())
-
-        Args:
-            input_path: Path to input JSON file
-        """
-        self.load(input_path)
 
     def summary(self) -> Dict[str, Any]:
         """Get database summary statistics
@@ -1092,7 +1006,7 @@ class MaxRefDB:
 
         print("Initializing py2max cache (one-time setup)...", file=sys.stderr)
         print(f"Location: {self.db_path}", file=sys.stderr)
-        print("Populating with all Max objects (1157 objects)...", file=sys.stderr)
+        print("Populating with all Max objects...", file=sys.stderr)
         self.populate()
         print(f"Cache ready with {self.count} objects", file=sys.stderr)
 

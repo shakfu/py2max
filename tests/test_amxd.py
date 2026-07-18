@@ -19,8 +19,10 @@ from py2max.core.common import Rect
 from py2max.exceptions import PatcherIOError
 
 
+# Relative output base; the test-suite fixture (tests/conftest.py) chdirs each
+# test into its own working directory with an ``outputs/`` subdirectory, so this
+# resolves under ``build/test-output`` rather than the repo root.
 OUT = Path("outputs")
-OUT.mkdir(exist_ok=True)
 
 DATA_DIR = Path(__file__).parent / "data"
 

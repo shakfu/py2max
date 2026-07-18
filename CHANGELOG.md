@@ -2,6 +2,91 @@
 
 ## [Unreleased]
 
+## [0.3.2]
+
+### New: Patch editing and removal API
+
+- Loading a patch (`Patcher.from_dict` / `load`) now restores all ID-generation state -- object, node, edge, and semantic-ID counters -- so `add_*` calls made after a load no longer collide with existing object IDs. This fixes the headline "edit an existing patch" round-trip, which previously emitted duplicate IDs on the first post-load add.
+- Added a removal / editing API with referential-integrity cleanup: `remove_line` / `disconnect`, `remove_box` / `remove`, and `replace`. Removing a box also prunes its dangling patchlines and clears the associated node/edge/index bookkeeping, so no orphaned lines or stale IDs are left behind.
+
+### New: Graph-layout engines as layout managers
+
+- Three optional graph-layout backends -- HOLA (`hola-graph`), COLA plus force-directed / geometric layouts (`graph-layout`), and OGDF's layered / force-directed / planar layouts (`ogdf-py`) -- are now selectable as first-class layout managers via `layout="graph:<algo>"` (e.g. `graph:hola`, `graph:cola`, `graph:ogdf-sugiyama`). Because these algorithms need the whole graph, positions are applied on `optimize_layout()` rather than as each box is added, and each box's width/height is preserved so UI objects are not squashed. Eleven algorithms are available: `hola`, `cola`, `sugiyama`, `fruchterman-reingold`, `kamada-kawai`, `spectral`, `circular`, `shell`, `ogdf-sugiyama`, `ogdf-fmmm`, `ogdf-planarization`.
+- The engines are lazy-imported inside the manager, so `import py2max` still pulls **zero runtime dependencies**; a missing backend raises a clear error naming the package to install. Install with `pip install "py2max[graph]"` -- the `graph` extra now also bundles `hola-graph` alongside `graph-layout` and `ogdf-py`. Implemented as `GraphLayoutManager` in `py2max/layout/external.py`.
+
+### New: Layout gallery generator and docs page
+
+- `scripts/gen_layout_gallery.py` (run via `make gallery`) renders every supported graph layout over one shared sample patch to transparent SVGs under `docs/assets/imgs/`, using py2max's own SVG exporter so the results are directly comparable. Backends that are not installed are skipped rather than failing the run.
+- A new published **Layout Gallery** page (`docs/user_guide/layout_gallery.md`, linked in the User Guide navigation) shows the rendered layouts and documents the `graph:<algo>` layout-manager API. The older networkx / graphviz / tsmpy experiments were dropped in favor of the three maintained backends.
+- The generator also renders py2max's **built-in** managers (grid, flow, columnar, matrix) via `optimize_layout()` -- no external dependencies -- and the **Layout Managers** guide (`docs/user_guide/layout_managers.md`) now embeds these as inline visuals so each layout strategy can be seen, not just described.
+
+### Fixed: Generation correctness
+
+- `add_coll` / `add_dict` / `add_table` no longer discard a caller-supplied `text` argument when `name` is `None` (an operator-precedence bug that let the fallback string win).
+- `add_beap` strips the `.maxpat` suffix correctly; previously `rstrip(".maxpat")` could truncate names such as `drum.maxpat` down to `dru`.
+- Parallel patchlines between the same source and destination now receive incrementing `order` values, so they spread apart in Max instead of overlapping.
+- Comments created with `comment=` are emitted on every save path (`save_as`, `to_json`, `to_dict`), not only `save()` / `optimize_layout()`.
+- Hand-typed objects that are not in the built-in defaults now get one outlet instead of zero, so they can act as a connection source.
+- Load/save round-trip no longer injects `autosave` / `dependency_cache` defaults into nested subpatchers the source patch did not have; patches containing subpatchers now round-trip faithfully.
+
+### Fixed: Layout managers
+
+- `layout="columnar"` now works; it previously raised `NotImplementedError` despite being documented.
+- Layout optimizers preserve each object's real width and height. UI objects (`scope~`, `dial`, `slider`, `function`, `live.*`, comments) are no longer squashed to text-box size by `optimize_layout()`.
+- The managers now share a single directed-graph model (`PatchGraph`) rather than re-deriving adjacency from patchlines in each manager, and object classification no longer carries contradictory category assignments (its context inference uses maxref signal typing with word-boundary matching).
+
+### Improved: maxref bundle loading (lazy and thread-safe)
+
+- In bundle mode (no local Max install), the shipped catalog is no longer eagerly materialized into the cache on first access. The name-to-source map still loads once, but each object is now built from the in-memory bundle on demand, so a single-object query no longer constructs all ~1175 entries. A bundle object whose cache slot is empty is re-materialized from the bundle rather than returning nothing.
+- The process-wide maxref cache is now thread-safe: an `RLock` guards the lazy refdict / category-map initialization and cache population, so concurrent `Box.help()` / validation lookups no longer race on first load or mutate the cache unsafely.
+
+### Fixed: maxref outlet digests and parser robustness
+
+- Outlet `<digest>` text is now extracted symmetrically with inlets. A condition bug previously required the `<outlet>` element to have leading text and then stored that text instead of the digest, so outlet descriptions were dropped for almost every object (~2000 digests across ~1093 objects). `Box.help()` / `get_info()` now report outlet descriptions. The shipped offline `bundle.json.gz` was regenerated so bundle-mode users (Linux/Windows/no-Max) get the corrected data.
+- A raw `&` in reference prose no longer drops the whole object on parse. Ampersands that do not begin a valid XML entity are escaped before parsing, hardening against `.maxref.xml` markup variations across Max versions (valid entities like `&amp;`, `&quot;`, `&#181;` are left intact).
+
+### Improved: Cross-platform maxref discovery
+
+- Reference-page resolution now honors the `PY2MAX_MAX_REFPAGES` environment override on all platforms and auto-discovers a Windows `refpages` directory, so Windows users with Max installed read live reference data instead of always falling back to the bundled snapshot. A wheel-build test now asserts the offline `bundle.json.gz` actually ships in the built artifact.
+
+### Improved: SVG preview fidelity
+
+- The SVG exporter (`Patcher.to_svg` / `py2max preview`) now renders a more faithful preview instead of a uniform grey schematic:
+  - **Box colors are honored.** Colors set via `Box.set_color` / `apply_theme` (`bgcolor`, `bordercolor`, `textcolor`) are drawn, converted from Max's `[r, g, b, a]` floats to CSS.
+  - **UI objects get recognizable affordances** rather than an identical rectangle: message boxes draw the right-edge flag notch, `toggle` an X, `button` a circle, number boxes (`flonum` / `number`) the left triangle marker, `dial` a circle with a pointer, and `slider` a thumb bar.
+  - **Ports resolve from the box's own `numinlets` / `numoutlets`** (what is written to the `.maxpat`) rather than a maxref lookup. Ports therefore render correctly for objects maxref does not know and without a Max install, and patchline endpoints line up with the ports they connect to (both use the same counts).
+- `export_svg_string` now builds the document in memory instead of round-tripping through a temporary file.
+
+### Fixed: Layout classification and overlap resolution
+
+- Object classification (matrix / columnar layouts) is now factored into a clear precedence -- curated functional intent, then maxref signal typing for the unknown audio tail, then name patterns -- with the rationale documented. Curated sets must win because functional categories do not map to raw signal I/O (even `cycle~` exposes a signal inlet, so signal typing alone would call it a processor; `adc~` is an input though it is a signal source). The dead, never-effective `_refine_column_assignments_by_flow` no-op and its call site were removed.
+- `LayoutManager.prevent_overlaps` now converges. The previous version cached each object's rect before mutating it (so pushes stopped accumulating) and clamped boxes back inside the canvas (re-introducing the overlaps it had just removed), leaving dense layouts overlapping at the 50-iteration cap. It is replaced with a monotone sweep that pushes each object clear of already-placed ones along the axis of least penetration; it converges in a few passes, early-exits when nothing overlaps, and preserves each object's real size.
+
+### Improved: Patch transformers
+
+- `run_pipeline` now delegates to `compose`, removing a duplicated apply loop and giving the previously-unused (but exported) `compose` helper a real use.
+- The `add-comment` transformer's position is now reachable from the CLI: prefix the value with `above|below|left|right:` to place the comment (e.g. `--apply "add-comment=below:tempo"`), defaulting to `above`. A leading token that is not a position is kept as comment text, so `"note: hi"` is left intact.
+- Added two transformers backed by existing APIs: `apply-theme` (apply a named color theme -- `light` / `dark` / `blue` / `high-contrast`) and `scale-positions` (scale every object's x/y position by a factor, sizes unchanged).
+
+### Fixed: Converters module cleanup
+
+- Importing `py2max.export.converters` no longer constructs a `Patcher` as an import-time side effect (which pulled in maxref, layout, etc.). The default-attribute set is now computed lazily on first use and cached. Also removed a dead `_infer_category` helper and an unreachable `NotImplementedError` guard (the caller strips subpatcher dicts before that path).
+
+### Removed: Honest CLI help for the moved `serve` / `repl` subcommands
+
+- The `serve` and `repl` subcommands (whose implementations moved to `py2max-server` in 0.3.0) no longer advertise themselves as live in `--help`; they now removed.
+
+### Removed: MaxRefDB deprecated alias methods
+
+- Removed 12 long-deprecated `MaxRefDB` aliases in favor of the canonical API: `populate_from_maxref` / `populate_all_*` -> `populate([category=...])`, `search_objects` -> `search`, `get_objects_by_category` -> `by_category`, `get_all_categories` -> `.categories`, `get_object_count` -> `.count`, and `export_to_json` / `import_from_json` -> `export` / `load`. The database module is already off the import path (lazily loaded, stdlib-only), so this only trims its API surface. Callers, tests, and docs were updated to the canonical names.
+- While updating the SQLite demo scripts, also fixed two pre-existing broken examples: `from py2max import MaxRefDB` (correct: `from py2max.maxref import MaxRefDB`) and `create_database(...)` used as a free function (it is `MaxRefDB.create_database(...)`). Both `tests/examples/db/` scripts now run.
+
+### Removed: Obsolete layout experiments and vendored editor assets
+
+- Deleted the old graph-layout experiment tests (`tests/test_layout_hola{1,2,3}`, `test_layout_hola_graph`, `test_layout_networkx{1,2}`, `test_layout_nx_graphviz`, `test_layout_nx_orthogonal`, `test_layout_nx_tsmpy`). They exercised backends that are no longer supported (raw adaptagrams, networkx, pygraphviz, tsmpy) or duplicated the new `GraphLayoutManager` coverage, and only ever skipped. The maintained path is covered by `tests/test_layout_graph_manager.py`.
+- Removed the vendored browser libraries under `docs/js/` (SVG.js, WebCola, D3) -- reference copies for the interactive editor that moved to the separate `py2max-server` package in 0.3.0 -- and the stale Sphinx build output under `docs/build/` that predated the MkDocs migration and was being copied into the published site.
+- Pruned 30 obsolete design notes from the `docs/notes/` dev journal (REPL, SSE/WebSocket live-preview server, and interactive SVG-editor implementation notes), all for features that moved to `py2max-server`. The 13 still-relevant library/journal notes were kept.
+
 ## [0.3.1]
 
 ### New: Standalone `gen.codebox~` Support

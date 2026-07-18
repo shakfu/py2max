@@ -106,7 +106,7 @@ def create_complex_patch():
     print(f"   Connections: {len(p._lines)}")
     print("\n🎯 Usage:")
     print("   1. Start the interactive server:")
-    print(f"      py2max serve {p._path}")
+    print(f"      py2max-server serve {p._path}")
     print("\n   2. In the browser:")
     print("      - Notice the randomly positioned objects (messy!)")
     print("      - Click the '🔄 Auto-Layout' button")

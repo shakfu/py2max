@@ -5,6 +5,8 @@ https://github.com/shakfu/graph-layout
 
 """
 
+import math
+
 import pytest
 
 try:
@@ -108,6 +110,17 @@ def test_graph():
     link(add1, scop)
     link(scp1, scop)
     link(scp2, scop, inlet=1)
+
+    assert len(p._boxes) == 14
+    assert len(p._lines) == 14
+    before = [tuple(b.patching_rect)[:2] for b in p._boxes]
+
     p.reposition()
     # p.graph()
     p.save()
+
+    after = [tuple(b.patching_rect)[:2] for b in p._boxes]
+    # COLA must assign every box a finite (x, y)...
+    assert all(math.isfinite(x) and math.isfinite(y) for x, y in after)
+    # ...and actually reposition them away from the initial grid layout.
+    assert after != before

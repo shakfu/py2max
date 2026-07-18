@@ -20,6 +20,28 @@ def test_linking1():
 
     p.save()
 
+    assert len(p._lines) == 6
+    # osc[0] -> gain[0]
+    assert p._lines[0].source == [osc.id, 0]
+    assert p._lines[0].destination == [gain.id, 0]
+    # osc[0] -> gain[1]
+    assert p._lines[1].source == [osc.id, 0]
+    assert p._lines[1].destination == [gain.id, 1]
+    # gain[0] -> limi[0]
+    assert p._lines[2].source == [gain.id, 0]
+    assert p._lines[2].destination == [limi.id, 0]
+    # gain[1] -> limi[1]
+    assert p._lines[3].source == [gain.id, 1]
+    assert p._lines[3].destination == [limi.id, 1]
+    # limi[0] -> dac[0]
+    assert p._lines[4].source == [limi.id, 0]
+    assert p._lines[4].destination == [dac.id, 0]
+    # limi[1] -> dac[1]
+    assert p._lines[5].source == [limi.id, 1]
+    assert p._lines[5].destination == [dac.id, 1]
+    # convenience src/dst attrs point at the box ids
+    assert p._lines[0].src == osc.id and p._lines[0].dst == gain.id
+
 
 def test_linking2():
     p = Patcher("outputs/test_linking2.maxpat", layout="vertical")
@@ -38,3 +60,17 @@ def test_linking2():
     p.link(limi, dac, outlet=1, inlet=1)  # limi outlet 1 -> dac inlet 1)
 
     p.save()
+
+    assert len(p._lines) == 6
+    assert p._lines[0].source == [osc.id, 0]
+    assert p._lines[0].destination == [gain.id, 0]
+    assert p._lines[1].destination == [gain.id, 1]
+    assert p._lines[3].source == [gain.id, 1]
+    assert p._lines[3].destination == [limi.id, 1]
+    assert p._lines[5].source == [limi.id, 1]
+    assert p._lines[5].destination == [dac.id, 1]
+    # verify the emitted JSON carries the same endpoints
+    lines = p.to_dict()["patcher"]["lines"]
+    assert len(lines) == 6
+    assert lines[0]["patchline"]["source"] == [osc.id, 0]
+    assert lines[0]["patchline"]["destination"] == [gain.id, 0]

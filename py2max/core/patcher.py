@@ -14,6 +14,7 @@ Example:
 """
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
 
@@ -68,7 +69,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         parent: Parent patcher for hierarchical organization.
         classnamespace: Namespace for object classes (e.g., 'rnbo').
         reset_on_render: Whether to reset layout on render.
-        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow', 'matrix').
+        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow', 'matrix', 'columnar').
         auto_hints: Whether to automatically generate object hints.
         openinpresentation: Presentation mode setting.
         validate_connections: Whether to validate patchline connections.
@@ -130,8 +131,6 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             tuple[str, str]
         ] = []  # store edge-ids by order of creation
         self._id_counter = 0
-        self._link_counter = 0
-        self._last_link: Optional[tuple[str, str]] = None
         self._reset_on_render = reset_on_render
         self._semantic_ids = semantic_ids
         self._semantic_counters: dict[str, int] = {}  # Track counts per object type
@@ -321,12 +320,15 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     @property
     def width(self) -> float:
         """width of patcher window."""
-        return self.rect.w
+        # ``rect`` is a Rect when built programmatically but a plain list when
+        # loaded from JSON (from_dict preserves it as-is for round-trip
+        # fidelity); index by position so both work.
+        return self.rect[2]
 
     @property
     def height(self) -> float:
         """height of patcher windows."""
-        return self.rect.h
+        return self.rect[3]
 
     @classmethod
     def from_dict(
@@ -338,6 +340,17 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             patcher = cls(save_to)
         else:
             patcher = cls()
+        # __init__ seeds every Max patcher attribute with a default (bglocked,
+        # gridsize, autosave, dependency_cache, ...). Real Max subpatchers omit
+        # a few of these -- notably ``autosave`` and ``dependency_cache``, which
+        # are top-level only. Leaving the defaults in place injects keys the
+        # original never had, so load/save is not byte-faithful for any patch
+        # containing subpatchers (C5). Drop each seeded public default the source
+        # dict does not carry, then overlay the source so the result mirrors the
+        # input exactly. (Private ``_``-prefixed infrastructure is preserved.)
+        for key in [k for k in vars(patcher) if not k.startswith("_")]:
+            if key not in patcher_dict:
+                delattr(patcher, key)
         patcher.__dict__.update(patcher_dict)
 
         for box_dict in patcher.boxes:
@@ -357,7 +370,39 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             pl = Patchline.from_dict(line)
             patcher._lines.append(pl)
 
+        patcher._restore_generation_state()
         return patcher
+
+    def _restore_generation_state(self) -> None:
+        """Rebuild the id/edge bookkeeping after loading boxes and lines.
+
+        ``from_dict`` populates ``_objects``/``_boxes``/``_lines`` directly but
+        leaves the generation counters and index lists at their construction-time
+        defaults. Without this, the first ``add_*`` on a loaded patch restarts
+        numbering at ``obj-1`` and collides with existing ids, and the node/edge
+        indexes consulted by layout are silently incomplete. Reconstruct them so
+        a loaded patch can be edited safely.
+        """
+        self._node_ids = [b.id for b in self._boxes if b.id]
+        self._edge_ids = [(pl.src, pl.dst) for pl in self._lines]
+
+        max_numeric = 0
+        for b in self._boxes:
+            if not b.id:
+                continue
+            numeric = re.match(r"obj-(\d+)$", b.id)
+            if numeric:
+                max_numeric = max(max_numeric, int(numeric.group(1)))
+                continue
+            # Semantic ids look like ``cycle_1``; keep the per-type counter ahead
+            # of any loaded id so semantic-id edits don't collide either.
+            semantic = re.match(r"(.+)_(\d+)$", b.id)
+            if semantic:
+                name, count = semantic.group(1), int(semantic.group(2))
+                self._semantic_counters[name] = max(
+                    self._semantic_counters.get(name, 0), count
+                )
+        self._id_counter = max_numeric
 
     @classmethod
     def from_file(
@@ -432,6 +477,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
 
     def render(self, reset: bool = False) -> None:
         """cascade convert py2max objects to dicts."""
+        # Flush deferred associated comments here (not only in save()) so every
+        # serialization entry point -- save, save_as, to_json -- emits them.
+        # Idempotent: _process_pending_comments clears its queue after running.
+        self._process_pending_comments()
         if reset or self._reset_on_render:
             self.boxes = []
             self.lines = []
@@ -565,6 +614,20 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
                 flow_direction=self._flow_direction,
                 num_dimensions=self._num_dimensions,
                 dimension_spacing=self._dimension_spacing,
+            )
+        elif name == "columnar":
+            # Functional-column layout (Controls -> Generators -> Processors ->
+            # Outputs). Always column mode regardless of flow_direction.
+            return layout_module.ColumnarLayoutManager(
+                self,
+                num_dimensions=self._num_dimensions,
+                dimension_spacing=self._dimension_spacing,
+            )
+        elif name.startswith("graph:"):
+            # External graph-layout engines (optional `graph` extra), applied
+            # on optimize_layout(); e.g. layout="graph:hola" / "graph:cola".
+            return layout_module.GraphLayoutManager(
+                self, algorithm=name[len("graph:") :]
             )
         else:
             raise NotImplementedError(f"layout '{name}' doesn't exist")

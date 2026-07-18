@@ -37,7 +37,7 @@ def create_typical_synth_patch():
     )
     delay_fx = p.add_textbox("delay~ 500", comment="Delay Effect", comment_pos="above")
     master_gain = p.add_textbox(
-        "gain~ 0.7", comment="Master Volume", comment_pos="above"
+        "*~ 0.7", comment="Master Volume", comment_pos="above"
     )
 
     # Add output objects (Column 4: Outputs)
@@ -47,11 +47,11 @@ def create_typical_synth_patch():
     # Create typical Max signal chain connections
 
     # Control connections
-    p.add_line(metro, osc1)
-    p.add_line(freq_control, osc1, inlet=1)  # Control frequency
-    p.add_line(freq_control, osc2, inlet=1)  # Control frequency
+    p.add_line(metro, freq_control)  # Tempo bangs the frequency value out
+    p.add_line(freq_control, osc1)  # Set osc1 frequency (left/signal inlet)
+    p.add_line(freq_control, osc2)  # Set osc2 frequency (left/signal inlet)
     p.add_line(filter_freq, lowpass, inlet=1)  # Control filter cutoff
-    p.add_line(volume, master_gain, inlet=1)  # Control master volume
+    p.add_line(volume, master_gain, inlet=1)  # Control master volume (*~ scalar)
 
     # Audio signal chain
     p.add_line(osc1, mixer, inlet=0, outlet=0)  # Oscillator 1 to mixer
@@ -102,10 +102,10 @@ def create_multi_voice_patch():
     voice2_env = p.add_textbox("adsr~ 5 50 0.5 300")
     voice3_env = p.add_textbox("adsr~ 20 200 0.9 800")
 
-    # Processing for each voice
-    voice1_gain = p.add_textbox("gain~ 0.33")
-    voice2_gain = p.add_textbox("gain~ 0.33")
-    voice3_gain = p.add_textbox("gain~ 0.33")
+    # Processing for each voice (*~ acts as a VCA driven by the envelope)
+    voice1_amp = p.add_textbox("*~")
+    voice2_amp = p.add_textbox("*~")
+    voice3_amp = p.add_textbox("*~")
     voice1_filter = p.add_textbox("lores~ 1000")
     voice2_filter = p.add_textbox("lores~ 1500")
     voice3_filter = p.add_textbox("lores~ 800")
@@ -117,30 +117,27 @@ def create_multi_voice_patch():
 
     # Connect the three-voice patch
     # Voice 1 chain
-    p.add_line(metro1, voice1_osc)
-    p.add_line(metro1, voice1_env)
-    p.add_line(freq1, voice1_osc, inlet=1)
-    p.add_line(voice1_osc, voice1_gain)
-    p.add_line(voice1_env, voice1_gain, inlet=1)
-    p.add_line(voice1_gain, voice1_filter)
+    p.add_line(metro1, voice1_env)  # trigger envelope
+    p.add_line(freq1, voice1_osc)  # set oscillator frequency (left inlet)
+    p.add_line(voice1_osc, voice1_amp)  # tone into amplitude VCA
+    p.add_line(voice1_env, voice1_amp, inlet=1)  # envelope modulates amplitude
+    p.add_line(voice1_amp, voice1_filter)
     p.add_line(voice1_filter, final_mix)
 
     # Voice 2 chain
-    p.add_line(metro2, voice2_osc)
-    p.add_line(metro2, voice2_env)
-    p.add_line(freq2, voice2_osc, inlet=1)
-    p.add_line(voice2_osc, voice2_gain)
-    p.add_line(voice2_env, voice2_gain, inlet=1)
-    p.add_line(voice2_gain, voice2_filter)
+    p.add_line(metro2, voice2_env)  # trigger envelope
+    p.add_line(freq2, voice2_osc)  # set oscillator frequency (left inlet)
+    p.add_line(voice2_osc, voice2_amp)  # tone into amplitude VCA
+    p.add_line(voice2_env, voice2_amp, inlet=1)  # envelope modulates amplitude
+    p.add_line(voice2_amp, voice2_filter)
     p.add_line(voice2_filter, final_mix)
 
     # Voice 3 chain
-    p.add_line(metro3, voice3_osc)
-    p.add_line(metro3, voice3_env)
-    p.add_line(freq3, voice3_osc, inlet=1)
-    p.add_line(voice3_osc, voice3_gain)
-    p.add_line(voice3_env, voice3_gain, inlet=1)
-    p.add_line(voice3_gain, voice3_filter)
+    p.add_line(metro3, voice3_env)  # trigger envelope
+    p.add_line(freq3, voice3_osc)  # set oscillator frequency (left inlet)
+    p.add_line(voice3_osc, voice3_amp)  # tone into amplitude VCA
+    p.add_line(voice3_env, voice3_amp, inlet=1)  # envelope modulates amplitude
+    p.add_line(voice3_amp, voice3_filter)
     p.add_line(voice3_filter, final_mix)
 
     # Final output

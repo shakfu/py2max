@@ -14,7 +14,8 @@ Max objects in patches:
 from .base import LayoutManager
 from .flow import FlowLayoutManager
 from .grid import GridLayoutManager, HorizontalLayoutManager, VerticalLayoutManager
-from .matrix import MatrixLayoutManager
+from .matrix import ColumnarLayoutManager, MatrixLayoutManager
+from .external import GraphLayoutManager
 
 __all__ = [
     "LayoutManager",
@@ -23,4 +24,6 @@ __all__ = [
     "VerticalLayoutManager",
     "FlowLayoutManager",
     "MatrixLayoutManager",
+    "ColumnarLayoutManager",
+    "GraphLayoutManager",
 ]

@@ -88,7 +88,7 @@ def _build_patcher_attribute_lines(
         line = f"{indent}{patcher_var}.{key} = {formatted}"
         lines.append(line)
         keys_present.add(key)
-    missing = sorted(_DEFAULT_PUBLIC_ATTRS - keys_present)
+    missing = sorted(_default_public_attrs() - keys_present)
     for key in missing:
         lines.append(f"{indent}if hasattr({patcher_var}, '{key}'):")
         lines.append(f"{indent}    delattr({patcher_var}, '{key}')")
@@ -96,9 +96,8 @@ def _build_patcher_attribute_lines(
 
 
 def _format_box(box: dict[str, Any]) -> tuple[str, dict[str, object]]:
-    if "patcher" in box:
-        raise NotImplementedError("Subpatcher conversion is not yet supported")
-
+    # The caller (_build_boxes_block) pops any subpatcher dict off the box
+    # before calling this, so `box` never contains a "patcher" key here.
     key_order = [
         "id",
         "maxclass",
@@ -279,35 +278,6 @@ def maxpat_to_python(
 __all__ = ["maxpat_to_python", "maxref_to_sqlite"]
 
 
-def _infer_category(ref_path: Path, data: dict[str, Any]) -> str:
-    parts = {part.lower() for part in ref_path.parts}
-    if "jit-ref" in parts or "jit" in parts:
-        return "jit"
-    if "msp-ref" in parts or "msp" in parts:
-        return "msp"
-    if "m4l-ref" in parts or "m4l" in parts:
-        return "m4l"
-    if "max-ref" in parts or "max" in parts:
-        return "max"
-
-    module = (data.get("module") or "").lower()
-    if module in {"jit", "msp", "m4l", "max"}:
-        return module
-
-    tags = data.get("metadata", {}).get("tag")
-    if isinstance(tags, list):
-        for tag in tags:
-            lowered = str(tag).lower()
-            if lowered in {"jit", "msp", "m4l", "max"}:
-                return lowered
-    elif isinstance(tags, str):
-        lowered = tags.lower()
-        if lowered in {"jit", "msp", "m4l", "max"}:
-            return lowered
-
-    return "unknown"
-
-
 def maxref_to_sqlite(
     sqlite_path: str | Path,
     names: Optional[Iterable[str]] = None,
@@ -341,8 +311,20 @@ def maxref_to_sqlite(
     return db.count
 
 
-_DEFAULT_PUBLIC_ATTRS = {
-    name
-    for name in vars(Patcher()).keys()
-    if not name.startswith("_") and name not in {"boxes", "lines"}
-}
+_default_public_attrs_cache: Optional[set[str]] = None
+
+
+def _default_public_attrs() -> set[str]:
+    """Public ``Patcher`` attribute names, computed lazily and cached.
+
+    Deferred so that merely importing this module does not construct a
+    ``Patcher`` (which loads maxref, layout, etc.) as an import-time side effect.
+    """
+    global _default_public_attrs_cache
+    if _default_public_attrs_cache is None:
+        _default_public_attrs_cache = {
+            name
+            for name in vars(Patcher()).keys()
+            if not name.startswith("_") and name not in {"boxes", "lines"}
+        }
+    return _default_public_attrs_cache

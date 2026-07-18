@@ -74,6 +74,33 @@ class TestQuickstartExamples:
         assert error_occurred is True
 
 
+class TestLayoutExampleScripts:
+    """Run the shipped layout example scripts to guard against them breaking.
+
+    The columnar example previously used ``layout="columnar"`` -- which raised
+    NotImplementedError -- yet nothing imported it, so the breakage shipped (L1).
+    These smoke tests ensure the scripts run end-to-end.
+    """
+
+    def setup_method(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.old_cwd = os.getcwd()
+        os.chdir(self.temp_dir)
+
+    def teardown_method(self):
+        os.chdir(self.old_cwd)
+
+    def test_columnar_layout_example_runs(self):
+        from layout.columnar_layout_examples import (
+            create_multi_voice_patch,
+            create_typical_synth_patch,
+        )
+
+        # each builds and saves a patch; must not raise
+        create_typical_synth_patch()
+        create_multi_voice_patch()
+
+
 class TestTutorialExamples:
     """Test tutorial examples."""
 
