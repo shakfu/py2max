@@ -4,7 +4,7 @@ from py2max.layout import HorizontalLayoutManager
 from py2max.layout import VerticalLayoutManager
 
 
-def example(p, optimize_layout=False):
+def example(p, optimize_layout=True):
     fbox = p.add_floatbox
     ibox = p.add_intbox
     tbox = p.add_textbox

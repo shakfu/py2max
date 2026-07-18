@@ -1,6 +1,6 @@
 """COLA (Constraint-based Layout Algorithm) via graph-layout
 
-This uses the graph-layout package (formerly pycola):
+This uses the graph-layout package:
 https://github.com/shakfu/graph-layout
 
 """
@@ -26,7 +26,7 @@ class ColaPatcher(Patcher):
         nodes = []
         id_to_index = {}
         for i, box in enumerate(self._boxes):
-            x, y, h, w = box.patching_rect
+            x, y, w, h = box.patching_rect
 
             node = {
                 "id": box.id,
@@ -55,19 +55,30 @@ class ColaPatcher(Patcher):
         )
         layout.run()
 
-        # Extract new positions from layout nodes
+        # Extract new positions from layout nodes. COLA centres the layout
+        # around the origin, so node coordinates are commonly negative. Node
+        # (x, y) is the box *centre*; convert to a top-left rect origin and then
+        # translate the whole layout so its top-left corner sits at ``pad``,
+        # keeping every object on-screen with a positive origin.
         scale = 1
+        margin = self._layout_mgr.pad
         repos = []
-        for node in layout.nodes:
-            repos.append((node.x * scale, node.y * scale))
+        for node, box in zip(layout.nodes, self._boxes):
+            _, _, w, h = box.patching_rect
+            repos.append((node.x * scale - w / 2, node.y * scale - h / 2))
+        min_x = min(x for x, _ in repos)
+        min_y = min(y for _, y in repos)
 
         _boxes = []
-        for box, xy in zip(self._boxes, repos):
-            x, y, h, w = box.patching_rect
-            newx, newy = xy
-            box.patching_rect = Rect(newx, newy, h, w)
+        for box, (nx, ny) in zip(self._boxes, repos):
+            x, y, w, h = box.patching_rect
+            box.patching_rect = Rect(nx - min_x + margin, ny - min_y + margin, w, h)
             _boxes.append(box)
         self.boxes = _boxes
+        # COLA's avoid_overlaps can leave residual overlaps around large nodes
+        # (e.g. scope~ at 130x130). Run the dimension-aware safety net the
+        # built-in managers use so the saved patch is overlap-free.
+        self._layout_mgr.prevent_overlaps()
 
 
 @pytest.mark.skipif(not HAS_GRAPH_LAYOUT, reason="requires graph-layout")
