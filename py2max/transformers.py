@@ -12,6 +12,8 @@ TransformerFactory = Callable[[Optional[str]], Transformer]
 
 
 class TransformerSpec(NamedTuple):
+    """Registry entry pairing a transformer factory with its description."""
+
     factory: TransformerFactory
     description: str
 

@@ -313,6 +313,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
 
     @property
     def filepath(self) -> Union[str, Path]:
+        """Path the patcher was created with, or ``""`` if none was set."""
         if self._path is None:
             return ""
         return self._path

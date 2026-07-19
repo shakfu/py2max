@@ -148,6 +148,7 @@ def _generate_test_source(name: str, data: Dict[str, Any]) -> str:
 
 
 def cmd_new(args: argparse.Namespace) -> int:
+    """Create a new, empty patcher file at the given path."""
     path = Path(args.path)
     if path.exists() and not args.force:
         print(f"Refusing to overwrite existing file: {path}", file=sys.stderr)
@@ -179,6 +180,7 @@ def cmd_new(args: argparse.Namespace) -> int:
 
 
 def cmd_info(args: argparse.Namespace) -> int:
+    """Print a summary of a patcher file (object and connection counts)."""
     path = Path(args.path)
     patcher = Patcher.from_file(path)
     _coerce_rect(patcher)
@@ -201,6 +203,7 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 
 def cmd_optimize(args: argparse.Namespace) -> int:
+    """Re-run layout optimization on a patcher and write the result."""
     input_path = Path(args.input)
     save_path = Path(args.output) if args.output else input_path
 
@@ -222,6 +225,7 @@ def cmd_optimize(args: argparse.Namespace) -> int:
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
+    """Validate a patcher's connections against maxref inlet/outlet metadata."""
     path = Path(args.path)
     patcher = Patcher.from_file(path)
     _coerce_rect(patcher)
@@ -272,6 +276,7 @@ def _parse_transform_spec(spec: str) -> tuple[str, str | None]:
 
 
 def cmd_transform(args: argparse.Namespace) -> int:
+    """Apply one or more transformers to a patcher (or list available ones)."""
     if args.list_transformers:
         for name, desc in available_transformers().items():
             print(f"{name}: {desc}")
@@ -316,6 +321,7 @@ def cmd_transform(args: argparse.Namespace) -> int:
 
 
 def cmd_convert(args: argparse.Namespace) -> int:
+    """Convert between formats (e.g. .maxpat to Python, maxref to SQLite)."""
     if args.mode == "maxpat-to-python":
         if not args.input or not args.output:
             print(
@@ -683,6 +689,7 @@ def cmd_preview(args: argparse.Namespace) -> int:
 
 
 def cmd_maxref(args: argparse.Namespace) -> int:
+    """Query the Max object reference (list objects or show one's details)."""
     cache = MaxRefCache()
 
     if args.list:
@@ -757,6 +764,7 @@ def cmd_maxref(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Construct the top-level argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         prog="py2max", description="Utilities for working with Max patchers."
     )
@@ -1045,6 +1053,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: List[str] | None = None) -> int:
+    """CLI entry point: parse ``argv`` and dispatch to the subcommand handler."""
     parser = build_parser()
     args = parser.parse_args(argv)
 

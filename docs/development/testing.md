@@ -59,6 +59,22 @@ make coverage  # Equivalent to above with HTML output
 
 The HTML coverage report is generated in <span class="title-ref">build/coverage-html/index.html</span>.
 
+### Test Output Artifacts
+
+Tests that write `.maxpat` files use a relative `outputs/` path. A shared
+fixture (`tests/conftest.py`) redirects those writes into the git-ignored
+`build/` tree so they never touch the working directory:
+
+- `make test` (default) — each test gets its own directory under
+  <span class="title-ref">build/test-output/&lt;test-name&gt;/</span>, so no two
+  tests collide on a shared filename. The tree is wiped at the start of each run
+  and directories that produced no files are dropped.
+- `make test-outputs` — writes every artifact flat into
+  <span class="title-ref">build/test-outputs/</span> for quick inspection
+  (later writers overwrite earlier same-named files).
+
+Both locations live under `build/`, so `make clean` removes them.
+
 ## Test Categories
 
 ### Core Functionality Tests

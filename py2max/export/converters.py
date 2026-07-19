@@ -140,6 +140,7 @@ class _CodeGenContext:
         self.helper_functions: list[str] = []
 
     def new_subpatch_name(self) -> str:
+        """Return a fresh, unique builder-function name for a subpatch."""
         name = f"_build_subpatch_{self.counter}"
         self.counter += 1
         return name

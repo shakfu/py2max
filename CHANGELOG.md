@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+## [0.3.3]
+
+### Removed: `serve` and `repl` CLI subcommands
+
+- The `py2max serve` and `py2max repl` subcommands -- thin stubs that only pointed at the separate `py2max-server` package since v0.3.0 -- have been removed. The interactive live editor and remote REPL still live in `py2max-server` (`pip install py2max-server`).
+
+### Fixed: Graph layouts (`graph:*`) are overlap-free and open on-screen
+
+- `GraphLayoutManager` now runs the dimension-aware overlap sweep (`prevent_overlaps`) after placement, so constraint/force engines no longer leave large UI objects (e.g. `scope~` at 130x130) overlapping their neighbours -- matching the guarantee the grid/flow managers already gave.
+- The patcher window is grown to enclose the laid-out graph plus a margin, so `optimize_layout()` output opens with the whole graph visible instead of spilling past the default 640x480 canvas (the window never shrinks below the default).
+
+### Fixed: Clustered grid layout squashed object sizes
+
+- The connection-aware clustering path of `GridLayoutManager` (`cluster_connected=True`) still wrote the manager's uniform 66x22 size back onto every clustered object, squashing UI objects (`scope~`, `ezdac~`, `dial`, ...) to text-box size. It now preserves each object's real width/height, matching the already-fixed non-clustered path.
+
+### Fixed: Example patches use valid Max connections
+
+- The layout example scripts (`tests/examples/layout/`) and matrix-layout tests wired control objects (`metro`, `loadbang`) straight into oscillator signal inlets, which Max rejects ("error connecting outlet ... to ... inlet"). They now use the correct idiom -- a float number box sets the oscillator frequency, `metro` triggers envelopes, and envelopes modulate amplitude through a `*~` VCA -- so the generated demo patches load cleanly.
+
+### New: `kwds_filter` utility
+
+- Added `py2max.utils.kwds_filter(kwds, **elems)`: returns `kwds` merged with the `elems` whose value is not `None` (legitimate falsy values such as `0` / `""` are kept, and the input is not mutated). Lets a method keep an optional parameter in its signature but omit it from the forwarded `**kwds` when the caller leaves it unset.
+
+### Improved: Build and test-output hygiene
+
+- Coverage HTML now writes to `build/coverage-html` and the test suite writes its artifacts under `build/test-output/` -- both within the git-ignored `build/` tree -- instead of a tracked `outputs/` directory. A new `make test-outputs` target writes all test artifacts flat into `build/test-outputs/` for quick inspection.
+
 ## [0.3.2]
 
 ### New: Patch editing and removal API
