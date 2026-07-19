@@ -104,7 +104,9 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
     for b in boxes:
         if b.id in by_id:
             findings.append(
-                Finding(E_DUP_ID, ERROR, f"duplicate object id {b.id!r}", obj_id=qid(b.id))
+                Finding(
+                    E_DUP_ID, ERROR, f"duplicate object id {b.id!r}", obj_id=qid(b.id)
+                )
             )
         else:
             by_id[b.id] = b

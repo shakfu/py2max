@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.4]
+
+### New: Param docking in layouts
+
+- `Patcher(..., param_placement=True)` docks value/UI "param" objects (`flonum`, `number`, `message`, `toggle`, `slider`, `dial`, `live.*`) next to the single object they drive, instead of spreading them through the signal graph. During `optimize_layout()`, a param whose outgoing connections all go to one non-param target is placed perpendicular to the signal flow -- above the target for a horizontal flow, to its left for a vertical flow (and to the right / below when the flow hugs that edge) -- ordered by, and for a lone param aligned to, the inlet it feeds, then de-overlapped. Works across every built-in layout (grid, flow, columnar, matrix). Off by default; a control that fans out to more than one object is left in the flow. Implemented as `LayoutManager.place_params()`.
+
 ### New: Patch linting and message-type-aware connection validation
 
 - Added `Patcher.lint()` (and the `py2max.lint` module: `lint()`, `Finding`) -- a patch-level health check returning structured findings with a `severity`, a `code`, and object/connection references. It covers invalid connections, out-of-range outlet/inlet indices, orphaned patchlines, duplicate IDs, overlapping objects, off-canvas objects, and unknown object classes.

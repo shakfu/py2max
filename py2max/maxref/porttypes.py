@@ -72,6 +72,7 @@ _SIGNAL_INLET_REJECTS_BANG = {
     "/~": {0, 1},
 }
 
+
 def _args(text: Optional[str]) -> List[str]:
     """Tokens after the object name in a box's ``text``."""
     return text.split()[1:] if text else []
@@ -168,9 +169,9 @@ def _emit_from_type(type_str: str) -> str:
 
 
 # --- public API ------------------------------------------------------------
-def port_counts(maxclass: str, text: Optional[str] = None) -> tuple[
-    Optional[int], Optional[int]
-]:
+def port_counts(
+    maxclass: str, text: Optional[str] = None
+) -> tuple[Optional[int], Optional[int]]:
     """Return ``(inlet_count, outlet_count)`` for an object, arg-aware.
 
     Uses the leading integer argument for objects whose I/O scales with it

@@ -3,7 +3,7 @@
 This module provides the base LayoutManager class that all layout managers inherit from.
 """
 
-from typing import Dict, Optional, Set, cast
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 from py2max.core.abstract import AbstractLayoutManager, AbstractPatcher
 from py2max.core.common import Rect
@@ -13,6 +13,18 @@ from .graph import PatchGraph
 
 # Threshold for incremental vs full layout (30% of total objects)
 INCREMENTAL_THRESHOLD = 0.3
+
+# Value/UI "param" objects: their role is to set a value on one object's inlet,
+# so they read better docked next to that object than spread through the graph.
+PARAM_MAXCLASSES = frozenset(
+    {"flonum", "number", "message", "toggle", "slider", "dial"}
+)
+
+
+def _is_param(box: object) -> bool:
+    """True for a value/UI control that parameterizes another object."""
+    mc = getattr(box, "maxclass", "") or ""
+    return mc in PARAM_MAXCLASSES or mc.startswith("live.")
 
 
 class LayoutManager(AbstractLayoutManager):
@@ -236,6 +248,115 @@ class LayoutManager(AbstractLayoutManager):
                 break
 
         return iterations_performed
+
+    def place_params(self, direction: Optional[str] = None, gap: float = 8.0) -> None:
+        """Dock value/UI 'param' objects next to the single object they drive.
+
+        A param (number box, toggle, slider, dial, message, ``live.*``) whose
+        outgoing connections all go to one non-param target is repositioned
+        adjacent to that target, perpendicular to the signal flow -- above the
+        target for a horizontal flow, to its left for a vertical flow -- and
+        aligned to the inlet it feeds. This keeps value controls with their
+        object instead of spread through the signal graph.
+
+        Runs after the main layout as the final placement pass. ``direction``
+        defaults to the manager's ``flow_direction``.
+        """
+        objects = self.parent._objects
+
+        # outgoing edges per source: source_id -> [(inlet, target_id), ...]
+        out_edges: Dict[str, List[Tuple[int, str]]] = {}
+        for line in self.parent._lines:
+            source = getattr(line, "source", None)
+            destination = getattr(line, "destination", None)
+            if not source or not destination:
+                continue
+            inlet = int(destination[1]) if len(destination) > 1 else 0
+            out_edges.setdefault(source[0], []).append((inlet, destination[0]))
+
+        # a param drives exactly one non-param target -> group by that target
+        by_target: Dict[str, List[Tuple[int, Any]]] = {}
+        for src_id, edges in out_edges.items():
+            box = objects.get(src_id)
+            if box is None or not _is_param(box):
+                continue
+            targets = {t for _, t in edges}
+            if len(targets) != 1:
+                continue
+            target_id = next(iter(targets))
+            target = objects.get(target_id)
+            if target is None or _is_param(target):
+                continue
+            inlet = min(i for i, _ in edges)
+            by_target.setdefault(target_id, []).append((inlet, box))
+
+        if not by_target:
+            return
+
+        direction = direction or getattr(self, "flow_direction", "horizontal")
+        left_side = direction in ("vertical", "column")
+        for target_id, params in by_target.items():
+            params.sort(key=lambda p: p[0])
+            self._dock_params(objects[target_id], params, left_side, gap)
+
+        self.prevent_overlaps()
+
+    def _dock_params(
+        self,
+        target: Any,
+        params: List[Tuple[int, Any]],
+        left_side: bool,
+        gap: float,
+    ) -> None:
+        """Position a target's param satellites (params sorted by inlet).
+
+        Docks on the perpendicular side that has room: left of the target when a
+        vertical flow leaves space, otherwise right; above for a horizontal flow,
+        otherwise below. This keeps params clear of a flow that hugs an edge.
+        """
+        tr = target.patching_rect
+        tx, ty, tw, th = float(tr[0]), float(tr[1]), float(tr[2]), float(tr[3])
+        n_inlets = int(getattr(target, "numinlets", 1) or 1)
+
+        if left_side:
+            max_w = max(float(b.patching_rect[2]) for _, b in params)
+            x = tx - max_w - gap
+            if x < self.pad:  # no room on the left -> dock on the right
+                x = tx + tw + gap
+            y = ty
+            for _, box in params:
+                bw, bh = float(box.patching_rect[2]), float(box.patching_rect[3])
+                box.patching_rect = Rect(x, y, bw, bh)
+                y += bh + gap
+            return
+
+        max_h = max(float(b.patching_rect[3]) for _, b in params)
+        y = ty - max_h - gap
+        if y < self.pad:  # no room above -> dock below
+            y = ty + th + gap
+        if len(params) == 1:
+            inlet, box = params[0]
+            bw = float(box.patching_rect[2])
+            cx = self._inlet_center_x(tx, tw, n_inlets, inlet)
+            box.patching_rect = Rect(
+                max(self.pad, cx - bw / 2), y, bw, box.patching_rect[3]
+            )
+        else:
+            # pack params as a centered row, in inlet order
+            widths = [float(b.patching_rect[2]) for _, b in params]
+            row_w = sum(widths) + gap * (len(params) - 1)
+            x = max(self.pad, tx + tw / 2 - row_w / 2)
+            for (_, box), bw in zip(params, widths):
+                box.patching_rect = Rect(x, y, bw, float(box.patching_rect[3]))
+                x += bw + gap
+
+    @staticmethod
+    def _inlet_center_x(tx: float, tw: float, n_inlets: int, inlet: int) -> float:
+        """Approximate x of the center of ``inlet`` on a box (Max spreads inlets
+        edge-to-edge across the top)."""
+        if n_inlets <= 1:
+            return tx + tw / 2
+        return tx + tw * min(inlet, n_inlets - 1) / (n_inlets - 1)
 
     def get_connected_objects(self, obj_ids: Set[str]) -> Set[str]:
         """Get all objects connected to the given objects via patchlines.

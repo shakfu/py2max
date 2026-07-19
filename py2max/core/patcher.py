@@ -130,6 +130,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         dimension_spacing: float = 100.0,
         semantic_ids: bool = False,
         device_type: str = "audio_effect",
+        param_placement: bool = False,
     ):
         logger.debug(
             f"Initializing Patcher: path={path}, layout={layout}, "
@@ -158,6 +159,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._validate_connections = validate_connections
         self._validate_attrs = validate_attrs
         self._strict = strict
+        self._param_placement = param_placement
         self._pending_comments: list[
             tuple[str, str, Optional[str]]
         ] = []  # [(box_id, comment_text, comment_pos), ...]
@@ -670,6 +672,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         """
         if hasattr(self._layout_mgr, "optimize_layout"):
             self._layout_mgr.optimize_layout()
+
+        # Dock value/UI params next to the object they drive (opt-in).
+        if self._param_placement and hasattr(self._layout_mgr, "place_params"):
+            self._layout_mgr.place_params()
 
         # Process pending comments after layout optimization
         self._process_pending_comments()

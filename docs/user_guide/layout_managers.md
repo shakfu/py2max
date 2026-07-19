@@ -405,3 +405,32 @@ p.save()
 ```
 
 This approach ensures the best performance and most coherent layout results.
+
+## Param Docking
+
+Value-setting UI objects -- number boxes, `toggle`, `slider`, `dial`, `message`,
+`live.*` -- usually belong *with* the object they control rather than as nodes in
+the signal flow. Enable `param_placement=True` to dock them next to their target:
+
+``` python
+p = Patcher('synth.maxpat', layout='flow', param_placement=True)
+freq = p.add_floatbox()
+phase = p.add_floatbox()
+osc = p.add_textbox('cycle~ 440')
+dac = p.add_textbox('ezdac~')
+p.add_line(freq, osc, inlet=0)    # frequency
+p.add_line(phase, osc, inlet=1)   # phase
+p.add_line(osc, dac)
+p.optimize_layout()               # freq/phase are docked above cycle~
+```
+
+During `optimize_layout()`, any param whose outgoing connections all go to a
+single non-param object is moved adjacent to that object, **perpendicular to the
+signal flow** -- above the target in a horizontal flow, to its left in a vertical
+flow (and to the right or below when the flow hugs that edge) -- ordered by the
+inlet it drives (a lone param is aligned directly to its inlet). Overlaps are
+then resolved automatically. This works with every built-in layout (grid, flow,
+columnar, matrix).
+
+A control that fans out to more than one object is treated as a shared control
+and left in the flow. The feature is off by default.
