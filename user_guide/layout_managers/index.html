@@ -16,7 +16,7 @@
         <link rel="prev" href="../tutorial/">
       
       
-        <link rel="next" href="../advanced_usage/">
+        <link rel="next" href="../layout_gallery/">
       
       
         
@@ -647,6 +647,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Layout Manager Comparison">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#functional-managers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functional managers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -753,6 +770,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../layout_gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout Gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1404,6 +1449,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Layout Manager Comparison">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#functional-managers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functional managers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1558,6 +1620,12 @@
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </code></pre></div>
+<p>The two grid directions applied to the same two-voice sample patch (generated
+by <code>make gallery</code>), for direct comparison:</p>
+<p><strong>Horizontal</strong> -- objects fill left-to-right, wrapping into rows:</p>
+<p><img alt="grid-horizontal" src="../../assets/imgs/grid-horizontal.svg" /></p>
+<p><strong>Vertical</strong> -- objects fill top-to-bottom, wrapping into columns:</p>
+<p><img alt="grid-vertical" src="../../assets/imgs/grid-vertical.svg" /></p>
 <h3 id="grid-layout-with-clustering">Grid Layout with Clustering<a class="headerlink" href="#grid-layout-with-clustering" title="Permanent link">&para;</a></h3>
 <p>The most powerful feature of GridLayoutManager is connection-aware clustering:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Enable clustering (default)</span>
@@ -1637,6 +1705,8 @@
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
 <a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </code></pre></div>
+<p>Horizontal flow arranges objects into signal-flow levels, left-to-right:</p>
+<p><img alt="flow-horizontal" src="../../assets/imgs/flow-horizontal.svg" /></p>
 <h3 id="vertical-flow-layout">Vertical Flow Layout<a class="headerlink" href="#vertical-flow-layout" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Vertical signal flow (top-to-bottom)</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;flow-vertical.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">,</span> <span class="n">flow_direction</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">)</span>
@@ -1664,6 +1734,8 @@
 <a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>
 <a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </code></pre></div>
+<p>The same patch with vertical flow, top-to-bottom:</p>
+<p><img alt="flow-vertical" src="../../assets/imgs/flow-vertical.svg" /></p>
 <h3 id="complex-flow-patterns">Complex Flow Patterns<a class="headerlink" href="#complex-flow-patterns" title="Permanent link">&para;</a></h3>
 <p>Flow layout handles complex topologies with multiple signal paths:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;complex-flow.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;flow&quot;</span><span class="p">)</span>
@@ -1783,6 +1855,14 @@
 </tr>
 </tbody>
 </table>
+<h3 id="functional-managers">Functional managers<a class="headerlink" href="#functional-managers" title="Permanent link">&para;</a></h3>
+<p>Two further managers organize objects by function. Both use the same sample
+patch as the grid/flow images above:</p>
+<p><strong>Columnar</strong> -- objects sorted into functional columns (controls, generators,
+processors, outputs):</p>
+<p><img alt="columnar" src="../../assets/imgs/columnar.svg" /></p>
+<p><strong>Matrix</strong> -- signal chains as columns, functional categories as rows:</p>
+<p><img alt="matrix" src="../../assets/imgs/matrix.svg" /></p>
 <h2 id="advanced-layout-techniques">Advanced Layout Techniques<a class="headerlink" href="#advanced-layout-techniques" title="Permanent link">&para;</a></h2>
 <h3 id="custom-positioning">Custom Positioning<a class="headerlink" href="#custom-positioning" title="Permanent link">&para;</a></h3>
 <p>You can override automatic layout for specific objects:</p>

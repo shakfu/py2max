@@ -455,6 +455,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user_guide/layout_gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout Gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user_guide/advanced_usage/" class="md-nav__link">
         
   
@@ -733,6 +761,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#py2max.layout.LayoutManager.box_dims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        box_dims
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#py2max.layout.LayoutManager.get_absolute_pos" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -970,6 +1009,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#py2max.layout.ColumnarLayoutManager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ColumnarLayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#py2max.layout.MatrixLayoutManager" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -980,6 +1030,17 @@
   
     <nav class="md-nav" aria-label="MatrixLayoutManager">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#py2max.layout.MatrixLayoutManager.num_columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        num_columns
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#py2max.layout.MatrixLayoutManager.column_spacing" class="md-nav__link">
@@ -1038,6 +1099,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#py2max.layout.GraphLayoutManager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphLayoutManager
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1384,6 +1456,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#py2max.layout.LayoutManager.box_dims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        box_dims
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#py2max.layout.LayoutManager.get_absolute_pos" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1621,6 +1704,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#py2max.layout.ColumnarLayoutManager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ColumnarLayoutManager
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#py2max.layout.MatrixLayoutManager" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1631,6 +1725,17 @@
   
     <nav class="md-nav" aria-label="MatrixLayoutManager">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#py2max.layout.MatrixLayoutManager.num_columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        num_columns
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#py2max.layout.MatrixLayoutManager.column_spacing" class="md-nav__link">
@@ -1689,6 +1794,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#py2max.layout.GraphLayoutManager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphLayoutManager
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1990,6 +2106,33 @@ for new projects.</p>
           </tr>
       </tbody>
     </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="py2max.layout.LayoutManager.box_dims" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">box_dims</span>
+
+
+<a href="#py2max.layout.LayoutManager.box_dims" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">box_dims</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return an object's own (width, height) for repositioning.</p>
+<p>Optimizers place objects on a uniform grid sized by <code>box_width</code> /
+<code>box_height</code>, but they must not <em>write back</em> those defaults as the
+object's size -- doing so squashes every UI object (<code>dial</code>, <code>scope~</code>,
+<code>function</code>, <code>live.*</code>, comments) down to text-box dimensions (L2).
+Read the object's existing rect and keep its real w/h, falling back to
+the manager defaults only when it has no usable rect. Works whether the
+rect is a <code>Rect</code> namedtuple (programmatic) or a plain list (loaded).</p>
 
 
     </div>
@@ -2940,6 +3083,57 @@ affected objects will be repositioned (incremental layout).</p>
 
 
 
+<h2 id="py2max.layout.ColumnarLayoutManager" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ColumnarLayoutManager</span>
+
+
+<a href="#py2max.layout.ColumnarLayoutManager" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="MatrixLayoutManager (py2max.layout.matrix.MatrixLayoutManager)" href="#py2max.layout.MatrixLayoutManager">MatrixLayoutManager</a></code></p>
+
+
+
+        <p>Functional-column layout: Controls -&gt; Generators -&gt; Processors -&gt; Outputs.</p>
+<p>A thin specialization of :class:<code>MatrixLayoutManager</code> pinned to column mode,
+where objects are grouped by functional category into vertical columns rather
+than by signal chain. Selected via <code>Patcher(..., layout="columnar")</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h2 id="py2max.layout.MatrixLayoutManager" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">MatrixLayoutManager</span>
 
@@ -3135,6 +3329,31 @@ In row mode, signal chains form columns while functional categories form rows.</
 
 
 
+<h3 id="py2max.layout.MatrixLayoutManager.num_columns" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_columns</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+      <small class="doc doc-label doc-label-writable"><code>writable</code></small>
+  </span>
+
+<a href="#py2max.layout.MatrixLayoutManager.num_columns" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">num_columns</span><span class="p">:</span> <span class="nb">int</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of functional columns (column mode); alias of num_dimensions.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="py2max.layout.MatrixLayoutManager.column_spacing" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">column_spacing</span>
 
@@ -3271,6 +3490,119 @@ full arrangement from the signal-chain analysis.</p>
     </div>
 
 </div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="py2max.layout.GraphLayoutManager" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">GraphLayoutManager</span>
+
+
+<a href="#py2max.layout.GraphLayoutManager" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="LayoutManager (py2max.layout.base.LayoutManager)" href="#py2max.layout.LayoutManager">LayoutManager</a></code></p>
+
+
+
+        <p>Position boxes with an external graph-layout engine.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>parent</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="AbstractPatcher (py2max.core.abstract.AbstractPatcher)" href="../abstract/#py2max.core.abstract.AbstractPatcher">AbstractPatcher</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the parent patcher.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>algorithm</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>one of :attr:<code>ALGORITHMS</code> (e.g. <code>"hola"</code>, <code>"cola"</code>,
+<code>"ogdf-sugiyama"</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>span</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="float">float</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>target size in px for the longest side of the normalized layout.
+Defaults to a value scaled by object count so boxes do not overlap.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
 
 
 

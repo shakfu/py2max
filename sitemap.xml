@@ -2,70 +2,74 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://shakfu.github.io/py2max/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/abstract/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/colors/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/common/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/core/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/layout/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/maxref/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/py2max/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/api/utils/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/development/changelog/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/development/contributing/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/development/testing/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/user_guide/advanced_usage/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/user_guide/installation/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
+    </url>
+    <url>
+         <loc>https://shakfu.github.io/py2max/user_guide/layout_gallery/</loc>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/user_guide/layout_managers/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/user_guide/quickstart/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
     <url>
          <loc>https://shakfu.github.io/py2max/user_guide/tutorial/</loc>
-         <lastmod>2026-06-27</lastmod>
+         <lastmod>2026-07-19</lastmod>
     </url>
 </urlset>

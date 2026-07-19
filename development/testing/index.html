@@ -455,6 +455,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user_guide/layout_gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout Gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user_guide/advanced_usage/" class="md-nav__link">
         
   
@@ -987,6 +1015,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#test-output-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Output Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1446,6 +1485,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#test-output-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Output Artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1811,10 +1861,10 @@
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>-v
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Run specific test file</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_core.py
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_patcher.py
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Run specific test function</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_core.py::test_patcher_creation
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_patcher.py::test_patcher_basics
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Run tests matching pattern</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;layout&quot;</span>
@@ -1829,7 +1879,21 @@
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Generate detailed coverage</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>make<span class="w"> </span>coverage<span class="w">  </span><span class="c1"># Equivalent to above with HTML output</span>
 </code></pre></div>
-<p>The HTML coverage report is generated in <span class="title-ref">outputs/_covhtml/index.html</span>.</p>
+<p>The HTML coverage report is generated in <span class="title-ref">build/coverage-html/index.html</span>.</p>
+<h3 id="test-output-artifacts">Test Output Artifacts<a class="headerlink" href="#test-output-artifacts" title="Permanent link">&para;</a></h3>
+<p>Tests that write <code>.maxpat</code> files use a relative <code>outputs/</code> path. A shared
+fixture (<code>tests/conftest.py</code>) redirects those writes into the git-ignored
+<code>build/</code> tree so they never touch the working directory:</p>
+<ul>
+<li><code>make test</code> (default) — each test gets its own directory under
+  <span class="title-ref">build/test-output/&lt;test-name&gt;/</span>, so no two
+  tests collide on a shared filename. The tree is wiped at the start of each run
+  and directories that produced no files are dropped.</li>
+<li><code>make test-outputs</code> — writes every artifact flat into
+  <span class="title-ref">build/test-outputs/</span> for quick inspection
+  (later writers overwrite earlier same-named files).</li>
+</ul>
+<p>Both locations live under <code>build/</code>, so <code>make clean</code> removes them.</p>
 <h2 id="test-categories">Test Categories<a class="headerlink" href="#test-categories" title="Permanent link">&para;</a></h2>
 <h3 id="core-functionality-tests">Core Functionality Tests<a class="headerlink" href="#core-functionality-tests" title="Permanent link">&para;</a></h3>
 <p><strong>Location</strong>: <span class="title-ref">tests/test_core*.py</span>, <span class="title-ref">tests/test_basic.py</span></p>

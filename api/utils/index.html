@@ -455,6 +455,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user_guide/layout_gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout Gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user_guide/advanced_usage/" class="md-nav__link">
         
   
@@ -783,6 +811,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#py2max.utils.kwds_filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kwds_filter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#py2max.utils.object_name" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1029,6 +1068,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#py2max.utils.kwds_filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kwds_filter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#py2max.utils.object_name" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1111,6 +1161,36 @@ such as pitch-to-frequency conversion and other musical calculations.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="py2max.utils.kwds_filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">kwds_filter</span>
+
+
+<a href="#py2max.utils.kwds_filter" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">kwds_filter</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">kwds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">**</span><span class="n">elems</span><span class="p">:</span> <span class="n">Any</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return <code>kwds</code> merged with the <code>elems</code> whose value is not <code>None</code>.</p>
+<p>Lets a method keep an optional parameter in its signature but omit it from
+the forwarded <code>**kwds</code> when the caller left it at its <code>None</code> default,
+so unset options never reach the serialized patch::</p>
+<div class="highlight"><pre><span></span><code>def add(self, text, varname=None, **kwds):
+    return Box(text, **kwds_filter(kwds, varname=varname))
+</code></pre></div>
+<p>Only <code>None</code> is treated as "unset"; legitimate falsy values such as <code>0</code>
+or <code>""</code> are kept. The input <code>kwds</code> is not mutated.</p>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
