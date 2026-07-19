@@ -4,7 +4,23 @@ This module provides helper functions for common Max/MSP operations
 such as pitch-to-frequency conversion and other musical calculations.
 """
 
-from typing import Any
+from typing import Any, Dict
+
+
+def kwds_filter(kwds: Dict[str, Any], **elems: Any) -> Dict[str, Any]:
+    """Return ``kwds`` merged with the ``elems`` whose value is not ``None``.
+
+    Lets a method keep an optional parameter in its signature but omit it from
+    the forwarded ``**kwds`` when the caller left it at its ``None`` default,
+    so unset options never reach the serialized patch::
+
+        def add(self, text, varname=None, **kwds):
+            return Box(text, **kwds_filter(kwds, varname=varname))
+
+    Only ``None`` is treated as "unset"; legitimate falsy values such as ``0``
+    or ``""`` are kept. The input ``kwds`` is not mutated.
+    """
+    return {**kwds, **{k: v for k, v in elems.items() if v is not None}}
 
 
 def object_name(box: Any) -> str:

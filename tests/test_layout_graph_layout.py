@@ -1,96 +1,39 @@
-"""COLA (Constraint-based Layout Algorithm) via graph-layout
+"""Graph layout backends via the built-in GraphLayoutManager.
 
-This uses the graph-layout package:
-https://github.com/shakfu/graph-layout
+Exercises every ``layout="graph:*"`` variant end-to-end and writes a separate
+output patch per algorithm (``outputs/test_layout_graph_<algo>.maxpat``).
 
+The variants are pulled from ``GraphLayoutManager.ALGORITHMS`` so this test
+covers whatever the production manager supports. Each backend is an optional
+package (hola-graph / graph-layout / ogdf-py); a variant whose backend is not
+installed is skipped rather than failing.
 """
 
 import math
 
 import pytest
 
-try:
-    from graph_layout import ColaLayoutAdapter
-
-    HAS_GRAPH_LAYOUT = True
-except ImportError:
-    HAS_GRAPH_LAYOUT = False
-
 from py2max import Patcher
-from py2max.core.common import Rect
+from py2max.layout.external import GraphLayoutManager
 
 
-class ColaPatcher(Patcher):
-    def reposition(self):
-        # add nodes
-        nodes = []
-        id_to_index = {}
-        for i, box in enumerate(self._boxes):
-            x, y, w, h = box.patching_rect
-
-            node = {
-                "id": box.id,
-                "x": x,
-                "y": y,
-                "width": w,
-                "height": h,
-            }
-            nodes.append(node)
-            id_to_index[box.id] = i  # Map ID to index
-
-        # Build edges using indices
-        edges = []
-        for line in self._lines:
-            edge = {
-                "source": id_to_index[line.src],
-                "target": id_to_index[line.dst],
-            }
-            edges.append(edge)
-
-        layout = ColaLayoutAdapter(
-            nodes=nodes,
-            links=edges,
-            avoid_overlaps=True,
-            link_distance=100,
-        )
-        layout.run()
-
-        # Extract new positions from layout nodes. COLA centres the layout
-        # around the origin, so node coordinates are commonly negative. Node
-        # (x, y) is the box *centre*; convert to a top-left rect origin and then
-        # translate the whole layout so its top-left corner sits at ``pad``,
-        # keeping every object on-screen with a positive origin.
-        scale = 1
-        margin = self._layout_mgr.pad
-        repos = []
-        for node, box in zip(layout.nodes, self._boxes):
-            _, _, w, h = box.patching_rect
-            repos.append((node.x * scale - w / 2, node.y * scale - h / 2))
-        min_x = min(x for x, _ in repos)
-        min_y = min(y for _, y in repos)
-
-        _boxes = []
-        for box, (nx, ny) in zip(self._boxes, repos):
-            x, y, w, h = box.patching_rect
-            box.patching_rect = Rect(nx - min_x + margin, ny - min_y + margin, w, h)
-            _boxes.append(box)
-        self.boxes = _boxes
-        # COLA's avoid_overlaps can leave residual overlaps around large nodes
-        # (e.g. scope~ at 130x130). Run the dimension-aware safety net the
-        # built-in managers use so the saved patch is overlap-free.
-        self._layout_mgr.prevent_overlaps()
+def _overlap(a, b):
+    """True if rects ``a`` and ``b`` (x, y, w, h) intersect."""
+    return (
+        a[0] < b[0] + b[2]
+        and b[0] < a[0] + a[2]
+        and a[1] < b[1] + b[3]
+        and b[1] < a[1] + a[3]
+    )
 
 
-@pytest.mark.skipif(not HAS_GRAPH_LAYOUT, reason="requires graph-layout")
-def test_graph():
-    p = ColaPatcher("outputs/test_layout_graph_layout.maxpat")
-
+def _build_example(p):
+    """Two-voice signal graph shared by every layout variant."""
     fbox = p.add_floatbox
     ibox = p.add_intbox
     tbox = p.add_textbox
     link = p.add_line
 
-    # objects
     freq1 = fbox()
     freq2 = fbox()
     phase = fbox()
@@ -106,7 +49,6 @@ def test_graph():
     scp1 = ibox()
     scp2 = ibox()
 
-    # lines
     link(freq1, osc1)
     link(osc1, mul1)
     link(mul1, add1)
@@ -122,16 +64,40 @@ def test_graph():
     link(scp1, scop)
     link(scp2, scop, inlet=1)
 
+
+@pytest.mark.parametrize("algorithm", GraphLayoutManager.ALGORITHMS)
+def test_graph_layout_variant(algorithm):
+    p = Patcher(
+        f"outputs/test_layout_graph_{algorithm}.maxpat",
+        layout=f"graph:{algorithm}",
+    )
+    _build_example(p)
     assert len(p._boxes) == 14
     assert len(p._lines) == 14
     before = [tuple(b.patching_rect)[:2] for b in p._boxes]
 
-    p.reposition()
-    # p.graph()
+    try:
+        p.optimize_layout()
+    except ImportError as exc:
+        # optional backend package (hola-graph / graph-layout / ogdf-py) absent
+        pytest.skip(str(exc))
     p.save()
 
-    after = [tuple(b.patching_rect)[:2] for b in p._boxes]
-    # COLA must assign every box a finite (x, y)...
+    rects = [tuple(b.patching_rect) for b in p._boxes]
+    after = [(x, y) for x, y, _, _ in rects]
+
+    # every box gets a finite coordinate...
     assert all(math.isfinite(x) and math.isfinite(y) for x, y in after)
-    # ...and actually reposition them away from the initial grid layout.
+    # ...is moved off the initial add-time grid...
     assert after != before
+    # ...stays on-screen with a non-negative origin (_normalize)...
+    assert all(x >= 0 and y >= 0 for x, y in after)
+    # ...fits entirely within the patcher window (grown to fit in _full_layout)...
+    _, _, win_w, win_h = tuple(p.rect)
+    assert all(x + w <= win_w and y + h <= win_h for x, y, w, h in rects)
+    # ...and overlaps nothing (prevent_overlaps safety net in _full_layout).
+    assert not any(
+        _overlap(rects[i], rects[j])
+        for i in range(len(rects))
+        for j in range(i + 1, len(rects))
+    )

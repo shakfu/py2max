@@ -101,6 +101,28 @@ class GraphLayoutManager(LayoutManager):
             x, y = positions[box.id]
             w, h = self.box_dims(box)
             box.patching_rect = Rect(x, y, w, h)
+        # Constraint/force engines can leave residual overlaps around large
+        # nodes (e.g. scope~ at 130x130) even with avoid_overlaps enabled, since
+        # they optimise on approximate sizes. Run the dimension-aware safety net
+        # the grid/flow managers use so the saved patch is overlap-free.
+        self.prevent_overlaps()
+        # Graph layouts normalize to their own span, which routinely exceeds the
+        # default 640x480 window; grow the window so the whole graph is visible
+        # when the patch is opened (instead of spilling off-screen).
+        self._fit_window(boxes)
+
+    def _fit_window(self, boxes: List[Any]) -> None:
+        """Grow the patcher window so every laid-out box is fully visible."""
+        if not boxes:
+            return
+        max_x = max(b.patching_rect[0] + b.patching_rect[2] for b in boxes)
+        max_y = max(b.patching_rect[1] + b.patching_rect[3] for b in boxes)
+        rect = self.parent.rect
+        x, y, w, h = rect[0], rect[1], rect[2], rect[3]
+        new_w = max(w, max_x + self.pad)
+        new_h = max(h, max_y + self.pad)
+        if (new_w, new_h) != (w, h):
+            self.parent.rect = Rect(x, y, new_w, new_h)
 
     # -- helpers -----------------------------------------------------------
     def _box_xywh(self, box: Any) -> Tuple[float, float, float, float]:
