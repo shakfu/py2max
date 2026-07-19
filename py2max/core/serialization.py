@@ -76,6 +76,8 @@ class SerializationMixin(AbstractPatcher):
             ):
                 self.render()
 
+            self._lint_on_save()
+
             # Use resolved path for writing
             if resolved_path.suffix.lower() == ".amxd":
                 # Lazy import: m4l is a feature layer, kept off core's import path.
@@ -106,6 +108,31 @@ class SerializationMixin(AbstractPatcher):
                 file_path=str(resolved_path),
                 operation="write",
             ) from e
+
+    def _lint_on_save(self) -> None:
+        """Lint the top-level patch on save.
+
+        Error-severity findings (bad connections, out-of-range ports, orphaned
+        lines, duplicate IDs) are logged. When the patcher was created with
+        ``strict=True`` they are raised as ``InvalidPatchError`` instead. Layout
+        warnings (overlaps / off-canvas / unknown objects) are left to an
+        explicit ``lint()`` call or ``py2max validate`` to keep saves quiet.
+        """
+        if self._parent:  # only lint the top-level patcher
+            return
+        from ..lint import lint as _lint_patch
+
+        errors = [f for f in _lint_patch(self) if f.severity == "error"]
+        if not errors:
+            return
+        for finding in errors:
+            logger.warning("lint: %s", finding)
+        if getattr(self, "_strict", False):
+            from ..exceptions import InvalidPatchError
+
+            raise InvalidPatchError(
+                f"patch has {len(errors)} validation error(s); first: {errors[0]}"
+            )
 
     def save(self) -> None:
         """Save the patch to the default file path.

@@ -677,64 +677,69 @@ def get_legacy_defaults(name: str) -> Dict[str, Any]:
 
 
 def validate_connection(
-    src_maxclass: str, src_outlet: int, dst_maxclass: str, dst_inlet: int
+    src_maxclass: str,
+    src_outlet: int,
+    dst_maxclass: str,
+    dst_inlet: int,
+    src_text: Optional[str] = None,
+    dst_text: Optional[str] = None,
 ) -> tuple[bool, str]:
-    """Validate a connection between two Max objects using maxref data.
+    """Validate a connection between two Max objects using the port-type model.
+
+    Checks (a) that the outlet/inlet indices are in range (arg-aware, so
+    ``limi~ 2`` is understood to have two ports) and (b) that the outlet's
+    message kind is compatible with the inlet -- catching a control outlet wired
+    into a signal-only inlet (e.g. ``metro -> cycle~``), which Max rejects.
+
+    The message-type check is deliberately conservative: only clearly-wrong
+    connections fail; anything ambiguous (or involving a maxref-unknown object)
+    is allowed, so validation never rejects a valid patch.
 
     Args:
-        src_maxclass: Source object's maxclass
-        src_outlet: Source outlet index (0-based)
-        dst_maxclass: Destination object's maxclass
-        dst_inlet: Destination inlet index (0-based)
+        src_maxclass: Source object's maxclass.
+        src_outlet: Source outlet index (0-based).
+        dst_maxclass: Destination object's maxclass.
+        dst_inlet: Destination inlet index (0-based).
+        src_text: Source box text (enables arg-aware outlet counts).
+        dst_text: Destination box text (enables arg-aware inlet counts).
 
     Returns:
-        Tuple of (is_valid: bool, error_message: str)
+        Tuple of (is_valid: bool, error_message: str). ``is_valid`` is ``False``
+        only for a definite error.
     """
-    # Get object information
-    src_info = get_object_info(src_maxclass)
-    dst_info = get_object_info(dst_maxclass)
+    from . import porttypes
 
-    # If we don't have maxref data, allow connection (backwards compatibility)
-    if not src_info or not dst_info:
-        return True, ""
-
-    # Check source outlet exists
-    src_outlets = src_info.get("outlets", [])
-    if src_outlets and src_outlet >= len(src_outlets):
+    # Index bounds (arg-aware). Out-of-range = hard error (Max deletes the cord).
+    _, src_outlets = porttypes.port_counts(src_maxclass, src_text)
+    if src_outlets is not None and src_outlet >= src_outlets:
         return (
             False,
-            f"Object '{src_maxclass}' only has {len(src_outlets)} outlet(s), cannot connect from outlet {src_outlet}",
+            f"Object '{src_maxclass}' only has {src_outlets} outlet(s), "
+            f"cannot connect from outlet {src_outlet}",
         )
-
-    # Check destination inlet exists
-    dst_inlets = dst_info.get("inlets", [])
-    if dst_inlets and dst_inlet >= len(dst_inlets):
+    dst_inlets, _ = porttypes.port_counts(dst_maxclass, dst_text)
+    if dst_inlets is not None and dst_inlet >= dst_inlets:
         return (
             False,
-            f"Object '{dst_maxclass}' only has {len(dst_inlets)} inlet(s), cannot connect to inlet {dst_inlet}",
+            f"Object '{dst_maxclass}' only has {dst_inlets} inlet(s), "
+            f"cannot connect to inlet {dst_inlet}",
         )
 
-    # Type checking (optional - could be enhanced)
-    if (
-        src_outlets
-        and dst_inlets
-        and src_outlet < len(src_outlets)
-        and dst_inlet < len(dst_inlets)
-    ):
-        src_outlet_type = src_outlets[src_outlet].get("type", "")
-        dst_inlet_type = dst_inlets[dst_inlet].get("type", "")
-
-        # Basic type compatibility checking
-        if src_outlet_type and dst_inlet_type:
-            # Signal connections
-            if "signal" in src_outlet_type and "signal" not in dst_inlet_type:
-                return (
-                    False,
-                    f"Cannot connect signal outlet from '{src_maxclass}' to non-signal inlet of '{dst_maxclass}'",
-                )
-
-            # Could add more sophisticated type checking here
-
+    # Message-type compatibility.
+    emit = porttypes.outlet_emits(src_maxclass, src_outlet)
+    accepts, authoritative = porttypes.inlet_acceptance(dst_maxclass, dst_inlet)
+    if emit == porttypes.BANG and porttypes.inlet_rejects_bang(dst_maxclass, dst_inlet):
+        return (
+            False,
+            f"Cannot connect a bang from '{src_maxclass}' to the signal inlet "
+            f"{dst_inlet} of '{dst_maxclass}'",
+        )
+    if porttypes.message_compatible(emit, accepts, authoritative) is False:
+        return (
+            False,
+            f"Cannot connect {emit} outlet of '{src_maxclass}' to inlet "
+            f"{dst_inlet} of '{dst_maxclass}' (accepts {sorted(accepts)})",
+        )
     return True, ""
 
 

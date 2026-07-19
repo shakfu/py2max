@@ -496,5 +496,65 @@ class TestExampleExecution:
                 )
 
 
+class TestExamplePatchesLintClean:
+    """Every shipped example patch must be Max-valid: zero lint errors.
+
+    This is the corpus scanner the validation plan called for -- it re-lints the
+    real generated patches, which is exactly what would have caught the invalid
+    control->signal connections that once shipped in these examples.
+    """
+
+    def setup_method(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.old_cwd = os.getcwd()
+        os.chdir(self.temp_dir)
+
+    def teardown_method(self):
+        os.chdir(self.old_cwd)
+
+    def test_layout_example_patches_have_no_lint_errors(self):
+        import glob
+
+        from layout.columnar_layout_examples import (
+            create_multi_voice_patch,
+            create_typical_synth_patch,
+        )
+        from layout.flow_layout_examples import (
+            create_complex_flow,
+            create_feedback_flow,
+            create_horizontal_flow,
+            create_parallel_processing,
+            create_vertical_flow,
+        )
+        from layout.matrix_layout_examples import (
+            create_effects_chain_matrix,
+            create_parallel_voices_matrix,
+            demonstrate_signal_chain_analysis,
+        )
+        from py2max import Patcher
+
+        builders = [
+            create_typical_synth_patch,
+            create_multi_voice_patch,
+            create_parallel_voices_matrix,
+            create_effects_chain_matrix,
+            demonstrate_signal_chain_analysis,
+            create_horizontal_flow,
+            create_vertical_flow,
+            create_complex_flow,
+            create_parallel_processing,
+            create_feedback_flow,
+        ]
+        for build in builders:
+            build()
+
+        problems = []
+        for path in sorted(glob.glob("*.maxpat")):
+            errors = [f for f in Patcher.from_file(path).lint() if f.severity == "error"]
+            problems += [f"{path}: {f}" for f in errors]
+
+        assert not problems, "example patches have lint errors:\n" + "\n".join(problems)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -36,14 +36,89 @@ Implement automatic layout optimization that repositions objects as they are add
 - [ ] Add schema versioning for SQLite (enables migrations)
 - [ ] Implement FTS5 for search (replace naive `LIKE '%query%'`)
 
-### Connection Validation Default
+### Validation, Linting & Error-Checking (headline focus)
 
-- [ ] **Make `validate_connections=True` the default** and thoroughly examine the implications before flipping it. The constructor default is currently `False`, which contradicts the docs/CLAUDE.md prose ("Validation enabled by default"). Resolve the discrepancy by changing the default, but treat it as a breaking change and audit the fallout first:
-  - **Backwards compatibility**: patches that today build invalid (or maxref-unknown) connections silently would start raising `InvalidConnectionError`. Survey the test suite, `examples/`, and any reverse-engineered/round-tripped patches for connections that would newly fail.
-  - **maxref coverage gaps**: validation no-ops when either object has no maxref entry (returns `(True, "")`), so the default would be uneven -- strict for known objects, permissive for unknown ones. Decide whether that asymmetry is acceptable or whether unknown objects should warn.
-  - **Dynamic-I/O objects**: confirm the codebox path (`DYNAMIC_IO_MAXCLASSES`) and any other code-dependent-I/O objects are handled so the stricter default does not reject legitimate patches.
-  - **Type checking**: the signal-vs-control inlet check can misfire on objects whose maxref inlet/outlet types are incomplete or generic; assess false-positive risk before making it default-on.
-  - **Migration / UX**: consider a transition window (e.g. warn-then-raise), document the opt-out (`validate_connections=False`), and add a CHANGELOG entry flagging the breaking change.
+Layout is in good shape after the last few releases; **validation is now the weak
+link and the focus of the next cycle.** The goal is that a patch built with
+py2max is *correct by default*: obvious Max errors (bad connections, out-of-range
+ports, off-canvas or overlapping objects, orphaned lines) are caught
+automatically, without the user opting in.
+
+**Current gaps (evidence, mostly from the 0.3.3 cycle):**
+
+- Connection validation is **off by default** (`Patcher.__init__` `validate_connections=False`, `core/patcher.py`), contradicting the docs/CLAUDE.md prose ("enabled by default").
+- The type check in `maxref.validate_connection` (`maxref/parser.py`) is **one-directional**: it rejects signal-outlet -> non-signal-inlet, but *not* control-outlet -> signal-only-inlet. So `metro -> cycle~` (a bang into a signal inlet, which Max rejects with "error connecting outlet ... to ... inlet") passes validation even when enabled.
+- The **maxref type data it rests on is unreliable**: placeholder types (`OUTLET_TYPE`/`INLET_TYPE` for `metro`, `loadbang`, `noise~`, `flonum`, ...), arg-dependent port counts not modeled (`limi~ 2` really has 2 in/out; maxref reports 1), dynamic ports not handled (`bpatcher`, subpatch `inlet`/`outlet`), and mis-typings (`cycle~` phase inlet is typed `signal/float` but is signal-only in Max).
+- **Nothing checks patch-level health**: out-of-range outlet/inlet indices (Max silently deletes the patchcord), object overlaps, objects outside the patcher window, orphaned/dangling patchlines, duplicate IDs.
+- **Tests verify JSON shape, not Max-validity** -- the overlap / off-canvas / invalid-connection bugs fixed in 0.3.3 all shipped under ~99% coverage because nothing asserted the generated patches were Max-legal.
+
+**Target end-state:** every built/saved patch is checked automatically (warnings by default, `strict=True` raises on errors), backed by a `Patcher.lint()` that returns structured findings, underpinned by trustworthy maxref message-type data, and enforced in CI so the whole test corpus stays lint-clean.
+
+**Status (landed 0.3.4-dev / Unreleased):** the core of all five phases shipped --
+`py2max/maxref/porttypes.py` (message-type model + arg-aware counts + curation),
+message-type-aware `validate_connection`, `Patcher.lint()` / `py2max.lint` with the
+full code set, lint-on-save (warn by default; `strict=True` raises), the `py2max
+validate` CLI, and golden/lint tests (`test_validation.py`, `test_lint.py`).
+Design note: rather than regenerate the bundle to fix raw placeholder types (Phase 1)
+and flip `validate_connections=True` to raise-by-default (Phase 4), port typing is
+normalized/curated at query time and on-by-default checking is delivered via
+lint-on-save warnings -- the warn-then-raise transition this plan called for.
+Arg-dependent counts now cover both value-scaled (`limi~ 2`) and arg-count-scaled
+(`select` / `route` / `pack` / `unpack` / `selector~` / `switch`) objects; a
+corpus test (`test_examples.py::TestExamplePatchesLintClean`) re-lints every
+shipped example patch and fails on any error; subpatcher/bpatcher port counts are
+derived from contained `inlet`/`outlet` objects; and `lint()` recurses into nested
+subpatchers with path-qualified findings.
+Inlet acceptance is now derived from each object's `<methodlist>` (its real
+message vocabulary), which resolves the control-port typing problem without the
+raw `type` attribute: `INLET_TYPE`/`OUTLET_TYPE` are placeholders in Max's *own*
+XML, so regeneration cannot fix them -- but the method list is present and now
+drives validation (`cycle~` has no `bang` method -> rejected; `adsr~` has
+`anything` -> allowed). `bundle.json.gz` was regenerated (content-identical to
+the shipped snapshot -- it already matched this Max install) and a
+`test_bundle_method_data_quality` guard was added.
+**Still open:** once field experience confirms the method-list validation is
+false-positive-free, consider flipping validation to raise-by-default. Outlet
+*emission* typing is still curated (not in the XML's structured data); expand the
+curated `_OUTLET_EMIT` set as needed.
+
+#### Phase 1 -- Trustworthy port/type data (foundation)
+
+Validation is only as good as this data; do it first.
+
+- [ ] Classify every port by **message type**, not the current placeholder strings: `signal`, `signal/float`, and control kinds (`bang` / `int` / `float` / `list` / `symbol`). Kill `OUTLET_TYPE` / `INLET_TYPE` (`maxref/parser.py` type extraction, ~L665).
+- [ ] Model **arg-dependent port counts** (`limi~ N`, `mc.*`, `matrix~`, `zl` group, etc.) -- derive from the box's own args/attrs, not the fixed maxref entry.
+- [ ] Handle **dynamic-I/O objects** (`bpatcher`, `patcher`/subpatch inlets from contained `inlet`/`outlet`, `js`) -- derive counts from actual content; extend the existing `DYNAMIC_IO_MAXCLASSES` path in `core/factory.py`.
+- [ ] Audit and correct **signal-only inlets** (e.g. `cycle~` phase, `gain~`/`lores~` inlet 0, MSP right inlets) that maxref currently reports as `signal/float`.
+- [ ] Regenerate `maxref/data/bundle.json.gz`; add a data-quality test that fails on any remaining placeholder type.
+
+#### Phase 2 -- Message-type-aware connection validation
+
+- [ ] Replace the one-directional signal check in `maxref.validate_connection` with a **bidirectional message-type compatibility matrix**: `signal->signal` ok; `int|float->(signal/float | number-accepting)` ok; `bang->(bang-accepting: counter, adsr~, flonum, ...)` ok; `bang|number->signal-only inlet` **error**; `signal->control-only inlet` **error**.
+- [ ] Keep index-bounds checks and treat **out-of-range outlet/inlet as a hard error** (Max deletes the patchcord on load).
+- [ ] Separate "**unknown object -> cannot validate**" (skip/warn) from "**known-invalid**" (error); decide the policy for maxref-unknown maxclasses.
+
+#### Phase 3 -- Patch-level linter (`Patcher.lint()`)
+
+- [ ] `lint() -> list[Finding]` where `Finding` carries `severity` (error/warning), `code`, `message`, and object/line refs. Suggested codes: `E-OUTLET-RANGE`, `E-INLET-RANGE`, `E-CTRL-TO-SIGNAL`, `E-SIGNAL-TO-CTRL`, `E-ORPHAN-LINE`, `E-DUP-ID`, `W-OVERLAP`, `W-OFFCANVAS`, `W-UNKNOWN-OBJECT`.
+- [ ] Checks: (a) connection validity (Phase 2), (b) out-of-range ports, (c) orphaned/dangling patchlines, (d) duplicate object IDs, (e) dimension-aware object overlaps, (f) objects outside the patcher window `rect`, (g) unknown maxclass. (a)-(g) are exactly the ad-hoc scans that surfaced the 0.3.3 bugs -- productize them.
+- [ ] Wire into the CLI: extend `cmd_validate` (`py2max validate`) to report lint findings with severities and a non-zero exit on errors.
+
+#### Phase 4 -- On-by-default policy & UX (subsumes the old "Connection Validation Default" item)
+
+- [ ] **Lint automatically on `save()` / `to_dict()`** -- warnings emitted by default (no exception); a `strict=True` (or `validate_connections=True`) path raises `InvalidPatchError` on any error-severity finding.
+- [ ] Flip connection validation on by default (or route it through the linter). Treat as a **breaking change** and audit the fallout first:
+  - **Backwards compatibility**: patches that silently build invalid/maxref-unknown connections would start failing. Survey the test suite, `tests/examples/`, and reverse-engineered/round-tripped patches for connections that would newly error.
+  - **maxref coverage gaps**: validation no-ops for objects with no maxref entry; decide whether unknown objects warn or are silently allowed.
+  - **Dynamic-I/O**: confirm codebox / `bpatcher` / subpatch paths don't reject legitimate patches under the stricter default.
+  - **False positives**: gate the flip on Phase 1 data quality -- do not turn on strict checking while the type data still misfires.
+  - **Migration / UX**: prefer a warn-then-raise transition window; document the opt-out; add a CHANGELOG breaking-change entry; fix the docs/CLAUDE.md "enabled by default" discrepancy.
+
+#### Phase 5 -- Test / CI enforcement (close the confidence gap)
+
+- [ ] CI scan: **every generated `.maxpat` in the corpus must be lint-clean** (zero error-severity findings) -- the exact checks that would have caught the 0.3.3 overlap / off-canvas / invalid-connection regressions.
+- [ ] Golden tests for the message-type matrix (`metro -> cycle~` rejected, `flonum -> cycle~` accepted, `saw~` inlet 1 signal-only, out-of-range outlet rejected, ...).
+- [ ] A deliberately-invalid fixture patch that asserts each lint `code` fires exactly once.
 
 ---
 

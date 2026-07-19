@@ -310,7 +310,12 @@ class BoxFactoryMixin(AbstractPatcher):
                 is_valid = not error_msg
             else:
                 is_valid, error_msg = maxref.validate_connection(
-                    src_name, src_outlet, dst_name, dst_inlet
+                    src_name,
+                    src_outlet,
+                    dst_name,
+                    dst_inlet,
+                    src_text=getattr(src_obj, "text", None),
+                    dst_text=getattr(dst_obj, "text", None),
                 )
 
             if not is_valid:

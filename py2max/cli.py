@@ -15,12 +15,12 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - optional dependency
     yaml = None
 
-from .core import Patcher, Patchline
+from .core import Patcher
 from .core.common import Rect
 from .exceptions import Py2MaxError
 from .export import export_svg
 from .export.converters import maxpat_to_python, maxref_to_sqlite
-from .maxref import MaxRefCache, MaxRefDB, validate_connection
+from .maxref import MaxRefCache, MaxRefDB
 from .transformers import available_transformers, create_transformer, run_pipeline
 
 LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
@@ -230,40 +230,18 @@ def cmd_validate(args: argparse.Namespace) -> int:
     patcher = Patcher.from_file(path)
     _coerce_rect(patcher)
 
-    errors: List[str] = []
+    findings = patcher.lint()
+    if not findings:
+        print("Patch is clean: no lint findings.")
+        return 0
 
-    for line in patcher._lines:
-        patchline = cast(Patchline, line)
-        src_id, dst_id = patchline.src, patchline.dst
-        src_port = int(patchline.source[1]) if len(patchline.source) > 1 else 0
-        dst_port = (
-            int(patchline.destination[1]) if len(patchline.destination) > 1 else 0
-        )
-
-        src_obj = patcher._objects.get(src_id)
-        dst_obj = patcher._objects.get(dst_id)
-
-        if not src_obj or not dst_obj:
-            errors.append(f"Dangling connection: {src_id} -> {dst_id}")
-            continue
-
-        src_name = _object_name(src_obj)
-        dst_name = _object_name(dst_obj)
-
-        is_valid, message = validate_connection(src_name, src_port, dst_name, dst_port)
-        if not is_valid:
-            errors.append(
-                f"Invalid connection {src_name}[{src_port}] -> {dst_name}[{dst_port}]: {message}"
-            )
-
-    if errors:
-        print("Connection validation failed:", file=sys.stderr)
-        for error in errors:
-            print(f"  - {error}", file=sys.stderr)
-        return 1
-
-    print("All connections are valid.")
-    return 0
+    errors = [f for f in findings if f.severity == "error"]
+    warnings = [f for f in findings if f.severity == "warning"]
+    stream = sys.stderr if errors else sys.stdout
+    for finding in findings:
+        print(f"  {finding}", file=stream)
+    print(f"{len(errors)} error(s), {len(warnings)} warning(s).", file=stream)
+    return 1 if errors else 0
 
 
 def _parse_transform_spec(spec: str) -> tuple[str, str | None]:

@@ -16,7 +16,20 @@ Example:
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
+
+if TYPE_CHECKING:
+    from ..lint import Finding
 
 from py2max import layout as layout_module
 from py2max.log import get_logger
@@ -109,6 +122,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         openinpresentation: int = 0,
         validate_connections: bool = False,
         validate_attrs: bool = False,
+        strict: bool = False,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
         # Matrix layout configuration parameters
@@ -143,6 +157,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._auto_hints = auto_hints
         self._validate_connections = validate_connections
         self._validate_attrs = validate_attrs
+        self._strict = strict
         self._pending_comments: list[
             tuple[str, str, Optional[str]]
         ] = []  # [(box_id, comment_text, comment_pos), ...]
@@ -658,3 +673,14 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
 
         # Process pending comments after layout optimization
         self._process_pending_comments()
+
+    def lint(self) -> "List[Finding]":
+        """Return patch-level lint findings (errors and warnings), errors first.
+
+        Checks connection validity, out-of-range ports, orphaned patchlines,
+        duplicate IDs, overlapping objects, off-canvas objects, and unknown
+        object classes. See :mod:`py2max.lint`.
+        """
+        from ..lint import lint as _lint
+
+        return _lint(self)

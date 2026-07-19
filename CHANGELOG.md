@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### New: Patch linting and message-type-aware connection validation
+
+- Added `Patcher.lint()` (and the `py2max.lint` module: `lint()`, `Finding`) -- a patch-level health check returning structured findings with a `severity`, a `code`, and object/connection references. It covers invalid connections, out-of-range outlet/inlet indices, orphaned patchlines, duplicate IDs, overlapping objects, off-canvas objects, and unknown object classes.
+- **Linting runs automatically on `save()`**: error-severity findings (bad connections, out-of-range ports, orphaned lines, duplicate IDs) are logged. Pass `Patcher(strict=True)` to raise `InvalidPatchError` on any error instead. Layout warnings (overlaps / off-canvas / unknown objects) are left to an explicit `lint()` or `py2max validate` to keep normal saves quiet. This is on by default and non-breaking -- saves still succeed unless `strict=True`.
+- Connection validation is now **message-type aware and bidirectional**. The previous check only rejected a signal outlet wired into a non-signal inlet; it now also catches a control outlet (a bang from `metro` / `loadbang` / `button`) wired into an oscillator's signal inlet -- e.g. `metro -> cycle~`, which Max rejects. The rules are deliberately conservative (ambiguous cases and maxref-unknown objects are allowed) so on-by-default checking never rejects a valid patch; notably a bang into `adsr~` (a legitimate envelope trigger) is *not* flagged.
+- Port typing is now modeled in `py2max/maxref/porttypes.py`, normalizing maxref's placeholder control types (`OUTLET_TYPE` / `INLET_TYPE`) into message kinds, and resolving **argument-dependent port counts** that maxref reports as the arg-less default -- both value-scaled (`limi~ 2` -> 2 in/out) and arg-count-scaled (`select a b c` -> 4 outlets, `route`, `pack`/`unpack`, `selector~`/`switch`) -- plus curated overrides for the handful of objects maxref mis-types.
+- `py2max validate` (CLI) now reports the full lint result -- errors and warnings with codes -- and exits non-zero on any error.
+- A corpus test re-lints every shipped layout example patch and fails on any error, so Max-invalid wiring can no longer ship unnoticed.
+- Subpatchers are handled: a subpatcher/bpatcher box's inlet/outlet count is derived from the `inlet` / `outlet` objects it contains (not the maxref default), and `lint()` recurses into nested patchers -- findings inside a subpatcher are reported path-qualified (e.g. `sub-box-id/obj-1`).
+- Inlet acceptance is now derived from each object's `<methodlist>` -- its real message vocabulary in Max's own docs -- rather than the placeholder inlet `type` (Cycling '74 ships `INLET_TYPE`/`OUTLET_TYPE` for control ports, so the type attribute alone is useless). This is what distinguishes a bang into `cycle~` (no `bang` method -> rejected) from a bang into `adsr~` (has an `anything` wildcard method -> allowed), replacing hand-curation with data that generalizes to all ~1050 objects that carry method lists. The shipped `bundle.json.gz` was regenerated so no-Max users get the same data (a `test_bundle_method_data_quality` guard prevents a future regeneration from dropping it).
+
 ## [0.3.3]
 
 ### Removed: `serve` and `repl` CLI subcommands

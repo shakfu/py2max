@@ -48,6 +48,7 @@ from .exceptions import (
     PatcherIOError,
     Py2MaxError,
 )
+from .lint import Finding, lint
 
 __all__ = [
     # Version
@@ -56,6 +57,9 @@ __all__ = [
     "Patcher",
     "Box",
     "Patchline",
+    # Linting
+    "lint",
+    "Finding",
     # Exceptions
     "Py2MaxError",
     "InvalidConnectionError",

@@ -281,8 +281,9 @@ class TestRealWorldScenarios:
         """Test creating complex patch with connection validation"""
         p = Patcher("complex.maxpat", validate_connections=True)
 
-        # Create a valid signal chain
-        metro = p.add_textbox("metro 500")
+        # Create a valid signal chain (a float number box sets osc frequency;
+        # a bang from metro into an oscillator's signal inlet is invalid in Max)
+        freq = p.add_floatbox()
         osc1 = p.add_textbox("cycle~ 440")
         osc2 = p.add_textbox("saw~ 220")
         mixer = p.add_textbox("+~")
@@ -290,8 +291,8 @@ class TestRealWorldScenarios:
         dac = p.add_textbox("ezdac~")
 
         # Valid connections should work
-        p.add_line(metro, osc1)
-        p.add_line(metro, osc2)
+        p.add_line(freq, osc1)
+        p.add_line(freq, osc2)
         p.add_line(osc1, mixer, inlet=0)
         p.add_line(osc2, mixer, inlet=1)
         p.add_line(mixer, gain)

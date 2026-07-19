@@ -90,3 +90,20 @@ def test_bundle_sentinel_rematerializes_from_bundle(monkeypatch):
     assert "cycle~" not in cache._cache
     data = cache.get_object_data("cycle~")
     assert data is not None and data.get("outlets")
+
+
+def test_bundle_method_data_quality(monkeypatch):
+    """The bundle must carry <methodlist> data, which connection validation now
+    depends on (it distinguishes e.g. cycle~ from adsr~). Guards a future
+    regeneration from silently dropping it."""
+    _force_no_max(monkeypatch)
+    cache = parser.MaxRefCache()
+    # a healthy fraction of objects should carry methods
+    named = [n for n in cache.refdict if not n.startswith("_")]
+    with_methods = sum(1 for n in named if (cache.get_object_data(n) or {}).get("methods"))
+    assert with_methods > 900, f"only {with_methods} objects have method data"
+    # the specific vocabulary validation relies on
+    assert "bang" in cache.get_object_data("metro")["methods"]
+    assert "anything" in cache.get_object_data("adsr~")["methods"]
+    assert "bang" not in cache.get_object_data("cycle~")["methods"]
+    assert "anything" not in cache.get_object_data("cycle~")["methods"]
