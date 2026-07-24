@@ -35,7 +35,7 @@ Example:
     >>> p.save()
 """
 
-__version__ = "0.3.4"
+__version__ = "0.3.5"
 
 from .core import Box, Patcher, Patchline
 from .exceptions import (

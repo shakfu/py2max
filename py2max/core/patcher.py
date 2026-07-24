@@ -23,6 +23,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
     cast,
@@ -656,7 +657,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             return self._layout_mgr.get_pos(maxclass)
         return self._layout_mgr.get_pos()
 
-    def optimize_layout(self) -> None:
+    def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
         """Optimize object positions based on layout manager type.
 
         Calls the layout manager's optimization method to improve object
@@ -669,9 +670,17 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
 
         This method should be called after all objects and connections
         have been added to the patch.
+
+        Args:
+            changed_objects: Optional set of object IDs that have changed. When
+                provided and small relative to the total, managers that support
+                it reposition only those objects and their neighbours
+                (incremental layout) instead of recomputing the whole patch;
+                when ``None`` a full layout is performed. Managers that do not
+                implement incremental layout ignore the argument.
         """
         if hasattr(self._layout_mgr, "optimize_layout"):
-            self._layout_mgr.optimize_layout()
+            self._layout_mgr.optimize_layout(changed_objects)
 
         # Dock value/UI params next to the object they drive (opt-in).
         if self._param_placement and hasattr(self._layout_mgr, "place_params"):

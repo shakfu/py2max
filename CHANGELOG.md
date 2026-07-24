@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.5]
+
+### Fixed: `Patcher.optimize_layout()` now reaches the incremental layout path
+
+- `Patcher.optimize_layout()` gained an optional `changed_objects: Optional[Set[str]]` parameter and forwards it to the layout manager. It previously called the manager with no arguments, silently discarding any change set, so the incremental layout engine (`layout/base.py` `optimize_layout(changed_objects)` / `should_use_incremental` / `_incremental_layout`) was unreachable through the public API -- every call forced a full relayout. Passing a set of object IDs now lets managers that support it (grid, flow) reposition only those objects and their patchline neighbours; `None` (the default) preserves the previous full-relayout behaviour, so the change is backward compatible. Matrix/columnar managers still recompute in full (they ignore the argument by design). This is the core prerequisite for server-side auto-layout, which lives in `py2max-server`.
+
 ## [0.3.4]
 
 ### New: Param docking in layouts
