@@ -4,23 +4,31 @@ This module provides comprehensive logging configuration and utilities for
 debugging, error tracking, and performance monitoring across the py2max library.
 
 Features:
-    - Color-coded console output with custom formatting
+    - Color-coded console output with custom formatting (opt-in)
     - Domain-specific loggers for different modules
     - Context managers for operation tracking
     - Error logging utilities with stack traces
-    - Configurable log levels via environment variables
+
+py2max is a library, so importing it does not configure logging and prints
+nothing: the ``py2max`` logger carries a ``NullHandler`` and the application
+decides where records go. Call :func:`setup_logging` for py2max's colored console
+output (the CLI does this), or configure the ``py2max`` logger yourself with the
+standard library, as with any other package.
 
 Environment Variables:
-    DEBUG: Set to '1' to enable DEBUG level logging (default: '1')
-    COLOR: Set to '1' to enable colored output (default: '1')
-    PY2MAX_LOG_FILE: Optional log file path for persistent logging
-    PY2MAX_LOG_LEVEL: Override log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    PY2MAX_DEBUG: Set to '1' to call setup_logging(level='DEBUG') at import.
+    PY2MAX_LOG_LEVEL: Log level for setup_logging; also enables it at import if
+        set (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+    PY2MAX_LOG_FILE: Optional log file path; also enables logging at import.
+    PY2MAX_COLOR: Set to '0' to disable ANSI colors in py2max's own handler.
 
 Example:
     >>> from py2max.log import get_logger
     >>> logger = get_logger(__name__)
-    >>> logger.info("Creating patcher")
-    >>> logger.debug("Adding box with id: cycle_1")
+    >>> logger.info("Creating patcher")   # silent unless configured
+
+    >>> from py2max.log import setup_logging
+    >>> setup_logging("INFO")             # opt in to py2max's console output
 """
 
 import contextlib
@@ -66,8 +74,16 @@ def getenv_str(key: str, default: Optional[str] = None) -> Optional[str]:
 # constants
 
 PY_VER_MINOR = sys.version_info.minor
-DEBUG = getenv("DEBUG", default=True)
-COLOR = getenv("COLOR", default=True)
+
+#: Root logger name for the package. Every py2max logger is a child of this, so
+#: an application can configure or silence all of py2max with one call:
+#: ``logging.getLogger("py2max").setLevel(...)``.
+LOGGER_NAME = "py2max"
+
+# Env-var opt-ins. Note these are read once at import; nothing is *applied*
+# unless one of them is explicitly set (see _configure_from_env below).
+DEBUG = getenv("PY2MAX_DEBUG", default=False)
+COLOR = getenv("PY2MAX_COLOR", default=True)
 LOG_FILE = getenv_str("PY2MAX_LOG_FILE")
 LOG_LEVEL = getenv_str("PY2MAX_LOG_LEVEL", "DEBUG" if DEBUG else "INFO")
 
@@ -139,75 +155,129 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-# Global flag to track if logging has been configured
-_logging_configured = False
+# A NullHandler on the package logger is the standard way for a library to
+# participate in logging without imposing any: records propagate to whatever the
+# application configured, and "No handlers could be found" warnings are avoided.
+logging.getLogger(LOGGER_NAME).addHandler(logging.NullHandler())
+
+# Tracks the handler installed by setup_logging so repeat calls reconfigure
+# rather than stack up duplicate output.
+_own_handlers: "list[logging.Handler]" = []
+
+
+def setup_logging(
+    level: Optional[str] = None,
+    *,
+    color: Optional[bool] = None,
+    log_file: Optional[str] = None,
+) -> logging.Logger:
+    """Opt in to py2max's colored console logging.
+
+    Attaches py2max's own handler(s) to the ``py2max`` logger and sets its level.
+    Only that logger is touched -- the root logger and any application
+    configuration are left alone, so calling this cannot disturb the host
+    program's logging.
+
+    Idempotent: calling it again replaces the handlers it installed previously
+    instead of adding a second copy of every message.
+
+    Propagation is deliberately left as-is. Disabling it here would be a global
+    side effect on a process-wide logger: anything that captures py2max records
+    through an ancestor logger (an application's root handler, pytest's
+    ``caplog``) would silently stop seeing them. An application that wants sole
+    ownership of the output can set ``propagate`` itself.
+
+    Args:
+        level: Log level name (default: PY2MAX_LOG_LEVEL, else INFO).
+        color: Use ANSI colors (default: PY2MAX_COLOR, else True).
+        log_file: Also append records to this file, uncolored.
+
+    Returns:
+        The configured ``py2max`` logger.
+
+    Example:
+        >>> from py2max.log import setup_logging
+        >>> setup_logging("DEBUG")
+        >>> import py2max
+        >>> py2max.Patcher("out.maxpat")   # now logs
+    """
+    logger = logging.getLogger(LOGGER_NAME)
+
+    for handler in _own_handlers:
+        logger.removeHandler(handler)
+        handler.close()
+    _own_handlers.clear()
+
+    use_color = COLOR if color is None else color
+    strm_handler = logging.StreamHandler()
+    strm_handler.setFormatter(CustomFormatter(use_color=use_color))
+    _own_handlers.append(strm_handler)
+
+    path = log_file if log_file is not None else LOG_FILE
+    if path:
+        log_path = Path(path)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_path, mode="a")
+        file_handler.setFormatter(CustomFormatter(use_color=False))
+        _own_handlers.append(file_handler)
+
+    for handler in _own_handlers:
+        logger.addHandler(handler)
+
+    resolved = (level or LOG_LEVEL or "INFO").upper()
+    logger.setLevel(getattr(logging, resolved, logging.INFO))
+    return logger
+
+
+def _configure_from_env() -> None:
+    """Apply env-var logging config, if any was explicitly requested.
+
+    Importing py2max stays silent unless the user asked for output, which keeps
+    the library well-behaved while preserving the "export a variable and see
+    what it is doing" workflow.
+    """
+    # DEBUG is the parsed PY2MAX_DEBUG flag, so an explicit '0' stays silent.
+    if DEBUG or os.getenv("PY2MAX_LOG_LEVEL") or os.getenv("PY2MAX_LOG_FILE"):
+        setup_logging()
+
+
+_configure_from_env()
 
 
 def config(name: str) -> logging.Logger:
-    """Configure and return a logger with custom formatting.
+    """Return a named logger under the ``py2max`` hierarchy.
 
-    This function sets up the global logging configuration on first call,
-    then returns named loggers for specific modules. Supports both console
-    and optional file output.
+    Retained for backwards compatibility; it no longer configures anything.
+    Prefer :func:`get_logger`, and :func:`setup_logging` to enable output.
 
     Args:
         name: Logger name (typically __name__ from calling module).
 
     Returns:
-        Configured logger instance for the specified name.
-
-    Example:
-        >>> logger = config(__name__)
-        >>> logger.info("Application started")
+        Logger instance for the specified name.
     """
-    global _logging_configured
-
-    if not _logging_configured:
-        handlers: list[logging.Handler] = []
-
-        # Console handler with color formatting
-        strm_handler = logging.StreamHandler()
-        strm_handler.setFormatter(CustomFormatter(use_color=COLOR))
-        handlers.append(strm_handler)
-
-        # Optional file handler
-        if LOG_FILE:
-            log_path = Path(LOG_FILE)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            file_handler = logging.FileHandler(log_path, mode="a")
-            file_handler.setFormatter(CustomFormatter(use_color=False))
-            handlers.append(file_handler)
-
-        # Get log level from environment or default
-        level = getattr(logging, (LOG_LEVEL or "INFO").upper(), logging.INFO)
-
-        logging.basicConfig(
-            level=level,
-            handlers=handlers,
-            force=True,  # Override any existing configuration
-        )
-        _logging_configured = True
-
     return logging.getLogger(name)
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Get a configured logger for the specified module.
+    """Get a logger for the specified module.
 
-    Convenience function that wraps config() for clearer API.
+    Does not configure logging: a library must not decide where its host
+    application's log records go. Use :func:`setup_logging` to opt in to
+    py2max's own console output.
 
     Args:
         name: Logger name (typically __name__ from calling module).
 
     Returns:
-        Configured logger instance.
+        Logger instance.
 
     Example:
         >>> from py2max.log import get_logger
         >>> logger = get_logger(__name__)
         >>> logger.debug("Processing object: cycle~")
     """
-    return config(name)
+    return logging.getLogger(name)
 
 
 # ----------------------------------------------------------------------------
@@ -330,7 +400,9 @@ class LoggerMixin:
 # Convenience exports
 
 __all__ = [
+    "LOGGER_NAME",
     "config",
+    "setup_logging",
     "get_logger",
     "log_exception",
     "log_warning_once",

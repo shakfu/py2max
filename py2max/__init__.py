@@ -13,6 +13,11 @@ The SQLite Max-reference database is available as ``from py2max.maxref import
 MaxRefDB`` -- kept out of the top-level import so ``import py2max`` does not pull
 in ``sqlite3`` and the database layer.
 
+Importing py2max prints nothing and does not configure logging -- that is the
+application's decision. Call ``py2max.setup_logging("DEBUG")`` for py2max's
+colored console output, set ``PY2MAX_DEBUG=1`` to enable it from the environment,
+or configure the ``py2max`` logger yourself with the standard library.
+
 Exceptions:
     Py2MaxError: Base exception for all py2max errors
     InvalidConnectionError: Exception raised for invalid connections
@@ -49,6 +54,7 @@ from .exceptions import (
     Py2MaxError,
 )
 from .lint import Finding, lint
+from .log import setup_logging
 
 __all__ = [
     # Version
@@ -60,6 +66,8 @@ __all__ = [
     # Linting
     "lint",
     "Finding",
+    # Logging (opt-in; importing py2max configures nothing and stays silent)
+    "setup_logging",
     # Exceptions
     "Py2MaxError",
     "InvalidConnectionError",

@@ -45,8 +45,12 @@ class Box(AbstractBox):
     ) -> None:
         self.id = id
         self.maxclass = maxclass or "newobj"
-        self.numinlets = numinlets or 0
-        self.numoutlets = numoutlets or 1
+        # `x if x is not None else default`, not `x or default`: an explicit 0 is
+        # meaningful (an object with no outlets cannot be a connection source,
+        # and a subpatcher with no `outlet` objects genuinely has none), but it
+        # is falsy, so `or` silently promoted it to the default.
+        self.numinlets = numinlets if numinlets is not None else 0
+        self.numoutlets = numoutlets if numoutlets is not None else 1
         # self.outlettype = outlettype
         self.patching_rect = patching_rect or Rect(0, 0, 62, 22)
 
@@ -111,8 +115,34 @@ class Box(AbstractBox):
     def render(self) -> None:
         """convert self and children to dictionary."""
         if self._patcher:
+            self._sync_subpatcher_ports()
             self._patcher.render()
             self.patcher = self._patcher.to_dict()
+
+    def _sync_subpatcher_ports(self) -> None:
+        """Match this box's port counts to the ``inlet``/``outlet`` objects inside.
+
+        A subpatcher box's real port count is however many ``inlet`` / ``outlet``
+        objects its nested patcher holds, and those are usually added *after* the
+        box itself, so the counts fixed at construction time go stale. Max shows
+        a box's declared ports, so a two-outlet subpatcher declaring one outlet
+        emits a patch whose second outlet cannot be connected.
+
+        Deliberately conservative: the counts are only overwritten for a
+        dimension that actually found objects to count. A nested patcher can hold
+        I/O this cannot interpret -- ``gen~`` and ``rnbo~`` declare theirs with
+        ``in``/``out`` objects, and an empty subpatcher is a stub the caller has
+        yet to fill -- and zeroing those boxes' ports would be worse than leaving
+        the constructed default alone.
+        """
+        from py2max.maxref.porttypes import subpatcher_counts
+
+        n_in, n_out = subpatcher_counts(self)
+        if n_in:
+            self.numinlets = n_in
+        if n_out:
+            self.numoutlets = n_out
+            self._kwds["outlettype"] = [""] * n_out
 
     def to_dict(self) -> Dict[str, Any]:
         """create dict from object with extra kwds included"""

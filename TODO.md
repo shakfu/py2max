@@ -41,6 +41,50 @@ Two items remain, both gated on field experience:
 - [ ] Expand the curated `_OUTLET_EMIT` set (`maxref/porttypes.py`) as gaps
   surface -- outlet *emission* typing is not in the XML's structured data.
 
+### Typed box properties
+
+- [ ] Replace `**kwds: Any` with a `BoxProps` TypedDict accepted via `Unpack`.
+  This is the property-level analogue of the connection-level checks above, and
+  the largest remaining silent-failure mode in the library.
+
+  *Problem.* `mypy strict = true` (python_version 3.9) already runs and backs the
+  shipped `py.typed`, but `Any` is strict-legal: the entire Max property
+  vocabulary (`presentation_rect`, `bgcolor`, `varname`,
+  `saved_attribute_attributes`, ...) enters through `**kwds: Any` at
+  `core/box.py:44` and `core/patchline.py:28`, is None-stripped, and is written
+  straight to the file. A misspelled or wrongly-typed property produces a
+  silently wrong `.maxpat`, not an error -- neither the type checker nor the
+  save-time linter sees it.
+
+  *Approach.* `class BoxProps(TypedDict, total=False)` + `**kwds:
+  Unpack[BoxProps]`. Must thread through the `factory.py` forwarders
+  (`add_textbox` and the `add_*` family at `392`, `565`, `601`, `618`, ...,
+  plus `add`/`_add_str`'s `**kwds` relays) or checking stops at the first hop
+  and the annotation is decorative.
+
+  *3.9 constraint.* PEP 692 (`Unpack[TypedDict]` in `**kwargs` position) is a
+  3.12 runtime feature; `typing.Unpack` arrived in 3.11. On the current floor use
+  `from __future__ import annotations` plus `if TYPE_CHECKING: from
+  typing_extensions import Unpack`, so annotations stay strings and no runtime
+  dependency is added (typing_extensions is already present transitively via
+  mypy in dev). Verify that downstream consumers of `py.typed` still resolve the
+  annotation.
+
+  *The vocabulary is derivable from data already shipped.* maxref attribute
+  entries carry a `type` (`int`/`float`/`symbol`/`atom`) and nested
+  meta-attributes including `save` and `default`; `save == 1` marks the
+  attributes Max persists into the patch file. Verified: `umenu.align` is
+  `type=atom, save=1`. So generate per-class property sets from the bundle and
+  hand-write only the universal box properties (`patching_rect`,
+  `presentation_rect`, `varname`, ...). Codegen must honour the `renamed` and
+  `obsolete` meta-attributes (`align` is `renamed -> textjustification`).
+
+  *Open questions.* Diff maxref attribute names against the actual JSON keys in
+  the `tests/` `.maxpat` fixtures before trusting the mapping. Keep a permissive
+  escape hatch for unknown keys -- a closed `BoxProps` would reject
+  round-tripping any patch containing properties newer than our vocabulary,
+  which `Patcher.from_dict` must continue to accept.
+
 ### Database Improvements
 
 - [ ] Add schema versioning for SQLite (enables migrations)
@@ -108,6 +152,47 @@ Deferred; each is a sizeable, self-contained effort.
 - [ ] **gen~/RNBO codebox DSL** -- a small DSP-graph DSL that emits `codebox`
   text, turning py2max into a code-generation backend (`add_gen`/`add_codebox`/`add_rnbo` already exist as targets).
 - [ ] **Declarative patch DSL / YAML recipes** -- see "Recipe-driven scaffolding" above.
+- [ ] **Experimental TypeScript core (spike, not a port)** -- evaluate a TS
+  implementation of the patch format and object model only.
+
+  *Motivation.* `.maxpat` is JSON, but the Python model reaches it by
+  reflection and is largely unchecked: `Box.__init__` (`core/box.py:36`) declares
+  five parameters and funnels the entire Max property vocabulary
+  (`presentation_rect`, `bgcolor`, `varname`, `saved_attribute_attributes`, ...)
+  through `**kwds: Any`; `to_dict` is `vars(self)` minus underscore keys
+  (`core/serialization.py:26`); `_remove_none_entries` exists only because Max
+  distinguishes absent keys from null ones (its own `TODO: make recursive` is a
+  symptom). A TS interface with optional fields describes the same JSON at zero
+  cost -- omitted optionals are absent, `JSON.stringify` drops `undefined`, and
+  `tsc` catches a misspelled property that today ships silently into the file.
+  Discriminated unions on `maxclass` add exhaustiveness checking; `as const` on
+  the maxref tables replaces `Dict[str, Any]`.
+
+  *The real differentiator is not the type system.* Max embeds JavaScript (the
+  `v8` object, and Node for Max via `node.script`), so a TS core is the only
+  option that runs both offline as a generator and inside a patch at runtime,
+  sharing one set of format types. If in-patch runtime manipulation ever enters
+  scope, this stops being a spike and becomes the main argument. Confirm the
+  Max version requirements for `v8`/`node.script` in the Cycling '74 docs first.
+
+  *Spike scope.* Format types + `Box`/`Patcher`/`Patchline` + JSON round-trip,
+  validated against the existing `.maxpat` fixtures in `tests/`. Explicitly out
+  of scope: layout, maxref, db, cli, svg.
+
+  *Decision gate.* The spike must beat "Typed box properties" under High
+  Priority, which closes the same silent-failure mode inside Python for a few
+  hundred annotations, mostly generated from the maxref bundle. Kill the spike
+  unless it demonstrates something that cannot reach. (Note that mypy strict
+  already runs -- the gap TS would close is `Any`, not laxness.)
+
+  *Costs, stated up front.* Conciseness is not the payoff: of ~12k lines, the
+  serialization/model layer TS would shrink is a few hundred; layout, XML
+  parsing, sqlite, and cli are at par or longer. Node has no stdlib XML parser
+  and `node:sqlite` is recent, so the "zero runtime dependencies" property does
+  not survive a full port of `maxref/`. The library's users are already in
+  Python (music21, librosa, numpy, mido) and the graph-layout dependencies
+  (networkx, pygraphviz) have no equal in JS -- so any TS core stays a second
+  front end to the format, never a replacement for the Python api.
 
 ### Code-quality polish (low value)
 

@@ -1,11 +1,14 @@
 """Shared pytest fixtures for the py2max test suite."""
 
+import logging
 import os
 import re
 import shutil
 from pathlib import Path
 
 import pytest
+
+from py2max.log import LOGGER_NAME
 
 # Persistent, git-ignored location for artifacts written by tests via relative
 # paths (e.g. ``outputs/foo.maxpat``). Anchored at the repo root so it is stable
@@ -19,9 +22,29 @@ import pytest
 #                   (later writers overwrite earlier same-named files).
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _FLAT_OUTPUT = bool(os.environ.get("PY2MAX_TEST_OUTPUT_FLAT"))
-TEST_OUTPUT_ROOT = _REPO_ROOT / "build" / (
-    "test-outputs" if _FLAT_OUTPUT else "test-output"
+TEST_OUTPUT_ROOT = (
+    _REPO_ROOT / "build" / ("test-outputs" if _FLAT_OUTPUT else "test-output")
 )
+
+
+@pytest.fixture(autouse=True)
+def _isolate_py2max_logger():
+    """Restore the ``py2max`` logger after each test.
+
+    ``setup_logging()`` mutates a process-global logger, so any test that calls it
+    -- directly or via ``cli.main()`` -- would otherwise leak handlers and level
+    into every test that runs afterwards. That once cost the suite a false
+    failure: a CLI test's logging config made ``caplog`` blind to py2max records
+    in a later lint test, which passed alone and failed in the full run.
+    """
+    logger = logging.getLogger(LOGGER_NAME)
+    saved = (list(logger.handlers), logger.level, logger.propagate)
+    try:
+        yield
+    finally:
+        logger.handlers[:] = saved[0]
+        logger.setLevel(saved[1])
+        logger.propagate = saved[2]
 
 
 @pytest.fixture(scope="session", autouse=True)

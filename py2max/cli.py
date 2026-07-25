@@ -19,6 +19,7 @@ from .core import Patcher
 from .core.common import Rect
 from .exceptions import Py2MaxError
 from .export import export_svg
+from .log import setup_logging
 from .export.converters import maxpat_to_python, maxref_to_sqlite
 from .maxref import MaxRefCache, MaxRefDB
 from .transformers import available_transformers, create_transformer, run_pipeline
@@ -746,6 +747,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="py2max", description="Utilities for working with Max patchers."
     )
+    # The library no longer configures logging on import, so the CLI -- an
+    # application, not a library -- opts in explicitly in main().
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase log verbosity (-v for INFO, -vv for DEBUG)",
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Suppress log output entirely"
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     new_parser = subparsers.add_parser("new", help="Create a new patcher file")
@@ -1034,6 +1047,10 @@ def main(argv: List[str] | None = None) -> int:
     """CLI entry point: parse ``argv`` and dispatch to the subcommand handler."""
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if not args.quiet:
+        levels = {0: "WARNING", 1: "INFO"}
+        setup_logging(levels.get(args.verbose, "DEBUG"))
 
     if not hasattr(args, "func"):
         parser.print_help()

@@ -1002,8 +1002,15 @@ class BoxFactoryMixin(AbstractPatcher):
                 id=id or self.get_id(obj_name),
                 text=text,
                 maxclass=maxclass or "newobj",
-                numinlets=numinlets or 1,
-                numoutlets=numoutlets or 0,
+                # Stated explicitly rather than relying on `Box.__init__` to
+                # promote a falsy 0 to 1, which is what the old `numoutlets or 0`
+                # actually did. A freshly created subpatcher has no `inlet` /
+                # `outlet` objects yet, so one of each is the useful starting
+                # point; `Box.render` replaces these with the real counts once
+                # the nested patcher has ports to count. This path also serves
+                # `add_gen`/`add_rnbo`, whose boxes must keep their outlet.
+                numinlets=numinlets if numinlets is not None else 1,
+                numoutlets=numoutlets if numoutlets is not None else 1,
                 outlettype=outlettype or [""],
                 patching_rect=patching_rect or self.get_pos(),
                 patcher=patcher or Patcher(parent=self),

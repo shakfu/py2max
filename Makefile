@@ -3,7 +3,8 @@
 
 .PHONY: help all build test test-verbose test-outputs coverage lint \
 		typecheck qa docs docs-clean docs-serve docs-deploy install \
-		dev clean reset ci format check-wheel publish-test publish
+		dev clean reset ci format check-wheel publish-test publish \
+		gallery single-file
 
 help: ## Show this help message
 	@echo "Available commands:"
@@ -53,6 +54,10 @@ docs-deploy: ## Build and deploy docs to GitHub Pages (gh-pages branch)
 
 gallery: ## Regenerate graph-layout gallery images (docs/assets/imgs)
 	@uv run --extra graph python scripts/gen_layout_gallery.py
+
+single-file: ## Regenerate the single-file edition (scripts/py2max.py)
+	@uv run python scripts/build_single_file.py
+	@uv run pytest tests/test_single_file.py -q
 
 install: ## Install package in development mode
 	@uv sync
