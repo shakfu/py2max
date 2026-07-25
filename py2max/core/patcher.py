@@ -23,7 +23,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Set,
     Tuple,
     Union,
     cast,
@@ -657,30 +656,24 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             return self._layout_mgr.get_pos(maxclass)
         return self._layout_mgr.get_pos()
 
-    def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
-        """Optimize object positions based on layout manager type.
+    def optimize_layout(self) -> None:
+        """Arrange the whole patch based on the active layout manager.
 
-        Calls the layout manager's optimization method to improve object
-        positioning, then repositions any associated comments based on
-        the new box positions. The effect depends on the layout manager:
+        Calls the layout manager to lay out every object, then repositions any
+        associated comments based on the new box positions. The effect depends
+        on the layout manager:
 
         - FlowLayoutManager: Arranges objects by signal flow topology
         - GridLayoutManager: Clusters connected objects together
         - Other managers: May have limited or no effect
 
-        This method should be called after all objects and connections
-        have been added to the patch.
-
-        Args:
-            changed_objects: Optional set of object IDs that have changed. When
-                provided and small relative to the total, managers that support
-                it reposition only those objects and their neighbours
-                (incremental layout) instead of recomputing the whole patch;
-                when ``None`` a full layout is performed. Managers that do not
-                implement incremental layout ignore the argument.
+        This is a batch, whole-patch operation intended to be called once after
+        all objects and connections have been added. Interactive, per-edit
+        relayout is out of scope for py2max (see ``docs/auto-layout.md`` in
+        py2max-server).
         """
         if hasattr(self._layout_mgr, "optimize_layout"):
-            self._layout_mgr.optimize_layout(changed_objects)
+            self._layout_mgr.optimize_layout()
 
         # Dock value/UI params next to the object they drive (opt-in).
         if self._param_placement and hasattr(self._layout_mgr, "place_params"):

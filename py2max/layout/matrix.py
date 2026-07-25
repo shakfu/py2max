@@ -3,7 +3,7 @@
 This module provides MatrixLayoutManager for matrix and columnar-based layouts.
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from py2max.core.abstract import AbstractBox, AbstractPatcher
 from py2max.core.common import Rect
@@ -272,12 +272,11 @@ class MatrixLayoutManager(LayoutManager):
 
         return Rect(x, y, w, h)
 
-    def optimize_layout(self, changed_objects: Optional[Set[str]] = None) -> None:
-        """Optimize the layout based on flow_direction setting.
+    def _full_layout(self) -> None:
+        """Arrange objects based on the ``flow_direction`` setting.
 
-        ``changed_objects`` is accepted for interface compatibility with
-        ``LayoutManager`` but ignored: the matrix layout always recomputes the
-        full arrangement from the signal-chain analysis.
+        The matrix layout always recomputes the full arrangement from the
+        signal-chain analysis.
         """
         if len(self.parent._objects) < 1:
             return

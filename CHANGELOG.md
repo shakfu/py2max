@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.3.6]
+
+### Removed: incremental layout; `optimize_layout()` is batch-only again
+
+- `Patcher.optimize_layout()` no longer takes the `changed_objects` parameter added in 0.3.5 -- it takes no arguments and always performs a full, whole-patch layout. The incremental machinery in the layout managers was removed with it: `LayoutManager.should_use_incremental`, `get_affected_objects`, `get_connected_objects`, `_incremental_layout`, `_find_non_overlapping_position`, and the `INCREMENTAL_THRESHOLD` constant (`layout/base.py`); the `optimize_layout(changed_objects)` overrides in `layout/grid.py` and `layout/flow.py` (they now implement `_full_layout` and inherit the batch entry point, with flow's `<2 objects` guard moved into `_full_layout`); and `layout/matrix.py`'s override (now `_full_layout`, with `ColumnarLayoutManager` inheriting it).
+- **Rationale (scope split):** py2max owns *batch* layout -- arranging a whole patch once, typically at the end of programmatic creation. Interactive, per-edit ("live") relayout belongs to the editor that owns the editing session (`py2max-server`), which handles it client-side. The incremental path existed only to serve that live case and was never exercised by a batch caller (batch `optimize_layout()` always passed `changed_objects=None`), so it was dead weight in the library. This reverses the 0.3.5 change, which had added the parameter as a prerequisite for a server-side auto-layout approach that was subsequently dropped.
+- **Breaking:** calling `optimize_layout()` with an argument (e.g. `optimize_layout({obj.id})`) now raises `TypeError`; drop the argument. The `test_optimize_layout_forwards_changed_objects` / `..._incremental_leaves_untouched_objects_fixed` regression tests were replaced by `test_optimize_layout_is_batch_only`.
+
 ## [0.3.5]
 
 ### Fixed: `Patcher.optimize_layout()` now reaches the incremental layout path
