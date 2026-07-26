@@ -1,0 +1,4 @@
+{
+  "//": "Marks the built artifacts as CommonJS. Max's v8 does not read this -- it is here so Node-based tooling does not treat them as ES modules because of the parent package.json.",
+  "type": "commonjs"
+}

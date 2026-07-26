@@ -147,6 +147,12 @@ AGENTS.md
 # pyscn
 .pyscn/
 
-# ts spike (see ts/README.md)
-ts/node_modules/
-ts/.tmp-typecheck/
+# js2max (see js2max/README.md). js2max/max/ is deliberately NOT ignored: the
+# bundled artifacts are what a Max user loads, so they ship the same way
+# scripts/py2max.py does.
+js2max/node_modules/
+js2max/.tmp-typecheck/
+# stray output from the harness's `write` message
+js2max/max/*-out.maxpat
+js2max/max/*-write-test.maxpat
+.DS_Store

@@ -3,7 +3,7 @@
 .PHONY: help all build test test-verbose test-outputs coverage lint \
 		typecheck qa docs docs-clean docs-serve docs-deploy install \
 		dev clean reset ci format check-wheel publish-test publish \
-		gallery single-file ts-check box-props
+		gallery single-file js2max js2max-check box-props
 
 help: ## Show this help message
 	@echo "Available commands:"
@@ -100,5 +100,12 @@ box-props: ## Regenerate the typed box-property vocabulary (py2max/core/props.py
 	@uv run mypy py2max
 	@uv run pytest tests/test_box_props.py -q
 
-ts-check: ## Typecheck and test the experimental TS core spike (ts/, needs bun)
-	@cd ts && bun install --silent && bun run check
+js2max: ## Build the Max-loadable js2max artifacts into js2max/max/ (needs bun)
+	@uv run python scripts/gen_js2max_objects.py
+	@cd js2max && bun install --silent && bun run build
+	@uv run python scripts/gen_v8_harness.py
+
+js2max-check: ## Typecheck, test and verify js2max is built (needs bun)
+	@uv run python scripts/gen_js2max_objects.py --check
+	@cd js2max && bun install --silent && bun run check
+	@uv run python scripts/gen_v8_harness.py --check

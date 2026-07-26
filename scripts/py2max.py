@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.3.6, generated from 455f575 (working tree modified)
+py2max 0.3.6, generated from bded55c (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
@@ -5858,6 +5858,12 @@ class BoxFactoryMixin(AbstractPatcher):
                 id=id or self.get_id("comment"),
                 text=text,
                 maxclass="comment",
+                # Stated rather than left to Box.__init__'s defaults, which are
+                # the wrong way round here: a comment takes a `set` message and
+                # emits nothing. Confirmed against a patch Max itself saved,
+                # which rewrote py2max's 0-in/1-out to 1-in/0-out.
+                numinlets=1,
+                numoutlets=0,
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds,
             )

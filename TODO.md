@@ -203,21 +203,99 @@ Deferred; each is a sizeable, self-contained effort.
 - [ ] **gen~/RNBO codebox DSL** -- a small DSP-graph DSL that emits `codebox`
   text, turning py2max into a code-generation backend (`add_gen`/`add_codebox`/`add_rnbo` already exist as targets).
 - [ ] **Declarative patch DSL / YAML recipes** -- see "Recipe-driven scaffolding" above.
-- [x] **Experimental TypeScript core (spike, not a port)** -- BUILT AND CLOSED.
-  Lives in `ts/` (868 lines, 32 passing tests); `ts/README.md` is the write-up.
+- [x] **TypeScript core** -- REOPENED AND BUILT OUT. Lives in `js2max/`;
+  `js2max/README.md` is the guide.
 
-  **Outcome: killed by its own decision gate.** The type-system benefits are real
-  and were measured, not argued -- `tsc` rejects a misspelled property, a wrong
-  value type, a bad tuple arity, a missing structural key and a non-exhaustive
-  maxclass switch, all of which the Python package currently emits straight into
-  the `.maxpat` (`validate_attrs=True` warns about unknown *names* but says
-  nothing about types, and `mypy --strict` catches neither, because `Any` is
-  strict-legal). But the `TypedDict`/`Unpack` prototype catches every one of the
-  same cases under the mypy the project already runs, so nothing here is out of
-  Python's reach. Do "Typed box properties" above instead.
-  Reopen only on the in-Max runtime argument (`v8` / `node.script`), which this
-  spike did not test and which remains unverified against the Cycling '74 docs.
-  Retain `ts/` as the evidence, not as a foundation.
+  The spike was closed as "killed by its own gate": every type-system benefit it
+  showed was reachable in Python with `TypedDict`/`Unpack`, which is now done.
+  Its stated reopening condition was the in-Max runtime argument -- and `v8`
+  ships in current Max, so that condition is met. The core now builds patches
+  *live inside a patcher*, which is the one thing the Python package cannot do.
+
+  Shipped: `src/scripting.ts` (a patch description becomes live Max objects via
+  `newdefault`/`connect`), `src/max.d.ts` (the `v8` host API with per-item
+  provenance), two bundled artifacts in `js2max/max/` (IIFE drop-in and a
+  `require()`-able CommonJS library), and `js2max/max/v8-harness.maxpat`, generated
+  by py2max itself. 49 tests; `make js2max` builds, `make js2max-check` verifies.
+
+  **Partly verified in Max.** The harness run confirmed `this`-binding inside
+  the bundled scope, `newdefault`, `connect`, the rect conversion and `outlet`,
+  and turned up a real bug: `clear` deleted the `[v8]` box running the script,
+  leaving execution on a freed object (`bad object` / `corrupt object` on the
+  next `post`). Fixed -- `clear` now undoes only the last build, `clearall` is
+  the separately named destructive option, and neither can delete the host box.
+
+- [x] **js2max `.maxpat` file I/O.** DONE -- `src/fileio.ts` wraps Max's `File`
+  class; `readPatch` / `writePatch` and the `read` / `write` messages. Untested
+  in Max. The one assumption to check there: `eof = 0` to truncate. The
+  reference documents the `eof` setter as *extending* a file, so shrinking is
+  inferred; if it does not shrink, writing a shorter patch over a longer one
+  leaves trailing bytes and produces invalid JSON.
+
+- [ ] Rename `toFile()` -- it returns the document object, not a file, which is
+  actively confusing now that real file I/O exists beside it.
+
+- [x] **Serializing a live patcher.** DONE -- `src/serialize.ts`, reached by the
+  `write <path>` message. The earlier "impossible" verdict was wrong twice over:
+  it read object attributes where box attributes were needed, and it predated
+  finding `Maxobj.boxtext`. `getboxattr` / `getboxattrnames` / `boxtext` cover
+  every field a box needs.
+
+- [x] **Probe Max and rebuild `serialize` on the result.** DONE. `getboxattr`
+  returns null for `maxclass`, `numinlets`, `numoutlets` and `text` -- none are
+  box attributes. `Maxobj.boxtext` works; `Maxobj.maxclass` is the object class.
+  The static half now comes from `js2max/src/objects.ts`, generated from py2max.
+
+- [x] **Recover object-level state via `getattr`.** DONE as `write <path> full`,
+  and probed in Max. `getattrnames()` exists; for a UI box it duplicates
+  `getboxattrnames()` exactly, so only the difference is read. `filename`,
+  `textfile` and `linecount` are **not** recoverable -- absent from
+  `getattrnames()`, and asking for `textfile` anyway returns an unwrappable Max
+  object. They are Max's save-time bookkeeping.
+
+- [ ] **Colours are still all-or-nothing** -- for `serialize` only; `save` is
+  unaffected, since it never reads anything back. `bgcolor` / `textcolor` are out of
+  the default attribute set, so a deliberately coloured box loses its colour on
+  a round trip; `allAttributes` recovers it at the cost of writing Max's
+  defaults everywhere. The font fix works because a patcher records
+  `default_fontsize`; there is no `default_bgcolor` to compare against, so this
+  needs a different discriminator -- possibly reading a freshly created object
+  of the same class, which is precise but creates and destroys objects in the
+  user's patch.
+
+- [ ] **Check whether the unrecoverable keys matter.** `filename` / `textfile`
+  are redundant with `text` on a `[v8]` box and `linecount` is display state Max
+  recomputes, so a written patch may reopen perfectly without them. Open one and
+  find out; if it does, nothing further is needed here.
+
+- [ ] **Open a written patch in Max.** `serialize` produces boxes matching
+  py2max's own output for the same objects, but no file it wrote has been opened
+  yet. Send `write out.maxpat` in the harness and open the result.
+
+- [ ] `js2max/src/objects.ts` adds ~45 KB, taking the bundle from 20 KB to
+  67 KB. Acceptable for a Max artifact, but if it matters: only the 43
+  own-maxclass entries are needed for correctness, since port counts can be
+  omitted. Consider splitting the table so `serialize` can be used without it.
+
+- [ ] **Use more of the Max JS API rather than hand-rolling.** The bridge
+  currently walks `firstobject`/`nextobject` where `applydeep` / `applyif` /
+  `getlogical` exist, and ignores `MaxobjListener`, `Dict`, `Task` and `File`
+  entirely. Check the [API reference](https://docs.cycling74.com/apiref/js/)
+  before adding to `scripting.ts` -- one wrong assumption about it (that
+  patchlines could not be enumerated) already cost a feature.
+
+- [ ] **Finish verifying the v8 bridge in Max.** Still unexercised by the
+  harness: `message("set", ...)` on a `newdefault`-created message box, whether
+  `newdefault` returns null or throws for an unknown class, `build <json>`,
+  subpatcher recursion, and `snapshotBoxes`. Extend the harness to cover them --
+  a message box and a deliberately bogus object class would settle the first
+  two, which are the assumptions the rest of the bridge rests on.
+
+- [ ] **Decide whether Python should emit v8 scripts.** Now that `v8` is a
+  target, the alternative to a TS core is codegen: py2max writes the patch *and*
+  the script inside it, the way `add_gen_codebox` already emits gen~ code. That
+  needs no second language and keeps one implementation. Worth settling before
+  the TS core grows further, since the two answers pull in opposite directions.
 
   The original rationale is kept below for the record.
 

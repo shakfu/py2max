@@ -1,5 +1,5 @@
 /**
- * py2max TypeScript core -- experimental spike.
+ * js2max -- the TypeScript counterpart to py2max.
  *
  * Scope: the `.maxpat` format as types, plus a minimal Box/Patcher/Patchline
  * model and JSON round-trip. Out of scope by design: layout managers, maxref,

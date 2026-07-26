@@ -763,6 +763,12 @@ class BoxFactoryMixin(AbstractPatcher):
                 id=id or self.get_id("comment"),
                 text=text,
                 maxclass="comment",
+                # Stated rather than left to Box.__init__'s defaults, which are
+                # the wrong way round here: a comment takes a `set` message and
+                # emits nothing. Confirmed against a patch Max itself saved,
+                # which rewrote py2max's 0-in/1-out to 1-in/0-out.
+                numinlets=1,
+                numoutlets=0,
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds,
             )
