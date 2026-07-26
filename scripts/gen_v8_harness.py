@@ -8,11 +8,16 @@ Two, because they answer different questions:
     something resembling it -- a fair round-trip check, but you cannot tell a
     real serialization from a file copy by looking at it.
 
-``write-demo.maxpat``
-    Writing a patch from code. ``save`` emits a nine-object instrument straight
-    to disk, creating nothing in the patcher -- the direct route, and an exact
-    one. Below it, ``synth`` + ``write ... built`` shows the other direction,
-    for when live objects are the source of truth.
+``save-demo.maxpat``
+    The exact route out: ``save`` (the message) and ``writePatch`` (the library
+    call, via ``save-example.js``). A description is written straight to disk
+    and no objects are created.
+
+``serialize-demo.maxpat``
+    The lossy route out, for when the objects in a patcher are the source of
+    truth: ``write`` (the message) and ``serialize`` (the library call, via
+    ``serialize-example.js``). The patch contains a small instrument placed by
+    hand, which is what gets captured.
 
 The TypeScript bridge is unit-tested against a mock host, which proves the
 mapping from a patch description to `newdefault`/`connect` calls. It cannot
@@ -44,7 +49,8 @@ from py2max.core.common import Rect  # noqa: E402
 
 OUT_DIR = ROOT / "js2max" / "max"
 HARNESS = OUT_DIR / "v8-harness.maxpat"
-WRITE_DEMO = OUT_DIR / "write-demo.maxpat"
+SAVE_DEMO = OUT_DIR / "save-demo.maxpat"
+SERIALIZE_DEMO = OUT_DIR / "serialize-demo.maxpat"
 
 # The bundle sits beside this patch, so `v8` finds it without a search path
 # entry. Keep the two in the same directory.
@@ -119,61 +125,141 @@ def build(path: Path) -> Patcher:
     return p
 
 
-def build_write_demo(path: Path) -> Patcher:
-    """The export demo: a description written straight to disk."""
+def build_save_demo(path: Path) -> Patcher:
+    """`save` and `writePatch`: a description written straight to disk."""
     p = Patcher(str(path))
-    p.rect = Rect(85.0, 104.0, 560.0, 520.0)
+    p.rect = Rect(85.0, 104.0, 580.0, 470.0)
 
     p.add_comment(
-        "js2max -- writing a patch from code",
+        "js2max -- save / writePatch",
         patching_rect=Rect(24, 20, 460, 24),
         fontsize=14.0,
     )
     p.add_comment(
-        "'save' writes a nine-object instrument straight to disk. No objects "
-        "are created here, nothing to tidy up afterwards, and the file is exact "
-        "-- a description already IS a .maxpat, so nothing has to be read back "
-        "out of Max. Open js2max-demo-out.maxpat, toggle it on, raise the float.",
-        patching_rect=Rect(24, 44, 460, 76),
-    )
-
-    save = p.add_message(
-        "save js2max-demo-out.maxpat", patching_rect=Rect(24, 132, 200, 22)
+        "The exact route out. A description is already the shape of a .maxpat, "
+        "so writing it needs no accessor, no default to guess at and no live "
+        "patcher -- nothing is created here, and nothing is lost. This is the "
+        "normal way to write a patch from code.",
+        patching_rect=Rect(24, 44, 500, 62),
     )
 
     p.add_comment(
-        "The other direction, for capturing a patcher someone edited by hand: "
-        "'synth' builds the same instrument into THIS patch, and 'write ... "
-        "built' serializes those live objects back out. Use it when the objects "
-        "are the source of truth; otherwise prefer 'save', which cannot lose "
-        "anything.",
-        patching_rect=Rect(24, 180, 460, 76),
+        "As a message, to the shipped script:",
+        patching_rect=Rect(24, 116, 300, 20),
     )
-
-    synth = p.add_message("synth", patching_rect=Rect(24, 268, 50, 22))
-    write = p.add_message(
-        "write js2max-live-out.maxpat built",
-        patching_rect=Rect(84, 268, 220, 22),
+    save = p.add_message(
+        "save js2max-demo-out.maxpat", patching_rect=Rect(24, 138, 200, 22)
     )
-    clear = p.add_message("clear", patching_rect=Rect(314, 268, 48, 22))
-
     v8 = p.add_textbox(
         f"v8 {BUNDLE}",
-        patching_rect=Rect(24, 312, 200, 22),
+        patching_rect=Rect(24, 174, 200, 22),
         numinlets=1,
         numoutlets=1,
         outlettype=[""],
     )
+
+    p.add_comment(
+        "Or from your own script -- open save-example.js to read it:",
+        patching_rect=Rect(24, 218, 400, 20),
+    )
+    go = p.add_message("bang", patching_rect=Rect(24, 240, 42, 22))
+    verify = p.add_message("verify", patching_rect=Rect(76, 240, 52, 22))
+    example = p.add_textbox(
+        "v8 save-example.js",
+        patching_rect=Rect(24, 276, 180, 22),
+        numinlets=1,
+        numoutlets=1,
+        outlettype=[""],
+    )
+
     printer = p.add_textbox(
         "print js2max",
-        patching_rect=Rect(24, 352, 90, 22),
+        patching_rect=Rect(24, 320, 90, 22),
         numinlets=1,
         numoutlets=0,
     )
 
-    for source in (save, synth, write, clear):
-        p.add_line(source, v8)
+    p.add_line(save, v8)
     p.add_line(v8, printer)
+    for source in (go, verify):
+        p.add_line(source, example)
+    p.add_line(example, printer)
+    return p
+
+
+def build_serialize_demo(path: Path) -> Patcher:
+    """`write` and `serialize`: a live patcher read back out."""
+    p = Patcher(str(path))
+    p.rect = Rect(85.0, 104.0, 580.0, 560.0)
+
+    p.add_comment(
+        "js2max -- write / serialize",
+        patching_rect=Rect(24, 20, 460, 24),
+        fontsize=14.0,
+    )
+    p.add_comment(
+        "The lossy route out, for when the objects ARE the source of truth -- "
+        "someone placed them by hand. Every field has to be rebuilt from what "
+        "the JS API exposes, so a font equal to the patcher default cannot be "
+        "told from an unset one, port counts maxref does not state are omitted, "
+        "and linecount / filename / textfile have no accessor at all. Prefer "
+        "save when you are exporting something you described in code.",
+        patching_rect=Rect(24, 44, 500, 90),
+    )
+
+    # Something worth capturing: a small chain placed here, not built by script.
+    osc = p.add_textbox("cycle~ 330", patching_rect=Rect(320, 150, 76, 22))
+    amp = p.add_textbox("*~ 0.15", patching_rect=Rect(320, 186, 62, 22))
+    dac = p.add_textbox("ezdac~", patching_rect=Rect(320, 222, 45, 45))
+    p.add_line(osc, amp)
+    p.add_line(amp, dac, inlet=0)
+    p.add_line(amp, dac, inlet=1)
+    p.add_comment(
+        "<- this is what gets captured",
+        patching_rect=Rect(320, 276, 200, 20),
+    )
+
+    p.add_comment(
+        "As a message, to the shipped script:",
+        patching_rect=Rect(24, 146, 300, 20),
+    )
+    write = p.add_message(
+        "write js2max-live-out.maxpat", patching_rect=Rect(24, 168, 210, 22)
+    )
+    v8 = p.add_textbox(
+        f"v8 {BUNDLE}",
+        patching_rect=Rect(24, 204, 200, 22),
+        numinlets=1,
+        numoutlets=1,
+        outlettype=[""],
+    )
+
+    p.add_comment(
+        "Or from your own script -- open serialize-example.js:",
+        patching_rect=Rect(24, 248, 400, 20),
+    )
+    go = p.add_message("bang", patching_rect=Rect(24, 270, 42, 22))
+    inspect = p.add_message("inspect", patching_rect=Rect(76, 270, 58, 22))
+    example = p.add_textbox(
+        "v8 serialize-example.js",
+        patching_rect=Rect(24, 306, 200, 22),
+        numinlets=1,
+        numoutlets=1,
+        outlettype=[""],
+    )
+
+    printer = p.add_textbox(
+        "print js2max",
+        patching_rect=Rect(24, 350, 90, 22),
+        numinlets=1,
+        numoutlets=0,
+    )
+
+    p.add_line(write, v8)
+    p.add_line(v8, printer)
+    for source in (go, inspect):
+        p.add_line(source, example)
+    p.add_line(example, printer)
     return p
 
 
@@ -190,7 +276,8 @@ def main() -> int:
 
     patches = [
         (HARNESS, build(HARNESS).to_json()),
-        (WRITE_DEMO, build_write_demo(WRITE_DEMO).to_json()),
+        (SAVE_DEMO, build_save_demo(SAVE_DEMO).to_json()),
+        (SERIALIZE_DEMO, build_serialize_demo(SERIALIZE_DEMO).to_json()),
     ]
 
     if args.check:
