@@ -14,10 +14,11 @@ Two, because they answer different questions:
     and no objects are created.
 
 ``serialize-demo.maxpat``
-    The lossy route out, for when the objects in a patcher are the source of
-    truth: ``write`` (the message) and ``serialize`` (the library call, via
-    ``serialize-example.js``). The patch contains a small instrument placed by
-    hand, which is what gets captured.
+    Reading a live patcher back as *data*. Saving the result is a worse ``cp``,
+    so the demo filters instead: ``extract`` pulls the signal chain out of a
+    mixed patch and writes it as its own file, which no copy could produce.
+    ``serialize-example.js`` adds two more things data allows and a copy does
+    not -- reporting what is unconnected, and rewriting the layout in place.
 
 The TypeScript bridge is unit-tested against a mock host, which proves the
 mapping from a patch description to `newdefault`/`connect` calls. It cannot
@@ -188,9 +189,9 @@ def build_save_demo(path: Path) -> Patcher:
 
 
 def build_serialize_demo(path: Path) -> Patcher:
-    """`write` and `serialize`: a live patcher read back out."""
+    """`write` and `serialize`: a live patcher read back as data, then filtered."""
     p = Patcher(str(path))
-    p.rect = Rect(85.0, 104.0, 580.0, 560.0)
+    p.rect = Rect(85.0, 104.0, 640.0, 600.0)
 
     p.add_comment(
         "js2max -- write / serialize",
@@ -198,37 +199,58 @@ def build_serialize_demo(path: Path) -> Patcher:
         fontsize=14.0,
     )
     p.add_comment(
-        "The lossy route out, for when the objects ARE the source of truth -- "
-        "someone placed them by hand. Every field has to be rebuilt from what "
-        "the JS API exposes, so a font equal to the patcher default cannot be "
-        "told from an unset one, port counts maxref does not state are omitted, "
-        "and linecount / filename / textfile have no accessor at all. Prefer "
-        "save when you are exporting something you described in code.",
-        patching_rect=Rect(24, 44, 500, 90),
+        "Serializing a whole patcher and saving it is a worse 'cp' -- a file "
+        "copy is exact and this is not. The point is getting the patch as DATA. "
+        "Once you have that you can filter it, measure it or rewrite it, and "
+        "end up with something no copy could produce.",
+        patching_rect=Rect(24, 44, 560, 62),
     )
 
-    # Something worth capturing: a small chain placed here, not built by script.
-    osc = p.add_textbox("cycle~ 330", patching_rect=Rect(320, 150, 76, 22))
-    amp = p.add_textbox("*~ 0.15", patching_rect=Rect(320, 186, 62, 22))
-    dac = p.add_textbox("ezdac~", patching_rect=Rect(320, 222, 45, 45))
+    # A mixed patch: control objects and a signal chain, so there is something
+    # to separate. Placed here by hand, not built by script -- which is the
+    # situation reading a live patcher is actually for.
+    tog = p.add_textbox("toggle", patching_rect=Rect(380, 150, 24, 24))
+    metro = p.add_textbox("metro 500", patching_rect=Rect(380, 186, 76, 22))
+    rand = p.add_textbox("random 24", patching_rect=Rect(380, 222, 76, 22))
+    plus = p.add_textbox("+ 48", patching_rect=Rect(380, 258, 48, 22))
+    tomf = p.add_textbox("mtof", patching_rect=Rect(380, 294, 45, 22))
+    osc = p.add_textbox("cycle~", patching_rect=Rect(380, 330, 60, 22))
+    amp = p.add_textbox("*~ 0.15", patching_rect=Rect(380, 366, 62, 22))
+    dac = p.add_textbox("ezdac~", patching_rect=Rect(380, 402, 45, 45))
+
+    p.add_line(tog, metro)
+    p.add_line(metro, rand)
+    p.add_line(rand, plus)
+    p.add_line(plus, tomf)
+    p.add_line(tomf, osc)
     p.add_line(osc, amp)
     p.add_line(amp, dac, inlet=0)
     p.add_line(amp, dac, inlet=1)
+
     p.add_comment(
-        "<- this is what gets captured",
-        patching_rect=Rect(320, 276, 200, 20),
+        "Five control objects and three signal ones, mixed. 'extract' pulls "
+        "out just the signal chain.",
+        patching_rect=Rect(380, 460, 220, 48),
     )
 
     p.add_comment(
         "As a message, to the shipped script:",
-        patching_rect=Rect(24, 146, 300, 20),
+        patching_rect=Rect(24, 118, 320, 20),
+    )
+    extract = p.add_message(
+        "extract js2max-signal-chain.maxpat", patching_rect=Rect(24, 140, 230, 22)
     )
     write = p.add_message(
-        "write js2max-live-out.maxpat", patching_rect=Rect(24, 168, 210, 22)
+        "write js2max-whole-patcher.maxpat", patching_rect=Rect(24, 176, 225, 22)
+    )
+    p.add_comment(
+        "^ the pointless one: a lossy copy of this file. Kept so you can "
+        "compare it with the extraction above.",
+        patching_rect=Rect(24, 202, 320, 34),
     )
     v8 = p.add_textbox(
         f"v8 {BUNDLE}",
-        patching_rect=Rect(24, 204, 200, 22),
+        patching_rect=Rect(24, 244, 200, 22),
         numinlets=1,
         numoutlets=1,
         outlettype=[""],
@@ -236,13 +258,14 @@ def build_serialize_demo(path: Path) -> Patcher:
 
     p.add_comment(
         "Or from your own script -- open serialize-example.js:",
-        patching_rect=Rect(24, 248, 400, 20),
+        patching_rect=Rect(24, 288, 400, 20),
     )
-    go = p.add_message("bang", patching_rect=Rect(24, 270, 42, 22))
-    inspect = p.add_message("inspect", patching_rect=Rect(76, 270, 58, 22))
+    go = p.add_message("bang", patching_rect=Rect(24, 310, 42, 22))
+    report = p.add_message("report", patching_rect=Rect(76, 310, 56, 22))
+    tidy = p.add_message("spread", patching_rect=Rect(142, 310, 56, 22))
     example = p.add_textbox(
         "v8 serialize-example.js",
-        patching_rect=Rect(24, 306, 200, 22),
+        patching_rect=Rect(24, 346, 200, 22),
         numinlets=1,
         numoutlets=1,
         outlettype=[""],
@@ -250,14 +273,15 @@ def build_serialize_demo(path: Path) -> Patcher:
 
     printer = p.add_textbox(
         "print js2max",
-        patching_rect=Rect(24, 350, 90, 22),
+        patching_rect=Rect(24, 390, 90, 22),
         numinlets=1,
         numoutlets=0,
     )
 
-    p.add_line(write, v8)
+    for source in (extract, write):
+        p.add_line(source, v8)
     p.add_line(v8, printer)
-    for source in (go, inspect):
+    for source in (go, report, tidy):
         p.add_line(source, example)
     p.add_line(example, printer)
     return p

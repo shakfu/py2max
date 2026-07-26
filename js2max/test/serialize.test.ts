@@ -14,6 +14,7 @@ import { Patcher } from "../src/model.ts";
 import { instantiate } from "../src/scripting.ts";
 import { synthPatch } from "../src/demo.ts";
 import { MockPatcher, asHost } from "./mockhost.ts";
+import type { MockMaxobj } from "./mockhost.ts";
 
 function built(patch: (p: Patcher) => void): MockPatcher {
   const p = new Patcher();
@@ -524,5 +525,53 @@ describe("a description written directly beats one round-tripped", () => {
       expect(entry.box).toHaveProperty("maxclass");
       expect(entry.box).toHaveProperty("patching_rect");
     }
+  });
+});
+
+describe("extracting a subset is what reading a patcher is for", () => {
+  test("a filtered serialize yields a patch no copy could produce", () => {
+    // Serializing everything and saving it is a worse `cp`. Filtering is the
+    // case that justifies having the patch as data at all.
+    const host = new MockPatcher();
+    for (const text of ["toggle", "metro 500", "random 24"]) {
+      host.newdefault(0, 0, text)!.boxtext = text;
+    }
+    const signal: MockMaxobj[] = [];
+    for (const text of ["cycle~", "*~ 0.15", "ezdac~"]) {
+      const object = host.newdefault(0, 0, text)!;
+      object.boxtext = text;
+      signal.push(object);
+    }
+    host.connect(signal[0]!, 0, signal[1]!, 0);
+    host.connect(signal[1]!, 0, signal[2]!, 0);
+
+    const { patcher } = serialize(asHost(host), {
+      only: signal as unknown as Maxobj[],
+    });
+
+    expect(host.count).toBe(6); // the patcher is untouched
+    expect(patcher.boxes).toHaveLength(3); // the file is not a copy of it
+    expect(patcher.lines).toHaveLength(2);
+    expect(patcher.boxes.map((b) => b.box.text)).toEqual([
+      "cycle~",
+      "*~ 0.15",
+      "ezdac~",
+    ]);
+  });
+
+  test("a cord leaving the subset is dropped, not left dangling", () => {
+    const host = new MockPatcher();
+    const control = host.newdefault(0, 0, "mtof")!;
+    control.boxtext = "mtof";
+    const osc = host.newdefault(0, 0, "cycle~")!;
+    osc.boxtext = "cycle~";
+    host.connect(control, 0, osc, 0);
+
+    const { patcher } = serialize(asHost(host), {
+      only: [osc] as unknown as Maxobj[],
+    });
+
+    expect(patcher.boxes).toHaveLength(1);
+    expect(patcher.lines).toEqual([]);
   });
 });

@@ -27,6 +27,8 @@
  *     save <path>             write a description straight to a .maxpat,
  *                             creating no objects at all -- the exact route
  *     write <path>            serialize the whole patcher, [v8] box included
+ *     extract <path> [match]  serialize only the objects matching `match`
+ *                             (default "~"), and the cords among them
  *     write <path> built      serialize only what the last build created
  *     write <path> partial    write even if some boxes are incomplete
  *     write <path> full       also record each object box's own attributes
@@ -435,6 +437,63 @@ export function probe(this: unknown): void {
   });
 }
 
+/**
+ * `extract <path> [match]` -- write out part of a patcher as its own patch.
+ *
+ * This is what reading a live patcher is *for*. Serializing a whole patcher is
+ * a worse `cp`: lossy where a file copy is exact. The value appears only when
+ * the result is not a copy -- when you filter, and get a patch that did not
+ * exist before.
+ *
+ * `match` is tested against each object's class and text, and defaults to `~`,
+ * which selects the signal objects. Cords are kept only where both ends
+ * survive, so the extracted patch is self-contained.
+ */
+export function extract(this: unknown, path: string, match?: string): void {
+  const target = this;
+  const needle = match ?? "~";
+  guard(() => {
+    const patcher = patcherOf(target);
+    const chosen: Maxobj[] = [];
+    for (
+      let object = patcher.firstobject;
+      object !== null && object !== undefined;
+      object = object.nextobject
+    ) {
+      const text = object.boxtext ?? "";
+      if (object.maxclass.indexOf(needle) >= 0 || text.indexOf(needle) >= 0) {
+        chosen.push(object);
+      }
+    }
+
+    if (chosen.length === 0) {
+      error(`js2max: nothing in this patcher matches "${needle}"\n`);
+      outlet(0, "error", "no-match");
+      return;
+    }
+
+    const result = serialize(patcher, { only: chosen });
+    for (const box of result.incomplete) {
+      error(
+        `js2max: cannot describe ${box.id} (${box.maxclass}) -- ` +
+          `missing ${box.missing.join(", ")}\n`,
+      );
+    }
+    writeText(path, JSON.stringify({ patcher: result.patcher }, null, 4));
+    post(
+      `js2max: extracted ${result.patcher.boxes.length} of ${patcher.count} ` +
+        `object(s) matching "${needle}" to ${path} -- ` +
+        `${result.patcher.lines.length} cord(s)\n`,
+    );
+    outlet(
+      0,
+      "extracted",
+      result.patcher.boxes.length,
+      result.patcher.lines.length,
+    );
+  });
+}
+
 export function count(this: unknown): void {
   const target = this;
   guard(() => {
@@ -451,6 +510,7 @@ Object.assign(globalThis, {
   clearall,
   count,
   demo,
+  extract,
   probe,
   read,
   save,

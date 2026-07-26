@@ -45,6 +45,7 @@
     save: () => save,
     read: () => read,
     probe: () => probe,
+    extract: () => extract,
     demo: () => demo,
     count: () => count,
     clearall: () => clearall,
@@ -1997,6 +1998,35 @@
       outlet(0, "probed", index);
     });
   }
+  function extract(path, match) {
+    const target = this;
+    const needle = match ?? "~";
+    guard(() => {
+      const patcher = patcherOf(target);
+      const chosen = [];
+      for (let object = patcher.firstobject;object !== null && object !== undefined; object = object.nextobject) {
+        const text = object.boxtext ?? "";
+        if (object.maxclass.indexOf(needle) >= 0 || text.indexOf(needle) >= 0) {
+          chosen.push(object);
+        }
+      }
+      if (chosen.length === 0) {
+        error(`js2max: nothing in this patcher matches "${needle}"
+`);
+        outlet(0, "error", "no-match");
+        return;
+      }
+      const result = serialize(patcher, { only: chosen });
+      for (const box of result.incomplete) {
+        error(`js2max: cannot describe ${box.id} (${box.maxclass}) -- ` + `missing ${box.missing.join(", ")}
+`);
+      }
+      writeText(path, JSON.stringify({ patcher: result.patcher }, null, 4));
+      post(`js2max: extracted ${result.patcher.boxes.length} of ${patcher.count} ` + `object(s) matching "${needle}" to ${path} -- ` + `${result.patcher.lines.length} cord(s)
+`);
+      outlet(0, "extracted", result.patcher.boxes.length, result.patcher.lines.length);
+    });
+  }
   function count() {
     const target = this;
     guard(() => {
@@ -2009,6 +2039,7 @@
     clearall,
     count,
     demo,
+    extract,
     probe,
     read,
     save,
