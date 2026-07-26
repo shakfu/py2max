@@ -442,6 +442,85 @@ describe("fonts are judged against the patcher's defaults", () => {
     const box = serialize(asHost(host)).patcher.boxes[0]?.box;
     expect(box?.fontsize).toBe(12);
   });
+
+  test("a default read as a string still matches a box that holds a number", () => {
+    // The two come from different reads (getattr on the patcher, getboxattr on
+    // the box) and Max is not consistent about which returns 12 and which
+    // "12". Compared as values alone, the box looked deliberately styled.
+    const host = new MockPatcher();
+    host.attrs.set("default_fontsize", "12");
+    const object = host.newdefault(10, 10, "comment");
+    object!.boxtext = "prose";
+    object!.boxAttrs.set("fontsize", 12);
+
+    const box = serialize(asHost(host)).patcher.boxes[0]?.box;
+    expect(box).not.toHaveProperty("fontsize");
+  });
+});
+
+describe("the patcher records the defaults its boxes were judged against", () => {
+  /** A patcher whose default font is 14pt, with one box left at it. */
+  function styled(): MockPatcher {
+    const host = new MockPatcher();
+    host.attrs.set("default_fontsize", 14);
+    host.attrs.set("default_fontname", "Lato");
+    host.attrs.set("default_fontface", 1);
+    const object = host.newdefault(10, 10, "comment");
+    object!.boxtext = "prose";
+    object!.boxAttrs.set("fontsize", 14);
+    return host;
+  }
+
+  test("the defaults are written into the emitted patcher", () => {
+    const { patcher } = serialize(asHost(styled()));
+
+    expect(patcher.default_fontsize).toBe(14);
+    expect(patcher.default_fontname).toBe("Lato");
+    expect(patcher.default_fontface).toBe(1);
+  });
+
+  test("a box left at the default reopens at the default, not Max's", () => {
+    // The bug this pair exists for: fonts were filtered against the patcher's
+    // defaults and the defaults were then not written, so every box in a 14pt
+    // patcher lost its size *and* the file said nothing about 14pt. It reopened
+    // at Max's own 12pt -- every box changed, and nothing reported it.
+    const { patcher } = serialize(asHost(styled()));
+    const box = patcher.boxes[0]?.box;
+
+    expect(box).not.toHaveProperty("fontsize");
+    expect(patcher.default_fontsize).toBe(14);
+  });
+
+  test("a patcher with no defaults to report writes none", () => {
+    // Absent, not guessed: writing a default the patcher never had would
+    // restyle boxes that were fine.
+    const host = new MockPatcher();
+    const object = host.newdefault(10, 10, "comment");
+    object!.boxtext = "prose";
+
+    const { patcher } = serialize(asHost(host));
+    expect(patcher).not.toHaveProperty("default_fontsize");
+    expect(patcher).not.toHaveProperty("default_fontname");
+    expect(patcher).not.toHaveProperty("default_fontface");
+  });
+
+  test("a default that is not a font size is not written as one", () => {
+    const host = new MockPatcher();
+    host.attrs.set("default_fontsize", "not a size");
+    host.attrs.set("default_fontname", "");
+
+    const { patcher } = serialize(asHost(host));
+    expect(patcher).not.toHaveProperty("default_fontsize");
+    expect(patcher).not.toHaveProperty("default_fontname");
+  });
+
+  test("the emitted patcher still parses back through the model", () => {
+    const { patcher } = serialize(asHost(styled()));
+    const reparsed = Patcher.fromFile({ patcher });
+
+    expect(reparsed.patcher.default_fontsize).toBe(14);
+    expect(reparsed.boxes).toHaveLength(1);
+  });
 });
 
 describe("exporting only what was built", () => {
@@ -498,6 +577,76 @@ describe("exporting only what was built", () => {
 
     const { patcher } = serialize(asHost(host), { only: objects });
     expect(patcher.boxes).toHaveLength(8);
+  });
+});
+
+describe("a round trip does not invent keys", () => {
+  test("boxes built from a description come back without varnames", () => {
+    // The two halves of this used to fight: instantiate named every box after
+    // its model id, and serialize reads `varname` back as an ordinary box key
+    // -- so building a patch and writing it out put `varname: "obj-1"` on every
+    // box, which py2max never writes and the source description never had.
+    const host = new MockPatcher();
+    instantiate(asHost(host), synthPatch());
+
+    const { patcher } = serialize(asHost(host));
+    for (const { box } of patcher.boxes) {
+      expect(box).not.toHaveProperty("varname");
+    }
+  });
+
+  test("a varname the description carries does survive the trip", () => {
+    const p = new Patcher();
+    p.add("cycle~ 440", { varname: "osc" });
+    const host = new MockPatcher();
+    instantiate(asHost(host), p.toPatcherDict());
+
+    const { patcher } = serialize(asHost(host));
+    expect(patcher.boxes[0]?.box.varname).toBe("osc");
+  });
+});
+
+describe("cords that do not make it into the file are counted", () => {
+  test("serializing a whole patcher drops none", () => {
+    // Every endpoint is in the set by construction, so this is the number that
+    // means something: non-zero here is loss, not filtering.
+    const host = new MockPatcher();
+    instantiate(asHost(host), synthPatch());
+
+    const { patcher, unresolved } = serialize(asHost(host));
+    expect(unresolved).toBe(0);
+    expect(patcher.lines).toHaveLength(9);
+  });
+
+  test("the cords cut at an extract's boundary are reported", () => {
+    // Not a failure -- cutting them is what makes the subset a patch on its own
+    // -- but the count is the difference between the extract and its source,
+    // which is worth being told rather than inferring from a line count.
+    const host = new MockPatcher();
+    const result = instantiate(asHost(host), synthPatch());
+    const objects = [...result.objects.values()];
+    const withoutOsc = objects.filter((o) => o.maxclass !== "cycle~");
+
+    const { patcher, unresolved } = serialize(asHost(host), {
+      only: withoutOsc,
+    });
+    expect(patcher.lines).toHaveLength(7);
+    expect(unresolved).toBe(2); // mtof -> cycle~ and cycle~ -> *~
+  });
+
+  test("a cord to a box that could not be described is counted, not silent", () => {
+    // The box is already reported in `incomplete`; without this, the cords that
+    // went with it vanished with no accounting at all.
+    const host = new MockPatcher();
+    instantiate(asHost(host), synthPatch());
+    const broken = host.objects[5]; // cycle~, mid-chain
+    broken!.boxtext = undefined; // an object box with no text is incomplete
+
+    const { incomplete, unresolved } = serialize(asHost(host), {
+      emitIncomplete: false,
+    });
+    expect(incomplete).toHaveLength(1);
+    expect(unresolved).toBe(2);
   });
 });
 

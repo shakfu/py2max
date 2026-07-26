@@ -55,6 +55,7 @@
 
   // src/scripting.ts
   var SET_CONTENT_CLASSES = new Set(["message", "comment"]);
+  var SEPARATORS = /[,;]/;
   function classNameOf(box) {
     if (box.maxclass !== "newobj")
       return box.maxclass;
@@ -62,14 +63,19 @@
     const head = text.trim().split(/\s+/)[0];
     return head === undefined || head === "" ? "newobj" : head;
   }
+  function atomOf(token) {
+    if (!/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(token))
+      return token;
+    const value = Number(token);
+    return Number.isFinite(value) ? value : token;
+  }
+  function atomsOf(text) {
+    return text.trim().split(/\s+/).filter((token) => token !== "").map(atomOf);
+  }
   function typedArgsOf(box) {
     if (box.maxclass !== "newobj")
       return [];
-    const tokens = (box.text ?? "").trim().split(/\s+/).slice(1);
-    return tokens.filter((token) => token !== "").map((token) => {
-      const asNumber = Number(token);
-      return Number.isFinite(asNumber) && token !== "" ? asNumber : token;
-    });
+    return atomsOf(box.text ?? "").slice(1);
   }
   function toMaxobjRect(rect) {
     const [x, y, w, h] = rect;
@@ -79,16 +85,84 @@
     const [left, top, right, bottom] = rect;
     return [left, top, right - left, bottom - top];
   }
+  var STRUCTURAL = new Set([
+    "id",
+    "maxclass",
+    "numinlets",
+    "numoutlets",
+    "outlettype",
+    "patcher",
+    "patching_rect",
+    "rect",
+    "text",
+    "varname",
+    "saved_attribute_attributes",
+    "saved_object_attributes"
+  ]);
+  function isPlain(value) {
+    const kind = typeof value;
+    if (kind === "number" || kind === "string" || kind === "boolean")
+      return true;
+    if (Array.isArray(value)) {
+      return value.every((item) => {
+        const k = typeof item;
+        return k === "number" || k === "string" || k === "boolean";
+      });
+    }
+    return false;
+  }
+  function applyBoxAttrs(object, box) {
+    let known;
+    try {
+      known = new Set(object.getboxattrnames());
+    } catch {
+      return [];
+    }
+    const failed = [];
+    for (const [name, value] of Object.entries(box)) {
+      if (STRUCTURAL.has(name) || !known.has(name))
+        continue;
+      if (!isPlain(value))
+        continue;
+      try {
+        if (Array.isArray(value))
+          object.setboxattr(name, ...value);
+        else
+          object.setboxattr(name, value);
+      } catch {
+        failed.push(name);
+      }
+    }
+    return failed;
+  }
+  function freeName(target, wanted) {
+    let candidate = wanted;
+    for (let n = 2;n <= 1000; n += 1) {
+      let taken;
+      try {
+        const found = target.getnamed(candidate);
+        taken = found !== null && found !== undefined;
+      } catch {
+        return candidate;
+      }
+      if (!taken)
+        return candidate;
+      candidate = `${wanted}-${n}`;
+    }
+    return candidate;
+  }
   function instantiate(target, source, options = {}) {
     const {
-      nameById = true,
+      nameById = false,
       applyRects = true,
+      applyAttributes = true,
       buildSubpatchers = true,
       offset = [0, 0]
     } = options;
     const [dx, dy] = offset;
     const objects = new Map;
     const skipped = [];
+    const warnings = [];
     let created = 0;
     let connected = 0;
     for (const entry of source.boxes) {
@@ -109,15 +183,30 @@
       objects.set(box.id, object);
       created += 1;
       if (SET_CONTENT_CLASSES.has(box.maxclass) && box.text !== undefined) {
-        object.message("set", ...box.text.trim().split(/\s+/));
+        object.message("set", ...atomsOf(box.text));
+        if (box.maxclass === "message" && SEPARATORS.test(box.text)) {
+          warnings.push({
+            id: box.id,
+            reason: `message text "${box.text}" contains a message separator ` + `(, or ;), which a "set" message cannot carry -- the box holds it ` + `as an ordinary symbol. Write the patch to a file instead if the ` + `separator matters.`
+          });
+        }
       }
-      if (nameById) {
-        object.varname = box.varname ?? box.id;
-      } else if (box.varname !== undefined) {
+      if (box.varname !== undefined) {
         object.varname = box.varname;
+      } else if (nameById) {
+        object.varname = freeName(target, box.id);
       }
       if (applyRects) {
         object.rect = toMaxobjRect([x + dx, y + dy, w, h]);
+      }
+      if (applyAttributes) {
+        const failed = applyBoxAttrs(object, box);
+        if (failed.length > 0) {
+          warnings.push({
+            id: box.id,
+            reason: `box attribute(s) refused by the object: ${failed.join(", ")}`
+          });
+        }
       }
       if (buildSubpatchers && box.patcher !== undefined) {
         const nested = object.subpatcher();
@@ -127,10 +216,14 @@
             reason: "box carries a nested patcher but exposes no subpatcher()"
           });
         } else {
-          const inner = instantiate(nested, box.patcher, options);
+          const inner = instantiate(nested, box.patcher, {
+            ...options,
+            offset: [0, 0]
+          });
           created += inner.created;
           connected += inner.connected;
           skipped.push(...inner.skipped);
+          warnings.push(...inner.warnings);
         }
       }
     }
@@ -156,15 +249,29 @@
         });
       }
     }
-    return { objects, created, connected, skipped };
+    return { objects, created, connected, skipped, warnings };
+  }
+  function sameObject(a, b) {
+    if (a === b)
+      return true;
+    try {
+      if (a.varname !== "" && a.varname === b.varname)
+        return true;
+      if (a.maxclass !== b.maxclass)
+        return false;
+      const [al, at, ar, ab] = a.rect;
+      const [bl, bt, br, bb] = b.rect;
+      return al === bl && at === bt && ar === br && ab === bb;
+    } catch {
+      return false;
+    }
+  }
+  function isKept(keep, object) {
+    return keep.some((kept) => sameObject(kept, object));
   }
   function clear(target, options = {}) {
     const keep = options.keep ?? [];
-    const doomed = [];
-    for (let object = target.firstobject;object !== null && object !== undefined; object = object.nextobject) {
-      if (!keep.includes(object))
-        doomed.push(object);
-    }
+    const doomed = objectsOf(target).filter((object) => !isKept(keep, object));
     for (const object of doomed)
       target.remove(object);
     return doomed.length;
@@ -173,247 +280,48 @@
     const keep = options.keep ?? [];
     let removed = 0;
     for (const object of [...objects]) {
-      if (keep.includes(object))
+      if (isKept(keep, object))
         continue;
       target.remove(object);
       removed += 1;
     }
     return removed;
   }
-
-  // src/model.ts
-  var MAX_VERSION = {
-    major: 8,
-    minor: 5,
-    revision: 5,
-    architecture: "x64",
-    modernui: 1
-  };
-  var DEFAULT_BOX = [0, 0, 66, 22];
-
-  class Patcher {
-    boxes = [];
-    lines = [];
-    idCounter = 0;
-    spacing;
-    settings;
-    constructor(options = {}) {
-      this.spacing = options.spacing ?? 72;
-      this.settings = {
-        fileversion: 1,
-        appversion: { ...MAX_VERSION },
-        classnamespace: options.classnamespace ?? "box",
-        rect: options.rect ?? [85, 104, 640, 480],
-        ...options.title === undefined ? {} : { title: options.title }
-      };
+  function objectsOf(target) {
+    const objects = [];
+    for (let object = target.firstobject;object !== null && object !== undefined; object = object.nextobject) {
+      objects.push(object);
     }
-    nextId() {
-      this.idCounter += 1;
-      return `obj-${this.idCounter}`;
-    }
-    nextRect() {
-      const index = this.boxes.length;
-      return [
-        48 + index % 8 * this.spacing,
-        48 + Math.floor(index / 8) * this.spacing,
-        DEFAULT_BOX[2],
-        DEFAULT_BOX[3]
-      ];
-    }
-    add(text, options = {}) {
-      const { id, maxclass, numinlets, numoutlets, patching_rect, ...props } = options;
-      const box = {
-        id: id ?? this.nextId(),
-        maxclass: maxclass ?? "newobj",
-        numinlets: numinlets ?? 2,
-        numoutlets: numoutlets ?? 1,
-        patching_rect: patching_rect ?? this.nextRect(),
-        ...text === "" ? {} : { text },
-        ...props
-      };
-      this.boxes.push({ box });
-      return box;
-    }
-    addSubpatcher(text, options = {}) {
-      const sub = new Patcher({ classnamespace: "box" });
-      const box = this.add(text, { numinlets: 1, numoutlets: 1, ...options });
-      box.patcher = sub.toPatcherDict();
-      return { box, sub };
-    }
-    connect(from, to, outlet2 = 0, inlet = 0) {
-      const order = this.lines.filter((l) => l.patchline.source[0] === from.id && l.patchline.destination[0] === to.id).length;
-      const patchline = {
-        source: [from.id, outlet2],
-        destination: [to.id, inlet],
-        ...order === 0 ? {} : { order }
-      };
-      this.lines.push({ patchline });
-      return patchline;
-    }
-    toPatcherDict() {
-      return { ...this.settings, boxes: this.boxes, lines: this.lines };
-    }
-    toFile() {
-      return { patcher: this.toPatcherDict() };
-    }
-    toJSON(indent = 4) {
-      return JSON.stringify(this.toFile(), null, indent);
-    }
-    static fromFile(file) {
-      return new LoadedPatcher(file.patcher);
-    }
-    static parse(text) {
-      return Patcher.fromFile(JSON.parse(text));
-    }
+    return objects;
   }
 
-  class LoadedPatcher {
-    patcher;
-    constructor(patcher) {
-      this.patcher = patcher;
-    }
-    get boxes() {
-      return this.patcher.boxes;
-    }
-    get lines() {
-      return this.patcher.lines;
-    }
-    maxNumericId() {
-      let max = 0;
-      for (const entry of this.patcher.boxes) {
-        const match = /^obj-(\d+)$/.exec(entry.box.id);
-        if (match?.[1] !== undefined) {
-          max = Math.max(max, Number.parseInt(match[1], 10));
-        }
+  // src/commands.ts
+  var WRITE_MODES = ["built", "partial", "full"];
+  function parseWriteModes(words) {
+    const known = new Set;
+    const unknown = [];
+    for (const word of words) {
+      if (WRITE_MODES.includes(word)) {
+        known.add(word);
+      } else if (word !== "") {
+        unknown.push(word);
       }
-      return max;
     }
-    findById(id) {
-      return this.patcher.boxes.find((entry) => entry.box.id === id)?.box;
-    }
-    *walk() {
-      const visit = function* (p) {
-        for (const entry of p.boxes) {
-          yield entry.box;
-          if (entry.box.patcher)
-            yield* visit(entry.box.patcher);
-        }
-      };
-      yield* visit(this.patcher);
-    }
-    toFile() {
-      return { patcher: this.patcher };
-    }
-    toJSON(indent = 4) {
-      return JSON.stringify(this.toFile(), null, indent);
-    }
+    return { modes: known, unknown };
   }
-
-  // src/demo.ts
-  function demoPatch() {
-    const p = new Patcher;
-    const osc = p.add("cycle~ 440");
-    const gain = p.add("gain~", {
-      maxclass: "gain~",
-      numinlets: 2,
-      numoutlets: 2
+  function basename(path) {
+    const cut = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+    return cut < 0 ? path : path.slice(cut + 1);
+  }
+  function isOwnFile(patcherPath, target) {
+    const own = basename(patcherPath);
+    return own !== "" && basename(target) === own;
+  }
+  function selectMatching(objects, needle) {
+    return objects.filter((object) => {
+      const text = object.boxtext ?? "";
+      return object.maxclass.indexOf(needle) >= 0 || text.indexOf(needle) >= 0;
     });
-    const dac = p.add("ezdac~", {
-      maxclass: "ezdac~",
-      numinlets: 2,
-      numoutlets: 0
-    });
-    p.connect(osc, gain);
-    p.connect(gain, dac, 0, 0);
-    p.connect(gain, dac, 0, 1);
-    return p.toPatcherDict();
-  }
-  function synthPatch() {
-    const p = new Patcher;
-    const ui = (maxclass, rect, extra = {}) => p.add("", { maxclass, patching_rect: rect, ...extra });
-    const obj = (text, rect) => p.add(text, { patching_rect: rect });
-    const onoff = ui("toggle", [40, 40, 24, 24]);
-    const metro = obj("metro 250", [40, 80, 70, 22]);
-    const pick = obj("random 12", [40, 120, 70, 22]);
-    const transpose = obj("+ 60", [40, 160, 45, 22]);
-    const tofreq = obj("mtof", [40, 200, 45, 22]);
-    const osc = obj("cycle~", [40, 240, 60, 22]);
-    const amp = ui("flonum", [160, 240, 50, 22]);
-    const gain = obj("*~ 0.2", [40, 280, 60, 22]);
-    const out = ui("ezdac~", [40, 330, 45, 45]);
-    p.connect(onoff, metro);
-    p.connect(metro, pick);
-    p.connect(pick, transpose);
-    p.connect(transpose, tofreq);
-    p.connect(tofreq, osc);
-    p.connect(osc, gain);
-    p.connect(amp, gain, 0, 1);
-    p.connect(gain, out, 0, 0);
-    p.connect(gain, out, 0, 1);
-    return p.toPatcherDict();
-  }
-
-  // src/fileio.ts
-  var CHUNK = 16384;
-  var maxFileFactory = (path, access) => {
-    const ctor = globalThis.File;
-    if (ctor === undefined) {
-      throw new Error("js2max: no Max File class -- file I/O is only available inside Max");
-    }
-    return new ctor(path, access);
-  };
-  function readText(path, options = {}) {
-    const factory = options.factory ?? maxFileFactory;
-    const file = factory(path, "read");
-    if (!file.isopen) {
-      throw new Error(`js2max: could not open ${path} for reading`);
-    }
-    try {
-      const chunks = [];
-      while (file.position < file.eof) {
-        const before = file.position;
-        const chunk = file.readstring(CHUNK);
-        if (chunk === "" || file.position <= before)
-          break;
-        chunks.push(chunk);
-      }
-      return chunks.join("");
-    } finally {
-      file.close();
-    }
-  }
-  function writeText(path, text, options = {}) {
-    const factory = options.factory ?? maxFileFactory;
-    const file = factory(path, "write");
-    if (!file.isopen) {
-      throw new Error(`js2max: could not open ${path} for writing`);
-    }
-    try {
-      try {
-        file.eof = 0;
-      } catch {}
-      file.position = 0;
-      file.writestring(text);
-    } finally {
-      file.close();
-    }
-  }
-  function readPatch(path, options = {}) {
-    const text = readText(path, options);
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch (err) {
-      throw new Error(`js2max: ${path} is not valid JSON -- ${String(err)}`);
-    }
-    const file = parsed;
-    if (file?.patcher?.boxes === undefined) {
-      throw new Error(`js2max: ${path} has no patcher.boxes -- not a .maxpat?`);
-    }
-    return Patcher.fromFile(file);
-  }
-  function writePatch(path, patcher, options = {}) {
-    writeText(path, patcher.toJSON(options.indent ?? 4), options);
   }
 
   // src/objects.ts
@@ -1565,17 +1473,246 @@
   function boxClassOf(objectClass) {
     return OWN_MAXCLASS.has(objectClass) ? objectClass : "newobj";
   }
+  var APP_VERSION = {
+    major: 8,
+    minor: 5,
+    revision: 5,
+    architecture: "x64",
+    modernui: 1
+  };
+
+  // src/model.ts
+  var MAX_VERSION = APP_VERSION;
+  var DEFAULT_BOX = [0, 0, 66, 22];
+  var FALLBACK_PORTS = [2, 1];
+  function classNameOf2(text, maxclass) {
+    const head = text.trim().split(/\s+/)[0];
+    return head === undefined || head === "" ? maxclass ?? "" : head;
+  }
+
+  class Patcher {
+    boxes = [];
+    lines = [];
+    idCounter = 0;
+    spacing;
+    settings;
+    constructor(options = {}) {
+      this.spacing = options.spacing ?? 72;
+      this.settings = {
+        fileversion: 1,
+        appversion: { ...MAX_VERSION },
+        classnamespace: options.classnamespace ?? "box",
+        rect: options.rect ?? [85, 104, 640, 480],
+        ...options.title === undefined ? {} : { title: options.title }
+      };
+    }
+    nextId() {
+      this.idCounter += 1;
+      return `obj-${this.idCounter}`;
+    }
+    nextRect() {
+      const index = this.boxes.length;
+      return [
+        48 + index % 8 * this.spacing,
+        48 + Math.floor(index / 8) * this.spacing,
+        DEFAULT_BOX[2],
+        DEFAULT_BOX[3]
+      ];
+    }
+    add(text, options = {}) {
+      const { id, maxclass, numinlets, numoutlets, patching_rect, ...props } = options;
+      const className = classNameOf2(text, maxclass);
+      const ports = PORTS[className];
+      const outlettype = numoutlets === undefined && ports !== undefined && ports.length === 3 ? ports[2] : undefined;
+      const box = {
+        id: id ?? this.nextId(),
+        maxclass: maxclass ?? boxClassOf(className),
+        numinlets: numinlets ?? ports?.[0] ?? FALLBACK_PORTS[0],
+        numoutlets: numoutlets ?? ports?.[1] ?? FALLBACK_PORTS[1],
+        patching_rect: patching_rect ?? this.nextRect(),
+        ...text === "" ? {} : { text },
+        ...outlettype === undefined ? {} : { outlettype: [...outlettype] },
+        ...props
+      };
+      this.boxes.push({ box });
+      return box;
+    }
+    addSubpatcher(text, options = {}) {
+      const sub = new Patcher({ classnamespace: "box" });
+      const box = this.add(text, { numinlets: 1, numoutlets: 1, ...options });
+      box.patcher = sub.toPatcherDict();
+      return { box, sub };
+    }
+    connect(from, to, outlet2 = 0, inlet = 0) {
+      const order = this.lines.filter((l) => l.patchline.source[0] === from.id && l.patchline.destination[0] === to.id).length;
+      const patchline = {
+        source: [from.id, outlet2],
+        destination: [to.id, inlet],
+        ...order === 0 ? {} : { order }
+      };
+      this.lines.push({ patchline });
+      return patchline;
+    }
+    toPatcherDict() {
+      return { ...this.settings, boxes: this.boxes, lines: this.lines };
+    }
+    toFile() {
+      return { patcher: this.toPatcherDict() };
+    }
+    toJSON(indent = 4) {
+      return JSON.stringify(this.toFile(), null, indent);
+    }
+    static fromFile(file) {
+      return new LoadedPatcher(file.patcher);
+    }
+    static parse(text) {
+      return Patcher.fromFile(JSON.parse(text));
+    }
+  }
+
+  class LoadedPatcher {
+    patcher;
+    constructor(patcher) {
+      this.patcher = patcher;
+    }
+    get boxes() {
+      return this.patcher.boxes;
+    }
+    get lines() {
+      return this.patcher.lines;
+    }
+    maxNumericId() {
+      let max = 0;
+      for (const entry of this.patcher.boxes) {
+        const match = /^obj-(\d+)$/.exec(entry.box.id);
+        if (match?.[1] !== undefined) {
+          max = Math.max(max, Number.parseInt(match[1], 10));
+        }
+      }
+      return max;
+    }
+    findById(id) {
+      return this.patcher.boxes.find((entry) => entry.box.id === id)?.box;
+    }
+    *walk() {
+      const visit = function* (p) {
+        for (const entry of p.boxes) {
+          yield entry.box;
+          if (entry.box.patcher)
+            yield* visit(entry.box.patcher);
+        }
+      };
+      yield* visit(this.patcher);
+    }
+    toFile() {
+      return { patcher: this.patcher };
+    }
+    toJSON(indent = 4) {
+      return JSON.stringify(this.toFile(), null, indent);
+    }
+  }
+
+  // src/demo.ts
+  function demoPatch() {
+    const p = new Patcher;
+    const osc = p.add("cycle~ 440");
+    const gain = p.add("gain~");
+    const dac = p.add("ezdac~");
+    p.connect(osc, gain);
+    p.connect(gain, dac, 0, 0);
+    p.connect(gain, dac, 0, 1);
+    return p.toPatcherDict();
+  }
+  function synthPatch() {
+    const p = new Patcher;
+    const ui = (maxclass, rect, extra = {}) => p.add("", { maxclass, patching_rect: rect, ...extra });
+    const obj = (text, rect) => p.add(text, { patching_rect: rect });
+    const onoff = ui("toggle", [40, 40, 24, 24]);
+    const metro = obj("metro 250", [40, 80, 70, 22]);
+    const pick = obj("random 12", [40, 120, 70, 22]);
+    const transpose = obj("+ 60", [40, 160, 45, 22]);
+    const tofreq = obj("mtof", [40, 200, 45, 22]);
+    const osc = obj("cycle~", [40, 240, 60, 22]);
+    const amp = ui("flonum", [160, 240, 50, 22]);
+    const gain = obj("*~ 0.2", [40, 280, 60, 22]);
+    const out = ui("ezdac~", [40, 330, 45, 45]);
+    p.connect(onoff, metro);
+    p.connect(metro, pick);
+    p.connect(pick, transpose);
+    p.connect(transpose, tofreq);
+    p.connect(tofreq, osc);
+    p.connect(osc, gain);
+    p.connect(amp, gain, 0, 1);
+    p.connect(gain, out, 0, 0);
+    p.connect(gain, out, 0, 1);
+    return p.toPatcherDict();
+  }
+
+  // src/fileio.ts
+  var CHUNK = 16384;
+  var maxFileFactory = (path, access) => {
+    const ctor = globalThis.File;
+    if (ctor === undefined) {
+      throw new Error("js2max: no Max File class -- file I/O is only available inside Max");
+    }
+    return new ctor(path, access);
+  };
+  function readText(path, options = {}) {
+    const factory = options.factory ?? maxFileFactory;
+    const file = factory(path, "read");
+    if (!file.isopen) {
+      throw new Error(`js2max: could not open ${path} for reading`);
+    }
+    try {
+      const chunks = [];
+      while (file.position < file.eof) {
+        const before = file.position;
+        const chunk = file.readstring(CHUNK);
+        if (chunk === "" || file.position <= before)
+          break;
+        chunks.push(chunk);
+      }
+      return chunks.join("");
+    } finally {
+      file.close();
+    }
+  }
+  function writeText(path, text, options = {}) {
+    const factory = options.factory ?? maxFileFactory;
+    const file = factory(path, "write");
+    if (!file.isopen) {
+      throw new Error(`js2max: could not open ${path} for writing`);
+    }
+    try {
+      try {
+        file.eof = 0;
+      } catch {}
+      file.position = 0;
+      file.writestring(text);
+    } finally {
+      file.close();
+    }
+  }
+  function readPatch(path, options = {}) {
+    const text = readText(path, options);
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      throw new Error(`js2max: ${path} is not valid JSON -- ${String(err)}`);
+    }
+    const file = parsed;
+    if (file?.patcher?.boxes === undefined) {
+      throw new Error(`js2max: ${path} has no patcher.boxes -- not a .maxpat?`);
+    }
+    return Patcher.fromFile(file);
+  }
+  function writePatch(path, patcher, options = {}) {
+    writeText(path, patcher.toJSON(options.indent ?? 4), options);
+  }
 
   // src/serialize.ts
-  var DERIVED = new Set([
-    "id",
-    "maxclass",
-    "numinlets",
-    "numoutlets",
-    "patcher",
-    "rect",
-    "text"
-  ]);
+  var DERIVED = new Set([...STRUCTURAL].filter((name) => name !== "varname"));
   var OPTIONAL = [
     "varname",
     "fontname",
@@ -1631,18 +1768,6 @@
       return;
     return numbers;
   }
-  function isPlain(value) {
-    const kind = typeof value;
-    if (kind === "number" || kind === "string" || kind === "boolean")
-      return true;
-    if (Array.isArray(value)) {
-      return value.every((item) => {
-        const k = typeof item;
-        return k === "number" || k === "string" || k === "boolean";
-      });
-    }
-    return false;
-  }
   function readObjectAttrs(object, box) {
     let names;
     let boxNames;
@@ -1680,6 +1805,19 @@
       } catch {}
     }
     return defaults;
+  }
+  function matchesDefault(value, fallback) {
+    return value === fallback || String(value) === String(fallback);
+  }
+  function defaultFontEntries(defaults) {
+    const name = defaults["fontname"];
+    const size = asNumber(defaults["fontsize"]);
+    const face = asNumber(defaults["fontface"]);
+    return {
+      ...size === undefined ? {} : { default_fontsize: size },
+      ...face === undefined ? {} : { default_fontface: face },
+      ...typeof name === "string" && name !== "" ? { default_fontname: name } : {}
+    };
   }
   function describe(object, id, options, fontDefaults = {}) {
     const objectClass = object.maxclass ?? "";
@@ -1722,8 +1860,9 @@
       const value = first(readBoxAttr(object, name));
       if (!isSet(value))
         continue;
-      if (name in fontDefaults && value === fontDefaults[name])
+      if (name in fontDefaults && matchesDefault(value, fontDefaults[name])) {
         continue;
+      }
       box[name] = value;
     }
     if (text !== undefined && text !== "")
@@ -1740,10 +1879,7 @@
     if (options.only !== undefined) {
       objects = [...options.only].filter((o) => o.valid !== false);
     } else {
-      objects = [];
-      for (let object = target.firstobject;object !== null && object !== undefined; object = object.nextobject) {
-        objects.push(object);
-      }
+      objects = objectsOf(target);
     }
     const boxes = [];
     const incomplete = [];
@@ -1762,12 +1898,21 @@
         boxes.push({ box });
     });
     const lines = [];
+    let unresolved = 0;
+    const inScope = new Set(objects);
     for (const object of objects) {
+      for (const cord of object.patchcords.inputs) {
+        if (inScope.has(cord.srcobject))
+          continue;
+        unresolved += 1;
+      }
       for (const cord of object.patchcords.outputs) {
         const from = ids.get(cord.srcobject);
         const to = ids.get(cord.dstobject);
-        if (from === undefined || to === undefined)
+        if (from === undefined || to === undefined) {
+          unresolved += 1;
           continue;
+        }
         lines.push({
           patchline: {
             source: [from, cord.srcoutlet],
@@ -1782,10 +1927,12 @@
         appversion: { ...MAX_VERSION },
         classnamespace: "box",
         rect: options.rect ?? [85, 104, 640, 480],
+        ...defaultFontEntries(fontDefaults),
         boxes,
         lines
       },
-      incomplete
+      incomplete,
+      unresolved
     };
   }
 
@@ -1811,16 +1958,16 @@
   var DEMO_OFFSET = [0, 280];
   var built = [];
   var described = null;
-  function basename(path) {
-    const cut = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
-    return cut < 0 ? path : path.slice(cut + 1);
-  }
   function report(result) {
     built = [...result.objects.values()];
     post(`js2max: created ${result.created} object(s), ` + `${result.connected} connection(s)
 `);
     for (const skip of result.skipped) {
       error(`js2max: skipped ${skip.id} -- ${skip.reason}
+`);
+    }
+    for (const warning of result.warnings) {
+      post(`js2max: warning, ${warning.id} -- ${warning.reason}
 `);
     }
     outlet(0, "done", result.created, result.connected, result.skipped.length);
@@ -1916,12 +2063,17 @@
     });
   }
   function write(path, ...modes) {
-    const mode = new Set(modes);
+    const { modes: mode, unknown } = parseWriteModes(modes);
     const target = this;
     guard(() => {
       const patcher = patcherOf(target);
-      const own = basename(patcher.filepath ?? "");
-      if (own !== "" && basename(path) === own && !mode.has("built")) {
+      if (unknown.length > 0) {
+        error(`js2max: "${unknown.join('", "')}" is not a write mode. ` + `Use any of: ${WRITE_MODES.join(", ")}.
+`);
+        outlet(0, "error", "bad-mode");
+        return;
+      }
+      if (isOwnFile(patcher.filepath ?? "", path) && !mode.has("built")) {
         error(`js2max: refusing to write ${path} -- that is this patcher's own file. ` + `serialize() describes the whole patcher, so this would overwrite it ` + `with a copy of itself. Choose another name.
 `);
         outlet(0, "error", "self");
@@ -1949,6 +2101,11 @@
           return;
         }
       }
+      if (result.unresolved > 0) {
+        const why = mode.has("built") ? "an endpoint is outside the built set" : "an endpoint was not written";
+        post(`js2max: ${result.unresolved} cord(s) not written -- ${why}
+`);
+      }
       writeText(path, JSON.stringify({ patcher: result.patcher }, null, 4));
       post(`js2max: wrote ${path} -- ${result.patcher.boxes.length} box(es), ` + `${result.patcher.lines.length} line(s)` + `${mode.has("built") ? " (built objects only)" : ""}
 `);
@@ -1959,8 +2116,23 @@
     const target = this;
     guard(() => {
       const patcher = patcherOf(target);
+      for (const name of [
+        "rect",
+        "default_fontname",
+        "default_fontsize",
+        "default_fontface"
+      ]) {
+        let value;
+        try {
+          value = patcher.getattr(name);
+        } catch (err) {
+          value = `<threw: ${String(err)}>`;
+        }
+        post(`js2max probe patcher: ${name} = ${JSON.stringify(value)}
+`);
+      }
       let index = 0;
-      for (let object = patcher.firstobject;object !== null && object !== undefined; object = object.nextobject) {
+      for (const object of objectsOf(patcher)) {
         index += 1;
         const names = (() => {
           try {
@@ -2003,13 +2175,7 @@
     const needle = match ?? "~";
     guard(() => {
       const patcher = patcherOf(target);
-      const chosen = [];
-      for (let object = patcher.firstobject;object !== null && object !== undefined; object = object.nextobject) {
-        const text = object.boxtext ?? "";
-        if (object.maxclass.indexOf(needle) >= 0 || text.indexOf(needle) >= 0) {
-          chosen.push(object);
-        }
-      }
+      const chosen = selectMatching(objectsOf(patcher), needle);
       if (chosen.length === 0) {
         error(`js2max: nothing in this patcher matches "${needle}"
 `);
@@ -2022,7 +2188,7 @@
 `);
       }
       writeText(path, JSON.stringify({ patcher: result.patcher }, null, 4));
-      post(`js2max: extracted ${result.patcher.boxes.length} of ${patcher.count} ` + `object(s) matching "${needle}" to ${path} -- ` + `${result.patcher.lines.length} cord(s)
+      post(`js2max: extracted ${result.patcher.boxes.length} of ${patcher.count} ` + `object(s) matching "${needle}" to ${path} -- ` + `${result.patcher.lines.length} cord(s)` + (result.unresolved > 0 ? `, ${result.unresolved} cut at the boundary` : "") + `
 `);
       outlet(0, "extracted", result.patcher.boxes.length, result.patcher.lines.length);
     });

@@ -24,10 +24,8 @@ function bang() {
 
     var osc = p.add("cycle~ 220", { patching_rect: [40, 40, 70, 22] });
     var amp = p.add("*~ 0.1", { patching_rect: [40, 80, 60, 22] });
-    var out = p.add("", {
-        maxclass: "ezdac~",
-        patching_rect: [40, 120, 45, 45]
-    });
+    // No maxclass or port counts spelled out: they come from the object class.
+    var out = p.add("ezdac~", { patching_rect: [40, 120, 45, 45] });
 
     p.connect(osc, amp);
     p.connect(amp, out, 0, 0);

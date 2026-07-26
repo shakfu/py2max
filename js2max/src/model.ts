@@ -22,17 +22,38 @@ import type {
   PatchlineEntry,
   Rect4,
 } from "./format.ts";
+import { APP_VERSION, PORTS, boxClassOf } from "./objects.ts";
 
-export const MAX_VERSION = {
-  major: 8,
-  minor: 5,
-  revision: 5,
-  architecture: "x64",
-  modernui: 1,
-} as const;
+/**
+ * The Max version a written file declares.
+ *
+ * Generated from py2max's `MAX_VER_*` rather than restated here, where it was a
+ * literal that would have gone stale the first time the Python side bumped.
+ */
+export const MAX_VERSION = APP_VERSION;
 
 /** Default box geometry, matching the Python package's fallback. */
 const DEFAULT_BOX: Rect4 = [0, 0, 66, 22];
+
+/**
+ * Port counts for a class the table does not know -- a third-party external.
+ *
+ * A `.maxpat` box must state both counts, so unlike {@link serialize} (which
+ * omits them and lets Max derive them from the instantiated object) this has to
+ * put something down. The commonest shape is the guess.
+ */
+const FALLBACK_PORTS: readonly [number, number] = [2, 1];
+
+/**
+ * The object class a box is keyed on, for the tables in `objects.ts`.
+ *
+ * The first word of the typed-in text -- `cycle~ 440` is a `cycle~` -- falling
+ * back to an explicit `maxclass` for a UI box added with no text at all.
+ */
+function classNameOf(text: string, maxclass: string | undefined): string {
+  const head = text.trim().split(/\s+/)[0];
+  return head === undefined || head === "" ? (maxclass ?? "") : head;
+}
 
 export interface PatcherOptions {
   title?: string;
@@ -100,17 +121,37 @@ export class Patcher {
    * Every property in `options` is checked against {@link BoxProps}: a
    * misspelling such as `bgcolour` is a compile error here, where the Python
    * equivalent accepts it through `**kwds: Any` and writes it to the file.
+   *
+   * The box class and port counts are looked up from the object class, so
+   * `p.add("ezdac~")` is a `maxclass: "ezdac~"` box with 2 inlets and no
+   * outlets, and `p.add("mtof")` a `newobj` with one of each. That knowledge is
+   * py2max's, exported into `objects.ts` for 1098 classes, and it was being
+   * ignored here: every box got 2 inlets and 1 outlet regardless, so a caller
+   * had to spell out what the table already knew and a caller who did not got a
+   * box whose declared ports contradicted the object inside it.
+   *
+   * Anything given explicitly wins, including for a class the table does not
+   * know -- there is no way to be right about a third-party external.
    */
   add(text: string, options: AddBoxOptions = {}): BoxDict {
     const { id, maxclass, numinlets, numoutlets, patching_rect, ...props } =
       options;
+    const className = classNameOf(text, maxclass);
+    const ports = PORTS[className];
+    // Only alongside a derived `numoutlets`: an explicit count the table
+    // disagrees with would leave the two describing different objects.
+    const outlettype =
+      numoutlets === undefined && ports !== undefined && ports.length === 3
+        ? ports[2]
+        : undefined;
     const box: BoxDict = {
       id: id ?? this.nextId(),
-      maxclass: maxclass ?? "newobj",
-      numinlets: numinlets ?? 2,
-      numoutlets: numoutlets ?? 1,
+      maxclass: maxclass ?? boxClassOf(className),
+      numinlets: numinlets ?? ports?.[0] ?? FALLBACK_PORTS[0],
+      numoutlets: numoutlets ?? ports?.[1] ?? FALLBACK_PORTS[1],
       patching_rect: patching_rect ?? this.nextRect(),
       ...(text === "" ? {} : { text }),
+      ...(outlettype === undefined ? {} : { outlettype: [...outlettype] }),
       ...props,
     };
     this.boxes.push({ box });

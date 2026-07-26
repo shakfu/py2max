@@ -1170,3 +1170,19 @@ export const PORTS: Readonly<Record<string, PortEntry>> = {
 export function boxClassOf(objectClass: string): string {
   return OWN_MAXCLASS.has(objectClass) ? objectClass : "newobj";
 }
+
+/**
+ * The Max version a written file declares, taken from py2max.
+ *
+ * Exported rather than restated so the two packages cannot claim to
+ * have been written by different versions of Max. It was a literal in
+ * `model.ts`, which would have gone quietly stale the first time
+ * py2max bumped `MAX_VER_*` in `core/patcher.py`.
+ */
+export const APP_VERSION = {
+  major: 8,
+  minor: 5,
+  revision: 5,
+  architecture: "x64",
+  modernui: 1,
+} as const;

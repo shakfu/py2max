@@ -4,7 +4,7 @@
  * Each case below is a code snippet compiled with `tsc` in a subprocess. The
  * "rejected" cases are the failure modes that reach the emitted `.maxpat`
  * silently in the Python package, where the entire property vocabulary arrives
- * through `**kwds: Any`. `ts/README.md` records the corresponding Python
+ * through `**kwds: Any`. `js2max/README.md` records the corresponding Python
  * behaviour for the same inputs.
  *
  * These are slow (a `tsc` process each), which is the honest cost of the claim.

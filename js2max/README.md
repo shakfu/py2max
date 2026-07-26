@@ -76,7 +76,9 @@ Put `max/js2max.v8.js` where Max can find it (beside your patch is enough):
 | `extract <path> [match]` | Writes only the objects matching `match` (default `~`) |
 | `write <path> full` | As above, plus each object box's own attributes |
 
-Modes combine: `write out.maxpat built full`.
+Modes combine: `write out.maxpat built full`. A word that is not a mode is
+refused rather than ignored -- `write out.maxpat buit` used to serialize the
+whole patcher, `[v8]` box included, and report success.
 
 `built` tracks the objects from the most recent `demo` / `synth` / `build`, in
 memory. `clear` resets it, and so does reloading the script -- which is why the
@@ -102,7 +104,7 @@ var js2max = require("js2max.js");
 function bang() {
     var p = new js2max.Patcher();
     var osc = p.add("cycle~ 440");
-    var dac = p.add("ezdac~", { maxclass: "ezdac~", numinlets: 2, numoutlets: 0 });
+    var dac = p.add("ezdac~");   // maxclass "ezdac~", 2 inlets, no outlets
     p.connect(osc, dac, 0, 0);
     p.connect(osc, dac, 0, 1);
 
@@ -110,6 +112,13 @@ function bang() {
     post("built " + result.created + " objects\n");
 }
 ```
+
+A box knows what it is before Max sees it: the box class, port counts and
+outlet types are looked up from the object class in `src/objects.ts`, so
+`p.add("ezdac~")` is a `maxclass: "ezdac~"` box with two inlets and no outlets,
+and `p.add("gain~")` has one inlet and two. Anything passed explicitly wins.
+This matters beyond typing less -- a box that declares a port it does not have
+loses the cord attached to it, silently, when Max opens the file.
 
 The same `Patcher` also serializes: `p.toJSON()` produces a `.maxpat` document
 identical in shape to the Python package's output.
@@ -139,6 +148,17 @@ lossy, because every field has to be rebuilt from whatever the JS API exposes:
 a font matching the patcher default is indistinguishable from an unset one, port
 counts maxref does not state are omitted for Max to derive, and `linecount` /
 `filename` / `textfile` have no accessor at all.
+
+The font case is the one that had to be handled rather than merely stated. A box
+attribute equal to the patcher's default is omitted -- that is how Max writes a
+file, and the only way to tell a styled box from a normal one -- so the emitted
+patcher records `default_fontname` / `default_fontsize` / `default_fontface`
+alongside the boxes. Filtering without recording was silent damage: a patcher
+defaulting to 14pt lost `fontsize: 14` from every box as "unstyled" and kept no
+default to restore it, so the file reopened at Max's 12pt with nothing said.
+
+The patcher's window `rect` is *not* read back; it is the default unless you
+pass `serialize(p, { rect })`. See "Still unverified" for why.
 
 So do not use it to copy a patcher -- `cp` does that better. Use it to get the
 patch as **data**, then do something a copy cannot:
@@ -176,9 +196,18 @@ What Max does give:
 
 `src/objects.ts` is generated from py2max (`make js2max`): the port counts and
 box classes are static per object class, and py2max already knows them for all
-1175 objects in the maxref bundle. An object class with no entry -- a
+1175 objects in the maxref bundle. The same table backs `Patcher.add`, so the
+two directions agree on what a `gain~` is. An object class with no entry -- a
 third-party external -- omits its port counts rather than guessing, since Max
 derives them from the instantiated object anyway.
+
+`result.unresolved` counts the cords that did not make it into the file because
+an endpoint was not written. Under `extract` that is the boundary being cut,
+which is the point; serializing a whole patcher it should be zero, since every
+endpoint is in the set by construction. It is counted rather than assumed
+because endpoints are matched by object identity, and the JS API does not
+promise two reads of an object give the same wrapper -- if that is ever wrong,
+this reports it instead of a patch arriving with no connections in it.
 
 **`write` refuses rather than writing a file Max cannot load.** Any box that
 cannot be fully described is named in the console and the write is abandoned;
@@ -195,10 +224,41 @@ patchline to a box that failed, is collected in `result.skipped` with a reason
 and the rest of the patch still builds. A half-built patcher with a clear log
 beats an exception halfway through.
 
+A built box carries the description's appearance, not just its position: the box
+attributes a `.maxpat` records -- colours, fonts, `presentation`, `hidden` --
+are applied to the object, so what `serialize` preserves is what `instantiate`
+restores. Only attributes the box itself reports through `getboxattrnames()` are
+attempted; asking a box for one it does not have is how the Max console fills up
+over a file that is otherwise fine. Pass `{ applyAttributes: false }` to build
+bare boxes.
+
+What a built box does *not* get is a name it never asked for. `result.objects`
+maps every model id to its live object, which is how a script addresses what it
+just built; naming the boxes as well was redundant and not free, since a
+`varname` invented from the model id is a key `serialize` then writes into the
+file and py2max never would. Pass `{ nameById: true }` when the name has to
+outlive the call -- a later message, another object reaching in with
+`getnamed` -- and the names are made unique, so a second build does not shadow
+the first. A `varname` the description carries is applied either way.
+
+`result.warnings` is the other list, for boxes that *were* built but not as
+described: an attribute the object refused, or a message box whose text contains
+`,` or `;`. Those are Max's message separators -- `1, 2` is two messages -- and they are
+`A_COMMA` / `A_SEMI` atoms that nothing in the JS API can produce, so a `set`
+message delivers an ordinary symbol instead. The box exists and the rest of the
+patch is unaffected; `save` writes such a patch correctly, because a description
+goes to the file without passing through Max. Empty `skipped` means it was
+built; empty `warnings` means it was built as written.
+
+Box text is tokenized the same way in both directions, so a message box `1 2 3`
+holds three ints rather than three symbols. Only Max's own number syntax
+converts: `0x10`, `1e3` and `Infinity` stay symbols, because Max does not read
+them as numbers and rewriting `gate 0x10` into `gate 16` would change the patch.
+
 ## Development
 
 ```bash
-cd ts
+cd js2max
 bun install
 bun run check     # tsc --noEmit, then bun test, then verify max/ is not stale
 bun run build     # rebuild max/
@@ -217,16 +277,17 @@ the repository root, `make js2max` builds and `make js2max-check` verifies.
 | `src/scripting.ts` | The bridge: a description becomes live Max objects |
 | `src/fileio.ts` | `.maxpat` read/write over Max's `File` class |
 | `src/serialize.ts` | Live patcher -> `.maxpat` |
-| `src/objects.ts` | Generated from py2max: box classes and port counts |
+| `src/objects.ts` | Generated from py2max: box classes, port counts, Max version |
 | `src/max.d.ts` | The `v8` host API, declared with per-item provenance |
-| `src/entry.v8.ts` | Message handlers for the drop-in build |
+| `src/commands.ts` | The decisions the messages make, where tests can reach them |
+| `src/entry.v8.ts` | Message handlers for the drop-in build -- glue only |
 | `src/lib.v8.ts` | Public surface for the `require()` build |
 | `test/mockhost.ts` | Recording stand-in for the Max host |
 | `test/mockfile.ts` | In-memory stand-in for Max's `File` |
 
 ## What is tested, and what is not
 
-`bun test` runs 126 tests. The round-trip tests parse every `.maxpat` fixture
+`bun test` runs 182 tests. The round-trip tests parse every `.maxpat` fixture
 under `tests/` and re-emit it. The bridge tests drive `instantiate` against
 `MockPatcher`, a double that records the Patcher-API calls, covering class-name
 derivation, typed-in argument coercion, the `[x,y,w,h]` to `[l,t,r,b]` rect
@@ -270,8 +331,18 @@ Run against Max with `max/v8-harness.maxpat`:
 
 ### Still unverified
 
+- **which rectangle convention a patcher attribute answers in.** `.maxpat`
+  stores the window as `[x, y, w, h]`; every rect the JS API hands back is
+  `[left, top, right, bottom]`. Reading `getattr("rect")` off the patcher and
+  writing it straight out would, if it is the second, produce a patch that opens
+  at the wrong size -- so `serialize` does not guess and keeps the default.
+  `probe` now logs the patcher's `rect` and its three font defaults; one run in
+  Max settles it.
 - whether `message("set", ...)` fills a message box created by `newdefault`
-  (the demo patch contains no message boxes, so nothing has exercised it)
+  (the demo patch contains no message boxes, so nothing has exercised it).
+  Related and untested for the same reason: whether a `set` argument that is a
+  symbol `,` shows up in the box as a literal comma, which is what
+  `result.warnings` exists to flag
 - whether `newdefault` returns null, as assumed, or throws for an unknown class
 - whether assigning `eof = 0` truncates. The reference documents the `eof`
   setter as *extending* a file with NULL bytes; shrinking is assumed. If it does

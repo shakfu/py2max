@@ -46,8 +46,15 @@ import type { InstantiateResult } from "./scripting.ts";
 import {
   clear as clearPatcher,
   instantiate,
+  objectsOf,
   remove as removeObjects,
 } from "./scripting.ts";
+import {
+  WRITE_MODES,
+  isOwnFile,
+  parseWriteModes,
+  selectMatching,
+} from "./commands.ts";
 import { demoPatch, synthPatch } from "./demo.ts";
 import { readPatch, writePatch, writeText } from "./fileio.ts";
 import { LoadedPatcher } from "./model.ts";
@@ -114,11 +121,6 @@ let built: Maxobj[] = [];
  */
 let described: PatcherDict | null = null;
 
-function basename(path: string): string {
-  const cut = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
-  return cut < 0 ? path : path.slice(cut + 1);
-}
-
 function report(result: InstantiateResult): void {
   built = [...result.objects.values()];
   post(
@@ -127,6 +129,11 @@ function report(result: InstantiateResult): void {
   );
   for (const skip of result.skipped) {
     error(`js2max: skipped ${skip.id} -- ${skip.reason}\n`);
+  }
+  // Built, but not as described -- worth saying, and not an error: the object
+  // is there and the rest of the patch is unaffected.
+  for (const warning of result.warnings) {
+    post(`js2max: warning, ${warning.id} -- ${warning.reason}\n`);
   }
   outlet(0, "done", result.created, result.connected, result.skipped.length);
 }
@@ -303,17 +310,28 @@ export function write(this: unknown, path: string, ...modes: string[]): void {
   //   built    export only what the last build created, not the whole patcher
   //   partial  write even if some boxes could not be described
   //   full     also record each object box's own attributes
-  const mode = new Set(modes);
+  const { modes: mode, unknown } = parseWriteModes(modes);
   const target = this;
   guard(() => {
     const patcher = patcherOf(target);
+
+    // A typo is not a mode. Ignoring one used to mean `write out.maxpat buit`
+    // serialized the whole patcher -- [v8] box included -- while reporting
+    // success, when what was asked for was the last build.
+    if (unknown.length > 0) {
+      error(
+        `js2max: "${unknown.join('", "')}" is not a write mode. ` +
+          `Use any of: ${WRITE_MODES.join(", ")}.\n`,
+      );
+      outlet(0, "error", "bad-mode");
+      return;
+    }
 
     // Refuse to write over the patch being serialized. `serialize` describes the
     // whole patcher, so the output of writing to your own filename is a copy of
     // yourself -- and for a generated patch (the harness is one) that silently
     // replaces a build artifact.
-    const own = basename(patcher.filepath ?? "");
-    if (own !== "" && basename(path) === own && !mode.has("built")) {
+    if (isOwnFile(patcher.filepath ?? "", path) && !mode.has("built")) {
       error(
         `js2max: refusing to write ${path} -- that is this patcher's own file. ` +
           `serialize() describes the whole patcher, so this would overwrite it ` +
@@ -353,6 +371,17 @@ export function write(this: unknown, path: string, ...modes: string[]): void {
         return;
       }
     }
+    // Serializing the whole patcher, every cord has both ends in the set by
+    // construction -- so a drop here is loss, not filtering, and is worth
+    // saying before the file is called faithful.
+    if (result.unresolved > 0) {
+      const why = mode.has("built")
+        ? "an endpoint is outside the built set"
+        : "an endpoint was not written";
+      post(
+        `js2max: ${result.unresolved} cord(s) not written -- ${why}\n`,
+      );
+    }
     writeText(path, JSON.stringify({ patcher: result.patcher }, null, 4));
     post(
       `js2max: wrote ${path} -- ${result.patcher.boxes.length} box(es), ` +
@@ -381,12 +410,26 @@ export function probe(this: unknown): void {
   const target = this;
   guard(() => {
     const patcher = patcherOf(target);
+    // The patcher's own attributes, which decide what the emitted file records
+    // above the boxes. `rect` is the open question: `.maxpat` stores
+    // `[x, y, w, h]` and the JS API's rects are `[left, top, right, bottom]`,
+    // so until this line is read in Max, `serialize` will not guess at it.
+    for (const name of [
+      "rect",
+      "default_fontname",
+      "default_fontsize",
+      "default_fontface",
+    ]) {
+      let value: unknown;
+      try {
+        value = patcher.getattr(name);
+      } catch (err) {
+        value = `<threw: ${String(err)}>`;
+      }
+      post(`js2max probe patcher: ${name} = ${JSON.stringify(value)}\n`);
+    }
     let index = 0;
-    for (
-      let object = patcher.firstobject;
-      object !== null && object !== undefined;
-      object = object.nextobject
-    ) {
+    for (const object of objectsOf(patcher)) {
       index += 1;
       const names = (() => {
         try {
@@ -454,17 +497,7 @@ export function extract(this: unknown, path: string, match?: string): void {
   const needle = match ?? "~";
   guard(() => {
     const patcher = patcherOf(target);
-    const chosen: Maxobj[] = [];
-    for (
-      let object = patcher.firstobject;
-      object !== null && object !== undefined;
-      object = object.nextobject
-    ) {
-      const text = object.boxtext ?? "";
-      if (object.maxclass.indexOf(needle) >= 0 || text.indexOf(needle) >= 0) {
-        chosen.push(object);
-      }
-    }
+    const chosen = selectMatching(objectsOf(patcher), needle);
 
     if (chosen.length === 0) {
       error(`js2max: nothing in this patcher matches "${needle}"\n`);
@@ -483,7 +516,13 @@ export function extract(this: unknown, path: string, match?: string): void {
     post(
       `js2max: extracted ${result.patcher.boxes.length} of ${patcher.count} ` +
         `object(s) matching "${needle}" to ${path} -- ` +
-        `${result.patcher.lines.length} cord(s)\n`,
+        `${result.patcher.lines.length} cord(s)` +
+        // Expected here rather than alarming: cutting the cords that leave the
+        // set is what makes the extract a patch on its own.
+        (result.unresolved > 0
+          ? `, ${result.unresolved} cut at the boundary`
+          : "") +
+        `\n`,
     );
     outlet(
       0,

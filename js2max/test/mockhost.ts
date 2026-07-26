@@ -17,10 +17,18 @@ export interface CreatedObject {
   args: (string | number)[];
 }
 
+/**
+ * A `connect` call as it was made.
+ *
+ * Endpoints are the objects, as Max receives them. They were recorded by
+ * `varname`, which quietly made this log depend on the naming policy: it read
+ * correctly only because `instantiate` happened to name every box after its
+ * model id, and said nothing at all once it stopped.
+ */
 export interface Connection {
-  from: string;
+  from: MockMaxobj;
   outlet: number;
-  to: string;
+  to: MockMaxobj;
   inlet: number;
   hidden?: boolean;
 }
@@ -34,7 +42,23 @@ export interface MockConnection {
 }
 
 export class MockMaxobj {
-  varname = "";
+  /**
+   * The scripting name.
+   *
+   * Backed by the box attribute rather than held beside it, because in Max they
+   * are one piece of state: assigning `Maxobj.varname` is what a later
+   * `getboxattr("varname")` reads back, and it is how the name reaches a saved
+   * file at all. Kept separate here, a box named by `instantiate` reported no
+   * name to `serialize`, and the two directions agreed only by accident.
+   */
+  get varname(): string {
+    return (this.boxAttrs.get("varname") as string | undefined) ?? "";
+  }
+
+  set varname(value: string) {
+    this.boxAttrs.set("varname", value);
+  }
+
   rect: [number, number, number, number] = [0, 0, 0, 0];
   readonly messages: Array<{ name: string; args: unknown[] }> = [];
   nested: MockPatcher | null = null;
@@ -94,8 +118,17 @@ export class MockMaxobj {
     return [...this.boxAttrs.keys()];
   }
 
-  setboxattr(name: string, value: unknown): void {
-    this.boxAttrs.set(name, value);
+  /** Names this box will refuse to set, so the failure path can be exercised. */
+  readonly refuses = new Set<string>();
+
+  /**
+   * As Max: an attribute takes an atom *list*, so a rect arrives as four
+   * arguments rather than one array. Stored the way `getboxattr` gives it back
+   * -- a single atom as itself, several as an array.
+   */
+  setboxattr(name: string, ...value: unknown[]): void {
+    if (this.refuses.has(name)) throw new Error(`${name} refused`);
+    this.boxAttrs.set(name, value.length === 1 ? value[0] : value);
   }
 
   get nextobject(): MockMaxobj | null {
@@ -113,6 +146,32 @@ export class MockMaxobj {
   }
 }
 
+/**
+ * Box attributes every created box reports, declared but unset.
+ *
+ * `getboxattrnames()` answers for the attributes a box *has*, at whatever value
+ * -- which is what `instantiate` consults before setting anything, and what
+ * `serialize` walks under `allAttributes`. A mock whose boxes claimed no
+ * attributes would let either side pass while doing nothing. Unset, so they are
+ * reported without being written back out (`isSet` drops them).
+ */
+const DECLARED_BOX_ATTRS = [
+  "annotation",
+  "bgcolor",
+  "border",
+  "color",
+  "fontface",
+  "fontname",
+  "fontsize",
+  "hidden",
+  "hint",
+  "ignoreclick",
+  "presentation",
+  "presentation_rect",
+  "textcolor",
+  "varname",
+];
+
 export interface MockPatcherOptions {
   /** Class names to reject, as Max does for an object it cannot instantiate. */
   unknownClasses?: readonly string[];
@@ -123,6 +182,8 @@ export interface MockPatcherOptions {
    * else gets `maxclass: "newobj"`, as Max does for an object box.
    */
   uiClasses?: readonly string[];
+  /** Attribute names every box refuses to set, for the failure path. */
+  refusedBoxAttrs?: readonly string[];
 }
 
 export class MockPatcher {
@@ -184,6 +245,12 @@ export class MockPatcher {
     // offers is modelled here, or the tests would validate a fiction.
     void boxclass;
     object.boxAttrs.set("patching_rect", [left, top, 66, 22]);
+    for (const name of DECLARED_BOX_ATTRS) {
+      if (!object.boxAttrs.has(name)) object.boxAttrs.set(name, undefined);
+    }
+    for (const name of this.options.refusedBoxAttrs ?? []) {
+      object.refuses.add(name);
+    }
     if (this.options.subpatcherClasses?.includes(className)) {
       object.nested = new MockPatcher(this.options);
     }
@@ -227,9 +294,9 @@ export class MockPatcher {
     hidden: boolean,
   ): void {
     this.connections.push({
-      from: from.varname,
+      from,
       outlet,
-      to: to.varname,
+      to,
       inlet,
       ...(hidden ? { hidden: true } : {}),
     });

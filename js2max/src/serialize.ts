@@ -34,21 +34,28 @@ import type {
 } from "./format.ts";
 import { MAX_VERSION } from "./model.ts";
 import { PORTS, boxClassOf } from "./objects.ts";
-import { fromMaxobjRect } from "./scripting.ts";
+import {
+  STRUCTURAL,
+  fromMaxobjRect,
+  isPlain,
+  objectsOf,
+} from "./scripting.ts";
 
 /**
  * Box attributes never copied verbatim: supplied from the class table, derived,
  * or the patcher's business rather than the box's.
+ *
+ * Almost exactly the set `instantiate` refuses to push back, and for the same
+ * reason -- these are the box's structure, reached through their own accessors
+ * -- so it is shared rather than restated, and the two directions cannot drift
+ * apart on what counts as a box attribute.
+ *
+ * `varname` is the one genuine difference, and it is not an oversight in either
+ * direction: building a box assigns it (`object.varname = ...`, no attribute
+ * involved), while a `.maxpat` records it as an ordinary box key that this must
+ * read back. Same name, two mechanisms.
  */
-const DERIVED = new Set([
-  "id",
-  "maxclass",
-  "numinlets",
-  "numoutlets",
-  "patcher",
-  "rect",
-  "text",
-]);
+const DERIVED = new Set([...STRUCTURAL].filter((name) => name !== "varname"));
 
 /**
  * Box attributes carried over when set.
@@ -177,6 +184,20 @@ export interface SerializeResult {
   patcher: PatcherDict;
   /** Boxes left out because they could not be described. Empty means faithful. */
   incomplete: IncompleteBox[];
+  /**
+   * Cords not written, because an endpoint is not among the boxes written.
+   *
+   * Expected under `only`, where dropping the cords that leave the set is what
+   * makes the extract self-contained, and after an `incomplete` box is left
+   * out. Serializing a whole patcher, it is neither: every cord's endpoints are
+   * in the set by construction, so a non-zero count means cords were lost.
+   * Counted rather than assumed away -- endpoints are matched by object
+   * identity, and the JS API does not promise that two reads of the same object
+   * give the same wrapper (`snapshot` carries a `varname` fallback for exactly
+   * this). If that assumption is ever wrong, this is what says so instead of a
+   * patch quietly arriving with no connections in it.
+   */
+  unresolved: number;
 }
 
 /**
@@ -186,27 +207,6 @@ export interface SerializeResult {
  * nothing to fall back to: `text` is not a box attribute, so the legacy `js`
  * engine -- which lacks `boxtext` -- cannot serialize a patcher at all.
  */
-/**
- * Whether a value is plain data a `.maxpat` can hold.
- *
- * Attributes do not all return data. Reading `textfile` on a `[v8]` box hands
- * back a Max object the JS bridge cannot wrap, and logs
- * `v8_wrapobject: couldn't wrap instance of class textfile` to the console for
- * the attempt. Anything that is not a number, string, boolean or a flat array
- * of those is skipped.
- */
-function isPlain(value: unknown): boolean {
-  const kind = typeof value;
-  if (kind === "number" || kind === "string" || kind === "boolean") return true;
-  if (Array.isArray(value)) {
-    return value.every((item) => {
-      const k = typeof item;
-      return k === "number" || k === "string" || k === "boolean";
-    });
-  }
-  return false;
-}
-
 /**
  * The object's own attributes, as distinct from the box's.
  *
@@ -258,6 +258,12 @@ function readObjectAttrs(
  * principled way to tell "this box was styled" from "this box is normal" --
  * without it, including fonts writes Max's defaults onto every box, and
  * excluding them loses a comment someone deliberately set to 14pt.
+ *
+ * These are read to filter *and* written into the emitted patcher, and the two
+ * are not separable. Filtering alone was a silent bug: a patcher defaulting to
+ * 14pt had `fontsize: 14` dropped from every box as "unstyled" and no default
+ * recorded to restore it, so the file reopened at Max's own 12pt -- every box
+ * changed size, and nothing said so.
  */
 function patcherFontDefaults(target: MaxPatcher): Record<string, unknown> {
   const defaults: Record<string, unknown> = {};
@@ -270,6 +276,37 @@ function patcherFontDefaults(target: MaxPatcher): Record<string, unknown> {
     }
   }
   return defaults;
+}
+
+/**
+ * Whether a box attribute matches the patcher default it is judged against.
+ *
+ * Compared as text, because the two come from different reads and Max is not
+ * consistent about which returns `12` and which `"12"`. A box left at the
+ * default that came back as a string would otherwise be written out as a
+ * deliberate override.
+ */
+function matchesDefault(value: unknown, fallback: unknown): boolean {
+  return value === fallback || String(value) === String(fallback);
+}
+
+/** The patcher-level font defaults, as the keys a `.maxpat` records them under. */
+function defaultFontEntries(
+  defaults: Record<string, unknown>,
+): Partial<Pick<
+  PatcherDict,
+  "default_fontname" | "default_fontsize" | "default_fontface"
+>> {
+  const name = defaults["fontname"];
+  const size = asNumber(defaults["fontsize"]);
+  const face = asNumber(defaults["fontface"]);
+  return {
+    ...(size === undefined ? {} : { default_fontsize: size }),
+    ...(face === undefined ? {} : { default_fontface: face }),
+    ...(typeof name === "string" && name !== ""
+      ? { default_fontname: name }
+      : {}),
+  };
 }
 
 function describe(
@@ -337,8 +374,12 @@ function describe(
     if (DERIVED.has(name)) continue;
     const value = first(readBoxAttr(object, name));
     if (!isSet(value)) continue;
-    // Equal to the patcher default means unstyled: Max omits it, so do we.
-    if (name in fontDefaults && value === fontDefaults[name]) continue;
+    // Equal to the patcher default means unstyled: Max omits it, so do we --
+    // and `serialize` records that default in the file, or this would drop the
+    // font without preserving what it was equal to.
+    if (name in fontDefaults && matchesDefault(value, fontDefaults[name])) {
+      continue;
+    }
     (box as unknown as Record<string, unknown>)[name] = value;
   }
 
@@ -370,14 +411,7 @@ export function serialize(
     // `bad object`.
     objects = [...options.only].filter((o) => o.valid !== false);
   } else {
-    objects = [];
-    for (
-      let object = target.firstobject;
-      object !== null && object !== undefined;
-      object = object.nextobject
-    ) {
-      objects.push(object);
-    }
+    objects = objectsOf(target);
   }
 
   const boxes: BoxEntry[] = [];
@@ -397,12 +431,27 @@ export function serialize(
   });
 
   const lines: PatchlineEntry[] = [];
+  let unresolved = 0;
+  const inScope = new Set(objects);
   for (const object of objects) {
+    // Cords arriving from outside the set are never seen by the pass below,
+    // which walks outputs only -- correct for emitting each cord once, and a
+    // blind spot for counting the ones that do not make it. Under `only` that
+    // was half the boundary: dropping the oscillator counted the cord out of it
+    // and not the cord into it.
+    for (const cord of object.patchcords.inputs) {
+      // Already accounted for by the outputs pass, whichever way it went.
+      if (inScope.has(cord.srcobject)) continue;
+      unresolved += 1;
+    }
     for (const cord of object.patchcords.outputs) {
       const from = ids.get(cord.srcobject);
       const to = ids.get(cord.dstobject);
       // A cord to a box that was dropped would reference a missing id.
-      if (from === undefined || to === undefined) continue;
+      if (from === undefined || to === undefined) {
+        unresolved += 1;
+        continue;
+      }
       lines.push({
         patchline: {
           source: [from, cord.srcoutlet],
@@ -417,10 +466,21 @@ export function serialize(
       fileversion: 1,
       appversion: { ...MAX_VERSION },
       classnamespace: "box",
+      // The window geometry is deliberately not read back from the patcher.
+      // `.maxpat` stores `rect` as `[x, y, w, h]` and the JS API's rects are
+      // `[left, top, right, bottom]`; which convention a patcher attribute
+      // answers in is not settled outside Max, and a wrong window rect is a
+      // patch that opens the wrong size. `probe` now reports it, so the harness
+      // can settle it. Until then, pass `rect` if you know it.
       rect: options.rect ?? [85, 104, 640, 480],
+      // Written because they are what the box fonts above were filtered
+      // against: a box equal to the default is omitted, so the default has to
+      // be in the file for it to mean anything.
+      ...defaultFontEntries(fontDefaults),
       boxes,
       lines,
     },
     incomplete,
+    unresolved,
   };
 }

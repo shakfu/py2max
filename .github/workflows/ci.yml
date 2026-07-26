@@ -85,6 +85,37 @@ jobs:
       - name: Run mypy
         run: uv run mypy py2max
 
+  js2max:
+    name: js2max
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Typechecks, runs bun test, and verifies that everything generated from
+      # py2max -- src/objects.ts, the two bundles in max/, the demo patches --
+      # matches what the sources currently produce. The bundles are committed so
+      # that a Max user needs no toolchain, which is exactly what lets them go
+      # stale unnoticed.
+      - name: Check js2max
+        run: make js2max-check
+
   docs:
     name: Build Documentation
     runs-on: ubuntu-latest

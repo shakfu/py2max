@@ -29,6 +29,18 @@ import type { BoxDict, PatcherDict, PatchlineDict, Rect4 } from "./format.ts";
 /** Box classes whose content is set with a `set` message, not typed-in args. */
 const SET_CONTENT_CLASSES = new Set(["message", "comment"]);
 
+/**
+ * Max's message separators, which a `set` message cannot carry.
+ *
+ * In a `.maxpat` a message box's `text` may hold several messages -- `1, 2` is
+ * two of them, `bang; foo bar` sends to a receive. Those are `A_COMMA` and
+ * `A_SEMI` atoms in Max, and nothing the JS API offers produces one: an
+ * argument to `message()` is a number or a symbol, so a `,` arrives as the
+ * *symbol* `,`. The box is still created; what it holds is reported instead of
+ * being passed off as faithful.
+ */
+const SEPARATORS = /[,;]/;
+
 /** Box classes that are their own class name, with no `text` to parse. */
 function classNameOf(box: BoxDict): string {
   if (box.maxclass !== "newobj") return box.maxclass;
@@ -38,20 +50,42 @@ function classNameOf(box: BoxDict): string {
 }
 
 /**
- * Typed-in arguments for a `newobj` box: everything after the class name.
+ * A number, if the token is one Max would read as a number, else the symbol.
  *
- * Numeric-looking tokens become numbers because Max distinguishes the symbol
- * `440` from the int `440` when it reaches an object's argument list.
+ * The distinction is real: Max treats the symbol `440` and the int `440` as
+ * different atoms, and an object's argument list is parsed accordingly.
+ *
+ * The pattern is deliberately narrower than `Number()`, which also accepts
+ * forms Max does not read as numbers and would silently rewrite: `0x10` would
+ * become 16, `1e3` 1000, `Infinity` a float. Those stay symbols, which is what
+ * a box typed with them contains.
  */
+function atomOf(token: string): string | number {
+  if (!/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(token)) return token;
+  const value = Number(token);
+  return Number.isFinite(value) ? value : token;
+}
+
+/**
+ * Box text as the atoms Max would parse from it.
+ *
+ * One tokenizer for both directions -- typed-in arguments and message/comment
+ * content. They were separate, and had drifted: arguments were coerced while
+ * `set` content was passed through as symbols, so a message box `1 2 3` was
+ * built holding three symbols where the file said three ints.
+ */
+function atomsOf(text: string): (string | number)[] {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token !== "")
+    .map(atomOf);
+}
+
+/** Typed-in arguments for a `newobj` box: everything after the class name. */
 function typedArgsOf(box: BoxDict): (string | number)[] {
   if (box.maxclass !== "newobj") return [];
-  const tokens = (box.text ?? "").trim().split(/\s+/).slice(1);
-  return tokens
-    .filter((token) => token !== "")
-    .map((token) => {
-      const asNumber = Number(token);
-      return Number.isFinite(asNumber) && token !== "" ? asNumber : token;
-    });
+  return atomsOf(box.text ?? "").slice(1);
 }
 
 /**
@@ -73,6 +107,124 @@ export function fromMaxobjRect(
   return [left, top, right - left, bottom - top];
 }
 
+/**
+ * Box keys that are the box's *structure*, not attributes to be pushed back.
+ *
+ * Every one of these is either established when the object is created
+ * (`maxclass` and `text` decide what it is, the port counts follow from that),
+ * applied through its own accessor (`patching_rect` via `rect`, `varname`
+ * directly), a nested document (`patcher`), or Max's own save bookkeeping
+ * (`saved_*`). A probe in Max settled the first group for good: `getboxattr`
+ * returns null for `maxclass`, `numinlets`, `numoutlets` and `text`, because
+ * they are not box attributes at all -- so setting them is not merely redundant,
+ * there is nothing to set.
+ *
+ * Shared with `serialize.ts`, which must not read back out what this does not
+ * write in. The two lists were separate and the same knowledge.
+ */
+export const STRUCTURAL: ReadonlySet<string> = new Set([
+  "id",
+  "maxclass",
+  "numinlets",
+  "numoutlets",
+  "outlettype",
+  "patcher",
+  "patching_rect",
+  "rect",
+  "text",
+  "varname",
+  "saved_attribute_attributes",
+  "saved_object_attributes",
+]);
+
+/**
+ * Whether a value is plain data a `.maxpat` can hold, and Max can be handed.
+ *
+ * Attributes do not all carry data. Reading `textfile` on a `[v8]` box hands
+ * back a Max object the JS bridge cannot wrap, and logs `v8_wrapobject:
+ * couldn't wrap instance of class textfile` for the attempt. Anything that is
+ * not a number, string, boolean or a flat array of those is left alone, in both
+ * directions.
+ */
+export function isPlain(value: unknown): boolean {
+  const kind = typeof value;
+  if (kind === "number" || kind === "string" || kind === "boolean") return true;
+  if (Array.isArray(value)) {
+    return value.every((item) => {
+      const k = typeof item;
+      return k === "number" || k === "string" || k === "boolean";
+    });
+  }
+  return false;
+}
+
+/**
+ * Push a description's box attributes onto the object just created for it.
+ *
+ * The asymmetry this closes: `serialize` works to preserve `bgcolor`,
+ * `fontsize`, `presentation` and the rest, and `instantiate` used to apply the
+ * rect and the varname and drop everything else -- so a patch that went file ->
+ * live -> file arrived stripped of its appearance, for reasons that have
+ * nothing to do with what the JS API can reach.
+ *
+ * Only attributes the box itself reports are set. Asking a box to set an
+ * attribute it does not have is how the Max console fills with complaints about
+ * a file that is otherwise fine, and `getboxattrnames()` is the box's own answer
+ * to what it accepts. A box that will not answer gets nothing rather than a
+ * guess.
+ */
+function applyBoxAttrs(object: Maxobj, box: BoxDict): string[] {
+  let known: Set<string>;
+  try {
+    known = new Set(object.getboxattrnames());
+  } catch {
+    return [];
+  }
+
+  const failed: string[] = [];
+  for (const [name, value] of Object.entries(box)) {
+    if (STRUCTURAL.has(name) || !known.has(name)) continue;
+    if (!isPlain(value)) continue;
+    try {
+      // A Max attribute takes an atom list, so a rect or a colour goes as four
+      // arguments and not as one array.
+      if (Array.isArray(value)) object.setboxattr(name, ...value);
+      else object.setboxattr(name, value);
+    } catch {
+      failed.push(name);
+    }
+  }
+  return failed;
+}
+
+/**
+ * A scripting name not already in use in this patcher.
+ *
+ * `getnamed` answers with the *first* object of a given name, so two builds
+ * that both named a box `obj-1` would leave the second unreachable and the
+ * first answering for it. Suffixed rather than refused: the point of the name
+ * is to be found by, and a caller who wanted a specific one would have put it
+ * in the description.
+ */
+function freeName(target: MaxPatcher, wanted: string): string {
+  let candidate = wanted;
+  // Bounded because this runs inside Max, where a runaway loop takes the whole
+  // application with it. A patcher with a thousand `obj-1`s is not a patcher.
+  for (let n = 2; n <= 1000; n += 1) {
+    let taken: boolean;
+    try {
+      const found = target.getnamed(candidate);
+      taken = found !== null && found !== undefined;
+    } catch {
+      // A host that will not answer gets the name as asked.
+      return candidate;
+    }
+    if (!taken) return candidate;
+    candidate = `${wanted}-${n}`;
+  }
+  return candidate;
+}
+
 export interface SkippedBox {
   id: string;
   reason: string;
@@ -85,17 +237,49 @@ export interface InstantiateResult {
   readonly connected: number;
   /** Boxes and lines that could not be built, with why. Never throws for these. */
   readonly skipped: readonly SkippedBox[];
+  /**
+   * Boxes that were built, but not faithfully.
+   *
+   * Distinct from {@link skipped}, which is about what does not exist in the
+   * patcher. These do exist and hold something other than what the description
+   * said -- a message box whose commas could not survive a `set`. An empty
+   * `skipped` means the patch was built; an empty `warnings` too means it was
+   * built as written.
+   */
+  readonly warnings: readonly SkippedBox[];
 }
 
 export interface InstantiateOptions {
   /**
    * Name every created object after its model id when it has no `varname`, so
-   * `patcher.getnamed("obj-3")` finds it afterwards. On by default: without it
-   * a script cannot address what it just built.
+   * `patcher.getnamed("obj-3")` finds it afterwards.
+   *
+   * **Off by default**, and it used to be on. The justification for on was that
+   * a script could not otherwise address what it had just built -- which is not
+   * true: {@link InstantiateResult.objects} maps every model id to its live
+   * object, in process, without touching the patch. What it cost was paid by
+   * every box: a description with no `varname` produced an object with one, so
+   * serializing the result wrote `varname: "obj-1"` onto boxes that had never
+   * asked for a name and that py2max would never write one for. Two builds into
+   * the same patcher then collided on those names, and `getnamed` answers with
+   * whichever it finds first.
+   *
+   * Turn it on when the name has to outlive the call -- a later message, a
+   * `[js]` in the patch, another script. Names are then made unique against the
+   * patcher, so a second build does not shadow the first.
+   *
+   * A `varname` the description actually carries is applied either way.
    */
   nameById?: boolean;
   /** Resize each object to its `patching_rect`. On by default. */
   applyRects?: boolean;
+  /**
+   * Apply the box attributes the description carries -- colours, fonts,
+   * presentation, `hidden`. On by default: a description that says a box is
+   * blue should produce a blue box, and the alternative is a patch that comes
+   * back from a file looking nothing like it went in.
+   */
+  applyAttributes?: boolean;
   /** Recurse into subpatcher boxes that carry a nested `patcher`. On by default. */
   buildSubpatchers?: boolean;
   /** Offset every position, for building into a region of an existing patcher. */
@@ -115,8 +299,9 @@ export function instantiate(
   options: InstantiateOptions = {},
 ): InstantiateResult {
   const {
-    nameById = true,
+    nameById = false,
     applyRects = true,
+    applyAttributes = true,
     buildSubpatchers = true,
     offset = [0, 0],
   } = options;
@@ -124,6 +309,7 @@ export function instantiate(
 
   const objects = new Map<string, Maxobj>();
   const skipped: SkippedBox[] = [];
+  const warnings: SkippedBox[] = [];
   let created = 0;
   let connected = 0;
 
@@ -149,18 +335,46 @@ export function instantiate(
 
     if (SET_CONTENT_CLASSES.has(box.maxclass) && box.text !== undefined) {
       // A message or comment carries its content as text rather than as
-      // typed-in arguments; `set` fills it without triggering output.
-      object.message("set", ...box.text.trim().split(/\s+/));
+      // typed-in arguments; `set` fills it without triggering output. The atoms
+      // are the ones Max would parse from the text, so a message box `1 2 3`
+      // holds three ints rather than three symbols.
+      object.message("set", ...atomsOf(box.text));
+      // Only for a message box: there `,` and `;` separate messages and their
+      // loss changes what the box does. In a comment they are prose.
+      if (box.maxclass === "message" && SEPARATORS.test(box.text)) {
+        warnings.push({
+          id: box.id,
+          reason:
+            `message text "${box.text}" contains a message separator ` +
+            `(, or ;), which a "set" message cannot carry -- the box holds it ` +
+            `as an ordinary symbol. Write the patch to a file instead if the ` +
+            `separator matters.`,
+        });
+      }
     }
 
-    if (nameById) {
-      object.varname = box.varname ?? box.id;
-    } else if (box.varname !== undefined) {
+    // A name the description carries is the caller's, and goes on verbatim --
+    // uniquifying it would break the reference it exists to be. A name invented
+    // from the model id is ours, and is made unique so a second build does not
+    // shadow the first.
+    if (box.varname !== undefined) {
       object.varname = box.varname;
+    } else if (nameById) {
+      object.varname = freeName(target, box.id);
     }
 
     if (applyRects) {
       object.rect = toMaxobjRect([x + dx, y + dy, w, h]);
+    }
+
+    if (applyAttributes) {
+      const failed = applyBoxAttrs(object, box);
+      if (failed.length > 0) {
+        warnings.push({
+          id: box.id,
+          reason: `box attribute(s) refused by the object: ${failed.join(", ")}`,
+        });
+      }
     }
 
     if (buildSubpatchers && box.patcher !== undefined) {
@@ -171,10 +385,19 @@ export function instantiate(
           reason: "box carries a nested patcher but exposes no subpatcher()",
         });
       } else {
-        const inner = instantiate(nested, box.patcher, options);
+        // `offset` must not travel into the subpatcher. A nested box's
+        // coordinates are its own window's, so shifting the parent's boxes by
+        // (dx, dy) says nothing about where the subpatcher's contents belong --
+        // forwarding it moved them by the parent's offset a second time, in a
+        // window that never saw the first.
+        const inner = instantiate(nested, box.patcher, {
+          ...options,
+          offset: [0, 0],
+        });
         created += inner.created;
         connected += inner.connected;
         skipped.push(...inner.skipped);
+        warnings.push(...inner.warnings);
       }
     }
   }
@@ -203,7 +426,43 @@ export function instantiate(
     }
   }
 
-  return { objects, created, connected, skipped };
+  return { objects, created, connected, skipped, warnings };
+}
+
+/**
+ * Whether two handles designate the same box, without relying on identity.
+ *
+ * `snapshot` already assumes they might not: the JS API does not promise that
+ * two reads of the same object give the same JavaScript wrapper, which is why
+ * it carries a `varname` fallback. The same doubt is far more serious here.
+ * `keep` exists so a script does not delete the box it is running in, and
+ * `Array.includes` answers that question by identity alone -- so if the
+ * assumption ever fails, the one call whose failure frees the running script
+ * fails open.
+ *
+ * So: identity, then a scripting name if both have one, then class and position
+ * -- two different boxes of the same class stacked at exactly the same
+ * coordinates is not a patch anyone has. The asymmetry is deliberate. A false
+ * match leaves an object in the patcher; a missed match leaves Max executing
+ * against freed memory, which reports as `bad object` / `typedmess: post:
+ * corrupt object` and takes the script with it.
+ */
+function sameObject(a: Maxobj, b: Maxobj): boolean {
+  if (a === b) return true;
+  try {
+    if (a.varname !== "" && a.varname === b.varname) return true;
+    if (a.maxclass !== b.maxclass) return false;
+    const [al, at, ar, ab] = a.rect;
+    const [bl, bt, br, bb] = b.rect;
+    return al === bl && at === bt && ar === br && ab === bb;
+  } catch {
+    // A handle that will not answer is not one to match against.
+    return false;
+  }
+}
+
+function isKept(keep: readonly Maxobj[], object: Maxobj): boolean {
+  return keep.some((kept) => sameObject(kept, object));
 }
 
 export interface ClearOptions {
@@ -227,14 +486,7 @@ export interface ClearOptions {
  */
 export function clear(target: MaxPatcher, options: ClearOptions = {}): number {
   const keep = options.keep ?? [];
-  const doomed: Maxobj[] = [];
-  for (
-    let object = target.firstobject;
-    object !== null && object !== undefined;
-    object = object.nextobject
-  ) {
-    if (!keep.includes(object)) doomed.push(object);
-  }
+  const doomed = objectsOf(target).filter((object) => !isKept(keep, object));
   for (const object of doomed) target.remove(object);
   return doomed.length;
 }
@@ -255,7 +507,7 @@ export function remove(
   const keep = options.keep ?? [];
   let removed = 0;
   for (const object of [...objects]) {
-    if (keep.includes(object)) continue;
+    if (isKept(keep, object)) continue;
     target.remove(object);
     removed += 1;
   }
@@ -263,7 +515,7 @@ export function remove(
 }
 
 /** Every object in a patcher, in list order. */
-function objectsOf(target: MaxPatcher): Maxobj[] {
+export function objectsOf(target: MaxPatcher): Maxobj[] {
   const objects: Maxobj[] = [];
   for (
     let object = target.firstobject;

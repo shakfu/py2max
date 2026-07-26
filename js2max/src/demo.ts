@@ -11,20 +11,18 @@ import type { PatcherDict, Rect4 } from "./format.ts";
 import type { AddBoxOptions } from "./model.ts";
 import { Patcher } from "./model.ts";
 
-/** `cycle~ 440 -> gain~ -> ezdac~`, with the gain fanned to both dac inlets. */
+/**
+ * `cycle~ 440 -> gain~ -> ezdac~`, with the gain fanned to both dac inlets.
+ *
+ * The box class and port counts come from `objects.ts`, so nothing here spells
+ * them out. They used to be written by hand and two of them were wrong: `gain~`
+ * was declared with 2 inlets where it has 1.
+ */
 export function demoPatch(): PatcherDict {
   const p = new Patcher();
   const osc = p.add("cycle~ 440");
-  const gain = p.add("gain~", {
-    maxclass: "gain~",
-    numinlets: 2,
-    numoutlets: 2,
-  });
-  const dac = p.add("ezdac~", {
-    maxclass: "ezdac~",
-    numinlets: 2,
-    numoutlets: 0,
-  });
+  const gain = p.add("gain~");
+  const dac = p.add("ezdac~");
   p.connect(osc, gain);
   p.connect(gain, dac, 0, 0);
   p.connect(gain, dac, 0, 1);

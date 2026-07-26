@@ -59,364 +59,6 @@ __export(exports_lib_v8, {
 });
 module.exports = __toCommonJS(exports_lib_v8);
 
-// src/model.ts
-var MAX_VERSION = {
-  major: 8,
-  minor: 5,
-  revision: 5,
-  architecture: "x64",
-  modernui: 1
-};
-var DEFAULT_BOX = [0, 0, 66, 22];
-
-class Patcher {
-  boxes = [];
-  lines = [];
-  idCounter = 0;
-  spacing;
-  settings;
-  constructor(options = {}) {
-    this.spacing = options.spacing ?? 72;
-    this.settings = {
-      fileversion: 1,
-      appversion: { ...MAX_VERSION },
-      classnamespace: options.classnamespace ?? "box",
-      rect: options.rect ?? [85, 104, 640, 480],
-      ...options.title === undefined ? {} : { title: options.title }
-    };
-  }
-  nextId() {
-    this.idCounter += 1;
-    return `obj-${this.idCounter}`;
-  }
-  nextRect() {
-    const index = this.boxes.length;
-    return [
-      48 + index % 8 * this.spacing,
-      48 + Math.floor(index / 8) * this.spacing,
-      DEFAULT_BOX[2],
-      DEFAULT_BOX[3]
-    ];
-  }
-  add(text, options = {}) {
-    const { id, maxclass, numinlets, numoutlets, patching_rect, ...props } = options;
-    const box = {
-      id: id ?? this.nextId(),
-      maxclass: maxclass ?? "newobj",
-      numinlets: numinlets ?? 2,
-      numoutlets: numoutlets ?? 1,
-      patching_rect: patching_rect ?? this.nextRect(),
-      ...text === "" ? {} : { text },
-      ...props
-    };
-    this.boxes.push({ box });
-    return box;
-  }
-  addSubpatcher(text, options = {}) {
-    const sub = new Patcher({ classnamespace: "box" });
-    const box = this.add(text, { numinlets: 1, numoutlets: 1, ...options });
-    box.patcher = sub.toPatcherDict();
-    return { box, sub };
-  }
-  connect(from, to, outlet = 0, inlet = 0) {
-    const order = this.lines.filter((l) => l.patchline.source[0] === from.id && l.patchline.destination[0] === to.id).length;
-    const patchline = {
-      source: [from.id, outlet],
-      destination: [to.id, inlet],
-      ...order === 0 ? {} : { order }
-    };
-    this.lines.push({ patchline });
-    return patchline;
-  }
-  toPatcherDict() {
-    return { ...this.settings, boxes: this.boxes, lines: this.lines };
-  }
-  toFile() {
-    return { patcher: this.toPatcherDict() };
-  }
-  toJSON(indent = 4) {
-    return JSON.stringify(this.toFile(), null, indent);
-  }
-  static fromFile(file) {
-    return new LoadedPatcher(file.patcher);
-  }
-  static parse(text) {
-    return Patcher.fromFile(JSON.parse(text));
-  }
-}
-
-class LoadedPatcher {
-  patcher;
-  constructor(patcher) {
-    this.patcher = patcher;
-  }
-  get boxes() {
-    return this.patcher.boxes;
-  }
-  get lines() {
-    return this.patcher.lines;
-  }
-  maxNumericId() {
-    let max = 0;
-    for (const entry of this.patcher.boxes) {
-      const match = /^obj-(\d+)$/.exec(entry.box.id);
-      if (match?.[1] !== undefined) {
-        max = Math.max(max, Number.parseInt(match[1], 10));
-      }
-    }
-    return max;
-  }
-  findById(id) {
-    return this.patcher.boxes.find((entry) => entry.box.id === id)?.box;
-  }
-  *walk() {
-    const visit = function* (p) {
-      for (const entry of p.boxes) {
-        yield entry.box;
-        if (entry.box.patcher)
-          yield* visit(entry.box.patcher);
-      }
-    };
-    yield* visit(this.patcher);
-  }
-  toFile() {
-    return { patcher: this.patcher };
-  }
-  toJSON(indent = 4) {
-    return JSON.stringify(this.toFile(), null, indent);
-  }
-}
-// src/scripting.ts
-var SET_CONTENT_CLASSES = new Set(["message", "comment"]);
-function classNameOf(box) {
-  if (box.maxclass !== "newobj")
-    return box.maxclass;
-  const text = box.text ?? "";
-  const head = text.trim().split(/\s+/)[0];
-  return head === undefined || head === "" ? "newobj" : head;
-}
-function typedArgsOf(box) {
-  if (box.maxclass !== "newobj")
-    return [];
-  const tokens = (box.text ?? "").trim().split(/\s+/).slice(1);
-  return tokens.filter((token) => token !== "").map((token) => {
-    const asNumber = Number(token);
-    return Number.isFinite(asNumber) && token !== "" ? asNumber : token;
-  });
-}
-function toMaxobjRect(rect) {
-  const [x, y, w, h] = rect;
-  return [x, y, x + w, y + h];
-}
-function fromMaxobjRect(rect) {
-  const [left, top, right, bottom] = rect;
-  return [left, top, right - left, bottom - top];
-}
-function instantiate(target, source, options = {}) {
-  const {
-    nameById = true,
-    applyRects = true,
-    buildSubpatchers = true,
-    offset = [0, 0]
-  } = options;
-  const [dx, dy] = offset;
-  const objects = new Map;
-  const skipped = [];
-  let created = 0;
-  let connected = 0;
-  for (const entry of source.boxes) {
-    const box = entry.box;
-    const [x, y, w, h] = box.patching_rect;
-    const className = classNameOf(box);
-    let object = null;
-    try {
-      object = target.newdefault(x + dx, y + dy, className, ...typedArgsOf(box));
-    } catch (err) {
-      skipped.push({ id: box.id, reason: `newdefault threw: ${String(err)}` });
-      continue;
-    }
-    if (object === null || object === undefined) {
-      skipped.push({ id: box.id, reason: `unknown object class "${className}"` });
-      continue;
-    }
-    objects.set(box.id, object);
-    created += 1;
-    if (SET_CONTENT_CLASSES.has(box.maxclass) && box.text !== undefined) {
-      object.message("set", ...box.text.trim().split(/\s+/));
-    }
-    if (nameById) {
-      object.varname = box.varname ?? box.id;
-    } else if (box.varname !== undefined) {
-      object.varname = box.varname;
-    }
-    if (applyRects) {
-      object.rect = toMaxobjRect([x + dx, y + dy, w, h]);
-    }
-    if (buildSubpatchers && box.patcher !== undefined) {
-      const nested = object.subpatcher();
-      if (nested === null || nested === undefined) {
-        skipped.push({
-          id: box.id,
-          reason: "box carries a nested patcher but exposes no subpatcher()"
-        });
-      } else {
-        const inner = instantiate(nested, box.patcher, options);
-        created += inner.created;
-        connected += inner.connected;
-        skipped.push(...inner.skipped);
-      }
-    }
-  }
-  for (const entry of source.lines) {
-    const { source: from, destination: to, hidden } = entry.patchline;
-    const fromObject = objects.get(from[0]);
-    const toObject = objects.get(to[0]);
-    if (fromObject === undefined || toObject === undefined) {
-      skipped.push({
-        id: `${from[0]}->${to[0]}`,
-        reason: "patchline references a box that was not created"
-      });
-      continue;
-    }
-    try {
-      const wire = hidden ? target.hiddenconnect : target.connect;
-      wire.call(target, fromObject, from[1], toObject, to[1]);
-      connected += 1;
-    } catch (err) {
-      skipped.push({
-        id: `${from[0]}->${to[0]}`,
-        reason: `connect threw: ${String(err)}`
-      });
-    }
-  }
-  return { objects, created, connected, skipped };
-}
-function clear(target, options = {}) {
-  const keep = options.keep ?? [];
-  const doomed = [];
-  for (let object = target.firstobject;object !== null && object !== undefined; object = object.nextobject) {
-    if (!keep.includes(object))
-      doomed.push(object);
-  }
-  for (const object of doomed)
-    target.remove(object);
-  return doomed.length;
-}
-function remove(target, objects, options = {}) {
-  const keep = options.keep ?? [];
-  let removed = 0;
-  for (const object of [...objects]) {
-    if (keep.includes(object))
-      continue;
-    target.remove(object);
-    removed += 1;
-  }
-  return removed;
-}
-function objectsOf(target) {
-  const objects = [];
-  for (let object = target.firstobject;object !== null && object !== undefined; object = object.nextobject) {
-    objects.push(object);
-  }
-  return objects;
-}
-function snapshot(target) {
-  const objects = objectsOf(target);
-  const ids = new Map;
-  const byVarname = new Map;
-  const boxes = objects.map((object, index) => {
-    const id = object.varname === "" ? `obj-${index + 1}` : object.varname;
-    ids.set(object, id);
-    if (object.varname !== "")
-      byVarname.set(object.varname, id);
-    return {
-      id,
-      maxclass: object.maxclass,
-      patching_rect: fromMaxobjRect(object.rect),
-      ...object.varname === "" ? {} : { varname: object.varname }
-    };
-  });
-  const identify = (object) => ids.get(object) ?? (object.varname === "" ? undefined : byVarname.get(object.varname));
-  const lines = [];
-  let unresolved = 0;
-  for (const object of objects) {
-    for (const cord of object.patchcords.outputs) {
-      const from = identify(cord.srcobject);
-      const to = identify(cord.dstobject);
-      if (from === undefined || to === undefined) {
-        unresolved += 1;
-        continue;
-      }
-      lines.push({
-        source: [from, cord.srcoutlet],
-        destination: [to, cord.dstinlet]
-      });
-    }
-  }
-  return { boxes, lines, unresolved };
-}
-// src/fileio.ts
-var CHUNK = 16384;
-var maxFileFactory = (path, access) => {
-  const ctor = globalThis.File;
-  if (ctor === undefined) {
-    throw new Error("js2max: no Max File class -- file I/O is only available inside Max");
-  }
-  return new ctor(path, access);
-};
-function readText(path, options = {}) {
-  const factory = options.factory ?? maxFileFactory;
-  const file = factory(path, "read");
-  if (!file.isopen) {
-    throw new Error(`js2max: could not open ${path} for reading`);
-  }
-  try {
-    const chunks = [];
-    while (file.position < file.eof) {
-      const before = file.position;
-      const chunk = file.readstring(CHUNK);
-      if (chunk === "" || file.position <= before)
-        break;
-      chunks.push(chunk);
-    }
-    return chunks.join("");
-  } finally {
-    file.close();
-  }
-}
-function writeText(path, text, options = {}) {
-  const factory = options.factory ?? maxFileFactory;
-  const file = factory(path, "write");
-  if (!file.isopen) {
-    throw new Error(`js2max: could not open ${path} for writing`);
-  }
-  try {
-    try {
-      file.eof = 0;
-    } catch {}
-    file.position = 0;
-    file.writestring(text);
-  } finally {
-    file.close();
-  }
-}
-function readPatch(path, options = {}) {
-  const text = readText(path, options);
-  let parsed;
-  try {
-    parsed = JSON.parse(text);
-  } catch (err) {
-    throw new Error(`js2max: ${path} is not valid JSON -- ${String(err)}`);
-  }
-  const file = parsed;
-  if (file?.patcher?.boxes === undefined) {
-    throw new Error(`js2max: ${path} has no patcher.boxes -- not a .maxpat?`);
-  }
-  return Patcher.fromFile(file);
-}
-function writePatch(path, patcher, options = {}) {
-  writeText(path, patcher.toJSON(options.indent ?? 4), options);
-}
 // src/objects.ts
 var OWN_MAXCLASS = new Set([
   "attrui",
@@ -1566,17 +1208,484 @@ var PORTS = {
 function boxClassOf(objectClass) {
   return OWN_MAXCLASS.has(objectClass) ? objectClass : "newobj";
 }
+var APP_VERSION = {
+  major: 8,
+  minor: 5,
+  revision: 5,
+  architecture: "x64",
+  modernui: 1
+};
 
-// src/serialize.ts
-var DERIVED = new Set([
+// src/model.ts
+var MAX_VERSION = APP_VERSION;
+var DEFAULT_BOX = [0, 0, 66, 22];
+var FALLBACK_PORTS = [2, 1];
+function classNameOf(text, maxclass) {
+  const head = text.trim().split(/\s+/)[0];
+  return head === undefined || head === "" ? maxclass ?? "" : head;
+}
+
+class Patcher {
+  boxes = [];
+  lines = [];
+  idCounter = 0;
+  spacing;
+  settings;
+  constructor(options = {}) {
+    this.spacing = options.spacing ?? 72;
+    this.settings = {
+      fileversion: 1,
+      appversion: { ...MAX_VERSION },
+      classnamespace: options.classnamespace ?? "box",
+      rect: options.rect ?? [85, 104, 640, 480],
+      ...options.title === undefined ? {} : { title: options.title }
+    };
+  }
+  nextId() {
+    this.idCounter += 1;
+    return `obj-${this.idCounter}`;
+  }
+  nextRect() {
+    const index = this.boxes.length;
+    return [
+      48 + index % 8 * this.spacing,
+      48 + Math.floor(index / 8) * this.spacing,
+      DEFAULT_BOX[2],
+      DEFAULT_BOX[3]
+    ];
+  }
+  add(text, options = {}) {
+    const { id, maxclass, numinlets, numoutlets, patching_rect, ...props } = options;
+    const className = classNameOf(text, maxclass);
+    const ports = PORTS[className];
+    const outlettype = numoutlets === undefined && ports !== undefined && ports.length === 3 ? ports[2] : undefined;
+    const box = {
+      id: id ?? this.nextId(),
+      maxclass: maxclass ?? boxClassOf(className),
+      numinlets: numinlets ?? ports?.[0] ?? FALLBACK_PORTS[0],
+      numoutlets: numoutlets ?? ports?.[1] ?? FALLBACK_PORTS[1],
+      patching_rect: patching_rect ?? this.nextRect(),
+      ...text === "" ? {} : { text },
+      ...outlettype === undefined ? {} : { outlettype: [...outlettype] },
+      ...props
+    };
+    this.boxes.push({ box });
+    return box;
+  }
+  addSubpatcher(text, options = {}) {
+    const sub = new Patcher({ classnamespace: "box" });
+    const box = this.add(text, { numinlets: 1, numoutlets: 1, ...options });
+    box.patcher = sub.toPatcherDict();
+    return { box, sub };
+  }
+  connect(from, to, outlet = 0, inlet = 0) {
+    const order = this.lines.filter((l) => l.patchline.source[0] === from.id && l.patchline.destination[0] === to.id).length;
+    const patchline = {
+      source: [from.id, outlet],
+      destination: [to.id, inlet],
+      ...order === 0 ? {} : { order }
+    };
+    this.lines.push({ patchline });
+    return patchline;
+  }
+  toPatcherDict() {
+    return { ...this.settings, boxes: this.boxes, lines: this.lines };
+  }
+  toFile() {
+    return { patcher: this.toPatcherDict() };
+  }
+  toJSON(indent = 4) {
+    return JSON.stringify(this.toFile(), null, indent);
+  }
+  static fromFile(file) {
+    return new LoadedPatcher(file.patcher);
+  }
+  static parse(text) {
+    return Patcher.fromFile(JSON.parse(text));
+  }
+}
+
+class LoadedPatcher {
+  patcher;
+  constructor(patcher) {
+    this.patcher = patcher;
+  }
+  get boxes() {
+    return this.patcher.boxes;
+  }
+  get lines() {
+    return this.patcher.lines;
+  }
+  maxNumericId() {
+    let max = 0;
+    for (const entry of this.patcher.boxes) {
+      const match = /^obj-(\d+)$/.exec(entry.box.id);
+      if (match?.[1] !== undefined) {
+        max = Math.max(max, Number.parseInt(match[1], 10));
+      }
+    }
+    return max;
+  }
+  findById(id) {
+    return this.patcher.boxes.find((entry) => entry.box.id === id)?.box;
+  }
+  *walk() {
+    const visit = function* (p) {
+      for (const entry of p.boxes) {
+        yield entry.box;
+        if (entry.box.patcher)
+          yield* visit(entry.box.patcher);
+      }
+    };
+    yield* visit(this.patcher);
+  }
+  toFile() {
+    return { patcher: this.patcher };
+  }
+  toJSON(indent = 4) {
+    return JSON.stringify(this.toFile(), null, indent);
+  }
+}
+// src/scripting.ts
+var SET_CONTENT_CLASSES = new Set(["message", "comment"]);
+var SEPARATORS = /[,;]/;
+function classNameOf2(box) {
+  if (box.maxclass !== "newobj")
+    return box.maxclass;
+  const text = box.text ?? "";
+  const head = text.trim().split(/\s+/)[0];
+  return head === undefined || head === "" ? "newobj" : head;
+}
+function atomOf(token) {
+  if (!/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(token))
+    return token;
+  const value = Number(token);
+  return Number.isFinite(value) ? value : token;
+}
+function atomsOf(text) {
+  return text.trim().split(/\s+/).filter((token) => token !== "").map(atomOf);
+}
+function typedArgsOf(box) {
+  if (box.maxclass !== "newobj")
+    return [];
+  return atomsOf(box.text ?? "").slice(1);
+}
+function toMaxobjRect(rect) {
+  const [x, y, w, h] = rect;
+  return [x, y, x + w, y + h];
+}
+function fromMaxobjRect(rect) {
+  const [left, top, right, bottom] = rect;
+  return [left, top, right - left, bottom - top];
+}
+var STRUCTURAL = new Set([
   "id",
   "maxclass",
   "numinlets",
   "numoutlets",
+  "outlettype",
   "patcher",
+  "patching_rect",
   "rect",
-  "text"
+  "text",
+  "varname",
+  "saved_attribute_attributes",
+  "saved_object_attributes"
 ]);
+function isPlain(value) {
+  const kind = typeof value;
+  if (kind === "number" || kind === "string" || kind === "boolean")
+    return true;
+  if (Array.isArray(value)) {
+    return value.every((item) => {
+      const k = typeof item;
+      return k === "number" || k === "string" || k === "boolean";
+    });
+  }
+  return false;
+}
+function applyBoxAttrs(object, box) {
+  let known;
+  try {
+    known = new Set(object.getboxattrnames());
+  } catch {
+    return [];
+  }
+  const failed = [];
+  for (const [name, value] of Object.entries(box)) {
+    if (STRUCTURAL.has(name) || !known.has(name))
+      continue;
+    if (!isPlain(value))
+      continue;
+    try {
+      if (Array.isArray(value))
+        object.setboxattr(name, ...value);
+      else
+        object.setboxattr(name, value);
+    } catch {
+      failed.push(name);
+    }
+  }
+  return failed;
+}
+function freeName(target, wanted) {
+  let candidate = wanted;
+  for (let n = 2;n <= 1000; n += 1) {
+    let taken;
+    try {
+      const found = target.getnamed(candidate);
+      taken = found !== null && found !== undefined;
+    } catch {
+      return candidate;
+    }
+    if (!taken)
+      return candidate;
+    candidate = `${wanted}-${n}`;
+  }
+  return candidate;
+}
+function instantiate(target, source, options = {}) {
+  const {
+    nameById = false,
+    applyRects = true,
+    applyAttributes = true,
+    buildSubpatchers = true,
+    offset = [0, 0]
+  } = options;
+  const [dx, dy] = offset;
+  const objects = new Map;
+  const skipped = [];
+  const warnings = [];
+  let created = 0;
+  let connected = 0;
+  for (const entry of source.boxes) {
+    const box = entry.box;
+    const [x, y, w, h] = box.patching_rect;
+    const className = classNameOf2(box);
+    let object = null;
+    try {
+      object = target.newdefault(x + dx, y + dy, className, ...typedArgsOf(box));
+    } catch (err) {
+      skipped.push({ id: box.id, reason: `newdefault threw: ${String(err)}` });
+      continue;
+    }
+    if (object === null || object === undefined) {
+      skipped.push({ id: box.id, reason: `unknown object class "${className}"` });
+      continue;
+    }
+    objects.set(box.id, object);
+    created += 1;
+    if (SET_CONTENT_CLASSES.has(box.maxclass) && box.text !== undefined) {
+      object.message("set", ...atomsOf(box.text));
+      if (box.maxclass === "message" && SEPARATORS.test(box.text)) {
+        warnings.push({
+          id: box.id,
+          reason: `message text "${box.text}" contains a message separator ` + `(, or ;), which a "set" message cannot carry -- the box holds it ` + `as an ordinary symbol. Write the patch to a file instead if the ` + `separator matters.`
+        });
+      }
+    }
+    if (box.varname !== undefined) {
+      object.varname = box.varname;
+    } else if (nameById) {
+      object.varname = freeName(target, box.id);
+    }
+    if (applyRects) {
+      object.rect = toMaxobjRect([x + dx, y + dy, w, h]);
+    }
+    if (applyAttributes) {
+      const failed = applyBoxAttrs(object, box);
+      if (failed.length > 0) {
+        warnings.push({
+          id: box.id,
+          reason: `box attribute(s) refused by the object: ${failed.join(", ")}`
+        });
+      }
+    }
+    if (buildSubpatchers && box.patcher !== undefined) {
+      const nested = object.subpatcher();
+      if (nested === null || nested === undefined) {
+        skipped.push({
+          id: box.id,
+          reason: "box carries a nested patcher but exposes no subpatcher()"
+        });
+      } else {
+        const inner = instantiate(nested, box.patcher, {
+          ...options,
+          offset: [0, 0]
+        });
+        created += inner.created;
+        connected += inner.connected;
+        skipped.push(...inner.skipped);
+        warnings.push(...inner.warnings);
+      }
+    }
+  }
+  for (const entry of source.lines) {
+    const { source: from, destination: to, hidden } = entry.patchline;
+    const fromObject = objects.get(from[0]);
+    const toObject = objects.get(to[0]);
+    if (fromObject === undefined || toObject === undefined) {
+      skipped.push({
+        id: `${from[0]}->${to[0]}`,
+        reason: "patchline references a box that was not created"
+      });
+      continue;
+    }
+    try {
+      const wire = hidden ? target.hiddenconnect : target.connect;
+      wire.call(target, fromObject, from[1], toObject, to[1]);
+      connected += 1;
+    } catch (err) {
+      skipped.push({
+        id: `${from[0]}->${to[0]}`,
+        reason: `connect threw: ${String(err)}`
+      });
+    }
+  }
+  return { objects, created, connected, skipped, warnings };
+}
+function sameObject(a, b) {
+  if (a === b)
+    return true;
+  try {
+    if (a.varname !== "" && a.varname === b.varname)
+      return true;
+    if (a.maxclass !== b.maxclass)
+      return false;
+    const [al, at, ar, ab] = a.rect;
+    const [bl, bt, br, bb] = b.rect;
+    return al === bl && at === bt && ar === br && ab === bb;
+  } catch {
+    return false;
+  }
+}
+function isKept(keep, object) {
+  return keep.some((kept) => sameObject(kept, object));
+}
+function clear(target, options = {}) {
+  const keep = options.keep ?? [];
+  const doomed = objectsOf(target).filter((object) => !isKept(keep, object));
+  for (const object of doomed)
+    target.remove(object);
+  return doomed.length;
+}
+function remove(target, objects, options = {}) {
+  const keep = options.keep ?? [];
+  let removed = 0;
+  for (const object of [...objects]) {
+    if (isKept(keep, object))
+      continue;
+    target.remove(object);
+    removed += 1;
+  }
+  return removed;
+}
+function objectsOf(target) {
+  const objects = [];
+  for (let object = target.firstobject;object !== null && object !== undefined; object = object.nextobject) {
+    objects.push(object);
+  }
+  return objects;
+}
+function snapshot(target) {
+  const objects = objectsOf(target);
+  const ids = new Map;
+  const byVarname = new Map;
+  const boxes = objects.map((object, index) => {
+    const id = object.varname === "" ? `obj-${index + 1}` : object.varname;
+    ids.set(object, id);
+    if (object.varname !== "")
+      byVarname.set(object.varname, id);
+    return {
+      id,
+      maxclass: object.maxclass,
+      patching_rect: fromMaxobjRect(object.rect),
+      ...object.varname === "" ? {} : { varname: object.varname }
+    };
+  });
+  const identify = (object) => ids.get(object) ?? (object.varname === "" ? undefined : byVarname.get(object.varname));
+  const lines = [];
+  let unresolved = 0;
+  for (const object of objects) {
+    for (const cord of object.patchcords.outputs) {
+      const from = identify(cord.srcobject);
+      const to = identify(cord.dstobject);
+      if (from === undefined || to === undefined) {
+        unresolved += 1;
+        continue;
+      }
+      lines.push({
+        source: [from, cord.srcoutlet],
+        destination: [to, cord.dstinlet]
+      });
+    }
+  }
+  return { boxes, lines, unresolved };
+}
+// src/fileio.ts
+var CHUNK = 16384;
+var maxFileFactory = (path, access) => {
+  const ctor = globalThis.File;
+  if (ctor === undefined) {
+    throw new Error("js2max: no Max File class -- file I/O is only available inside Max");
+  }
+  return new ctor(path, access);
+};
+function readText(path, options = {}) {
+  const factory = options.factory ?? maxFileFactory;
+  const file = factory(path, "read");
+  if (!file.isopen) {
+    throw new Error(`js2max: could not open ${path} for reading`);
+  }
+  try {
+    const chunks = [];
+    while (file.position < file.eof) {
+      const before = file.position;
+      const chunk = file.readstring(CHUNK);
+      if (chunk === "" || file.position <= before)
+        break;
+      chunks.push(chunk);
+    }
+    return chunks.join("");
+  } finally {
+    file.close();
+  }
+}
+function writeText(path, text, options = {}) {
+  const factory = options.factory ?? maxFileFactory;
+  const file = factory(path, "write");
+  if (!file.isopen) {
+    throw new Error(`js2max: could not open ${path} for writing`);
+  }
+  try {
+    try {
+      file.eof = 0;
+    } catch {}
+    file.position = 0;
+    file.writestring(text);
+  } finally {
+    file.close();
+  }
+}
+function readPatch(path, options = {}) {
+  const text = readText(path, options);
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    throw new Error(`js2max: ${path} is not valid JSON -- ${String(err)}`);
+  }
+  const file = parsed;
+  if (file?.patcher?.boxes === undefined) {
+    throw new Error(`js2max: ${path} has no patcher.boxes -- not a .maxpat?`);
+  }
+  return Patcher.fromFile(file);
+}
+function writePatch(path, patcher, options = {}) {
+  writeText(path, patcher.toJSON(options.indent ?? 4), options);
+}
+// src/serialize.ts
+var DERIVED = new Set([...STRUCTURAL].filter((name) => name !== "varname"));
 var OPTIONAL = [
   "varname",
   "fontname",
@@ -1632,18 +1741,6 @@ function asRect(value) {
     return;
   return numbers;
 }
-function isPlain(value) {
-  const kind = typeof value;
-  if (kind === "number" || kind === "string" || kind === "boolean")
-    return true;
-  if (Array.isArray(value)) {
-    return value.every((item) => {
-      const k = typeof item;
-      return k === "number" || k === "string" || k === "boolean";
-    });
-  }
-  return false;
-}
 function readObjectAttrs(object, box) {
   let names;
   let boxNames;
@@ -1681,6 +1778,19 @@ function patcherFontDefaults(target) {
     } catch {}
   }
   return defaults;
+}
+function matchesDefault(value, fallback) {
+  return value === fallback || String(value) === String(fallback);
+}
+function defaultFontEntries(defaults) {
+  const name = defaults["fontname"];
+  const size = asNumber(defaults["fontsize"]);
+  const face = asNumber(defaults["fontface"]);
+  return {
+    ...size === undefined ? {} : { default_fontsize: size },
+    ...face === undefined ? {} : { default_fontface: face },
+    ...typeof name === "string" && name !== "" ? { default_fontname: name } : {}
+  };
 }
 function describe(object, id, options, fontDefaults = {}) {
   const objectClass = object.maxclass ?? "";
@@ -1723,8 +1833,9 @@ function describe(object, id, options, fontDefaults = {}) {
     const value = first(readBoxAttr(object, name));
     if (!isSet(value))
       continue;
-    if (name in fontDefaults && value === fontDefaults[name])
+    if (name in fontDefaults && matchesDefault(value, fontDefaults[name])) {
       continue;
+    }
     box[name] = value;
   }
   if (text !== undefined && text !== "")
@@ -1741,10 +1852,7 @@ function serialize(target, options = {}) {
   if (options.only !== undefined) {
     objects = [...options.only].filter((o) => o.valid !== false);
   } else {
-    objects = [];
-    for (let object = target.firstobject;object !== null && object !== undefined; object = object.nextobject) {
-      objects.push(object);
-    }
+    objects = objectsOf(target);
   }
   const boxes = [];
   const incomplete = [];
@@ -1763,12 +1871,21 @@ function serialize(target, options = {}) {
       boxes.push({ box });
   });
   const lines = [];
+  let unresolved = 0;
+  const inScope = new Set(objects);
   for (const object of objects) {
+    for (const cord of object.patchcords.inputs) {
+      if (inScope.has(cord.srcobject))
+        continue;
+      unresolved += 1;
+    }
     for (const cord of object.patchcords.outputs) {
       const from = ids.get(cord.srcobject);
       const to = ids.get(cord.dstobject);
-      if (from === undefined || to === undefined)
+      if (from === undefined || to === undefined) {
+        unresolved += 1;
         continue;
+      }
       lines.push({
         patchline: {
           source: [from, cord.srcoutlet],
@@ -1783,26 +1900,20 @@ function serialize(target, options = {}) {
       appversion: { ...MAX_VERSION },
       classnamespace: "box",
       rect: options.rect ?? [85, 104, 640, 480],
+      ...defaultFontEntries(fontDefaults),
       boxes,
       lines
     },
-    incomplete
+    incomplete,
+    unresolved
   };
 }
 // src/demo.ts
 function demoPatch() {
   const p = new Patcher;
   const osc = p.add("cycle~ 440");
-  const gain = p.add("gain~", {
-    maxclass: "gain~",
-    numinlets: 2,
-    numoutlets: 2
-  });
-  const dac = p.add("ezdac~", {
-    maxclass: "ezdac~",
-    numinlets: 2,
-    numoutlets: 0
-  });
+  const gain = p.add("gain~");
+  const dac = p.add("ezdac~");
   p.connect(osc, gain);
   p.connect(gain, dac, 0, 0);
   p.connect(gain, dac, 0, 1);

@@ -37,6 +37,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from py2max import Patcher, maxref  # noqa: E402
+from py2max.core.patcher import (  # noqa: E402
+    MAX_VER_MAJOR,
+    MAX_VER_MINOR,
+    MAX_VER_REVISION,
+)
 
 DEFAULT_OUT = ROOT / "js2max" / "src" / "objects.ts"
 
@@ -149,6 +154,22 @@ def render(own: Set[str], ports: Dict[str, Tuple[int, int, Optional[List[str]]]]
     lines.append("export function boxClassOf(objectClass: string): string {")
     lines.append('  return OWN_MAXCLASS.has(objectClass) ? objectClass : "newobj";')
     lines.append("}")
+    lines.append("")
+    lines.append("/**")
+    lines.append(" * The Max version a written file declares, taken from py2max.")
+    lines.append(" *")
+    lines.append(" * Exported rather than restated so the two packages cannot claim to")
+    lines.append(" * have been written by different versions of Max. It was a literal in")
+    lines.append(" * `model.ts`, which would have gone quietly stale the first time")
+    lines.append(" * py2max bumped `MAX_VER_*` in `core/patcher.py`.")
+    lines.append(" */")
+    lines.append("export const APP_VERSION = {")
+    lines.append(f"  major: {MAX_VER_MAJOR},")
+    lines.append(f"  minor: {MAX_VER_MINOR},")
+    lines.append(f"  revision: {MAX_VER_REVISION},")
+    lines.append('  architecture: "x64",')
+    lines.append("  modernui: 1,")
+    lines.append("} as const;")
     lines.append("")
     return "\n".join(lines)
 
