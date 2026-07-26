@@ -171,9 +171,17 @@ class MatrixLayoutManager(LayoutManager):
 
             return chain
 
-        # Start from objects with no inputs (sources) or minimal inputs
+        # Start from true sources -- objects nothing feeds into.
+        #
+        # This used to accept `len(inputs) <= 1`, which made every mid-chain
+        # object a chain start. Since `visited` stops a chain the moment it
+        # reaches an object another chain already claimed, whichever mid-chain
+        # object came first in iteration order consumed the tail and left the
+        # real source stranded in a chain of its own: `cycle~ -> gain~ ->
+        # ezdac~` became three one-object chains, hence three matrix columns,
+        # purely because the boxes were added in reverse signal order.
         sources = [
-            obj_id for obj_id, inputs in reverse_connections.items() if len(inputs) <= 1
+            obj_id for obj_id, inputs in reverse_connections.items() if not inputs
         ]
 
         # If no clear sources, start from input/control objects

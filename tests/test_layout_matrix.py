@@ -861,3 +861,65 @@ if __name__ == "__main__":
     print("Flow direction tests passed!")
 
     print("All MatrixLayoutManager tests passed!")
+
+
+# --- signal-chain tracing regressions ---------------------------------------
+
+
+def _chains(objects, wires, layout="matrix"):
+    """Build a patch and return its detected signal chains."""
+    p = Patcher(layout=layout)
+    boxes = [p.add_textbox(text) for text in objects]
+    for src, dst in wires:
+        p.add_line(boxes[src], boxes[dst])
+    p.optimize_layout()
+    return p._layout_mgr.get_signal_chain_info()["chains"]
+
+
+def test_chain_tracing_is_independent_of_creation_order():
+    """One connected chain stays one chain however its boxes were added.
+
+    Chain starts were taken to be objects with *at most one* input, which made
+    every mid-chain object a start. Whichever came first in iteration order
+    consumed the tail and stranded the real source, so a patch built in reverse
+    signal order fragmented into one chain -- one matrix column -- per object.
+    """
+    signal_order = ["cycle~ 440", "gain~", "ezdac~"]
+    forward = _chains(signal_order, [(0, 1), (1, 2)])
+    reverse = _chains(list(reversed(signal_order)), [(2, 1), (1, 0)])
+
+    assert len(forward) == 1
+    assert len(reverse) == 1, "creation order fragmented a single signal chain"
+    # both traced source -> sink, so the chains are the same patch read the
+    # same way; only the auto-assigned ids differ
+    assert len(forward[0]) == len(reverse[0]) == 3
+
+
+def test_parallel_chains_stay_separate():
+    """Two chains meeting at a shared sink are still two chains."""
+    chains = _chains(
+        ["cycle~ 440", "gain~", "saw~ 220", "lores~ 500", "ezdac~"],
+        [(0, 1), (2, 3), (1, 4), (3, 4)],
+    )
+    assert len(chains) == 2
+    assert sum(len(c) for c in chains) == 5, "the shared sink was double-counted"
+
+
+def test_chain_tracing_terminates_on_cycles():
+    """A feedback loop must not hang or drop objects."""
+    # a cycle with no acyclic entry point at all
+    pure = _chains(["cycle~ 440", "gain~", "lores~ 500"], [(0, 1), (1, 2), (2, 0)])
+    assert sorted(len(c) for c in pure) == [3]
+
+    # a cycle fed from outside
+    fed = _chains(["metro 500", "cycle~ 440", "gain~"], [(0, 1), (1, 2), (2, 1)])
+    assert sorted(len(c) for c in fed) == [3]
+
+    # an object wired to itself
+    assert _chains(["cycle~ 440"], [(0, 0)]) == [["obj-1"]]
+
+
+def test_disconnected_objects_are_separate_chains():
+    chains = _chains(["cycle~ 440", "gain~", "ezdac~"], [])
+    assert len(chains) == 3
+    assert all(len(c) == 1 for c in chains)

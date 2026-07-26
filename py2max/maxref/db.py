@@ -8,6 +8,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 
+from ..log import get_logger
 from .parser import (
     get_all_jit_objects,
     get_all_m4l_objects,
@@ -16,6 +17,18 @@ from .parser import (
     get_available_objects,
     get_object_info,
 )
+
+logger = get_logger(__name__)
+
+
+def _escape_like(term: str) -> str:
+    """Escape LIKE wildcards so a search term is matched literally.
+
+    Backslash first, or it would double-escape the escapes added after it.
+    """
+    for char in ("\\", "%", "_"):
+        term = term.replace(char, "\\" + char)
+    return term
 
 
 class MaxRefDB:
@@ -28,6 +41,10 @@ class MaxRefDB:
 
     The cache is automatically populated on first use.
     """
+
+    #: Columns of `objects` that `search()` will match against. A whitelist
+    #: because the field name is interpolated into the SQL, not bound.
+    SEARCHABLE_FIELDS = frozenset({"name", "digest", "description", "category"})
 
     @staticmethod
     def get_cache_dir() -> Path:
@@ -887,26 +904,39 @@ class MaxRefDB:
     def search(self, query: str, fields: Optional[List[str]] = None) -> List[str]:
         """Search for objects by name, digest, or description
 
+        The query is matched literally: `%` and `_` are LIKE wildcards in SQL
+        but ordinary characters in a Max object name, so they are escaped
+        rather than interpreted. Searching for "%" finds objects containing a
+        percent sign, not every object in the database.
+
         Args:
             query: Search query string
             fields: List of fields to search in. Default: ['name', 'digest', 'description']
 
         Returns:
             List of matching object names
+
+        Raises:
+            ValueError: if no recognized field is given.
         """
         if fields is None:
             fields = ["name", "digest", "description"]
 
-        with self._get_cursor() as cursor:
-            conditions = []
-            for field in fields:
-                if field in ["name", "digest", "description", "category"]:
-                    conditions.append(f"{field} LIKE ?")
+        searchable = [f for f in fields if f in self.SEARCHABLE_FIELDS]
+        if not searchable:
+            raise ValueError(
+                f"no searchable field in {fields!r};"
+                f" expected any of {sorted(self.SEARCHABLE_FIELDS)}"
+            )
 
-            where_clause = " OR ".join(conditions)
+        with self._get_cursor() as cursor:
+            where_clause = " OR ".join(
+                f"{field} LIKE ? ESCAPE '\\'" for field in searchable
+            )
             sql = f"SELECT name FROM objects WHERE {where_clause} ORDER BY name"
 
-            cursor.execute(sql, tuple([f"%{query}%" for _ in conditions]))
+            pattern = f"%{_escape_like(query)}%"
+            cursor.execute(sql, tuple(pattern for _ in searchable))
             return [row["name"] for row in cursor.fetchall()]
 
     def by_category(self, category: str) -> List[str]:
@@ -1001,14 +1031,17 @@ class MaxRefDB:
         return f"MaxRefDB({location}, {self.count} objects)"
 
     def _auto_populate_cache(self) -> None:
-        """Auto-populate cache database with all Max objects"""
-        import sys
+        """Auto-populate cache database with all Max objects.
 
-        print("Initializing py2max cache (one-time setup)...", file=sys.stderr)
-        print(f"Location: {self.db_path}", file=sys.stderr)
-        print("Populating with all Max objects...", file=sys.stderr)
+        Logged rather than printed: this is a library, so whether the one-time
+        setup is visible -- and where it goes -- is the application's call.
+        `py2max.setup_logging("INFO")` shows it.
+        """
+        logger.info(
+            "initializing py2max cache (one-time setup) at %s", self.db_path
+        )
         self.populate()
-        print(f"Cache ready with {self.count} objects", file=sys.stderr)
+        logger.info("cache ready with %d objects", self.count)
 
 
 __all__ = ["MaxRefDB"]

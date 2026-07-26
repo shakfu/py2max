@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.3.6, generated from 6a5d453 (working tree modified)
+py2max 0.3.6, generated from 455f575 (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
@@ -36,6 +36,7 @@ import contextlib
 import datetime
 import gzip
 import html
+import inspect
 import json
 import logging
 import os
@@ -50,25 +51,33 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
-    FrozenSet,
     Iterable,
     List,
     Optional,
     Tuple,
     Union,
+    cast,
 )
 from typing import (
-    cast,
+    FrozenSet,
 )
 from typing import (
     Iterator,
 )
-from typing import Callable
 from typing import Set
-from typing import Sequence
+from typing import Sequence, TypedDict
 from typing import NamedTuple
+from typing import Mapping
+
+
+# Type-checking-only imports, hoisted out of the modules'
+# `if TYPE_CHECKING:` blocks. Never imported at runtime.
+if TYPE_CHECKING:
+    from typing_extensions import Unpack
 
 
 # Module-qualified references (maxref.get_object_info, porttypes.BANG,
@@ -1021,6 +1030,1729 @@ THEMES: Dict[str, Dict[str, ColorLike]] = {
     },
     "high-contrast": {"bg": "black", "text": "yellow", "border": "yellow"},
 }
+
+
+# --------------------------------------------------------------------------
+# py2max/core/props.py
+# --------------------------------------------------------------------------
+
+
+#: A Max atom: the loosest useful value type.
+Atom = Union[str, int, float]
+
+#: A Max time value: milliseconds, or notation such as "4n".
+TimeValue = Union[int, float, str]
+
+
+class BoxProps(TypedDict, total=False):
+    """Properties accepted by ``Box.__init__`` beyond its structural args."""
+
+    accentcolor: Sequence[float]
+    accum: int
+    accum_desat: float
+    active: int
+    active1: Sequence[float]
+    activebgcolor: Sequence[float]
+    activebgoncolor: Sequence[float]
+    activecolor: Sequence[float]
+    activedialcolor: Sequence[float]
+    activefgdialcolor: Sequence[float]
+    activeneedlecolor: Sequence[float]
+    activesafe: int
+    activeslidercolor: Sequence[float]
+    activetextcolor: Sequence[float]
+    activetextoncolor: Sequence[float]
+    activetricolor: Sequence[float]
+    activetricolor2: Sequence[float]
+    addpoints: Sequence[Any]
+    align: Atom
+    allowdisabled: int
+    allowdrag: int
+    allowreorder: int
+    allwindowsactive: int
+    alpha: float
+    amountcolor: Sequence[float]
+    amxdtype: int
+    annotation: str
+    annotation_name: str
+    appearance: int
+    appicon_mac: str
+    appicon_win: str
+    applycolors: int
+    applyfont: int
+    arrow: int
+    arrow_orientation: int
+    arrowcolor: Sequence[float]
+    arrows: int
+    assistance: int
+    attack: Union[float, int]
+    attr: str
+    attr_bpm: float
+    attr_comment: str
+    attr_display: int
+    attrfilter: Sequence[str]
+    audioframerate: float
+    audioframesize: int
+    auto_handle: int
+    autoboxedit_patching: int
+    autocompletionspace: int
+    autoconnectusesmouseposition: int
+    autoexport: int
+    autofit: int
+    autohint: int
+    autolockunselected: int
+    automatic: int
+    automation: str
+    automationon: str
+    automouse: int
+    autoout: int
+    autopopulate: int
+    autosave: int
+    autoscroll: int
+    autosize: int
+    autosustain: int
+    autowatch: int
+    autowrite: int
+    background: int
+    bangmode: int
+    basictuning: int
+    bblend: int
+    beats: int
+    bgcolor: Sequence[float]
+    bgcolor2: Sequence[float]
+    bgfillcolor: Sequence[float]
+    bgmode: int
+    bgoncolor: Sequence[float]
+    bgrulercolor: Sequence[float]
+    bgstepcolor: Sequence[float]
+    bgstepcolor2: Sequence[float]
+    bgtransparent: int
+    bgunitcolor: Sequence[float]
+    bkgnddrag: int
+    bkgndpict: str
+    bkgndsize: int
+    blackkeycolor: Sequence[float]
+    blanksym: str
+    blinkcolor: Sequence[float]
+    blinktime: int
+    border: int
+    bordercolor: Sequence[float]
+    bordercolor2: Sequence[float]
+    bottommargin: int
+    bottomvalue: int
+    boundmode: int
+    browsertext: str
+    bubble: int
+    bubble_bgcolor: Sequence[float]
+    bubble_outlinecolor: Sequence[float]
+    bubblepoint: float
+    bubbleside: int
+    bubblesize: int
+    bubbletextmargin: int
+    bubbleusescolors: int
+    buffername: str
+    bufsize: int
+    bundleidentifier: str
+    button: int
+    bypass: int
+    calccount: int
+    candicane2: Sequence[float]
+    candicane3: Sequence[float]
+    candicane4: Sequence[float]
+    candicane5: Sequence[float]
+    candicane6: Sequence[float]
+    candicane7: Sequence[float]
+    candicane8: Sequence[float]
+    candycane: int
+    candycane2: Sequence[float]
+    candycane3: Sequence[float]
+    candycane4: Sequence[float]
+    candycane5: Sequence[float]
+    candycane6: Sequence[float]
+    candycane7: Sequence[float]
+    candycane8: Sequence[float]
+    candymode: int
+    cantchange: int
+    cantclosetoplevelpatchers: int
+    cefsupport: int
+    cellheight: int
+    cellpict: str
+    cellwidth: int
+    channelcount: int
+    channels: int
+    chanoffset: int
+    chans: int
+    checkedcolor: Sequence[float]
+    checkforupdates: int
+    classic_curve: int
+    clearcolor: Sequence[float]
+    clefs: int
+    clickadd: int
+    clickedimage: int
+    clickinactive: int
+    clickincrement: int
+    clickmode: int
+    clickmove: int
+    clickmoveinactive: int
+    clicksustain: int
+    clickthrough: int
+    client_rect: Sequence[float]
+    clip: int
+    clip_size: int
+    clipdraw: int
+    clipheight: float
+    code: str
+    coldcolor: Sequence[float]
+    colhead: int
+    collection: str
+    color: Sequence[float]
+    colorlabels: int
+    colormode: str
+    colorselectedtext: int
+    colortheme: Atom
+    colortitlebar: int
+    cols: int
+    columns: int
+    colwidth: int
+    comment: Any
+    compatibility: int
+    connectacrossdividers: int
+    constrainduplicates: int
+    constrainpointchanges: int
+    contdata: int
+    contrast: float
+    contrastactivetab: int
+    convertobj: int
+    cool: int
+    coolcolor: Sequence[float]
+    copysupport: int
+    crashrecovery: str
+    curvecolor: Sequence[float]
+    data: Any
+    database: int
+    datadirty: int
+    dbdisplay: int
+    dbperled: int
+    debugqueuesize: int
+    decodemode: int
+    default_template: str
+    defaultcachesize: float
+    defaultglcontext: str
+    defaultm4ldevicesfolder: str
+    defaultpatchersize: int
+    defaultprojectsfolder: str
+    defer: int
+    degrees: int
+    delay: Union[float, int]
+    depth: Union[float, int]
+    description: str
+    devpath: str
+    devpathtype: int
+    dialcolor: Sequence[float]
+    dialmode: int
+    dialtracking: int
+    digest: str
+    dimmedconnectionalpha: float
+    direction: int
+    direction_height: float
+    directioncolor: Sequence[float]
+    dirty: int
+    disabledalpha: float
+    disabledcolor: Sequence[float]
+    disablefind: int
+    display_flat: int
+    display_range: Sequence[float]
+    displayamount: int
+    displaychan: int
+    displayknob: int
+    displaymode: int
+    displaysinglechannel: int
+    dividercolor: Sequence[float]
+    dividers: Atom
+    dividersize: int
+    domain: float
+    domainlabel: str
+    dontreplace: int
+    downarrow: int
+    drag_window: int
+    dragtrack: int
+    drawline: int
+    drawoffcolor: int
+    drawpeakhold: int
+    drawpeaks: int
+    drawstyle: int
+    drawto: str
+    dsp_cpulimit: str
+    dsp_driver: int
+    dsp_inputdevice: str
+    dsp_iovectorsize: str
+    dsp_option1: str
+    dsp_option2: str
+    dsp_outputdevice: str
+    dsp_overdrive: str
+    dsp_samplerate: str
+    dsp_siai: str
+    dsp_signalvectorsize: str
+    dstrect: Sequence[int]
+    duration_active: int
+    dynamic: int
+    editing_bgcolor: Sequence[float]
+    editlocked: int
+    editlooponly: int
+    editor_rect: Sequence[float]
+    elementcolor: Sequence[float]
+    embed: int
+    emptycolor: Sequence[float]
+    enable: int
+    enabled: int
+    enablednotes: Sequence[Atom]
+    enabledrag: int
+    enableglobalcontext: int
+    enablehscroll: int
+    enablesprites: int
+    enablevscroll: int
+    erase_color: Sequence[float]
+    exclusive: int
+    expansion: str
+    export_dpi: int
+    exportfolder: str
+    exportname: str
+    exportnotifier: str
+    exportscript: str
+    exportscriptargs: str
+    externaleditor: str
+    extra1_active: int
+    extra1_max: int
+    extra1_min: int
+    extra1_signed: int
+    extra2_active: int
+    extra2_max: int
+    extra2_min: int
+    extra2_signed: int
+    extra_thickness: float
+    factorycontent: int
+    fblend: int
+    fgcolor: Sequence[float]
+    fgdialcolor: Sequence[float]
+    file: str
+    filekind: str
+    filename: str
+    fillhorizontalspace: int
+    filternodeschanges: int
+    filtertext: str
+    flagmode: int
+    floateditorwindow: int
+    floatoutput: int
+    focusbordercolor: Sequence[float]
+    folderslash: int
+    followglobaltempo: int
+    followlivetheme: Atom
+    fontface: int
+    fontlink: int
+    fontname: str
+    fontsize: float
+    forceaspect: int
+    forcejwebrendermode: int
+    formant: float
+    formantcorrection: int
+    format: int
+    fps: float
+    frames: int
+    freezecolor: Sequence[float]
+    ft1: float
+    fullspect: int
+    gaincaption: int
+    gaindragmode: int
+    gainradius: float
+    gainstyle: int
+    genericeditor: int
+    gensupport: int
+    gfxengine: str
+    ghostbar: int
+    gizmos: int
+    globalpatchername: str
+    globalzoomfactor: int
+    gradient: float
+    graphcolor: Sequence[float]
+    graphmode: str
+    grid: Union[float, int]
+    gridcolor: Sequence[float]
+    gridlinecolor: Sequence[float]
+    gridorigincolor: Sequence[float]
+    gridstep_x: float
+    gridstep_y: float
+    hbgcolor: Sequence[float]
+    hcellcolor: Sequence[float]
+    hcurvecolor: Sequence[float]
+    headercolor: Sequence[float]
+    headerheight: int
+    headerlabel: str
+    hgraphcolor: Sequence[float]
+    hidden: int
+    hideloop: int
+    hiderwff: int
+    hilite: int
+    hint: str
+    hires: int
+    hkeycolor: Sequence[float]
+    hltcolor: Sequence[float]
+    hlttextcolor: Sequence[float]
+    horizontal_direction: int
+    horizontalmargin: int
+    horizontalspacing: int
+    horizontaltracking: float
+    hotcolor: Sequence[float]
+    hscroll: int
+    hsync: int
+    htabcolor: Sequence[float]
+    htextcolor: Sequence[float]
+    htricolor: Sequence[float]
+    idle: int
+    idlemouse: int
+    ignoreclick: int
+    ignoreconnected: int
+    ignoreemptyinterp: int
+    illustrationspeed: int
+    imagemask: int
+    inactive: int
+    inactivealpha: float
+    inactivecoldcolor: Sequence[float]
+    inactiveimage: int
+    inactivelcdcolor: Sequence[float]
+    inactivetextoffcolor: Sequence[float]
+    inactivetextoncolor: Sequence[float]
+    inactivewarmcolor: Sequence[float]
+    inc: float
+    includepackages: int
+    incolormap: Atom
+    increment: float
+    index: int
+    initial: Sequence[Atom]
+    initialgain: float
+    inlabels: Atom
+    inputmode: int
+    inputrangemode: int
+    inputs: int
+    inspectreadonly: int
+    int: int
+    interp: Union[float, int]
+    interpinlet: int
+    interval: Union[float, int]
+    invert: int
+    invisiblebkgnd: int
+    items: Sequence[Any]
+    jsarguments: Sequence[Atom]
+    jump: int
+    just: int
+    justification: int
+    jwebremotedebuggingport: int
+    keymode: int
+    keynavigate: int
+    knobcolor: Sequence[float]
+    knobpict: str
+    knobshape: int
+    knobsize: float
+    labelclick: int
+    labelheight: float
+    labels: int
+    labeltextcolor: Sequence[float]
+    labelwidth: float
+    lastchannelcount: int
+    latency: Union[float, int]
+    layoutbubbles: int
+    lcdbgcolor: Sequence[float]
+    lcdcolor: Sequence[float]
+    leftarrow: int
+    leftmargin: int
+    leftvalue: int
+    legacy: int
+    legacyoutputorder: int
+    legacytextcolor: int
+    legacytransport: int
+    legend: Union[int, str]
+    linecolor: Sequence[float]
+    linecount: int
+    linenumbers: int
+    linenumberwidth: int
+    lines: int
+    linethickness: float
+    link: int
+    linmarkers: Sequence[float]
+    listmode: int
+    listresize: int
+    livemode: int
+    loadbangonpaste: int
+    local: int
+    lock: int
+    locked_bgcolor: Sequence[float]
+    lockeddragscroll: int
+    lockedsize: int
+    logamp: int
+    logfreq: int
+    loglevel: int
+    logmarkers: Sequence[float]
+    logtosystemconsole: int
+    loop: int
+    loopbordercolor: Sequence[float]
+    loopreport: int
+    loopruler: int
+    lsbfirst: int
+    margin: int
+    margins: Sequence[float]
+    marker_horizontal: int
+    marker_vertical: int
+    markercolor: Sequence[float]
+    markers: Sequence[int]
+    markersused: int
+    matrixmode: int
+    maxdynamicnodes: int
+    maxgain: float
+    maximum: Atom
+    maxurlproxyname: str
+    maxwindow_dequeuesize: int
+    maxwindow_fontname: str
+    maxwindow_fontsize: int
+    maxwindow_queuesize: int
+    mcisolate: int
+    mctrigchan: int
+    menu_display: int
+    menumode: int
+    metering: int
+    min: float
+    minimum: Atom
+    mode: Union[int, str]
+    modulationcolor: Sequence[float]
+    monitormode: int
+    monochrome: int
+    monotone: int
+    mousefilter: int
+    mousemode: int
+    mousereport: int
+    mouseup: int
+    movehorizontal: int
+    movevertical: int
+    mult: float
+    multiline: int
+    multiplier: int
+    multiselect: int
+    multislider: int
+    n4m_debug_log_enabled: int
+    n4m_debug_log_folder: str
+    n4m_debug_log_name: str
+    n4m_external_node_binary: str
+    n4m_process_manager_path: str
+    name: str
+    needlecolor: Sequence[float]
+    needlemode: int
+    neverdirty: int
+    nfilters: int
+    nhotleds: int
+    nodecolor: Sequence[float]
+    nodenumber: int
+    nodesnames: Sequence[str]
+    nofsaa: int
+    noloadbangdefeating: int
+    normalized: int
+    norulerclick: int
+    nosymquotes: int
+    notebase: int
+    notelist: Sequence[str]
+    notename: int
+    nseq: int
+    nsize: Sequence[float]
+    ntepidleds: int
+    numdecimalplaces: int
+    numdisplay: int
+    numins: int
+    numleds: int
+    numouts: int
+    numplots: int
+    numpoints: int
+    nwarmleds: int
+    offcolor: Sequence[float]
+    offset: Union[Sequence[float], float, int]
+    oncolor: Sequence[float]
+    onscreen: int
+    orientation: int
+    originallength: TimeValue
+    originaltempo: float
+    oscdefer: int
+    oscparamenableddefault: int
+    oscprefix: str
+    oscprefixmode: int
+    oscqueryenable: int
+    oscqueryport: int
+    oscreceivemode: int
+    oscreceivequantize: TimeValue
+    oscreceivethreshold: TimeValue
+    oscreceiveudpport: int
+    oscsendmode: int
+    oscsendthreshold: TimeValue
+    oscsendudpaddr: str
+    oscsendudpport: int
+    oscuseparamprefix: int
+    oscvaluemode: int
+    outcolormap: Atom
+    outlabels: Atom
+    outlettype: Any
+    outlinecolor: Sequence[float]
+    outmode: int
+    output_texture: int
+    outputalpha: int
+    outputformat: str
+    outputmode: int
+    outputonclick: int
+    outputs: int
+    overdrive: int
+    overgaincolor: Sequence[float]
+    overloadcolor: Sequence[float]
+    panelcolor: Sequence[float]
+    param_connect: str
+    parameter_enable: int
+    parameter_mappable: int
+    paramonly: int
+    patcher: Any
+    patcher_boxsnapmargin: Atom
+    patcherinspector: int
+    patchername: str
+    patchingmargin: int
+    patchingmarginpercent: float
+    patchingmechanics: int
+    patchline_curved: int
+    patchlinecolor: Sequence[float]
+    pattrmode: int
+    pconstrain: int
+    peakcolor: Sequence[float]
+    permissive: int
+    phasespect: int
+    pic: str
+    pickray: int
+    pictures: Sequence[str]
+    pitch_active: int
+    pitchcorrection: int
+    pitchdetection: int
+    pitchshift: float
+    pitchshiftcent: int
+    planemap: Sequence[int]
+    pointalign: float
+    pointcolor: Sequence[float]
+    pointsize: float
+    polezerocolor: Sequence[float]
+    poll: int
+    popupbrowserbar: int
+    precision: int
+    prefer: str
+    preffilename: str
+    prefix: str
+    prefix_mode: int
+    presentation: int
+    presentation_rect: Sequence[float]
+    preservegain: int
+    preset_data: Sequence[Any]
+    preview: int
+    prioritizeexterns: int
+    prioritizepatchlines: int
+    prototypename: str
+    quality: str
+    quiet: int
+    range: Sequence[Atom]
+    rangelabel: str
+    ratio: int
+    readonly: int
+    realtime_params: int
+    reflection: int
+    reflectioncolor: Sequence[float]
+    refreshrate: float
+    relative: int
+    release: Union[float, int]
+    remapsvgcolors: int
+    rendermode: int
+    reportprogress: int
+    restorewindows: int
+    retune: int
+    rightarrow: int
+    rightmargin: int
+    rightvalue: int
+    rnbo_classname: str
+    rnbo_extra_attributes: Dict[str, Any]
+    rnbo_log_file: str
+    rnbo_log_folder: str
+    rnbo_log_level: int
+    rnbo_server_autostart: int
+    rounded: float
+    rowhead: int
+    rowheight: int
+    rows: int
+    running: int
+    saturation: float
+    saved_attribute_attributes: Dict[str, Any]
+    saved_object_attributes: Dict[str, Any]
+    savedependencies: int
+    savemode: int
+    savesingletons: int
+    scale: Union[float, int]
+    scaleknob: int
+    sccolor: Sequence[float]
+    scroll: int
+    searchformissingfiles: int
+    segmented: int
+    segpatchcords: int
+    selectalpha: float
+    selectedclick: int
+    selectioncolor: Sequence[float]
+    selector: str
+    selecttextonclick_patching: int
+    selmode: int
+    selsync: int
+    separator: str
+    setarrowkeysscrollpatcher: int
+    seteventinterval: int
+    setminmax: Sequence[float]
+    setmixergbitmode: int
+    setmixerlatency: float
+    setmixerparallel: int
+    setmixerramptime: float
+    setmode: int
+    setnativefontpanel: int
+    setpollthrottle: int
+    setqueuethrottle: int
+    setresizes: int
+    setscrollbarmode: int
+    setslop: float
+    setstyle: int
+    setsysqelemthrottle: int
+    settype: int
+    setunit: int
+    sgcolor: Sequence[float]
+    shadow: int
+    shadowactive: int
+    shadowalpha: float
+    shadowblend: float
+    shadowline: int
+    shadoworientation: int
+    shadowperbar: int
+    shadowproportion: float
+    shadowreflectionpoint: float
+    shadowsigned: int
+    shape: int
+    showcaption: int
+    showcluebar: int
+    showdotfiles: int
+    showeditor: int
+    showgain: int
+    showgetonly: int
+    showheader: int
+    showlabels: int
+    showname: int
+    shownumber: int
+    signalmode: str
+    signalusecols: int
+    signed: int
+    sigoutmode: int
+    size: float
+    slidercolor: Sequence[float]
+    slurtime: float
+    smoothing: float
+    snap: int
+    snap2grid: int
+    snapto: int
+    snaptopixelbydefault: int
+    sono: int
+    sonohicolor: Sequence[float]
+    sonolocolor: Sequence[float]
+    sonomedcolor: Sequence[float]
+    sonomedhicolor: Sequence[float]
+    sonomedlocolor: Sequence[float]
+    sonomonobgcolor: Sequence[float]
+    sonomonofgcolor: Sequence[float]
+    sortmode: int
+    spacing: Union[float, int]
+    spacing_x: float
+    spacing_y: float
+    srcrect: Sequence[int]
+    staffs: int
+    statusvisible: int
+    stay: int
+    stcolor: Sequence[float]
+    stepcolor: Sequence[float]
+    stepcolor2: Sequence[float]
+    storage_rect: Sequence[float]
+    stored1: Sequence[float]
+    storeinpreset: int
+    stripe2: Sequence[float]
+    stripecolor: Sequence[float]
+    style: str
+    suppressinlet: int
+    svg: str
+    switchcolor: Sequence[float]
+    sync: int
+    syntax: str
+    syntax_attrargcolor: Sequence[float]
+    syntax_attributecolor: Sequence[float]
+    syntax_objargcolor: Sequence[float]
+    syntax_objectcolor: Sequence[float]
+    syntaxcoloring: int
+    syntaxcolorset: Atom
+    systimerearlywake: int
+    tabcolor: Sequence[float]
+    table_data: Sequence[float]
+    tabmode: int
+    tabs: Sequence[str]
+    tags: str
+    template: str
+    tepidcolor: Sequence[float]
+    text: str
+    text_width: float
+    textcolor: Sequence[float]
+    textcolor_inverse: Sequence[float]
+    textjustification: int
+    textoffcolor: Sequence[float]
+    texton: str
+    textoncolor: Sequence[float]
+    textovercolor: Sequence[float]
+    thickness: Union[float, int]
+    thinmode: str
+    thinthresh: int
+    thinto: float
+    threshold: float
+    threshold_db: float
+    threshold_linear: float
+    ticks: int
+    timestretch: int
+    toggle: int
+    tool: int
+    toolbarcluemode: int
+    toolbarquickrecord_format: int
+    toolbarquickrecord_redbutton: int
+    topmargin: int
+    topvalue: int
+    tosymbol: int
+    trackcircular: int
+    trackhorizontal: int
+    tracking: int
+    trackvertical: int
+    transition: int
+    translation: str
+    triangle: int
+    tribordercolor: Sequence[float]
+    tricolor: Sequence[float]
+    tricolor2: Sequence[float]
+    trigger: int
+    triglevel: float
+    trioncolor: Sequence[float]
+    triscale: float
+    truncate: int
+    types: Union[Atom, str]
+    uncheckedcolor: Sequence[float]
+    underline: int
+    unitruler: int
+    uparrow: int
+    url: str
+    use_16bit: int
+    usebgoncolor: int
+    usedstrect: int
+    useexternaleditor: int
+    useoffcolor: int
+    usepicture: int
+    usesearchpath: int
+    useselectioncolor: int
+    usespacesforjed: int
+    usesrcrect: int
+    usestepcolor2: int
+    usesvgviewbox: int
+    usetextovercolor: int
+    usewebeditor: int
+    valign: int
+    valuemode: int
+    valuepopup: int
+    valuepopuplabel: int
+    varname: str
+    velocity_active: int
+    vertical_direction: int
+    verticalmargin: int
+    verticalspacing: int
+    verticaltracking: float
+    videoengine: str
+    viewvisibility: Any
+    vlabels: int
+    voffset: float
+    vscroll: int
+    vstscanmode: int
+    vsync: int
+    vticks: int
+    vtracking: int
+    vzoom: float
+    warmcolor: Sequence[float]
+    waveformcolor: Sequence[float]
+    waveformdisplay: int
+    wheelzoomdirection: int
+    wheelzoomfactor: float
+    whitekeycolor: Sequence[float]
+    wiggletime: int
+    wordwrap: int
+    xoffset: float
+    xplace: Sequence[float]
+    yoffset: float
+    yplace: Sequence[float]
+    zoom_orientation: int
+    zoomstyle: int
+    zoomthresh: float
+
+
+class TextboxProps(TypedDict, total=False):
+    """As :class:`BoxProps`, minus the names the factory takes as parameters."""
+
+    accentcolor: Sequence[float]
+    accum: int
+    accum_desat: float
+    active: int
+    active1: Sequence[float]
+    activebgcolor: Sequence[float]
+    activebgoncolor: Sequence[float]
+    activecolor: Sequence[float]
+    activedialcolor: Sequence[float]
+    activefgdialcolor: Sequence[float]
+    activeneedlecolor: Sequence[float]
+    activesafe: int
+    activeslidercolor: Sequence[float]
+    activetextcolor: Sequence[float]
+    activetextoncolor: Sequence[float]
+    activetricolor: Sequence[float]
+    activetricolor2: Sequence[float]
+    addpoints: Sequence[Any]
+    align: Atom
+    allowdisabled: int
+    allowdrag: int
+    allowreorder: int
+    allwindowsactive: int
+    alpha: float
+    amountcolor: Sequence[float]
+    amxdtype: int
+    annotation: str
+    annotation_name: str
+    appearance: int
+    appicon_mac: str
+    appicon_win: str
+    applycolors: int
+    applyfont: int
+    arrow: int
+    arrow_orientation: int
+    arrowcolor: Sequence[float]
+    arrows: int
+    assistance: int
+    attack: Union[float, int]
+    attr: str
+    attr_bpm: float
+    attr_comment: str
+    attr_display: int
+    attrfilter: Sequence[str]
+    audioframerate: float
+    audioframesize: int
+    auto_handle: int
+    autoboxedit_patching: int
+    autocompletionspace: int
+    autoconnectusesmouseposition: int
+    autoexport: int
+    autofit: int
+    autohint: int
+    autolockunselected: int
+    automatic: int
+    automation: str
+    automationon: str
+    automouse: int
+    autoout: int
+    autopopulate: int
+    autosave: int
+    autoscroll: int
+    autosize: int
+    autosustain: int
+    autowatch: int
+    autowrite: int
+    background: int
+    bangmode: int
+    basictuning: int
+    bblend: int
+    beats: int
+    bgcolor: Sequence[float]
+    bgcolor2: Sequence[float]
+    bgfillcolor: Sequence[float]
+    bgmode: int
+    bgoncolor: Sequence[float]
+    bgrulercolor: Sequence[float]
+    bgstepcolor: Sequence[float]
+    bgstepcolor2: Sequence[float]
+    bgtransparent: int
+    bgunitcolor: Sequence[float]
+    bkgnddrag: int
+    bkgndpict: str
+    bkgndsize: int
+    blackkeycolor: Sequence[float]
+    blanksym: str
+    blinkcolor: Sequence[float]
+    blinktime: int
+    border: int
+    bordercolor: Sequence[float]
+    bordercolor2: Sequence[float]
+    bottommargin: int
+    bottomvalue: int
+    boundmode: int
+    browsertext: str
+    bubble: int
+    bubble_bgcolor: Sequence[float]
+    bubble_outlinecolor: Sequence[float]
+    bubblepoint: float
+    bubbleside: int
+    bubblesize: int
+    bubbletextmargin: int
+    bubbleusescolors: int
+    buffername: str
+    bufsize: int
+    bundleidentifier: str
+    button: int
+    bypass: int
+    calccount: int
+    candicane2: Sequence[float]
+    candicane3: Sequence[float]
+    candicane4: Sequence[float]
+    candicane5: Sequence[float]
+    candicane6: Sequence[float]
+    candicane7: Sequence[float]
+    candicane8: Sequence[float]
+    candycane: int
+    candycane2: Sequence[float]
+    candycane3: Sequence[float]
+    candycane4: Sequence[float]
+    candycane5: Sequence[float]
+    candycane6: Sequence[float]
+    candycane7: Sequence[float]
+    candycane8: Sequence[float]
+    candymode: int
+    cantchange: int
+    cantclosetoplevelpatchers: int
+    cefsupport: int
+    cellheight: int
+    cellpict: str
+    cellwidth: int
+    channelcount: int
+    channels: int
+    chanoffset: int
+    chans: int
+    checkedcolor: Sequence[float]
+    checkforupdates: int
+    classic_curve: int
+    clearcolor: Sequence[float]
+    clefs: int
+    clickadd: int
+    clickedimage: int
+    clickinactive: int
+    clickincrement: int
+    clickmode: int
+    clickmove: int
+    clickmoveinactive: int
+    clicksustain: int
+    clickthrough: int
+    client_rect: Sequence[float]
+    clip: int
+    clip_size: int
+    clipdraw: int
+    clipheight: float
+    code: str
+    coldcolor: Sequence[float]
+    colhead: int
+    collection: str
+    color: Sequence[float]
+    colorlabels: int
+    colormode: str
+    colorselectedtext: int
+    colortheme: Atom
+    colortitlebar: int
+    cols: int
+    columns: int
+    colwidth: int
+    compatibility: int
+    connectacrossdividers: int
+    constrainduplicates: int
+    constrainpointchanges: int
+    contdata: int
+    contrast: float
+    contrastactivetab: int
+    convertobj: int
+    cool: int
+    coolcolor: Sequence[float]
+    copysupport: int
+    crashrecovery: str
+    curvecolor: Sequence[float]
+    data: Any
+    database: int
+    datadirty: int
+    dbdisplay: int
+    dbperled: int
+    debugqueuesize: int
+    decodemode: int
+    default_template: str
+    defaultcachesize: float
+    defaultglcontext: str
+    defaultm4ldevicesfolder: str
+    defaultpatchersize: int
+    defaultprojectsfolder: str
+    defer: int
+    degrees: int
+    delay: Union[float, int]
+    depth: Union[float, int]
+    description: str
+    devpath: str
+    devpathtype: int
+    dialcolor: Sequence[float]
+    dialmode: int
+    dialtracking: int
+    digest: str
+    dimmedconnectionalpha: float
+    direction: int
+    direction_height: float
+    directioncolor: Sequence[float]
+    dirty: int
+    disabledalpha: float
+    disabledcolor: Sequence[float]
+    disablefind: int
+    display_flat: int
+    display_range: Sequence[float]
+    displayamount: int
+    displaychan: int
+    displayknob: int
+    displaymode: int
+    displaysinglechannel: int
+    dividercolor: Sequence[float]
+    dividers: Atom
+    dividersize: int
+    domain: float
+    domainlabel: str
+    dontreplace: int
+    downarrow: int
+    drag_window: int
+    dragtrack: int
+    drawline: int
+    drawoffcolor: int
+    drawpeakhold: int
+    drawpeaks: int
+    drawstyle: int
+    drawto: str
+    dsp_cpulimit: str
+    dsp_driver: int
+    dsp_inputdevice: str
+    dsp_iovectorsize: str
+    dsp_option1: str
+    dsp_option2: str
+    dsp_outputdevice: str
+    dsp_overdrive: str
+    dsp_samplerate: str
+    dsp_siai: str
+    dsp_signalvectorsize: str
+    dstrect: Sequence[int]
+    duration_active: int
+    dynamic: int
+    editing_bgcolor: Sequence[float]
+    editlocked: int
+    editlooponly: int
+    editor_rect: Sequence[float]
+    elementcolor: Sequence[float]
+    embed: int
+    emptycolor: Sequence[float]
+    enable: int
+    enabled: int
+    enablednotes: Sequence[Atom]
+    enabledrag: int
+    enableglobalcontext: int
+    enablehscroll: int
+    enablesprites: int
+    enablevscroll: int
+    erase_color: Sequence[float]
+    exclusive: int
+    expansion: str
+    export_dpi: int
+    exportfolder: str
+    exportname: str
+    exportnotifier: str
+    exportscript: str
+    exportscriptargs: str
+    externaleditor: str
+    extra1_active: int
+    extra1_max: int
+    extra1_min: int
+    extra1_signed: int
+    extra2_active: int
+    extra2_max: int
+    extra2_min: int
+    extra2_signed: int
+    extra_thickness: float
+    factorycontent: int
+    fblend: int
+    fgcolor: Sequence[float]
+    fgdialcolor: Sequence[float]
+    file: str
+    filekind: str
+    filename: str
+    fillhorizontalspace: int
+    filternodeschanges: int
+    filtertext: str
+    flagmode: int
+    floateditorwindow: int
+    floatoutput: int
+    focusbordercolor: Sequence[float]
+    folderslash: int
+    followglobaltempo: int
+    followlivetheme: Atom
+    fontface: int
+    fontlink: int
+    fontname: str
+    fontsize: float
+    forceaspect: int
+    forcejwebrendermode: int
+    formant: float
+    formantcorrection: int
+    format: int
+    fps: float
+    frames: int
+    freezecolor: Sequence[float]
+    ft1: float
+    fullspect: int
+    gaincaption: int
+    gaindragmode: int
+    gainradius: float
+    gainstyle: int
+    genericeditor: int
+    gensupport: int
+    gfxengine: str
+    ghostbar: int
+    gizmos: int
+    globalpatchername: str
+    globalzoomfactor: int
+    gradient: float
+    graphcolor: Sequence[float]
+    graphmode: str
+    grid: Union[float, int]
+    gridcolor: Sequence[float]
+    gridlinecolor: Sequence[float]
+    gridorigincolor: Sequence[float]
+    gridstep_x: float
+    gridstep_y: float
+    hbgcolor: Sequence[float]
+    hcellcolor: Sequence[float]
+    hcurvecolor: Sequence[float]
+    headercolor: Sequence[float]
+    headerheight: int
+    headerlabel: str
+    hgraphcolor: Sequence[float]
+    hidden: int
+    hideloop: int
+    hiderwff: int
+    hilite: int
+    hint: str
+    hires: int
+    hkeycolor: Sequence[float]
+    hltcolor: Sequence[float]
+    hlttextcolor: Sequence[float]
+    horizontal_direction: int
+    horizontalmargin: int
+    horizontalspacing: int
+    horizontaltracking: float
+    hotcolor: Sequence[float]
+    hscroll: int
+    hsync: int
+    htabcolor: Sequence[float]
+    htextcolor: Sequence[float]
+    htricolor: Sequence[float]
+    idle: int
+    idlemouse: int
+    ignoreclick: int
+    ignoreconnected: int
+    ignoreemptyinterp: int
+    illustrationspeed: int
+    imagemask: int
+    inactive: int
+    inactivealpha: float
+    inactivecoldcolor: Sequence[float]
+    inactiveimage: int
+    inactivelcdcolor: Sequence[float]
+    inactivetextoffcolor: Sequence[float]
+    inactivetextoncolor: Sequence[float]
+    inactivewarmcolor: Sequence[float]
+    inc: float
+    includepackages: int
+    incolormap: Atom
+    increment: float
+    index: int
+    initial: Sequence[Atom]
+    initialgain: float
+    inlabels: Atom
+    inputmode: int
+    inputrangemode: int
+    inputs: int
+    inspectreadonly: int
+    int: int
+    interp: Union[float, int]
+    interpinlet: int
+    interval: Union[float, int]
+    invert: int
+    invisiblebkgnd: int
+    items: Sequence[Any]
+    jsarguments: Sequence[Atom]
+    jump: int
+    just: int
+    justification: int
+    jwebremotedebuggingport: int
+    keymode: int
+    keynavigate: int
+    knobcolor: Sequence[float]
+    knobpict: str
+    knobshape: int
+    knobsize: float
+    labelclick: int
+    labelheight: float
+    labels: int
+    labeltextcolor: Sequence[float]
+    labelwidth: float
+    lastchannelcount: int
+    latency: Union[float, int]
+    layoutbubbles: int
+    lcdbgcolor: Sequence[float]
+    lcdcolor: Sequence[float]
+    leftarrow: int
+    leftmargin: int
+    leftvalue: int
+    legacy: int
+    legacyoutputorder: int
+    legacytextcolor: int
+    legacytransport: int
+    legend: Union[int, str]
+    linecolor: Sequence[float]
+    linecount: int
+    linenumbers: int
+    linenumberwidth: int
+    lines: int
+    linethickness: float
+    link: int
+    linmarkers: Sequence[float]
+    listmode: int
+    listresize: int
+    livemode: int
+    loadbangonpaste: int
+    local: int
+    lock: int
+    locked_bgcolor: Sequence[float]
+    lockeddragscroll: int
+    lockedsize: int
+    logamp: int
+    logfreq: int
+    loglevel: int
+    logmarkers: Sequence[float]
+    logtosystemconsole: int
+    loop: int
+    loopbordercolor: Sequence[float]
+    loopreport: int
+    loopruler: int
+    lsbfirst: int
+    margin: int
+    margins: Sequence[float]
+    marker_horizontal: int
+    marker_vertical: int
+    markercolor: Sequence[float]
+    markers: Sequence[int]
+    markersused: int
+    matrixmode: int
+    maxdynamicnodes: int
+    maxgain: float
+    maximum: Atom
+    maxurlproxyname: str
+    maxwindow_dequeuesize: int
+    maxwindow_fontname: str
+    maxwindow_fontsize: int
+    maxwindow_queuesize: int
+    mcisolate: int
+    mctrigchan: int
+    menu_display: int
+    menumode: int
+    metering: int
+    min: float
+    minimum: Atom
+    mode: Union[int, str]
+    modulationcolor: Sequence[float]
+    monitormode: int
+    monochrome: int
+    monotone: int
+    mousefilter: int
+    mousemode: int
+    mousereport: int
+    mouseup: int
+    movehorizontal: int
+    movevertical: int
+    mult: float
+    multiline: int
+    multiplier: int
+    multiselect: int
+    multislider: int
+    n4m_debug_log_enabled: int
+    n4m_debug_log_folder: str
+    n4m_debug_log_name: str
+    n4m_external_node_binary: str
+    n4m_process_manager_path: str
+    name: str
+    needlecolor: Sequence[float]
+    needlemode: int
+    neverdirty: int
+    nfilters: int
+    nhotleds: int
+    nodecolor: Sequence[float]
+    nodenumber: int
+    nodesnames: Sequence[str]
+    nofsaa: int
+    noloadbangdefeating: int
+    normalized: int
+    norulerclick: int
+    nosymquotes: int
+    notebase: int
+    notelist: Sequence[str]
+    notename: int
+    nseq: int
+    nsize: Sequence[float]
+    ntepidleds: int
+    numdecimalplaces: int
+    numdisplay: int
+    numins: int
+    numleds: int
+    numouts: int
+    numplots: int
+    numpoints: int
+    nwarmleds: int
+    offcolor: Sequence[float]
+    offset: Union[Sequence[float], float, int]
+    oncolor: Sequence[float]
+    onscreen: int
+    orientation: int
+    originallength: TimeValue
+    originaltempo: float
+    oscdefer: int
+    oscparamenableddefault: int
+    oscprefix: str
+    oscprefixmode: int
+    oscqueryenable: int
+    oscqueryport: int
+    oscreceivemode: int
+    oscreceivequantize: TimeValue
+    oscreceivethreshold: TimeValue
+    oscreceiveudpport: int
+    oscsendmode: int
+    oscsendthreshold: TimeValue
+    oscsendudpaddr: str
+    oscsendudpport: int
+    oscuseparamprefix: int
+    oscvaluemode: int
+    outcolormap: Atom
+    outlabels: Atom
+    outlinecolor: Sequence[float]
+    outmode: int
+    output_texture: int
+    outputalpha: int
+    outputformat: str
+    outputmode: int
+    outputonclick: int
+    outputs: int
+    overdrive: int
+    overgaincolor: Sequence[float]
+    overloadcolor: Sequence[float]
+    panelcolor: Sequence[float]
+    param_connect: str
+    parameter_enable: int
+    parameter_mappable: int
+    paramonly: int
+    patcher: Any
+    patcher_boxsnapmargin: Atom
+    patcherinspector: int
+    patchername: str
+    patchingmargin: int
+    patchingmarginpercent: float
+    patchingmechanics: int
+    patchline_curved: int
+    patchlinecolor: Sequence[float]
+    pattrmode: int
+    pconstrain: int
+    peakcolor: Sequence[float]
+    permissive: int
+    phasespect: int
+    pic: str
+    pickray: int
+    pictures: Sequence[str]
+    pitch_active: int
+    pitchcorrection: int
+    pitchdetection: int
+    pitchshift: float
+    pitchshiftcent: int
+    planemap: Sequence[int]
+    pointalign: float
+    pointcolor: Sequence[float]
+    pointsize: float
+    polezerocolor: Sequence[float]
+    poll: int
+    popupbrowserbar: int
+    precision: int
+    prefer: str
+    preffilename: str
+    prefix: str
+    prefix_mode: int
+    presentation: int
+    presentation_rect: Sequence[float]
+    preservegain: int
+    preset_data: Sequence[Any]
+    preview: int
+    prioritizeexterns: int
+    prioritizepatchlines: int
+    prototypename: str
+    quality: str
+    quiet: int
+    range: Sequence[Atom]
+    rangelabel: str
+    ratio: int
+    readonly: int
+    realtime_params: int
+    reflection: int
+    reflectioncolor: Sequence[float]
+    refreshrate: float
+    relative: int
+    release: Union[float, int]
+    remapsvgcolors: int
+    rendermode: int
+    reportprogress: int
+    restorewindows: int
+    retune: int
+    rightarrow: int
+    rightmargin: int
+    rightvalue: int
+    rnbo_classname: str
+    rnbo_extra_attributes: Dict[str, Any]
+    rnbo_log_file: str
+    rnbo_log_folder: str
+    rnbo_log_level: int
+    rnbo_server_autostart: int
+    rounded: float
+    rowhead: int
+    rowheight: int
+    rows: int
+    running: int
+    saturation: float
+    saved_attribute_attributes: Dict[str, Any]
+    saved_object_attributes: Dict[str, Any]
+    savedependencies: int
+    savemode: int
+    savesingletons: int
+    scale: Union[float, int]
+    scaleknob: int
+    sccolor: Sequence[float]
+    scroll: int
+    searchformissingfiles: int
+    segmented: int
+    segpatchcords: int
+    selectalpha: float
+    selectedclick: int
+    selectioncolor: Sequence[float]
+    selector: str
+    selecttextonclick_patching: int
+    selmode: int
+    selsync: int
+    separator: str
+    setarrowkeysscrollpatcher: int
+    seteventinterval: int
+    setminmax: Sequence[float]
+    setmixergbitmode: int
+    setmixerlatency: float
+    setmixerparallel: int
+    setmixerramptime: float
+    setmode: int
+    setnativefontpanel: int
+    setpollthrottle: int
+    setqueuethrottle: int
+    setresizes: int
+    setscrollbarmode: int
+    setslop: float
+    setstyle: int
+    setsysqelemthrottle: int
+    settype: int
+    setunit: int
+    sgcolor: Sequence[float]
+    shadow: int
+    shadowactive: int
+    shadowalpha: float
+    shadowblend: float
+    shadowline: int
+    shadoworientation: int
+    shadowperbar: int
+    shadowproportion: float
+    shadowreflectionpoint: float
+    shadowsigned: int
+    shape: int
+    showcaption: int
+    showcluebar: int
+    showdotfiles: int
+    showeditor: int
+    showgain: int
+    showgetonly: int
+    showheader: int
+    showlabels: int
+    showname: int
+    shownumber: int
+    signalmode: str
+    signalusecols: int
+    signed: int
+    sigoutmode: int
+    size: float
+    slidercolor: Sequence[float]
+    slurtime: float
+    smoothing: float
+    snap: int
+    snap2grid: int
+    snapto: int
+    snaptopixelbydefault: int
+    sono: int
+    sonohicolor: Sequence[float]
+    sonolocolor: Sequence[float]
+    sonomedcolor: Sequence[float]
+    sonomedhicolor: Sequence[float]
+    sonomedlocolor: Sequence[float]
+    sonomonobgcolor: Sequence[float]
+    sonomonofgcolor: Sequence[float]
+    sortmode: int
+    spacing: Union[float, int]
+    spacing_x: float
+    spacing_y: float
+    srcrect: Sequence[int]
+    staffs: int
+    statusvisible: int
+    stay: int
+    stcolor: Sequence[float]
+    stepcolor: Sequence[float]
+    stepcolor2: Sequence[float]
+    storage_rect: Sequence[float]
+    stored1: Sequence[float]
+    storeinpreset: int
+    stripe2: Sequence[float]
+    stripecolor: Sequence[float]
+    style: str
+    suppressinlet: int
+    svg: str
+    switchcolor: Sequence[float]
+    sync: int
+    syntax: str
+    syntax_attrargcolor: Sequence[float]
+    syntax_attributecolor: Sequence[float]
+    syntax_objargcolor: Sequence[float]
+    syntax_objectcolor: Sequence[float]
+    syntaxcoloring: int
+    syntaxcolorset: Atom
+    systimerearlywake: int
+    tabcolor: Sequence[float]
+    table_data: Sequence[float]
+    tabmode: int
+    tabs: Sequence[str]
+    tags: str
+    template: str
+    tepidcolor: Sequence[float]
+    text_width: float
+    textcolor: Sequence[float]
+    textcolor_inverse: Sequence[float]
+    textjustification: int
+    textoffcolor: Sequence[float]
+    texton: str
+    textoncolor: Sequence[float]
+    textovercolor: Sequence[float]
+    thickness: Union[float, int]
+    thinmode: str
+    thinthresh: int
+    thinto: float
+    threshold: float
+    threshold_db: float
+    threshold_linear: float
+    ticks: int
+    timestretch: int
+    toggle: int
+    tool: int
+    toolbarcluemode: int
+    toolbarquickrecord_format: int
+    toolbarquickrecord_redbutton: int
+    topmargin: int
+    topvalue: int
+    tosymbol: int
+    trackcircular: int
+    trackhorizontal: int
+    tracking: int
+    trackvertical: int
+    transition: int
+    translation: str
+    triangle: int
+    tribordercolor: Sequence[float]
+    tricolor: Sequence[float]
+    tricolor2: Sequence[float]
+    trigger: int
+    triglevel: float
+    trioncolor: Sequence[float]
+    triscale: float
+    truncate: int
+    types: Union[Atom, str]
+    uncheckedcolor: Sequence[float]
+    underline: int
+    unitruler: int
+    uparrow: int
+    url: str
+    use_16bit: int
+    usebgoncolor: int
+    usedstrect: int
+    useexternaleditor: int
+    useoffcolor: int
+    usepicture: int
+    usesearchpath: int
+    useselectioncolor: int
+    usespacesforjed: int
+    usesrcrect: int
+    usestepcolor2: int
+    usesvgviewbox: int
+    usetextovercolor: int
+    usewebeditor: int
+    valign: int
+    valuemode: int
+    valuepopup: int
+    valuepopuplabel: int
+    varname: str
+    velocity_active: int
+    vertical_direction: int
+    verticalmargin: int
+    verticalspacing: int
+    verticaltracking: float
+    videoengine: str
+    viewvisibility: Any
+    vlabels: int
+    voffset: float
+    vscroll: int
+    vstscanmode: int
+    vsync: int
+    vticks: int
+    vtracking: int
+    vzoom: float
+    warmcolor: Sequence[float]
+    waveformcolor: Sequence[float]
+    waveformdisplay: int
+    wheelzoomdirection: int
+    wheelzoomfactor: float
+    whitekeycolor: Sequence[float]
+    wiggletime: int
+    wordwrap: int
+    xoffset: float
+    xplace: Sequence[float]
+    yoffset: float
+    yplace: Sequence[float]
+    zoom_orientation: int
+    zoomstyle: int
+    zoomthresh: float
+
+
+#: Every property name in :class:`BoxProps`, for runtime checks.
+BOX_PROP_NAMES = frozenset(BoxProps.__annotations__)
 
 
 # --------------------------------------------------------------------------
@@ -2878,6 +4610,29 @@ def message_compatible(
 # --------------------------------------------------------------------------
 
 
+# Annotations are postponed so ``Unpack[BoxProps]`` can be written in signatures
+# without importing ``typing_extensions`` at runtime -- the library ships zero
+# runtime dependencies, and PEP 692 is only a 3.12 runtime feature.
+
+
+def _scrub(value: Any) -> Any:
+    """Recursively drop None-valued keys from any dicts inside `value`.
+
+    Lists are walked but not filtered: a None *element* is positional (an
+    `outlettype` slot, say) and dropping it would change the arity. Tuples are
+    left alone so `Rect`, a NamedTuple, survives as itself.
+    """
+    if isinstance(value, Mapping):
+        return _scrub_mapping(value)
+    if isinstance(value, list):
+        return [_scrub(item) for item in value]
+    return value
+
+
+def _scrub_mapping(mapping: Mapping[str, Any]) -> Dict[str, Any]:
+    return {k: _scrub(v) for k, v in mapping.items() if v is not None}
+
+
 class Box(AbstractBox):
     """Represents a Max object in a patch.
 
@@ -2908,7 +4663,7 @@ class Box(AbstractBox):
         numoutlets: Optional[int] = None,
         id: Optional[str] = None,
         patching_rect: Optional[Rect] = None,
-        **kwds: Any,
+        **kwds: "Unpack[BoxProps]",
     ) -> None:
         self.id = id
         self.maxclass = maxclass or "newobj"
@@ -2924,12 +4679,22 @@ class Box(AbstractBox):
         self._kwds = self._remove_none_entries(kwds)
         self._patcher: Optional["Patcher"] = self._kwds.pop("patcher", None)
 
-    def _remove_none_entries(self, kwds: Dict[str, Any]) -> Dict[str, Any]:
-        """removes items in the dict which have None values.
+    def _remove_none_entries(self, kwds: Mapping[str, Any]) -> Dict[str, Any]:
+        """Drop keys whose value is None, at any depth.
 
-        TODO: make recursive in case of nested dicts.
+        Max distinguishes an absent key from a null one, and an unset optional
+        argument arrives here as None -- so a key that was never asked for must
+        not be written as ``"key": null``.
+
+        Nested dicts are scrubbed too: `saved_attribute_attributes` is built
+        with optional members, so a shallow pass left `"parameter_mmax": null`
+        one level down where nothing would ever remove it.
+
+        Takes a ``Mapping`` rather than a ``dict`` so a ``BoxProps`` TypedDict
+        can be passed straight in; TypedDicts are ``Mapping[str, object]``, not
+        ``dict[str, Any]``.
         """
-        return {k: v for k, v in kwds.items() if v is not None}
+        return _scrub_mapping(kwds)
 
     def __iter__(self) -> Iterator[Any]:
         yield self
@@ -3374,7 +5139,37 @@ class SerializationMixin(AbstractPatcher):
 # --------------------------------------------------------------------------
 
 
+# Postponed annotations: lets ``Unpack[...]`` appear in signatures without a
+# runtime typing_extensions import (PEP 692 is a 3.12 runtime feature).
+
 logger = get_logger(__name__)
+
+# Cache of "name of the first positional parameter", keyed by the *function*
+# rather than the bound method so this never keeps a Patcher alive.
+_FIRST_PARAM_CACHE: Dict[Any, Optional[str]] = {}
+
+
+def _first_param_name(method: Callable[..., Any]) -> Optional[str]:
+    """Return the name of `method`'s first positional parameter, or None.
+
+    Used by the `add()` dispatcher to detect when a caller keyword names the
+    same parameter the dispatcher is about to fill positionally. Derived by
+    introspection rather than from a table so that adding a new entry to
+    `Patcher._maxclass_methods` cannot silently reintroduce the collision.
+    """
+    func = getattr(method, "__func__", method)
+    if func not in _FIRST_PARAM_CACHE:
+        params = list(inspect.signature(func).parameters.values())
+        if params and params[0].name == "self":
+            params = params[1:]
+        name = None
+        for param in params:
+            if param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD):
+                name = param.name
+                break
+        _FIRST_PARAM_CACHE[func] = name
+    return _FIRST_PARAM_CACHE[func]
+
 
 # Max objects whose inlet/outlet counts are determined by their code rather
 # than by a fixed maxref entry. Connection validation for these consults the
@@ -3728,7 +5523,7 @@ class BoxFactoryMixin(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds: Any,
+        **kwds: "Unpack[TextboxProps]",
     ) -> "Box":
         """Add a text-based Max object to the patch.
 
@@ -3803,55 +5598,81 @@ class BoxFactoryMixin(AbstractPatcher):
             comment_pos,
         )
 
-    def _textbox_helper(self, maxclass: str, kwds: Dict[str, Any]) -> Dict[str, Any]:
+    def _textbox_helper(self, maxclass: str, kwds: "TextboxProps") -> "TextboxProps":
         """adds special case support for textbox"""
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = maxclass
             if maxclass in ["codebox", "codebox~"]:
-                if "code" in kwds and "rnbo_extra_attributes" not in kwds:
-                    if "\r" not in kwds["code"]:
-                        kwds["code"] = kwds["code"].replace("\n", "\r\n")
+                code = kwds.get("code")
+                if code is not None and "rnbo_extra_attributes" not in kwds:
+                    if "\r" not in code:
+                        code = code.replace("\n", "\r\n")
+                        kwds["code"] = code
                     kwds["rnbo_extra_attributes"] = dict(
-                        code=kwds["code"],
+                        code=code,
                         hot=0,
                     )
         return kwds
+
+    def _dispatch(
+        self, method: Callable[..., Any], value: Any, kwds: Dict[str, Any]
+    ) -> "Box":
+        """Call `method(value, **kwds)`, letting a caller keyword win.
+
+        `add()` derives `method`'s first argument from the value it was handed
+        (the text tail, the number). A caller naming that same parameter used
+        to be a hard `TypeError` -- "got multiple values for argument" -- so
+        the explicit value now takes precedence over the derived one.
+        """
+        name = _first_param_name(method)
+        if name is not None and name in kwds:
+            value = kwds.pop(name)
+        return cast("Box", method(value, **kwds))
+
+    def _add_param(
+        self,
+        method: Callable[..., Any],
+        value: Union[int, float],
+        args: Tuple[Any, ...],
+        kwds: Dict[str, Any],
+    ) -> "Box":
+        """Shared body for `_add_float`/`_add_int`.
+
+        The parameter name may be given positionally or as `name=`; either way
+        it is consumed here rather than left in `kwds` to leak into the emitted
+        box as a stray `name` property.
+        """
+        longname: Any = kwds.pop("name", None)
+        if args:
+            longname = args[0]
+        if longname is None:
+            longname = ""
+        if not isinstance(longname, str):
+            kind = "int" if isinstance(value, int) else "float"
+            raise ValueError(
+                f"should be: .add(<{kind}>, '<name>') OR .add(<{kind}>, name='<name>')"
+            )
+        # explicit keywords win over the values derived from the call
+        return cast(
+            "Box",
+            method(
+                longname=kwds.pop("longname", longname),
+                initial=kwds.pop("initial", value),
+                **kwds,
+            ),
+        )
 
     def _add_float(self, value: float, *args: Any, **kwds: Any) -> "Box":
         """type-handler for float values in `add`"""
 
         assert isinstance(value, float)
-        name = None
-        if args:
-            name = args[0]
-        elif "name" in kwds:
-            name = kwds.get("name")
-        else:
-            return self.add_floatparam(longname="", initial=value, **kwds)
-
-        if isinstance(name, str):
-            return self.add_floatparam(longname=name, initial=value, **kwds)
-        raise ValueError(
-            "should be: .add(<float>, '<name>') OR .add(<float>, name='<name>')"
-        )
+        return self._add_param(self.add_floatparam, value, args, kwds)
 
     def _add_int(self, value: int, *args: Any, **kwds: Any) -> "Box":
         """type-handler for int values in `add`"""
 
         assert isinstance(value, int)
-        name = None
-        if args:
-            name = args[0]
-        elif "name" in kwds:
-            name = kwds.get("name")
-        else:
-            return self.add_intparam(longname="", initial=value, **kwds)
-
-        if isinstance(name, str):
-            return self.add_intparam(longname=name, initial=value, **kwds)
-        raise ValueError(
-            "should be: .add(<int>, '<name>') OR .add(<int>, name='<name>')"
-        )
+        return self._add_param(self.add_intparam, value, args, kwds)
 
     def _add_str(self, value: str, *args: Any, **kwds: Any) -> "Box":
         """type-handler for str values in `add`"""
@@ -3864,20 +5685,20 @@ class BoxFactoryMixin(AbstractPatcher):
         # first check _maxclass_methods
         # these methods don't need the maxclass, just the `text` tail of value
         if maxclass in self._maxclass_methods:
-            return cast("Box", self._maxclass_methods[maxclass](txt, **kwds))
+            return self._dispatch(self._maxclass_methods[maxclass], txt, kwds)
         # next two require value as a whole
         if maxclass == "p":
-            return self.add_subpatcher(value, **kwds)
+            return self._dispatch(self.add_subpatcher, value, kwds)
         if maxclass == "gen~":
             return self.add_gen_tilde(**kwds)
         if maxclass == "gen.codebox~":
             # Tail is the gen code. value.split() collapses whitespace, so this
             # shortcut suits single-line/`;`-terminated code; for multi-line
             # source pass it to add_gen_codebox() directly.
-            return self.add_gen_codebox(txt, **kwds)
+            return self._dispatch(self.add_gen_codebox, txt, kwds)
         if maxclass == "rnbo~":
-            return self.add_rnbo(value, **kwds)
-        return self.add_textbox(text=value, **kwds)
+            return self._dispatch(self.add_rnbo, value, kwds)
+        return self._dispatch(self.add_textbox, value, kwds)
 
     def add(self, value: Any, *args: Any, **kwds: Any) -> "Box":
         """generic adder: value can be a number or a list or text for an object."""
@@ -4002,7 +5823,7 @@ class BoxFactoryMixin(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds: Any,
+        **kwds: "Unpack[TextboxProps]",
     ) -> "Box":
         """Add a max message."""
 
@@ -4027,7 +5848,7 @@ class BoxFactoryMixin(AbstractPatcher):
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         justify: Optional[str] = None,
-        **kwds: Any,
+        **kwds: "Unpack[TextboxProps]",
     ) -> "Box":
         """Add a basic comment object."""
         if justify:
@@ -4130,11 +5951,11 @@ class BoxFactoryMixin(AbstractPatcher):
                         parameter_type=0,
                     )
                 ),
-                maximum=maximum,
-                minimum=minimum,
                 patching_rect=rect or self.get_pos(),
                 hint=hint or (longname if self._auto_hints else ""),
-                **kwds,
+                # kwds_filter, not `maximum=maximum`: these are Optional here and
+                # an unset one must be absent from the patch, not present as null.
+                **kwds_filter(kwds, maximum=maximum, minimum=minimum),
             ),
             comment or longname,  # units can also be added here
             comment_pos,
@@ -4174,11 +5995,11 @@ class BoxFactoryMixin(AbstractPatcher):
                         parameter_type=1,
                     )
                 ),
-                maximum=maximum,
-                minimum=minimum,
                 patching_rect=rect or self.get_pos(),
                 hint=hint or (longname if self._auto_hints else ""),
-                **kwds,
+                # kwds_filter, not `maximum=maximum`: these are Optional here and
+                # an unset one must be absent from the patch, not present as null.
+                **kwds_filter(kwds, maximum=maximum, minimum=minimum),
             ),
             comment or longname,  # units can also be added here
             comment_pos,
@@ -4931,7 +6752,7 @@ class BoxFactoryMixin(AbstractPatcher):
                 outlettype=["int", "", ""],
                 autopopulate=autopopulate or 1,
                 depth=depth or 1,
-                items=_commas(cast(List[str], items)) or [],
+                items=_commas(items) if items else [],
                 prefix=prefix or "",
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds,
@@ -6376,9 +8197,17 @@ class MatrixLayoutManager(LayoutManager):
 
             return chain
 
-        # Start from objects with no inputs (sources) or minimal inputs
+        # Start from true sources -- objects nothing feeds into.
+        #
+        # This used to accept `len(inputs) <= 1`, which made every mid-chain
+        # object a chain start. Since `visited` stops a chain the moment it
+        # reaches an object another chain already claimed, whichever mid-chain
+        # object came first in iteration order consumed the tail and left the
+        # real source stranded in a chain of its own: `cycle~ -> gain~ ->
+        # ezdac~` became three one-object chains, hence three matrix columns,
+        # purely because the boxes were added in reverse signal order.
         sources = [
-            obj_id for obj_id, inputs in reverse_connections.items() if len(inputs) <= 1
+            obj_id for obj_id, inputs in reverse_connections.items() if not inputs
         ]
 
         # If no clear sources, start from input/control objects

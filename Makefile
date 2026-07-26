@@ -1,10 +1,9 @@
-
 # Makefile for py2max project
 
 .PHONY: help all build test test-verbose test-outputs coverage lint \
 		typecheck qa docs docs-clean docs-serve docs-deploy install \
 		dev clean reset ci format check-wheel publish-test publish \
-		gallery single-file
+		gallery single-file ts-check box-props
 
 help: ## Show this help message
 	@echo "Available commands:"
@@ -95,3 +94,11 @@ publish-test: check-wheel ## Publish to PyPI Test
 
 publish: check-wheel ## Publish to PyPI
 	@uv run twine upload dist/*
+
+box-props: ## Regenerate the typed box-property vocabulary (py2max/core/props.py)
+	@uv run python scripts/gen_box_props.py
+	@uv run mypy py2max
+	@uv run pytest tests/test_box_props.py -q
+
+ts-check: ## Typecheck and test the experimental TS core spike (ts/, needs bun)
+	@cd ts && bun install --silent && bun run check

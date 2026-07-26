@@ -3,6 +3,7 @@
 import tempfile
 from pathlib import Path
 
+import pytest
 
 from py2max.maxref.db import MaxRefDB
 from py2max.maxref import get_object_info
@@ -880,3 +881,78 @@ class TestMaxRefDB:
             # Second call should use existing cache
             db2 = MaxRefDB(auto_populate=True)
             assert db2.count == 2
+
+
+class TestSearchEscaping:
+    """`search()` matches its query literally, not as a LIKE pattern."""
+
+    FIELDS = {
+        "metadata": {},
+        "inlets": [],
+        "outlets": [],
+        "objargs": [],
+        "methods": {},
+        "attributes": {},
+        "examples": [],
+        "seealso": [],
+        "misc": {},
+        "palette": {},
+        "parameter": {},
+    }
+
+    def _db(self):
+        db = MaxRefDB(":memory:", auto_populate=False)
+        for name, digest in [
+            ("jit_kernel", "an object with an underscore"),
+            ("gain~", "adjusts level"),
+            ("modulo", "remainder, as a % of the input"),
+            ("cycle~", "a wavetable oscillator"),
+        ]:
+            db.insert_object(
+                name,
+                {"name": name, "digest": digest, "description": "", **self.FIELDS},
+            )
+        return db
+
+    def test_percent_is_literal_not_a_wildcard(self):
+        """`%` used to match every row, so `search('%')` returned the database."""
+        db = self._db()
+        assert db.search("%") == ["modulo"]
+
+    def test_underscore_is_literal_not_a_single_char_wildcard(self):
+        """`_` used to match any character, so `gain_` matched `gain~`."""
+        db = self._db()
+        assert db.search("_") == ["jit_kernel"]
+        assert db.search("gain_") == []
+        assert db.search("gain~") == ["gain~"]
+
+    def test_backslash_is_literal(self):
+        """The escape character itself must not leak into the pattern."""
+        db = self._db()
+        assert db.search("\\") == []
+        assert db.search("cycle") == ["cycle~"]
+
+    def test_unknown_field_raises_instead_of_emitting_broken_sql(self):
+        """An empty WHERE clause used to reach sqlite as a syntax error."""
+        db = self._db()
+        with pytest.raises(ValueError, match="no searchable field"):
+            db.search("cycle", fields=["bogus"])
+
+    def test_known_fields_still_filter(self):
+        db = self._db()
+        assert db.search("oscillator", fields=["digest"]) == ["cycle~"]
+        assert db.search("oscillator", fields=["name"]) == []
+
+
+def test_auto_populate_logs_rather_than_prints(monkeypatch, caplog):
+    """Cache setup is a library event: the application decides if it is seen."""
+    import logging
+
+    db = MaxRefDB(":memory:", auto_populate=False)
+    monkeypatch.setattr(MaxRefDB, "populate", lambda self, *a, **k: None)
+
+    with caplog.at_level(logging.INFO, logger="py2max"):
+        db._auto_populate_cache()
+
+    assert any("initializing py2max cache" in r.message for r in caplog.records)
+    assert any("cache ready" in r.message for r in caplog.records)

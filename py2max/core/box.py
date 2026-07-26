@@ -1,14 +1,40 @@
 """Box class for representing Max objects in a patch."""
 
+# Annotations are postponed so ``Unpack[BoxProps]`` can be written in signatures
+# without importing ``typing_extensions`` at runtime -- the library ships zero
+# runtime dependencies, and PEP 692 is only a 3.12 runtime feature.
+from __future__ import annotations
+
 import re
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Mapping, Optional
 
 from .abstract import AbstractBox
 from .common import Rect
+from .props import BoxProps
 
 if TYPE_CHECKING:
+    from typing_extensions import Unpack
+
     from .colors import ColorLike
     from .patcher import Patcher
+
+
+def _scrub(value: Any) -> Any:
+    """Recursively drop None-valued keys from any dicts inside `value`.
+
+    Lists are walked but not filtered: a None *element* is positional (an
+    `outlettype` slot, say) and dropping it would change the arity. Tuples are
+    left alone so `Rect`, a NamedTuple, survives as itself.
+    """
+    if isinstance(value, Mapping):
+        return _scrub_mapping(value)
+    if isinstance(value, list):
+        return [_scrub(item) for item in value]
+    return value
+
+
+def _scrub_mapping(mapping: Mapping[str, Any]) -> Dict[str, Any]:
+    return {k: _scrub(v) for k, v in mapping.items() if v is not None}
 
 
 class Box(AbstractBox):
@@ -41,7 +67,7 @@ class Box(AbstractBox):
         numoutlets: Optional[int] = None,
         id: Optional[str] = None,
         patching_rect: Optional[Rect] = None,
-        **kwds: Any,
+        **kwds: "Unpack[BoxProps]",
     ) -> None:
         self.id = id
         self.maxclass = maxclass or "newobj"
@@ -57,12 +83,22 @@ class Box(AbstractBox):
         self._kwds = self._remove_none_entries(kwds)
         self._patcher: Optional["Patcher"] = self._kwds.pop("patcher", None)
 
-    def _remove_none_entries(self, kwds: Dict[str, Any]) -> Dict[str, Any]:
-        """removes items in the dict which have None values.
+    def _remove_none_entries(self, kwds: Mapping[str, Any]) -> Dict[str, Any]:
+        """Drop keys whose value is None, at any depth.
 
-        TODO: make recursive in case of nested dicts.
+        Max distinguishes an absent key from a null one, and an unset optional
+        argument arrives here as None -- so a key that was never asked for must
+        not be written as ``"key": null``.
+
+        Nested dicts are scrubbed too: `saved_attribute_attributes` is built
+        with optional members, so a shallow pass left `"parameter_mmax": null`
+        one level down where nothing would ever remove it.
+
+        Takes a ``Mapping`` rather than a ``dict`` so a ``BoxProps`` TypedDict
+        can be passed straight in; TypedDicts are ``Mapping[str, object]``, not
+        ``dict[str, Any]``.
         """
-        return {k: v for k, v in kwds.items() if v is not None}
+        return _scrub_mapping(kwds)
 
     def __iter__(self) -> Iterator[Any]:
         yield self

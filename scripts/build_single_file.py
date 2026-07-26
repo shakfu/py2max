@@ -57,6 +57,7 @@ MODULES: List[Spec] = [
     ("py2max/utils.py", None),
     ("py2max/core/common.py", None),
     ("py2max/core/colors.py", None),
+    ("py2max/core/props.py", None),
     ("py2max/core/abstract.py", None),
     # maxref layer: curated data and port logic verbatim, data source shimmed.
     ("py2max/maxref/legacy.py", None),
@@ -261,6 +262,10 @@ class Module:
         # lose their alias when the import is stripped; re-emit them as plain
         # assignments so the aliased name still resolves.
         self.aliases: Dict[str, str] = {}
+        # Third-party imports inside `if TYPE_CHECKING:` blocks (typing_extensions'
+        # `Unpack`, for one). The block itself is dropped, so these have to be
+        # re-emitted or the annotations that use them become undefined names.
+        self.type_only_imports: Set[str] = set()
         self._drop: Set[int] = set()  # 1-based line numbers
         self._analyze()
 
@@ -323,9 +328,17 @@ class Module:
                     self._drop_node(node)
                 continue
 
-            # `if TYPE_CHECKING:` blocks only import intra-package names for
-            # annotations, which resolve in the flattened namespace anyway.
+            # `if TYPE_CHECKING:` blocks mostly import intra-package names for
+            # annotations, which resolve in the flattened namespace anyway. Any
+            # *external* import in there is still needed, though, so hoist it
+            # into a single TYPE_CHECKING block in the header before dropping.
             if isinstance(node, ast.If) and self._references_type_checking(node.test):
+                for inner in ast.walk(node):
+                    if isinstance(inner, (ast.Import, ast.ImportFrom)):
+                        if not self._is_intra_package(inner):
+                            segment = ast.get_source_segment(self.src, inner)
+                            if segment:
+                                self.type_only_imports.add(" ".join(segment.split()))
                 self._drop_node(node)
                 continue
 
@@ -468,6 +481,22 @@ def build() -> str:
     plain = sorted(s for s in stdlib if s.startswith("import "))
     froms = sorted(s for s in stdlib if s.startswith("from "))
 
+    # Type-only third-party imports, re-emitted under one TYPE_CHECKING guard so
+    # nothing is needed at runtime (typing_extensions is not a dependency).
+    type_only: Set[str] = set()
+    for module in modules:
+        type_only |= module.type_only_imports
+    type_only_block = ""
+    if type_only:
+        body = "\n".join(f"    {imp}" for imp in sorted(type_only))
+        type_only_block = (
+            "\n# Type-checking-only imports, hoisted out of the modules'\n"
+            "# `if TYPE_CHECKING:` blocks. Never imported at runtime.\n"
+            "if TYPE_CHECKING:\n" + body + "\n"
+        )
+        stdlib.add("from typing import TYPE_CHECKING")
+        froms = sorted(s for s in stdlib if s.startswith("from "))
+
     header = f'''"""py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
@@ -504,6 +533,8 @@ from __future__ import annotations
 
     parts = [header]
     parts.append("\n".join(plain) + "\n\n" + "\n".join(froms) + "\n")
+    if type_only_block:
+        parts.append(type_only_block)
     parts.append(
         "\n# Module-qualified references (maxref.get_object_info, porttypes.BANG,\n"
         "# category.INPUT_OBJECTS, layout_module.GridLayoutManager) resolve here:\n"

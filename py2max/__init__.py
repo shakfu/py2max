@@ -43,6 +43,7 @@ Example:
 __version__ = "0.3.6"
 
 from .core import Box, Patcher, Patchline
+from .core.props import BoxProps, TextboxProps
 from .exceptions import (
     DatabaseError,
     InvalidConnectionError,
@@ -63,6 +64,9 @@ __all__ = [
     "Patcher",
     "Box",
     "Patchline",
+    # Typed box properties (for callers annotating their own helpers)
+    "BoxProps",
+    "TextboxProps",
     # Linting
     "lint",
     "Finding",

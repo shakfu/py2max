@@ -8,11 +8,17 @@ no API change -- adding a new object type means editing this file, not the
 core class.
 """
 
+# Postponed annotations: lets ``Unpack[...]`` appear in signatures without a
+# runtime typing_extensions import (PEP 692 is a 3.12 runtime feature).
+from __future__ import annotations
+
+import inspect
 import re
 import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     Iterable,
     List,
@@ -26,15 +32,45 @@ from py2max import maxref
 
 from ..exceptions import InvalidConnectionError
 from ..log import get_logger
+from ..utils import kwds_filter
 from .abstract import AbstractBox, AbstractPatcher, AbstractPatchline
 from .box import Box
 from .common import Rect
 from .patchline import Patchline
+from .props import TextboxProps
 
 if TYPE_CHECKING:
+    from typing_extensions import Unpack
+
     from .patcher import Patcher
 
 logger = get_logger(__name__)
+
+# Cache of "name of the first positional parameter", keyed by the *function*
+# rather than the bound method so this never keeps a Patcher alive.
+_FIRST_PARAM_CACHE: Dict[Any, Optional[str]] = {}
+
+
+def _first_param_name(method: Callable[..., Any]) -> Optional[str]:
+    """Return the name of `method`'s first positional parameter, or None.
+
+    Used by the `add()` dispatcher to detect when a caller keyword names the
+    same parameter the dispatcher is about to fill positionally. Derived by
+    introspection rather than from a table so that adding a new entry to
+    `Patcher._maxclass_methods` cannot silently reintroduce the collision.
+    """
+    func = getattr(method, "__func__", method)
+    if func not in _FIRST_PARAM_CACHE:
+        params = list(inspect.signature(func).parameters.values())
+        if params and params[0].name == "self":
+            params = params[1:]
+        name = None
+        for param in params:
+            if param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD):
+                name = param.name
+                break
+        _FIRST_PARAM_CACHE[func] = name
+    return _FIRST_PARAM_CACHE[func]
 
 # Max objects whose inlet/outlet counts are determined by their code rather
 # than by a fixed maxref entry. Connection validation for these consults the
@@ -389,7 +425,7 @@ class BoxFactoryMixin(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds: Any,
+        **kwds: "Unpack[TextboxProps]",
     ) -> "Box":
         """Add a text-based Max object to the patch.
 
@@ -464,55 +500,84 @@ class BoxFactoryMixin(AbstractPatcher):
             comment_pos,
         )
 
-    def _textbox_helper(self, maxclass: str, kwds: Dict[str, Any]) -> Dict[str, Any]:
+    def _textbox_helper(
+        self, maxclass: str, kwds: "TextboxProps"
+    ) -> "TextboxProps":
         """adds special case support for textbox"""
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = maxclass
             if maxclass in ["codebox", "codebox~"]:
-                if "code" in kwds and "rnbo_extra_attributes" not in kwds:
-                    if "\r" not in kwds["code"]:
-                        kwds["code"] = kwds["code"].replace("\n", "\r\n")
+                code = kwds.get("code")
+                if code is not None and "rnbo_extra_attributes" not in kwds:
+                    if "\r" not in code:
+                        code = code.replace("\n", "\r\n")
+                        kwds["code"] = code
                     kwds["rnbo_extra_attributes"] = dict(
-                        code=kwds["code"],
+                        code=code,
                         hot=0,
                     )
         return kwds
+
+    def _dispatch(
+        self, method: Callable[..., Any], value: Any, kwds: Dict[str, Any]
+    ) -> "Box":
+        """Call `method(value, **kwds)`, letting a caller keyword win.
+
+        `add()` derives `method`'s first argument from the value it was handed
+        (the text tail, the number). A caller naming that same parameter used
+        to be a hard `TypeError` -- "got multiple values for argument" -- so
+        the explicit value now takes precedence over the derived one.
+        """
+        name = _first_param_name(method)
+        if name is not None and name in kwds:
+            value = kwds.pop(name)
+        return cast("Box", method(value, **kwds))
+
+    def _add_param(
+        self,
+        method: Callable[..., Any],
+        value: Union[int, float],
+        args: Tuple[Any, ...],
+        kwds: Dict[str, Any],
+    ) -> "Box":
+        """Shared body for `_add_float`/`_add_int`.
+
+        The parameter name may be given positionally or as `name=`; either way
+        it is consumed here rather than left in `kwds` to leak into the emitted
+        box as a stray `name` property.
+        """
+        longname: Any = kwds.pop("name", None)
+        if args:
+            longname = args[0]
+        if longname is None:
+            longname = ""
+        if not isinstance(longname, str):
+            kind = "int" if isinstance(value, int) else "float"
+            raise ValueError(
+                f"should be: .add(<{kind}>, '<name>')"
+                f" OR .add(<{kind}>, name='<name>')"
+            )
+        # explicit keywords win over the values derived from the call
+        return cast(
+            "Box",
+            method(
+                longname=kwds.pop("longname", longname),
+                initial=kwds.pop("initial", value),
+                **kwds,
+            ),
+        )
 
     def _add_float(self, value: float, *args: Any, **kwds: Any) -> "Box":
         """type-handler for float values in `add`"""
 
         assert isinstance(value, float)
-        name = None
-        if args:
-            name = args[0]
-        elif "name" in kwds:
-            name = kwds.get("name")
-        else:
-            return self.add_floatparam(longname="", initial=value, **kwds)
-
-        if isinstance(name, str):
-            return self.add_floatparam(longname=name, initial=value, **kwds)
-        raise ValueError(
-            "should be: .add(<float>, '<name>') OR .add(<float>, name='<name>')"
-        )
+        return self._add_param(self.add_floatparam, value, args, kwds)
 
     def _add_int(self, value: int, *args: Any, **kwds: Any) -> "Box":
         """type-handler for int values in `add`"""
 
         assert isinstance(value, int)
-        name = None
-        if args:
-            name = args[0]
-        elif "name" in kwds:
-            name = kwds.get("name")
-        else:
-            return self.add_intparam(longname="", initial=value, **kwds)
-
-        if isinstance(name, str):
-            return self.add_intparam(longname=name, initial=value, **kwds)
-        raise ValueError(
-            "should be: .add(<int>, '<name>') OR .add(<int>, name='<name>')"
-        )
+        return self._add_param(self.add_intparam, value, args, kwds)
 
     def _add_str(self, value: str, *args: Any, **kwds: Any) -> "Box":
         """type-handler for str values in `add`"""
@@ -525,20 +590,20 @@ class BoxFactoryMixin(AbstractPatcher):
         # first check _maxclass_methods
         # these methods don't need the maxclass, just the `text` tail of value
         if maxclass in self._maxclass_methods:
-            return cast("Box", self._maxclass_methods[maxclass](txt, **kwds))
+            return self._dispatch(self._maxclass_methods[maxclass], txt, kwds)
         # next two require value as a whole
         if maxclass == "p":
-            return self.add_subpatcher(value, **kwds)
+            return self._dispatch(self.add_subpatcher, value, kwds)
         if maxclass == "gen~":
             return self.add_gen_tilde(**kwds)
         if maxclass == "gen.codebox~":
             # Tail is the gen code. value.split() collapses whitespace, so this
             # shortcut suits single-line/`;`-terminated code; for multi-line
             # source pass it to add_gen_codebox() directly.
-            return self.add_gen_codebox(txt, **kwds)
+            return self._dispatch(self.add_gen_codebox, txt, kwds)
         if maxclass == "rnbo~":
-            return self.add_rnbo(value, **kwds)
-        return self.add_textbox(text=value, **kwds)
+            return self._dispatch(self.add_rnbo, value, kwds)
+        return self._dispatch(self.add_textbox, value, kwds)
 
     def add(self, value: Any, *args: Any, **kwds: Any) -> "Box":
         """generic adder: value can be a number or a list or text for an object."""
@@ -663,7 +728,7 @@ class BoxFactoryMixin(AbstractPatcher):
         id: Optional[str] = None,
         comment: Optional[str] = None,
         comment_pos: Optional[str] = None,
-        **kwds: Any,
+        **kwds: "Unpack[TextboxProps]",
     ) -> "Box":
         """Add a max message."""
 
@@ -688,7 +753,7 @@ class BoxFactoryMixin(AbstractPatcher):
         patching_rect: Optional[Rect] = None,
         id: Optional[str] = None,
         justify: Optional[str] = None,
-        **kwds: Any,
+        **kwds: "Unpack[TextboxProps]",
     ) -> "Box":
         """Add a basic comment object."""
         if justify:
@@ -791,11 +856,11 @@ class BoxFactoryMixin(AbstractPatcher):
                         parameter_type=0,
                     )
                 ),
-                maximum=maximum,
-                minimum=minimum,
                 patching_rect=rect or self.get_pos(),
                 hint=hint or (longname if self._auto_hints else ""),
-                **kwds,
+                # kwds_filter, not `maximum=maximum`: these are Optional here and
+                # an unset one must be absent from the patch, not present as null.
+                **kwds_filter(kwds, maximum=maximum, minimum=minimum),
             ),
             comment or longname,  # units can also be added here
             comment_pos,
@@ -835,11 +900,11 @@ class BoxFactoryMixin(AbstractPatcher):
                         parameter_type=1,
                     )
                 ),
-                maximum=maximum,
-                minimum=minimum,
                 patching_rect=rect or self.get_pos(),
                 hint=hint or (longname if self._auto_hints else ""),
-                **kwds,
+                # kwds_filter, not `maximum=maximum`: these are Optional here and
+                # an unset one must be absent from the patch, not present as null.
+                **kwds_filter(kwds, maximum=maximum, minimum=minimum),
             ),
             comment or longname,  # units can also be added here
             comment_pos,
@@ -1596,7 +1661,7 @@ class BoxFactoryMixin(AbstractPatcher):
                 outlettype=["int", "", ""],
                 autopopulate=autopopulate or 1,
                 depth=depth or 1,
-                items=_commas(cast(List[str], items)) or [],
+                items=_commas(items) if items else [],
                 prefix=prefix or "",
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds,

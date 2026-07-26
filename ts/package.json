@@ -1,0 +1,17 @@
+{
+  "name": "@py2max/core-spike",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Experimental TypeScript core for py2max: patch format types and object model only. A spike, not a port -- see README.md for the findings and verdict.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "bun run typecheck && bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "typescript": "^5.9.0"
+  }
+}
