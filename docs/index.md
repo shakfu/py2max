@@ -1,10 +1,15 @@
 # py2max Documentation
 
-**py2max** is a pure Python library for offline generation of Max/MSP patcher files (.maxpat, .maxhelp, .rbnopat). It provides a Python object model that mirrors Max's patch organization with round-trip conversion capabilities.
+**py2max** is a pure Python library for generating Max/MSP patcher files
+(.maxpat, .maxhelp, .rbnopat). It provides a Python object model that mirrors
+Max's patch organization with round-trip conversion capabilities -- and, through
+its [js2max](user_guide/js2max.md) bridge, can build a patch *inside a running
+Max patcher* rather than only writing a file for Max to open later.
 
 ## Features
 
 - **Scripted offline generation** of Max patcher files using Python objects
+- **Live patch building inside Max** ([js2max](user_guide/js2max.md)) -- a JavaScript bridge that runs in an open patcher through Max's `v8` object, builds a description into it, and serializes one back out; the runtime ships in the wheel
 - **Round-trip conversion** between JSON .maxpat files and corresponding Python objects
 - **Max for Live (.amxd)** binary read/write with presentation-mode helpers
 - **Encapsulation** -- wrap a selection of objects into a subpatcher with auto-generated inlets/outlets
@@ -18,7 +23,7 @@
 - **SVG preview generation** with a Max-faithful look (signal vs message ports/cables, subpatcher tinting)
 - **SQLite database** for Max object metadata with automatic caching
 - **Fully typed** (passes `mypy --strict`) with no runtime dependencies
-- **High test coverage** with 420+ tests
+- **High test coverage** with 700+ tests, plus 230+ for the js2max bridge
 
 !!! note
     The interactive browser-based live editor and remote REPL now live in the
@@ -56,4 +61,5 @@ pip install py2max
 - [Tutorial](user_guide/tutorial.md) -- a guided walkthrough
 - [Layout Managers](user_guide/layout_managers.md) -- automatic positioning
 - [Advanced Usage](user_guide/advanced_usage.md) -- subpatchers, presets, mc./poly~, theming
+- [Building Patches Inside Max](user_guide/js2max.md) -- the js2max bridge and its runtime
 - [API Reference](api/py2max.md) -- the full API

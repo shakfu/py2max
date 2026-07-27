@@ -58,7 +58,7 @@ That's it! Open `my-synth.maxpat` in Max to see your patch.
 - **Universal Object Support** - Works with any Max/MSP/Jitter object
 - **Fully typed** - Passes `mypy --strict`; no runtime dependencies
 - **Live Patch Building ([js2max](#building-patches-inside-max-js2max))** - Build into an *open* patcher through Max's `v8` object, and serialize one back out; the JavaScript runtime ships in the wheel
-- **High Test Coverage** - 420+ tests ensure reliability
+- **High Test Coverage** - 700+ tests, plus 230+ for the js2max bridge
 
 ### Max for Live (.amxd)
 
