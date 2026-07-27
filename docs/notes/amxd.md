@@ -12,7 +12,7 @@ A `.amxd` file is a 36-byte header followed by NUL-terminated UTF-8 patcher JSON
 
 ### Header (offsets 0-35)
 
-```
+```text
 offset  size  endian  value                           meaning
 0       4     -       "ampf"                          magic
 4       4     LE u32  4                               format version
@@ -27,6 +27,7 @@ offset  size  endian  value                           meaning
 ```
 
 Notes:
+
 - The `ptch` chunk size at offset 16 is **little-endian**; every other size in the file is **big-endian**.
 - The 4 bytes at offset 8 are the device-type tag, *not* padding (this differed from the original issue #9 notes).
 
@@ -34,7 +35,7 @@ Notes:
 
 Immediately after the JSON's NUL byte, no padding. Each chunk is `FOURCC + BE u32 size + payload` where `size` is **inclusive** of the 8-byte chunk header. Container chunks (`dlst`, `dire`) wrap further chunks in their payload.
 
-```
+```text
 dlst
   dire
     type  -> "JSON"                            (4-byte payload, constant)
@@ -110,6 +111,7 @@ Everything else in the header and trailer is constant for our purposes:
 ## Public API (`py2max.m4l`)
 
 Binary format:
+
 - `pack_amxd(json, *, device_type, patcher_filename, mtime)` -> `bytes`
 - `unpack_amxd(data)` -> `(json_bytes, device_type)`
 - `read_amxd(path)` -> `(patcher_dict, device_type)`
@@ -119,10 +121,12 @@ Binary format:
 - `DEVICE_TYPES`, `MAX_EPOCH_OFFSET`
 
 Patcher integration:
+
 - `Patcher(path, device_type="audio_effect", ...)`
 - `Patcher.save()` and `Patcher.from_file()` auto-detect the `.amxd` extension; `.maxpat` paths are unchanged.
 
 Presentation-mode helpers (also in `py2max.m4l`):
+
 - `Patcher.enable_presentation(devicewidth=...)`, `Patcher.enforce_integer_coords()`
 - `Box.add_to_presentation([x, y, w, h], *, strict=False)`
 - `is_presentation_ui(box)`, `is_m4l_infrastructure(box)`
@@ -133,4 +137,3 @@ Presentation-mode helpers (also in `py2max.m4l`):
 `tests/test_amxd.py::test_pack_byte_for_byte_matches_max_export` re-packs the JSON extracted from each real Max-exported `.amxd` with the original `fnam` and `mdat`, and asserts the output matches the original file byte-for-byte. Runs against both fixtures.
 
 Verified by loading into Max 9 and the the device loads with any errors.
-

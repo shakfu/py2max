@@ -53,12 +53,40 @@ That's it! Open `my-synth.maxpat` in Max to see your patch.
 ### Core Capabilities
 
 - **Offline Patch Generation** - Create Max patches programmatically without Max running
-- **Live Patch Building ([js2max](#building-patches-inside-max-js2max))** - Build into an *open* patcher through Max's `v8` object, and serialize one back out; the JavaScript runtime ships in the wheel
 - **Round-trip Conversion** - Load, modify, and save existing `.maxpat` files
 - **Max for Live (.amxd)** - Read/write binary `.amxd` device files with presentation-mode helpers
 - **Universal Object Support** - Works with any Max/MSP/Jitter object
 - **Fully typed** - Passes `mypy --strict`; no runtime dependencies
+- **Live Patch Building ([js2max](#building-patches-inside-max-js2max))** - Build into an *open* patcher through Max's `v8` object, and serialize one back out; the JavaScript runtime ships in the wheel
 - **High Test Coverage** - 420+ tests ensure reliability
+
+### Max for Live (.amxd)
+
+Generate Max for Live devices directly. `Patcher.save()` / `Patcher.from_file()`
+auto-detect the `.amxd` extension and read/write the binary device format,
+byte-for-byte compatible with Max-exported devices.
+
+```python
+from py2max import Patcher
+
+# device_type: "audio_effect" (default), "instrument", or "midi_effect"
+p = Patcher('gain.amxd', device_type='audio_effect')
+p.enable_presentation(devicewidth=120)        # render Ableton's device strip
+
+plugin = p.add_textbox('plugin~')             # audio in from Live
+gain = p.add('live.gain~', maxclass='live.gain~')
+plugout = p.add_textbox('plugout~')           # audio back to Live
+gain.add_to_presentation([20, 20, 60, 136])   # show the fader in the device
+
+p.add_line(plugin, gain, outlet=0, inlet=0)
+p.add_line(gain, plugout, outlet=0, inlet=0)
+p.save()                                       # writes a binary .amxd
+```
+
+Helpers: `Patcher.enable_presentation(devicewidth=...)`,
+`Box.add_to_presentation([x, y, w, h])` (rejects M4L infrastructure objects and
+rounds fractional coordinates), and `Patcher.enforce_integer_coords()`. M4L
+binary helpers live in `py2max.m4l`.
 
 ### Building patches inside Max (js2max)
 
@@ -67,7 +95,7 @@ JavaScript counterpart, and does the one thing Python cannot: Max embeds a
 JavaScript engine, so a `v8` script runs **inside an open patcher** and builds
 into it directly, from the same patch description py2max writes.
 
-```
+```text
 [import my-patch.json(        [builddict my_patch(
         |                              |
 [dict my_patch]                [v8 js2max.v8.js]
@@ -99,34 +127,6 @@ Full guide: [Building Patches Inside Max](docs/user_guide/js2max.md). Source and
 what has been confirmed against Max: [`js2max/README.md`](js2max/README.md).
 Building the runtime needs [Bun](https://bun.sh) (`make js2max`); using it does
 not.
-
-### Max for Live (.amxd)
-
-Generate Max for Live devices directly. `Patcher.save()` / `Patcher.from_file()`
-auto-detect the `.amxd` extension and read/write the binary device format,
-byte-for-byte compatible with Max-exported devices.
-
-```python
-from py2max import Patcher
-
-# device_type: "audio_effect" (default), "instrument", or "midi_effect"
-p = Patcher('gain.amxd', device_type='audio_effect')
-p.enable_presentation(devicewidth=120)        # render Ableton's device strip
-
-plugin = p.add_textbox('plugin~')             # audio in from Live
-gain = p.add('live.gain~', maxclass='live.gain~')
-plugout = p.add_textbox('plugout~')           # audio back to Live
-gain.add_to_presentation([20, 20, 60, 136])   # show the fader in the device
-
-p.add_line(plugin, gain, outlet=0, inlet=0)
-p.add_line(gain, plugout, outlet=0, inlet=0)
-p.save()                                       # writes a binary .amxd
-```
-
-Helpers: `Patcher.enable_presentation(devicewidth=...)`,
-`Box.add_to_presentation([x, y, w, h])` (rejects M4L infrastructure objects and
-rounds fractional coordinates), and `Patcher.enforce_integer_coords()`. M4L
-binary helpers live in `py2max.m4l`.
 
 ### Interactive Server (separate package)
 

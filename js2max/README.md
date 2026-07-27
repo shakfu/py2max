@@ -66,7 +66,7 @@ expects.
 
 Put `max/js2max.v8.js` where Max can find it (beside your patch is enough):
 
-```
+```text
 [demo(   [count(   [clear(
     \       |       /
      [v8 js2max.v8.js]
@@ -141,7 +141,7 @@ truncated a few characters into any real patch. A `dict` is passed by *name*, so
 the message carries one symbol and the document never meets Max's message parser
 at all -- and a `dict` can load the file itself:
 
-```
+```text
 [import my-patch.json(        [builddict my_patch(
         |                              |
 [dict my_patch]                [v8 js2max.v8.js]
@@ -371,16 +371,20 @@ Run against Max with `max/v8-harness.maxpat`:
 - **`getboxattr` does not carry the class or the port counts.** `maxclass`,
   `numinlets`, `numoutlets` and `text` all come back null; `getboxattrnames()`
   never lists them. This is why `src/objects.ts` exists.
+
 - **`Maxobj.boxtext` works**, returning the full text of every box -- including
   a comment's prose and a message box's contents.
+
 - **`Maxobj.maxclass` is the object class**, not the box class: `print`, `v8`,
   `comment`, `message`.
+
 - **`getattrnames()` exists, but for a UI box it returns the same list as
   `getboxattrnames()`** -- there the box and the object are one thing, so a
   comment reports the same 33 names either way. Only object boxes have anything
   of their own: `print` reports `bettersymquotes deltatime floatprecision level
   popup time`, a `[v8]` box reports `annotation_name embed parameter_enable
   parameter_mappable`.
+
 - **`filename`, `textfile` and `linecount` are not recoverable.** None appear in
   `getattrnames()`, so they are bookkeeping Max writes on save rather than state
   anything can read back. Asking for one anyway is worse than useless:
@@ -471,8 +475,10 @@ Run against Max with `max/v8-harness.maxpat`:
   `newobject` takes the box's parameters explicitly, and two calls decoded its
   signature between them:
 
-      newobject("message", 24, 720, 1, 2, 3)          boxtext "3"
-      newobject("message", 24, 752, 100, 0, "1 2 3")  boxtext "\"1 2 3\""
+  ```text
+  newobject("message", 24, 720, 1, 2, 3)          boxtext "3"
+  newobject("message", 24, 752, 100, 0, "1 2 3")  boxtext "\"1 2 3\""
+  ```
 
   The first consumed `1` and `2` as width and font size, leaving `3` as the
   text; the second passed the content as one symbol, which Max quoted. So it is
@@ -498,10 +504,13 @@ Run against Max with `max/v8-harness.maxpat`:
 - **`this` is bound as expected inside the bundled IIFE scope.** `demo` and
   `count` both reach `this.patcher`; the global-handle fallback in `contextOf`
   was not needed, and is kept only as a cheap safety net.
+
 - **`newdefault`, `connect` and the rect conversion all work.** `demo` produced
   `cycle~ 440 -> gain~ -> ezdac~`, correctly wired and positioned.
+
 - **`outlet()` works** -- `count` returned 11 in an 8-box patch after `demo`
   added 3.
+
 - **Deleting the script's own box corrupts the running script**, rather than
   failing cleanly. This is why `clear` was redesigned; see above.
 

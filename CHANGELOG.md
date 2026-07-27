@@ -34,7 +34,6 @@ one level down.
 
 - One py2max bug came back the other way: `add_comment` had its port counts backwards, found by serializing a py2max patch out of Max and diffing it against the original. See the `add_comment` entry in this release.
 
-
 ### New: the js2max runtime ships in the wheel; `add_v8_bridge()` writes it beside a patch
 
 - The built JavaScript now lives at `py2max/data/js2max/` and ships as package data, so **`pip install py2max` is enough to use js2max**. Until now the bundles existed only in the source repository, which meant the feature was unreachable for everyone who installs from PyPI.
@@ -187,7 +186,6 @@ differently enough to mention.
 Typed box properties are a static change: `mypy --strict` will now reject a
 misspelled or wrongly-typed property that it previously accepted. That is the
 point of them, and nothing changes at runtime.
-
 
 ## [0.3.6]
 

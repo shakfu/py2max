@@ -25,7 +25,7 @@ p.save()
 
 That writes two files:
 
-```
+```text
 builder.maxpat
 js2max.v8.js
 ```

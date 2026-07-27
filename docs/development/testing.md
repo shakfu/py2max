@@ -333,13 +333,13 @@ class TestNewFeature:
 
 When writing tests:
 
-1.  **Test public APIs** - Focus on user-facing functionality
-2.  **Include edge cases** - Test boundary conditions
-3.  **Test error conditions** - Verify proper error handling
-4.  **Use descriptive names** - Test names should explain what they test
-5.  **Keep tests independent** - Each test should work in isolation
-6.  **Mock external dependencies** - Don't rely on Max installation
-7.  **Validate outputs** - Check generated .maxpat files are correct
+1. **Test public APIs** - Focus on user-facing functionality
+2. **Include edge cases** - Test boundary conditions
+3. **Test error conditions** - Verify proper error handling
+4. **Use descriptive names** - Test names should explain what they test
+5. **Keep tests independent** - Each test should work in isolation
+6. **Mock external dependencies** - Don't rely on Max installation
+7. **Validate outputs** - Check generated .maxpat files are correct
 
 ### Example Test Implementation
 
@@ -408,12 +408,12 @@ The project uses CI to run tests automatically:
 
 CI Pipeline includes:
 
-1.  **Install dependencies**
-2.  **Run full test suite**
-3.  **Check code coverage**
-4.  **Run type checking (mypy)**
-5.  **Run linting (ruff)**
-6.  **Build documentation**
+1. **Install dependencies**
+2. **Run full test suite**
+3. **Check code coverage**
+4. **Run type checking (mypy)**
+5. **Run linting (ruff)**
+6. **Build documentation**
 
 ### Local CI Simulation
 

@@ -43,22 +43,29 @@ uv run pytest tests/test_examples.py
 ## Example Categories
 
 ### Quickstart Examples
+
 Basic examples for getting started with py2max, including simple patches and layout demonstrations.
 
 ### Tutorial Examples
+
 Four comprehensive tutorials building from simple synthesis to complex generative music systems:
+
 1. **Simple Synthesis** - Multi-oscillator chord synthesizer
 2. **Signal Processing Chain** - Complete audio effects chain
 3. **Interactive Controller** - MIDI controller with preset management
 4. **Generative Music** - Multi-pattern algorithmic composition
 
 ### Layout Examples
+
 Demonstrations of py2max's powerful layout managers:
+
 - **Grid Layout** - Automatic grid positioning with clustering
 - **Flow Layout** - Signal flow-based hierarchical arrangement
 
 ### Advanced Examples
+
 Complex usage patterns including:
+
 - **Subpatchers** - Hierarchical patch organization
 - **Data Containers** - Tables, collections, and state management
 - **Connection Patterns** - Advanced routing and feedback systems
@@ -67,7 +74,9 @@ Complex usage patterns including:
 - **Extensions** - Custom patcher classes and methods
 
 ### API Examples
+
 Complete demonstrations of the py2max API:
+
 - **Patcher API** - All patcher creation and management methods
 - **Box API** - Object introspection, help system, and validation
 

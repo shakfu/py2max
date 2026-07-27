@@ -24,7 +24,7 @@ for finding in p.lint():
     print(finding)
 ```
 
-```
+```text
 ERROR E-BAD-CONNECTION: cannot connect bang outlet 0 of 'metro' to inlet 0 of 'cycle~' [obj-1:0 -> obj-2:0]
 ```
 
@@ -138,7 +138,7 @@ if there are any errors -- useful in a build or CI step:
 py2max validate patch.maxpat
 ```
 
-```
+```text
   ERROR E-BAD-CONNECTION: cannot connect bang outlet 0 of 'metro' to inlet 0 of 'cycle~' [obj-1:0 -> obj-2:0]
   WARNING W-OVERLAP: objects 'obj-3' and 'obj-4' overlap [obj-3]
 1 error(s), 1 warning(s).

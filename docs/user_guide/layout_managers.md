@@ -88,10 +88,10 @@ p.save()
 
 Clustering works by:
 
-1.  **Analyzing connections** - Identifies groups of connected objects
-2.  **Creating clusters** - Groups objects that are connected together
-3.  **Spatial organization** - Positions clusters in separate areas of the patch
-4.  **Type-based subdivision** - Splits large clusters by object type for clarity
+1. **Analyzing connections** - Identifies groups of connected objects
+2. **Creating clusters** - Groups objects that are connected together
+3. **Spatial organization** - Positions clusters in separate areas of the patch
+4. **Type-based subdivision** - Splits large clusters by object type for clarity
 
 ### Clustering Configuration
 
@@ -374,11 +374,11 @@ p.save()
 
 ### Layout Workflow
 
-1.  **Choose layout type** based on patch structure
-2.  **Add all objects** first
-3.  **Create all connections**
-4.  **Call optimize_layout()** once at the end
-5.  **Fine-tune manually** if needed
+1. **Choose layout type** based on patch structure
+2. **Add all objects** first
+3. **Create all connections**
+4. **Call optimize_layout()** once at the end
+5. **Fine-tune manually** if needed
 
 ``` python
 # Recommended workflow

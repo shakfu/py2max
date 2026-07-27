@@ -212,7 +212,9 @@ Deferred; each is a sizeable, self-contained effort.
 
 - [ ] **gen~/RNBO codebox DSL** -- a small DSP-graph DSL that emits `codebox`
   text, turning py2max into a code-generation backend (`add_gen`/`add_codebox`/`add_rnbo` already exist as targets).
+
 - [ ] **Declarative patch DSL / YAML recipes** -- see "Recipe-driven scaffolding" above.
+
 - [x] **TypeScript core** -- REOPENED AND BUILT OUT. Lives in `js2max/`;
   `js2max/README.md` is the guide.
 
@@ -401,4 +403,3 @@ Deferred; each is a sizeable, self-contained effort.
 - The interactive server and REPL live in the separate
   [`py2max-server`](https://github.com/shakfu/py2max-server) package (since 0.3.0);
   those TODO items are tracked in that repo's `TODO.md`.
-
