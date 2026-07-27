@@ -1181,7 +1181,7 @@ Max patcher</em> rather than only writing a file for Max to open later.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Scripted offline generation</strong> of Max patcher files using Python objects</li>
-<li><strong>Live patch building inside Max</strong> (<a href="user_guide/js2max/">js2max</a>) -- a JavaScript bridge that runs in an open patcher through Max's <code>v8</code> object, builds a description into it, and serializes one back out; the runtime ships in the wheel</li>
+<li><strong>Live patch building</strong> (<a href="user_guide/js2max/">js2max</a>) -- add generated objects to a patch that is <em>already open</em> in Max, and read an edited patch back into Python, without the save-and-reopen cycle</li>
 <li><strong>Round-trip conversion</strong> between JSON .maxpat files and corresponding Python objects</li>
 <li><strong>Max for Live (.amxd)</strong> binary read/write with presentation-mode helpers</li>
 <li><strong>Encapsulation</strong> -- wrap a selection of objects into a subpatcher with auto-generated inlets/outlets</li>
