@@ -57,7 +57,7 @@ That's it! Open `my-synth.maxpat` in Max to see your patch.
 - **Max for Live (.amxd)** - Read/write binary `.amxd` device files with presentation-mode helpers
 - **Universal Object Support** - Works with any Max/MSP/Jitter object
 - **Fully typed** - Passes `mypy --strict`; no runtime dependencies
-- **Live Patch Building ([js2max](#building-patches-inside-max-js2max))** - Build into an *open* patcher through Max's `v8` object, and serialize one back out; the JavaScript runtime ships in the wheel
+- **Live Patch Building ([js2max](#building-patches-inside-max-js2max))** - Add generated objects to a patch that is already open in Max, and read an edited patch back into Python -- no save-and-reopen cycle
 - **High Test Coverage** - 700+ tests, plus 230+ for the js2max bridge
 
 ### Max for Live (.amxd)
@@ -405,7 +405,7 @@ py2max maxref cycle~ --json
 - **Container population** - Prepopulate `coll`, `dict`, `table` objects with data
 - **Generative patching** - Algorithmic patch creation
 - **CI/CD integration** - SVG previews for documentation and version control
-- **Live patch building** - generate a description in Python, build it into a running patcher with [js2max](js2max/)
+- **Live patch building** - iterate on a patch while it stays open in Max, with [js2max](#building-patches-inside-max-js2max)
 
 ## Testing
 
@@ -429,7 +429,7 @@ All classes are extendable via `**kwargs`, allowing any Max object configuration
 
 ## Caveats
 
-- Max doesn't refresh from file when open - close and reopen to see changes, or use `py2max-server serve` (from the separate `py2max-server` package) for live editing
+- Max doesn't refresh from file when open - close and reopen to see changes, or build straight into the open patch with [js2max](#building-patches-inside-max-js2max), or use `py2max-server serve` (from the separate `py2max-server` package) for live editing
 - For tilde variants, use the `_tilde` suffix: `p.add_gen()` vs `p.add_gen_tilde()`
 - API docs in progress - see `CLAUDE.md` for comprehensive usage
 
