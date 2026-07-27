@@ -483,6 +483,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user_guide/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Linting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/js2max/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Patches Inside Max (js2max)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user_guide/advanced_usage/" class="md-nav__link">
         
   
@@ -860,32 +916,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#py2max.layout.LayoutManager.get_connected_objects" class="md-nav__link">
+  <a href="#py2max.layout.LayoutManager.place_params" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_connected_objects
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.LayoutManager.get_affected_objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_affected_objects
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.LayoutManager.should_use_incremental" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        should_use_incremental
+        place_params
       
     </span>
   </a>
@@ -931,17 +965,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#py2max.layout.FlowLayoutManager.optimize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        optimize_layout
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -964,17 +987,6 @@
     <span class="md-ellipsis">
       
         get_relative_pos
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.GridLayoutManager.optimize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        optimize_layout
       
     </span>
   </a>
@@ -1069,17 +1081,6 @@
     <span class="md-ellipsis">
       
         get_relative_pos
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.MatrixLayoutManager.optimize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        optimize_layout
       
     </span>
   </a>
@@ -1555,32 +1556,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#py2max.layout.LayoutManager.get_connected_objects" class="md-nav__link">
+  <a href="#py2max.layout.LayoutManager.place_params" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_connected_objects
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.LayoutManager.get_affected_objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_affected_objects
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.LayoutManager.should_use_incremental" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        should_use_incremental
+        place_params
       
     </span>
   </a>
@@ -1626,17 +1605,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#py2max.layout.FlowLayoutManager.optimize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        optimize_layout
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1659,17 +1627,6 @@
     <span class="md-ellipsis">
       
         get_relative_pos
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.GridLayoutManager.optimize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        optimize_layout
       
     </span>
   </a>
@@ -1764,17 +1721,6 @@
     <span class="md-ellipsis">
       
         get_relative_pos
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#py2max.layout.MatrixLayoutManager.optimize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        optimize_layout
       
     </span>
   </a>
@@ -2433,227 +2379,27 @@ objects are pushed apart in the direction of their center offset.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="py2max.layout.LayoutManager.get_connected_objects" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">get_connected_objects</span>
+<h3 id="py2max.layout.LayoutManager.place_params" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">place_params</span>
 
 
-<a href="#py2max.layout.LayoutManager.get_connected_objects" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_connected_objects</span><span class="p">(</span><span class="n">obj_ids</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<a href="#py2max.layout.LayoutManager.place_params" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">place_params</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">direction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">8.0</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Get all objects connected to the given objects via patchlines.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>obj_ids</code>
-            </td>
-            <td>
-                  <code><span title="typing.Set">Set</span>[<span title="str">str</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Set of object IDs to find connections for.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="typing.Set">Set</span>[<span title="str">str</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Set of object IDs that are directly connected to the input objects.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="py2max.layout.LayoutManager.get_affected_objects" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">get_affected_objects</span>
-
-
-<a href="#py2max.layout.LayoutManager.get_affected_objects" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_affected_objects</span><span class="p">(</span><span class="n">changed_objects</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Get all objects affected by changes to the given objects.</p>
-<p>This includes the changed objects themselves plus their immediate
-neighbors (objects connected via patchlines).</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>changed_objects</code>
-            </td>
-            <td>
-                  <code><span title="typing.Set">Set</span>[<span title="str">str</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Set of object IDs that have changed.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="typing.Set">Set</span>[<span title="str">str</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Set of all affected object IDs.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="py2max.layout.LayoutManager.should_use_incremental" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">should_use_incremental</span>
-
-
-<a href="#py2max.layout.LayoutManager.should_use_incremental" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">should_use_incremental</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Determine whether to use incremental or full layout.</p>
-<p>Uses incremental layout when:
-- changed_objects is provided
-- The number of affected objects is less than INCREMENTAL_THRESHOLD
-  of total objects</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>changed_objects</code>
-            </td>
-            <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Set">Set</span>[<span title="str">str</span>]]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Set of changed object IDs, or None for full layout.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>True if incremental layout should be used.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+        <p>Dock value/UI 'param' objects next to the single object they drive.</p>
+<p>A param (number box, toggle, slider, dial, message, <code>live.*</code>) whose
+outgoing connections all go to one non-param target is repositioned
+adjacent to that target, perpendicular to the signal flow -- above the
+target for a horizontal flow, to its left for a vertical flow -- and
+aligned to the inlet it feeds. This keeps value controls with their
+object instead of spread through the signal graph.</p>
+<p>Runs after the main layout as the final placement pass. <code>direction</code>
+defaults to the manager's <code>flow_direction</code>.</p>
 
 
     </div>
@@ -2668,52 +2414,18 @@ neighbors (objects connected via patchlines).</p>
 
 
 <a href="#py2max.layout.LayoutManager.optimize_layout" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">optimize_layout</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">optimize_layout</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Optimize the layout of objects.</p>
-<p>If changed_objects is provided and the number of affected objects
-is small relative to the total, only those objects and their
-neighbors will be repositioned (incremental layout). Otherwise,
-a full layout recalculation is performed.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>changed_objects</code>
-            </td>
-            <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Set">Set</span>[<span title="str">str</span>]]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Optional set of object IDs that have changed.
-If None, performs full layout optimization.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-        <p>Subclasses should override _full_layout() and optionally
-_incremental_layout() to implement specific algorithms.</p>
+        <p>Arrange every object in the patch (batch, whole-patch layout).</p>
+<p>This is py2max's batch layout entry point: it always performs a full
+layout of the entire patch. Subclasses implement their algorithm in
+<code>_full_layout()</code>.</p>
+<p>Interactive, per-edit ("incremental") relayout is intentionally out of
+scope for py2max; it belongs to the editor/server that owns the live
+editing session. See <code>docs/auto-layout.md</code> in py2max-server.</p>
 
 
     </div>
@@ -2794,61 +2506,6 @@ _incremental_layout() to implement specific algorithms.</p>
 
 </div>
 
-<div class="doc doc-object doc-function">
-
-
-<h3 id="py2max.layout.FlowLayoutManager.optimize_layout" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">optimize_layout</span>
-
-
-<a href="#py2max.layout.FlowLayoutManager.optimize_layout" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">optimize_layout</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Optimize the layout of all existing objects based on their connections.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>changed_objects</code>
-            </td>
-            <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Set">Set</span>[<span title="str">str</span>]]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Optional set of object IDs that have changed.
-If provided and small relative to total objects, only
-affected objects will be repositioned (incremental layout).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
 
 
   </div>
@@ -2914,61 +2571,6 @@ affected objects will be repositioned (incremental layout).</p>
     <div class="doc doc-contents ">
 
         <p>Returns a relative position for the object based on flow direction.</p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="py2max.layout.GridLayoutManager.optimize_layout" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">optimize_layout</span>
-
-
-<a href="#py2max.layout.GridLayoutManager.optimize_layout" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">optimize_layout</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Optimize the layout to cluster connected objects together.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>changed_objects</code>
-            </td>
-            <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Set">Set</span>[<span title="str">str</span>]]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Optional set of object IDs that have changed.
-If provided and small relative to total objects, only
-affected objects will be repositioned (incremental layout).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
 
 
     </div>
@@ -3417,31 +3019,6 @@ In row mode, signal chains form columns while functional categories form rows.</
     <div class="doc doc-contents ">
 
         <p>Returns a position based on flow_direction setting.</p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="py2max.layout.MatrixLayoutManager.optimize_layout" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">optimize_layout</span>
-
-
-<a href="#py2max.layout.MatrixLayoutManager.optimize_layout" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">optimize_layout</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">changed_objects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Optimize the layout based on flow_direction setting.</p>
-<p><code>changed_objects</code> is accepted for interface compatibility with
-<code>LayoutManager</code> but ignored: the matrix layout always recomputes the
-full arrangement from the signal-chain analysis.</p>
 
 
     </div>

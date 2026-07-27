@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://shakfu.github.io/py2max/user_guide/installation/">
+        <link rel="canonical" href="https://shakfu.github.io/py2max/user_guide/validation/">
       
       
-        <link rel="prev" href="../..">
+        <link rel="prev" href="../layout_gallery/">
       
       
-        <link rel="next" href="../quickstart/">
+        <link rel="next" href="../js2max/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Installation - py2max</title>
+        <title>Validation and Linting - py2max</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#validation-and-linting" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              Validation and Linting
             
           </span>
         </div>
@@ -342,37 +342,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Installation
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
         
   
   
@@ -388,103 +361,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-from-pypi" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install from PyPI
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-from-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install from Source
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Development Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verify-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Optional Dependencies
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#maxmsp-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Max/MSP Integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -606,10 +482,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../validation/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Linting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -625,6 +528,109 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#linting-a-patch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting a patch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Linting a patch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-on-save" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking on save
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validating-connections-as-you-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validating connections as you build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-connection-check-decides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the connection check decides
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-the-command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From the command line
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#programmatic-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Programmatic use
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1146,10 +1152,38 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#linting-a-patch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Requirements
+        Linting a patch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Linting a patch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-on-save" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking on save
       
     </span>
   </a>
@@ -1157,10 +1191,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#install-from-pypi" class="md-nav__link">
+  <a href="#validating-connections-as-you-build" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Install from PyPI
+        Validating connections as you build
       
     </span>
   </a>
@@ -1168,10 +1202,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#install-from-source" class="md-nav__link">
+  <a href="#how-the-connection-check-decides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Install from Source
+        How the connection check decides
       
     </span>
   </a>
@@ -1179,10 +1213,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#development-installation" class="md-nav__link">
+  <a href="#from-the-command-line" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Development Installation
+        From the command line
       
     </span>
   </a>
@@ -1190,32 +1224,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verify-installation" class="md-nav__link">
+  <a href="#programmatic-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Optional Dependencies
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#maxmsp-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Max/MSP Integration
+        Programmatic use
       
     </span>
   </a>
@@ -1242,59 +1254,188 @@
   
 
 
-<h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<p>py2max requires:</p>
+<h1 id="validation-and-linting">Validation and Linting<a class="headerlink" href="#validation-and-linting" title="Permanent link">&para;</a></h1>
+<p>py2max checks your patch for problems that Max would reject or that indicate a
+mistake -- invalid connections, out-of-range ports, overlapping or off-canvas
+objects, dangling patchlines, and unknown object classes. There are two layers:</p>
 <ul>
-<li>Python 3.9 or later</li>
-<li>No runtime dependencies (pure Python)</li>
+<li><strong>Patch linting</strong> runs automatically on <code>save()</code> and is available on demand
+  via <code>Patcher.lint()</code>. It inspects the whole patch and reports structured
+  findings.</li>
+<li><strong>Connection validation</strong> is an opt-in, immediate check at <code>add_line()</code> time
+  that raises as soon as you make an invalid connection.</li>
 </ul>
-<p>The library is designed to work without any external dependencies, making it easy to integrate into existing projects.</p>
-<h2 id="install-from-pypi">Install from PyPI<a class="headerlink" href="#install-from-pypi" title="Permanent link">&para;</a></h2>
-<p>Once published to PyPI, py2max can be installed using pip:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>py2max
+<h2 id="linting-a-patch">Linting a patch<a class="headerlink" href="#linting-a-patch" title="Permanent link">&para;</a></h2>
+<p>Call <code>lint()</code> for a list of findings, most severe first:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">()</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;metro 500&#39;</span><span class="p">),</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">))</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">for</span> <span class="n">finding</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">lint</span><span class="p">():</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">finding</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="install-from-source">Install from Source<a class="headerlink" href="#install-from-source" title="Permanent link">&para;</a></h2>
-<p>To install from source, clone the repository and install using pip:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/shakfu/py2max.git
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>py2max
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pip<span class="w"> </span>install<span class="w"> </span>.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ERROR E-BAD-CONNECTION: cannot connect bang outlet 0 of &#39;metro&#39; to inlet 0 of &#39;cycle~&#39; [obj-1:0 -&gt; obj-2:0]
 </code></pre></div>
-<h2 id="development-installation">Development Installation<a class="headerlink" href="#development-installation" title="Permanent link">&para;</a></h2>
-<p>For development, use uv (recommended):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/shakfu/py2max.git
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>py2max
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>uv<span class="w"> </span>sync
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+<p>(A <code>metro</code> sends a <em>bang</em>, which an oscillator's signal inlet cannot accept --
+Max reports "error connecting outlet ... to ... inlet" for exactly this.)</p>
+<p>Each result is a <code>Finding</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td>short stable identifier, e.g. <code>E-BAD-CONNECTION</code></td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td><code>"error"</code> or <code>"warning"</code></td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>human-readable explanation</td>
+</tr>
+<tr>
+<td><code>obj_id</code></td>
+<td>the object a finding refers to (or <code>None</code>)</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td><code>(src_id, outlet, dst_id, inlet)</code> for connection findings (or <code>None</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="finding-codes">Finding codes<a class="headerlink" href="#finding-codes" title="Permanent link">&para;</a></h3>
+<p><strong>Errors</strong> -- things Max rejects or that break the patch:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>E-BAD-CONNECTION</code></td>
+<td>the outlet's message kind is incompatible with the inlet (e.g. a bang into a signal inlet)</td>
+</tr>
+<tr>
+<td><code>E-OUTLET-RANGE</code></td>
+<td>the outlet index exceeds the object's outlet count</td>
+</tr>
+<tr>
+<td><code>E-INLET-RANGE</code></td>
+<td>the inlet index exceeds the object's inlet count</td>
+</tr>
+<tr>
+<td><code>E-ORPHAN-LINE</code></td>
+<td>a patchline references a missing object</td>
+</tr>
+<tr>
+<td><code>E-DUP-ID</code></td>
+<td>two objects share the same id</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Warnings</strong> -- suspicious but not fatal:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>W-OVERLAP</code></td>
+<td>two objects occupy overlapping rectangles</td>
+</tr>
+<tr>
+<td><code>W-OFFCANVAS</code></td>
+<td>an object extends outside the patcher window</td>
+</tr>
+<tr>
+<td><code>W-UNKNOWN-OBJECT</code></td>
+<td>the object class is not in the Max reference</td>
+</tr>
+</tbody>
+</table>
+<p>Linting recurses into subpatchers; a finding inside <code>p sub</code> is reported with a
+path-qualified id (e.g. <code>sub-box-id/obj-1</code>).</p>
+<h2 id="checking-on-save">Checking on save<a class="headerlink" href="#checking-on-save" title="Permanent link">&para;</a></h2>
+<p><code>save()</code> lints automatically. By default it is <strong>non-fatal</strong>: error-severity
+findings are logged (via the standard <code>logging</code> module) and the file is still
+written, so existing workflows are unaffected. Warnings (overlaps, off-canvas,
+unknown objects) are left to an explicit <code>lint()</code> call to keep saves quiet.</p>
+<p>To make errors fatal, create the patcher with <code>strict=True</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span><span class="p">,</span> <span class="n">InvalidPatchError</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;metro 500&#39;</span><span class="p">),</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">))</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">except</span> <span class="n">InvalidPatchError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>   <span class="c1"># patch has 1 validation error(s); first: ERROR E-BAD-CONNECTION ...</span>
 </code></pre></div>
-<h2 id="verify-installation">Verify Installation<a class="headerlink" href="#verify-installation" title="Permanent link">&para;</a></h2>
-<p>To verify the installation works correctly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">py2max</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">py2max</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Create a simple test patch</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">p</span> <span class="o">=</span> <span class="n">py2max</span><span class="o">.</span><span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;test.maxpat&#39;</span><span class="p">)</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created patch with oscillator: </span><span class="si">{</span><span class="n">osc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<p>Building the patch correctly (a float number box sets an oscillator's frequency)
+saves cleanly under <code>strict=True</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">freq</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_floatbox</span><span class="p">()</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">osc</span><span class="p">)</span>   <span class="c1"># float -&gt; frequency inlet: valid</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>                <span class="c1"># no error</span>
 </code></pre></div>
-<h2 id="optional-dependencies">Optional Dependencies<a class="headerlink" href="#optional-dependencies" title="Permanent link">&para;</a></h2>
-<p>The interactive browser-based server and REPL now live in the separate <code>py2max-server</code> package:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pip<span class="w"> </span>install<span class="w"> </span>py2max-server
+<h2 id="validating-connections-as-you-build">Validating connections as you build<a class="headerlink" href="#validating-connections-as-you-build" title="Permanent link">&para;</a></h2>
+<p>For immediate feedback, enable <code>validate_connections</code>. Then <code>add_line()</code> raises
+<code>InvalidConnectionError</code> the moment you make an invalid connection, instead of
+waiting for <code>save()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">Patcher</span><span class="p">,</span> <span class="n">InvalidConnectionError</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;patch.maxpat&#39;</span><span class="p">,</span> <span class="n">validate_connections</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">metro</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;metro 500&#39;</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">metro</span><span class="p">,</span> <span class="n">osc</span><span class="p">)</span>          <span class="c1"># bang into a signal inlet</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">except</span> <span class="n">InvalidConnectionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 </code></pre></div>
-<p>This pulls in <code>py2max</code> plus <code>websockets</code> and <code>ptpython</code> for the live editing server and interactive REPL. See <a href="https://github.com/shakfu/py2max-server">https://github.com/shakfu/py2max-server</a>.</p>
-<p>For enhanced layout algorithms, you can optionally install:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pip<span class="w"> </span>install<span class="w"> </span>networkx<span class="w"> </span>matplotlib
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pip<span class="w"> </span>install<span class="w"> </span>hola-graph<span class="w">      </span><span class="c1"># HOLA orthogonal layout</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pip<span class="w"> </span>install<span class="w"> </span>graph-layout<span class="w">    </span><span class="c1"># COLA constraint-based layout</span>
+<h2 id="how-the-connection-check-decides">How the connection check decides<a class="headerlink" href="#how-the-connection-check-decides" title="Permanent link">&para;</a></h2>
+<p>Compatibility is judged from each object's <strong>message vocabulary</strong> -- the methods
+it documents in Max's own reference, not a guess. A <code>cycle~</code> has no <code>bang</code>
+method, so a bang into it is rejected; an <code>adsr~</code> has an <code>anything</code> (wildcard)
+method, so a bang -- a legitimate envelope trigger -- is allowed. Port counts are
+argument-aware (<code>limi~ 2</code> has two inlets/outlets, <code>select 0 1 2</code> has four
+outlets), and subpatcher ports come from the <code>inlet</code>/<code>outlet</code> objects inside.</p>
+<p>The check is deliberately <strong>conservative</strong>: only clearly-wrong connections fail.
+Ambiguous cases, and objects that are not in the Max reference, are allowed --
+so validation never rejects a patch that is actually fine. That means it can
+miss some genuinely-invalid connections, but it will not produce false alarms.</p>
+<h2 id="from-the-command-line">From the command line<a class="headerlink" href="#from-the-command-line" title="Permanent link">&para;</a></h2>
+<p><code>py2max validate</code> lints a saved patch, prints the findings, and exits non-zero
+if there are any errors -- useful in a build or CI step:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>py2max<span class="w"> </span>validate<span class="w"> </span>patch.maxpat
 </code></pre></div>
-<p>These are only required for advanced graph-based layout algorithms and are not needed for basic usage.</p>
-<h2 id="maxmsp-integration">Max/MSP Integration<a class="headerlink" href="#maxmsp-integration" title="Permanent link">&para;</a></h2>
-<p>py2max works with Max/MSP installations to provide enhanced object documentation and validation:</p>
-<ul>
-<li><strong>macOS</strong>: Automatically detects Max.app installations in /Applications</li>
-<li><strong>Windows/Linux</strong>: Basic functionality available without Max installation</li>
-</ul>
-<p>The MaxRef system will automatically discover your Max installation and provide rich documentation for 1157+ Max objects. If Max is not found, the library falls back to basic functionality.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>  ERROR E-BAD-CONNECTION: cannot connect bang outlet 0 of &#39;metro&#39; to inlet 0 of &#39;cycle~&#39; [obj-1:0 -&gt; obj-2:0]
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  WARNING W-OVERLAP: objects &#39;obj-3&#39; and &#39;obj-4&#39; overlap [obj-3]
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>1 error(s), 1 warning(s).
+</code></pre></div>
+<h2 id="programmatic-use">Programmatic use<a class="headerlink" href="#programmatic-use" title="Permanent link">&para;</a></h2>
+<p>The linter is also importable directly, and the finding codes are exported for
+filtering:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max</span><span class="w"> </span><span class="kn">import</span> <span class="n">lint</span><span class="p">,</span> <span class="n">Finding</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max.lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">ERROR</span><span class="p">,</span> <span class="n">E_BAD_CONNECTION</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">findings</span> <span class="o">=</span> <span class="n">lint</span><span class="p">(</span><span class="n">patcher</span><span class="p">)</span>                       <span class="c1"># same as patcher.lint()</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">errors</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="n">ERROR</span><span class="p">]</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">bad_connections</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">code</span> <span class="o">==</span> <span class="n">E_BAD_CONNECTION</span><span class="p">]</span>
+</code></pre></div>
 
 
 

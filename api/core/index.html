@@ -483,6 +483,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user_guide/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Linting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/js2max/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Patches Inside Max (js2max)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user_guide/advanced_usage/" class="md-nav__link">
         
   
@@ -863,6 +919,17 @@
     <span class="md-ellipsis">
       
         add_gen_codebox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#py2max.core.Patcher.add_v8_bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_v8_bridge
       
     </span>
   </a>
@@ -1391,6 +1458,17 @@
     <span class="md-ellipsis">
       
         optimize_layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#py2max.core.Patcher.lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lint
       
     </span>
   </a>
@@ -2220,6 +2298,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#py2max.core.Patcher.add_v8_bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_v8_bridge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#py2max.core.Patcher.add_message" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2741,6 +2830,17 @@
     <span class="md-ellipsis">
       
         optimize_layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#py2max.core.Patcher.lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lint
       
     </span>
   </a>
@@ -3446,7 +3546,16 @@ gain = p.add_textbox('gain~')       # ID: 'gain_1'</p>
 
     <div class="doc doc-contents ">
 
-        <p>create dict from object with extra kwds included</p>
+        <p>Return the patcher as a <code>.maxpat</code> dictionary.</p>
+<p>Renders first, so the result is the patcher as it stands rather than as
+it stood after whatever last happened to render it. It did not, and the
+failure was silent and order-dependent: <code>to_dict()</code> returned a patcher
+with <em>no boxes</em> until something else called <code>render()</code>, and the same
+call on the same object then started returning them. A test asserting
+over <code>to_dict()</code> examined an empty patcher and passed for the wrong
+reason, which is how this was found.</p>
+<p>Rendering here also removes the asymmetry with <code>Box.to_dict()</code>, which
+has always returned a populated box with no preparation required.</p>
 
 
     </div>
@@ -3582,10 +3691,10 @@ every serialization path emits them.</p>
 
 <a href="#py2max.core.Patcher.add_box" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_box</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">box</span><span class="p">:</span> <span class="n">Box</span><span class="p">,</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">box</span><span class="p">:</span> <span class="s2">&quot;Box&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3606,7 +3715,7 @@ every serialization path emits them.</p>
 
 <a href="#py2max.core.Patcher.add_associated_comment" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_associated_comment</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">box</span><span class="p">:</span> <span class="n">Box</span><span class="p">,</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">box</span><span class="p">:</span> <span class="s2">&quot;Box&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
@@ -3636,7 +3745,7 @@ ensuring comments stay properly positioned relative to their associated boxes.</
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">dst_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">dst_inlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">src_outlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Patchline</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Patchline&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3661,7 +3770,7 @@ ensuring comments stay properly positioned relative to their associated boxes.</
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">src_outlet</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">dst_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">dst_inlet</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Patchline</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Patchline&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3759,7 +3868,7 @@ ensuring comments stay properly positioned relative to their associated boxes.</
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Patchline (py2max.core.patchline.Patchline)" href="#py2max.core.Patchline">Patchline</a></code>
+                  <code>&#39;Patchline&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3807,11 +3916,11 @@ ensuring comments stay properly positioned relative to their associated boxes.</
 
 <a href="#py2max.core.Patcher.add_line" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_line</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">src_obj</span><span class="p">:</span> <span class="n">Box</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">dst_obj</span><span class="p">:</span> <span class="n">Box</span><span class="p">,</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">src_obj</span><span class="p">:</span> <span class="s2">&quot;Box&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">dst_obj</span><span class="p">:</span> <span class="s2">&quot;Box&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">inlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">outlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Patchline</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Patchline&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3837,7 +3946,7 @@ object. Validates the connection if validation is enabled.</p>
                 <code>src_obj</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Box (py2max.core.box.Box)" href="#py2max.core.Box">Box</a></code>
+                  <code>&#39;Box&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3853,7 +3962,7 @@ object. Validates the connection if validation is enabled.</p>
                 <code>dst_obj</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Box (py2max.core.box.Box)" href="#py2max.core.Box">Box</a></code>
+                  <code>&#39;Box&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3911,7 +4020,7 @@ object. Validates the connection if validation is enabled.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Patchline (py2max.core.patchline.Patchline)" href="#py2max.core.Patchline">Patchline</a></code>
+                  <code>&#39;Patchline&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3981,8 +4090,8 @@ p.add_line(osc, gain)  # Connect outlet 0 to inlet 0</p>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="s2">&quot;Unpack[TextboxProps]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4153,7 +4262,7 @@ maxclass based on the object type.</p>
                 <code>**kwds</code>
             </td>
             <td>
-                  <code><span title="typing.Any">Any</span></code>
+                  <code>&#39;Unpack[TextboxProps]&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4179,7 +4288,7 @@ maxclass based on the object type.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Box (py2max.core.box.Box)" href="#py2max.core.Box">Box</a></code>
+                  <code>&#39;Box&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4216,7 +4325,7 @@ metro = p.add_textbox('metro 500')</p>
 
 
 <a href="#py2max.core.Patcher.add" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Box&#39;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4244,7 +4353,7 @@ metro = p.add_textbox('metro 500')</p>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">tilde</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4271,7 +4380,7 @@ metro = p.add_textbox('metro 500')</p>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4301,7 +4410,7 @@ metro = p.add_textbox('metro 500')</p>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4325,6 +4434,191 @@ defaults to at least 1).</p>
 <div class="doc doc-object doc-function">
 
 
+<h3 id="py2max.core.Patcher.add_v8_bridge" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">add_v8_bridge</span>
+
+
+<a href="#py2max.core.Patcher.add_v8_bridge" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_v8_bridge</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">bundle</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="s2">&quot;Unpack[TextboxProps]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Add a <code>[v8]</code> box running the js2max bridge, and ship it with the patch.</p>
+<p>js2max is the JavaScript counterpart to this package: it runs <em>inside</em>
+an open patcher and can build objects into it from a patch description,
+or serialize the patcher back out to a <code>.maxpat</code>. Adding this box is
+what makes a generated patch able to do either.</p>
+<p>The runtime is written next to the patch when it is saved -- Max
+resolves a bare filename through the folder holding the patch, so the
+two sitting together need no configuration. Nothing is written for a
+patcher that never called this, so an ordinary <code>save()</code> cannot leave a
+stray <code>.js</code> file behind.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>bundle</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filename of the runtime to load. Defaults to the shipped
+drop-in build; pass another name only if you are installing the
+runtime yourself under a different name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>patching_rect</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="Rect (py2max.core.common.Rect)" href="../common/#py2max.core.common.Rect">Rect</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Position and size of the box.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>id</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Explicit object id.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>comment</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Associated comment text.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>comment_pos</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Where to place the associated comment.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwds</code>
+            </td>
+            <td>
+                  <code>&#39;Unpack[TextboxProps]&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Further box properties.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>&#39;Box&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>[v8]</code> box, so it can be wired up like any other.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <blockquote>
+<blockquote>
+<blockquote>
+<p>p = Patcher('builder.maxpat')
+bridge = p.add_v8_bridge()
+p.save()   # writes builder.maxpat and js2max.v8.js beside it</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="py2max.core.Patcher.add_message" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">add_message</span>
 
@@ -4336,8 +4630,8 @@ defaults to at least 1).</p>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="s2">&quot;Unpack[TextboxProps]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4362,8 +4656,8 @@ defaults to at least 1).</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">justify</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="s2">&quot;Unpack[TextboxProps]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4389,7 +4683,7 @@ defaults to at least 1).</p>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4415,7 +4709,7 @@ defaults to at least 1).</p>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4447,7 +4741,7 @@ defaults to at least 1).</p>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4479,7 +4773,7 @@ defaults to at least 1).</p>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4499,7 +4793,9 @@ defaults to at least 1).</p>
 
 
 <a href="#py2max.core.Patcher.add_pattrstorage" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_pattrstorage</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;presets&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_pattrstorage</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;presets&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4570,7 +4866,7 @@ automatically.</p>
 
 
 <a href="#py2max.core.Patcher.add_autopattr" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_autopattr</span><span class="p">(</span><span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_autopattr</span><span class="p">(</span><span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Box&#39;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4595,7 +4891,7 @@ so it participates in <code>pattrstorage</code> presets without a per-object
 <a href="#py2max.core.Patcher.add_preset_system" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_preset_system</span><span class="p">(</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;presets&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Box</span><span class="p">,</span> <span class="n">Box</span><span class="p">]</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;Box&quot;</span><span class="p">,</span> <span class="s2">&quot;Box&quot;</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4619,12 +4915,12 @@ presets. Returns <code>(autopattr_box, pattrstorage_box)</code>.</p>
 
 <a href="#py2max.core.Patcher.enable_parameter" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">enable_parameter</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">box</span><span class="p">:</span> <span class="n">Box</span><span class="p">,</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">box</span><span class="p">:</span> <span class="s2">&quot;Box&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">longname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">shortname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">ptype</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">initial</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4652,7 +4948,7 @@ rebuilding it.</p>
                 <code>box</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Box (py2max.core.box.Box)" href="#py2max.core.Box">Box</a></code>
+                  <code>&#39;Box&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4742,7 +5038,7 @@ rebuilding it.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Box (py2max.core.box.Box)" href="#py2max.core.Box">Box</a></code>
+                  <code>&#39;Box&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4778,7 +5074,7 @@ rebuilding it.</p>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">autovar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">show_label</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4806,9 +5102,9 @@ rebuilding it.</p>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">outlettype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">patching_rect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Rect</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="nb">id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">patcher</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Patcher</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">patcher</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Patcher&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4828,7 +5124,7 @@ rebuilding it.</p>
 
 
 <a href="#py2max.core.Patcher.remove_line" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">remove_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="n">Patchline</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">remove_line</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="s1">&#39;Patchline&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4849,8 +5145,8 @@ rebuilding it.</p>
 
 <a href="#py2max.core.Patcher.disconnect" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">disconnect</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">src</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Box</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">dst</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Box</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">src</span><span class="p">:</span> <span class="s2">&quot;Union[Box, str]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">dst</span><span class="p">:</span> <span class="s2">&quot;Union[Box, str]&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">outlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">inlet</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span>
@@ -4889,7 +5185,7 @@ p.disconnect(osc, gain)
 
 
 <a href="#py2max.core.Patcher.remove_box" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">remove_box</span><span class="p">(</span><span class="n">box</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Box</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Box</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">remove_box</span><span class="p">(</span><span class="n">box</span><span class="p">:</span> <span class="s1">&#39;Union[Box, str]&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;Box&#39;</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4925,8 +5221,10 @@ p.remove_box(osc)</p>
 
 <a href="#py2max.core.Patcher.replace" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">replace</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">old</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Box</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">new</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Box</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">old</span><span class="p">:</span> <span class="s2">&quot;Union[Box, str]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">new</span><span class="p">:</span> <span class="s2">&quot;Union[Box, str]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4970,10 +5268,10 @@ saw = p.replace(osc, 'saw~ 220')  # saw~ inherits osc's wiring</p>
 
 <a href="#py2max.core.Patcher.encapsulate" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">encapsulate</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">boxes</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Box</span><span class="p">],</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">boxes</span><span class="p">:</span> <span class="s2">&quot;Iterable[Box]&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;p subpatch&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5007,7 +5305,7 @@ built by hand.</p>
                 <code>boxes</code>
             </td>
             <td>
-                  <code><span title="typing.Iterable">Iterable</span>[<a class="autorefs autorefs-internal" title="py2max.core.Box (py2max.core.box.Box)" href="#py2max.core.Box">Box</a>]</code>
+                  <code>&#39;Iterable[Box]&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5065,7 +5363,7 @@ built by hand.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="py2max.core.Box (py2max.core.box.Box)" href="#py2max.core.Box">Box</a></code>
+                  <code>&#39;Box&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5093,7 +5391,7 @@ built by hand.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">tilde</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5115,7 +5413,7 @@ built by hand.</p>
 <a href="#py2max.core.Patcher.add_gen_tilde" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_gen_tilde</span><span class="p">(</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5135,7 +5433,7 @@ built by hand.</p>
 
 
 <a href="#py2max.core.Patcher.add_rnbo" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_rnbo</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;rnbo~&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_rnbo</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;rnbo~&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Box&#39;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5157,7 +5455,7 @@ built by hand.</p>
 <a href="#py2max.core.Patcher.add_mc" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_mc</span><span class="p">(</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chans</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5191,7 +5489,9 @@ between two <code>mc.</code> objects carries all channels.</p>
 
 
 <a href="#py2max.core.Patcher.add_poly" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_poly</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">voices</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_poly</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">voices</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5233,7 +5533,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5263,7 +5563,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5294,7 +5594,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">tilde</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5324,7 +5624,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5353,7 +5653,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5383,7 +5683,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5421,7 +5721,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">comment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">comment_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5441,7 +5741,7 @@ between two <code>mc.</code> objects carries all channels.</p>
 
 
 <a href="#py2max.core.Patcher.add_beap" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_beap</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_beap</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Box&#39;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5964,6 +6264,16 @@ subpatchers) to find one matching the specified maxclass or text prefix.</p>
     <div class="doc doc-contents ">
 
         <p>cascade convert py2max objects to dicts.</p>
+<p>Idempotent: rendering twice produces the same patcher, not two copies of
+it. That matters because <code>to_dict()</code> renders on its own behalf, so a
+<code>save_as()</code> renders once for its own log line and again underneath --
+and because a caller has no way to know whether a render already
+happened.</p>
+<p><code>self.boxes</code> used to be <em>appended</em> to while <code>self.lines</code> was
+rebuilt, so a second render duplicated every box and no line. Nothing in
+the repository passed <code>reset_on_render=False</code>, which is the only way
+to reach that path, so the asymmetry had never bitten -- but it made
+rendering order-dependent in exactly the way <code>to_dict()</code> was.</p>
 
 
     </div>
@@ -6355,17 +6665,42 @@ svg_content = p.to_svg_string()</p>
 
     <div class="doc doc-contents ">
 
-        <p>Optimize object positions based on layout manager type.</p>
-<p>Calls the layout manager's optimization method to improve object
-positioning, then repositions any associated comments based on
-the new box positions. The effect depends on the layout manager:</p>
+        <p>Arrange the whole patch based on the active layout manager.</p>
+<p>Calls the layout manager to lay out every object, then repositions any
+associated comments based on the new box positions. The effect depends
+on the layout manager:</p>
 <ul>
 <li>FlowLayoutManager: Arranges objects by signal flow topology</li>
 <li>GridLayoutManager: Clusters connected objects together</li>
 <li>Other managers: May have limited or no effect</li>
 </ul>
-<p>This method should be called after all objects and connections
-have been added to the patch.</p>
+<p>This is a batch, whole-patch operation intended to be called once after
+all objects and connections have been added. Interactive, per-edit
+relayout is out of scope for py2max (see <code>docs/auto-layout.md</code> in
+py2max-server).</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="py2max.core.Patcher.lint" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">lint</span>
+
+
+<a href="#py2max.core.Patcher.lint" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">lint</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Finding</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return patch-level lint findings (errors and warnings), errors first.</p>
+<p>Checks connection validity, out-of-range ports, orphaned patchlines,
+duplicate IDs, overlapping objects, off-canvas objects, and unknown
+object classes. See :mod:<code>py2max.lint</code>.</p>
 
 
     </div>
@@ -6499,7 +6834,7 @@ and help information.</p>
                 <code>**kwds</code>
             </td>
             <td>
-                  <code><span title="typing.Any">Any</span></code>
+                  <code>&#39;Unpack[BoxProps]&#39;</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6634,7 +6969,7 @@ and help information.</p>
   </span>
 
 <a href="#py2max.core.Box.subpatcher" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">subpatcher</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Patcher</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">subpatcher</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;Patcher&#39;</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6724,7 +7059,7 @@ and help information.</p>
   </span>
 
 <a href="#py2max.core.Box.from_dict" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_dict</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_dict</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;Box&#39;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6745,10 +7080,10 @@ and help information.</p>
 
 <a href="#py2max.core.Box.set_color" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">set_color</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">bg</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ColorLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ColorLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">border</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ColorLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">bg</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;ColorLike&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;ColorLike&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">border</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;ColorLike&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6784,7 +7119,7 @@ and help information.</p>
 <a href="#py2max.core.Box.add_to_presentation" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_to_presentation</span><span class="p">(</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">rect</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Box</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Box&quot;</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

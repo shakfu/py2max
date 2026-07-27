@@ -483,6 +483,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user_guide/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Linting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/js2max/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Patches Inside Max (js2max)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user_guide/advanced_usage/" class="md-nav__link">
         
   
@@ -2505,12 +2561,21 @@ with the old MAXCLASS_DEFAULTS structure.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">src_outlet</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">dst_maxclass</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">dst_inlet</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">src_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">dst_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Validate a connection between two Max objects using maxref data.</p>
+        <p>Validate a connection between two Max objects using the port-type model.</p>
+<p>Checks (a) that the outlet/inlet indices are in range (arg-aware, so
+<code>limi~ 2</code> is understood to have two ports) and (b) that the outlet's
+message kind is compatible with the inlet -- catching a control outlet wired
+into a signal-only inlet (e.g. <code>metro -&gt; cycle~</code>), which Max rejects.</p>
+<p>The message-type check is deliberately conservative: only clearly-wrong
+connections fail; anything ambiguous (or involving a maxref-unknown object)
+is allowed, so validation never rejects a valid patch.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2533,7 +2598,7 @@ with the old MAXCLASS_DEFAULTS structure.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Source object's maxclass</p>
+                <p>Source object's maxclass.</p>
               </div>
             </td>
             <td>
@@ -2549,7 +2614,7 @@ with the old MAXCLASS_DEFAULTS structure.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Source outlet index (0-based)</p>
+                <p>Source outlet index (0-based).</p>
               </div>
             </td>
             <td>
@@ -2565,7 +2630,7 @@ with the old MAXCLASS_DEFAULTS structure.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Destination object's maxclass</p>
+                <p>Destination object's maxclass.</p>
               </div>
             </td>
             <td>
@@ -2581,11 +2646,43 @@ with the old MAXCLASS_DEFAULTS structure.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Destination inlet index (0-based)</p>
+                <p>Destination inlet index (0-based).</p>
               </div>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>src_text</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Source box text (enables arg-aware outlet counts).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dst_text</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Destination box text (enables arg-aware inlet counts).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -2603,11 +2700,21 @@ with the old MAXCLASS_DEFAULTS structure.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="tuple">tuple</span>[<span title="bool">bool</span>, <span title="str">str</span>]</code>
+                  <code><span title="bool">bool</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Tuple of (is_valid: bool, error_message: str)</p>
+                <p>Tuple of (is_valid: bool, error_message: str). <code>is_valid</code> is <code>False</code></p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>only for a definite error.</p>
               </div>
             </td>
           </tr>

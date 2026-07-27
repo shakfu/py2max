@@ -766,6 +766,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#param-docking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Param Docking
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -790,6 +801,62 @@
     
   
     Layout Gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Linting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../js2max/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Patches Inside Max (js2max)
   
 
     
@@ -1568,6 +1635,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#param-docking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Param Docking
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1866,7 +1944,7 @@ processors, outputs):</p>
 <h2 id="advanced-layout-techniques">Advanced Layout Techniques<a class="headerlink" href="#advanced-layout-techniques" title="Permanent link">&para;</a></h2>
 <h3 id="custom-positioning">Custom Positioning<a class="headerlink" href="#custom-positioning" title="Permanent link">&para;</a></h3>
 <p>You can override automatic layout for specific objects:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">py2max.core.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rect</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;custom-positions.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">)</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
@@ -1973,6 +2051,29 @@ processors, outputs):</p>
 <a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </code></pre></div>
 <p>This approach ensures the best performance and most coherent layout results.</p>
+<h2 id="param-docking">Param Docking<a class="headerlink" href="#param-docking" title="Permanent link">&para;</a></h2>
+<p>Value-setting UI objects -- number boxes, <code>toggle</code>, <code>slider</code>, <code>dial</code>, <code>message</code>,
+<code>live.*</code> -- usually belong <em>with</em> the object they control rather than as nodes in
+the signal flow. Enable <code>param_placement=True</code> to dock them next to their target:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">Patcher</span><span class="p">(</span><span class="s1">&#39;synth.maxpat&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;flow&#39;</span><span class="p">,</span> <span class="n">param_placement</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">freq</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_floatbox</span><span class="p">()</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">phase</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_floatbox</span><span class="p">()</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">osc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;cycle~ 440&#39;</span><span class="p">)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">dac</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_textbox</span><span class="p">(</span><span class="s1">&#39;ezdac~&#39;</span><span class="p">)</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">osc</span><span class="p">,</span> <span class="n">inlet</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>    <span class="c1"># frequency</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">osc</span><span class="p">,</span> <span class="n">inlet</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># phase</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="n">p</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="n">p</span><span class="o">.</span><span class="n">optimize_layout</span><span class="p">()</span>               <span class="c1"># freq/phase are docked above cycle~</span>
+</code></pre></div>
+<p>During <code>optimize_layout()</code>, any param whose outgoing connections all go to a
+single non-param object is moved adjacent to that object, <strong>perpendicular to the
+signal flow</strong> -- above the target in a horizontal flow, to its left in a vertical
+flow (and to the right or below when the flow hugs that edge) -- ordered by the
+inlet it drives (a lone param is aligned directly to its inlet). Overlaps are
+then resolved automatically. This works with every built-in layout (grid, flow,
+columnar, matrix).</p>
+<p>A control that fans out to more than one object is treated as a shared control
+and left in the flow. The feature is off by default.</p>
 
 
 
