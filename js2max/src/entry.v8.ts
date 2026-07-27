@@ -44,6 +44,7 @@
 import type { PatcherDict } from "./format.ts";
 import type { InstantiateResult } from "./scripting.ts";
 import {
+  attrNamesOf,
   clear as clearPatcher,
   instantiate,
   objectsOf,
@@ -55,10 +56,17 @@ import {
   parseWriteModes,
   selectMatching,
 } from "./commands.ts";
+import { patcherOf as patcherIn, readDictPatch } from "./dict.ts";
 import { demoPatch, synthPatch } from "./demo.ts";
 import { readPatch, writePatch, writeText } from "./fileio.ts";
 import { LoadedPatcher } from "./model.ts";
 import { serialize } from "./serialize.ts";
+import {
+  diagnoseBridge,
+  formatChecks,
+  formatDiagnosis,
+  verifyBridge,
+} from "./verify.ts";
 
 inlets = 1;
 outlets = 1;
@@ -89,7 +97,7 @@ function contextOf(context: unknown): MaxThis {
   );
 }
 
-function patcherOf(context: unknown): MaxPatcher {
+function patcherOfContext(context: unknown): MaxPatcher {
   return contextOf(context).patcher;
 }
 
@@ -153,27 +161,80 @@ function guard(action: () => void): void {
  * patcher object, because both turn up: the first from a file py2max wrote, the
  * second from a `dict` or a message assembled in the patch.
  */
-export function build(this: unknown, json: string): void {
+export function build(this: unknown, ...atoms: (string | number)[]): void {
   const target = this;
   guard(() => {
+    // Max splits a message into atoms at whitespace, so a JSON document never
+    // arrives as one symbol -- it arrives as however many pieces the tokenizer
+    // made of it. Taking only the first argument, as this used to, meant `build`
+    // could not work from a message box at all. Rejoining is the most that can
+    // be done here; whether Max delivers the braces, quotes and colons intact
+    // is what the harness is for.
+    const json = atoms.join(" ");
     let parsed: unknown;
     try {
       parsed = JSON.parse(json);
     } catch (err) {
       error(`js2max: could not parse patch description -- ${String(err)}\n`);
+      // The failure as data rather than as a verdict: a message box cannot
+      // carry `,` or `;` (Max ends the message there), so a JSON document with
+      // either is truncated before this code ever sees it. Printing what did
+      // arrive is what distinguishes "Max mangled it" from "the JSON is wrong".
+      error(
+        `js2max: received ${atoms.length} atom(s), ${json.length} chars: ` +
+          `${JSON.stringify(json.slice(0, 200))}\n`,
+      );
+      outlet(0, "error", "parse", atoms.length);
       return;
     }
-    const patcher =
-      parsed !== null && typeof parsed === "object" && "patcher" in parsed
-        ? (parsed as { patcher: PatcherDict }).patcher
-        : (parsed as PatcherDict);
-
-    if (patcher === null || patcher === undefined || !Array.isArray(patcher.boxes)) {
-      error("js2max: patch description has no boxes\n");
+    let patcher: PatcherDict;
+    try {
+      // Shared with `builddict`, so the two cannot disagree about what counts
+      // as a description -- both accept a whole document or a bare patcher.
+      patcher = patcherIn(parsed, "the patch description");
+    } catch (err) {
+      error(`${String(err)}\n`);
       return;
     }
     described = patcher;
-    report(instantiate(patcherOf(target), patcher));
+    report(instantiate(patcherOfContext(target), patcher));
+  });
+}
+
+/**
+ * `builddict <name>` -- build the patch description held in a Max dictionary.
+ *
+ * The usable form of `build`. A message box ends its message at the first `,`,
+ * so a `.maxpat` handed over as a message arrives truncated a few characters
+ * in; a `dict` is passed by *name*, holds nested structure natively, and can
+ * load a file from disk itself:
+ *
+ *     [import_json my-patch.maxpat(  ->  [dict my_patch]
+ *     [builddict my_patch(           ->  [v8 js2max.v8.js]
+ *
+ * Where `read <path>` opens a file this script chooses, this builds whatever
+ * the patch has already assembled -- from a file, from a `[dict]` built by
+ * other objects, or from JSON that arrived over the network.
+ */
+export function builddict(this: unknown, name: string): void {
+  const target = this;
+  guard(() => {
+    if (name === undefined || String(name) === "") {
+      error(
+        'js2max: builddict needs a dictionary name, e.g. "builddict my_patch"\n',
+      );
+      outlet(0, "error", "no-name");
+      return;
+    }
+    const patcher = readDictPatch(String(name));
+    described = patcher;
+    post(`js2max: read dictionary ${String(name)}\n`);
+    // Offset like `read`, and for the same reason: a description that came
+    // from somewhere else carries its own coordinates, which land on top of
+    // whatever the host patch keeps at its top left.
+    report(
+      instantiate(patcherOfContext(target), patcher, { offset: DEMO_OFFSET }),
+    );
   });
 }
 
@@ -188,7 +249,7 @@ export function demo(this: unknown): void {
   const target = this;
   guard(() => {
     report(
-      instantiate(patcherOf(target), demoPatch(), { offset: DEMO_OFFSET }),
+      instantiate(patcherOfContext(target), demoPatch(), { offset: DEMO_OFFSET }),
     );
   });
 }
@@ -214,7 +275,7 @@ export function synth(this: unknown): void {
   guard(() => {
     const description = synthPatch();
     described = description;
-    report(instantiate(patcherOf(target), description, { offset: [0, 40] }));
+    report(instantiate(patcherOfContext(target), description, { offset: [0, 40] }));
   });
 }
 
@@ -246,7 +307,7 @@ export function clear(this: unknown): void {
   const target = this;
   guard(() => {
     const self = selfBox(target);
-    const removed = removeObjects(patcherOf(target), built, {
+    const removed = removeObjects(patcherOfContext(target), built, {
       keep: self === undefined ? [] : [self],
     });
     built = [];
@@ -274,7 +335,7 @@ export function clearall(this: unknown): void {
       );
       return;
     }
-    const removed = clearPatcher(patcherOf(target), { keep: [self] });
+    const removed = clearPatcher(patcherOfContext(target), { keep: [self] });
     built = [];
     post(`js2max: removed ${removed} object(s)\n`);
     outlet(0, "cleared", removed);
@@ -293,7 +354,7 @@ export function read(this: unknown, path: string): void {
   guard(() => {
     const loaded = readPatch(path);
     post(`js2max: read ${path}\n`);
-    report(instantiate(patcherOf(target), loaded.patcher, { offset: DEMO_OFFSET }));
+    report(instantiate(patcherOfContext(target), loaded.patcher, { offset: DEMO_OFFSET }));
   });
 }
 
@@ -313,7 +374,7 @@ export function write(this: unknown, path: string, ...modes: string[]): void {
   const { modes: mode, unknown } = parseWriteModes(modes);
   const target = this;
   guard(() => {
-    const patcher = patcherOf(target);
+    const patcher = patcherOfContext(target);
 
     // A typo is not a mode. Ignoring one used to mean `write out.maxpat buit`
     // serialized the whole patcher -- [v8] box included -- while reporting
@@ -409,7 +470,7 @@ export function write(this: unknown, path: string, ...modes: string[]): void {
 export function probe(this: unknown): void {
   const target = this;
   guard(() => {
-    const patcher = patcherOf(target);
+    const patcher = patcherOfContext(target);
     // The patcher's own attributes, which decide what the emitted file records
     // above the boxes. `rect` is the open question: `.maxpat` stores
     // `[x, y, w, h]` and the JS API's rects are `[left, top, right, bottom]`,
@@ -431,13 +492,7 @@ export function probe(this: unknown): void {
     let index = 0;
     for (const object of objectsOf(patcher)) {
       index += 1;
-      const names = (() => {
-        try {
-          return object.getboxattrnames();
-        } catch (err) {
-          return [`<getboxattrnames failed: ${String(err)}>`];
-        }
-      })();
+      const names = attrNamesOf(() => object.getboxattrnames());
       post(
         `js2max probe ${index}: maxclass=${object.maxclass} ` +
           `boxclass=${String(object.getboxattr("maxclass"))} ` +
@@ -445,13 +500,9 @@ export function probe(this: unknown): void {
           `numinlets=${String(object.getboxattr("numinlets"))} ` +
           `numoutlets=${String(object.getboxattr("numoutlets"))}\n`,
       );
-      const objectAttrs = (() => {
-        try {
-          return object.getattrnames();
-        } catch (err) {
-          return [`<getattrnames failed: ${String(err)}>`];
-        }
-      })();
+      // Null for a `trigger`, and for the `jbogus` placeholder -- not an empty
+      // array, and not a throw. `probe` used to die on the `.filter` below.
+      const objectAttrs = attrNamesOf(() => object.getattrnames());
       // Only what the object has beyond its box is interesting: for a UI box
       // the two lists are identical. Reading a name the object does not report
       // is what logged `v8_wrapobject: couldn't wrap instance of class
@@ -496,7 +547,7 @@ export function extract(this: unknown, path: string, match?: string): void {
   const target = this;
   const needle = match ?? "~";
   guard(() => {
-    const patcher = patcherOf(target);
+    const patcher = patcherOfContext(target);
     const chosen = selectMatching(objectsOf(patcher), needle);
 
     if (chosen.length === 0) {
@@ -533,10 +584,59 @@ export function extract(this: unknown, path: string, match?: string): void {
   });
 }
 
+/**
+ * `verify` -- run the bridge's own assumptions against this Max, and report.
+ *
+ * Everything in `scripting.ts` is checked against a mock, which proves the
+ * mapping and proves nothing about whether Max accepts the calls. This settles
+ * the four assumptions the rest of the bridge rests on: whether `set` fills a
+ * message box, whether `newdefault` returns null or throws for an unknown
+ * class, whether a subpatcher box exposes its patcher, and whether `snapshot`
+ * reads a live one.
+ *
+ * Builds what each check needs and takes it away again, so the patcher is left
+ * as it was found. Read the console; `[NO ]` on any line is a real finding.
+ */
+export function verify(this: unknown): void {
+  const target = this;
+  guard(() => {
+    const result = verifyBridge(patcherOfContext(target), selfBox(target));
+    for (const line of formatChecks(result)) post(`${line}\n`);
+    const failed = result.checks.filter((c) => c.held !== true).length;
+    if (failed > 0) {
+      error(
+        `js2max verify: ${failed} assumption(s) did not hold -- ` +
+          `js2max/README.md records what each one costs\n`,
+      );
+    }
+    outlet(0, "verified", result.checks.length - failed, failed);
+  });
+}
+
+/**
+ * `diagnose` -- the questions `verify` left open, put to Max as experiments.
+ *
+ * Where `verify` reports whether an assumption held, this reports what the
+ * thing that broke it actually looks like: several variants built side by side
+ * with every readable field printed, so a detector can be written from evidence
+ * instead of from a guess. Cleans up after itself, as `verify` does.
+ *
+ * Expect `js2max.nosuchobject~: No such object` in the console. That is the
+ * experiment running, not a fault.
+ */
+export function diagnose(this: unknown): void {
+  const target = this;
+  guard(() => {
+    const result = diagnoseBridge(patcherOfContext(target), selfBox(target));
+    for (const line of formatDiagnosis(result)) post(`${line}\n`);
+    outlet(0, "diagnosed", result.observations.length);
+  });
+}
+
 export function count(this: unknown): void {
   const target = this;
   guard(() => {
-    outlet(0, "count", patcherOf(target).count);
+    outlet(0, "count", patcherOfContext(target).count);
   });
 }
 
@@ -545,14 +645,17 @@ export function count(this: unknown): void {
 // bundler's module scope would hide every handler.
 Object.assign(globalThis, {
   build,
+  builddict,
   clear,
   clearall,
   count,
   demo,
+  diagnose,
   extract,
   probe,
   read,
   save,
   synth,
+  verify,
   write,
 });

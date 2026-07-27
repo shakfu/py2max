@@ -79,31 +79,87 @@ describe("instantiate", () => {
     expect(host.objects[0]?.created.args).toEqual([]);
   });
 
-  test("a message box gets its content via a set message, not arguments", () => {
+  test("a message box is built with newobject, which is what fills it", () => {
+    // Four routes through `newdefault` were tried in Max and every one left the
+    // box empty: `set` with separate atoms, `set` with one symbol, the content
+    // as creation arguments, and setboxattr("text"). The box was real -- its
+    // attribute list matched a file-loaded message box exactly -- and it did
+    // not even resize, which a message box does to fit its contents.
+    //
+    // `newobject` takes the box's parameters explicitly and does fill it. The
+    // signature `(class, left, top, width, fontsize, ...atoms)` was decoded from
+    // two calls whose results differed in exactly the way that identifies it.
     const p = new Patcher();
-    p.add("1 2 3", { maxclass: "message", numinlets: 2, numoutlets: 1 });
+    p.add("1 2 3", {
+      maxclass: "message",
+      patching_rect: [10, 20, 60, 22],
+      numinlets: 2,
+      numoutlets: 1,
+    });
+    const host = new MockPatcher();
+    instantiate(asHost(host), p.toPatcherDict());
+
+    // Ints, not the symbols `"1" "2" "3"`: content and typed-in arguments share
+    // one tokenizer, and Max distinguishes the symbol `440` from the int `440`.
+    expect(host.objects[0]?.created.args).toEqual([1, 2, 3]);
+    expect(host.objects[0]?.boxtext).toBe("1 2 3");
+    // No `set` any more: it demonstrably does nothing to a message box.
+    expect(host.objects[0]?.messages).toEqual([]);
+  });
+
+  test("the atoms go separately, not joined into one symbol", () => {
+    // The second probe call passed "1 2 3" whole and Max quoted it, producing a
+    // box holding the literal string rather than three atoms.
+    const p = new Patcher();
+    p.add("1 2 3", { maxclass: "message", patching_rect: [10, 20, 60, 22] });
+    const host = new MockPatcher();
+    instantiate(asHost(host), p.toPatcherDict());
+
+    expect(host.objects[0]?.created.args).toHaveLength(3);
+  });
+
+  test("no box class is sent a set message any more", () => {
+    // Four `set`-based routes were tried in Max and every one left the box
+    // empty. Keeping the call would be cargo cult.
+    const p = new Patcher();
+    p.add("1 2", { maxclass: "message" });
+    p.add("prose", { maxclass: "comment" });
+    const host = new MockPatcher();
+    instantiate(asHost(host), p.toPatcherDict());
+
+    for (const object of host.objects) expect(object.messages).toEqual([]);
+  });
+
+  test("a UI box that is not a message still takes no arguments", () => {
+    // The creation-argument route is for message and comment boxes only: a
+    // toggle has no content, and handing it arguments would be inventing some.
+    const p = new Patcher();
+    p.add("", { maxclass: "toggle" });
     const host = new MockPatcher();
     instantiate(asHost(host), p.toPatcherDict());
 
     expect(host.objects[0]?.created.args).toEqual([]);
-    // Ints, not the symbols `"1" "2" "3"`. Set content and typed-in arguments
-    // now share one tokenizer; they had drifted, and this test asserted the
-    // drift -- a message box built from `1 2 3` held three symbols, and
-    // clicking it sent symbols where the file says ints.
-    expect(host.objects[0]?.messages).toEqual([
-      { name: "set", args: [1, 2, 3] },
-    ]);
+    expect(host.objects[0]?.messages).toEqual([]);
   });
 
-  test("a comment's content is set the same way", () => {
+  test("a comment is built the same way as a message box", () => {
+    // Both content-carrying classes go through `newobject` now. Message boxes
+    // were confirmed in Max first; comments followed on the same signature,
+    // and `verify` check 5 holds them to the same standard rather than
+    // assuming it.
     const p = new Patcher();
-    p.add("440 Hz", { maxclass: "comment", numinlets: 1, numoutlets: 0 });
+    p.add("440 Hz", {
+      maxclass: "comment",
+      patching_rect: [10, 20, 100, 22],
+      numinlets: 1,
+      numoutlets: 0,
+    });
     const host = new MockPatcher();
     const result = instantiate(asHost(host), p.toPatcherDict());
 
-    expect(host.objects[0]?.messages).toEqual([
-      { name: "set", args: [440, "Hz"] },
-    ]);
+    expect(host.objects[0]?.created.args).toEqual([440, "Hz"]);
+    expect(host.objects[0]?.boxtext).toBe("440 Hz");
+    expect(host.objects[0]?.messages).toEqual([]);
     // A comma in a comment is prose, not a separator, so nothing is warned.
     expect(result.warnings).toEqual([]);
   });
@@ -662,5 +718,84 @@ describe("removed objects report themselves invalid", () => {
     expect((object as unknown as { valid: boolean }).valid).toBe(true);
     remove(asHost(host), [object]);
     expect((object as unknown as { valid: boolean }).valid).toBe(false);
+  });
+});
+
+describe("a class Max cannot build is detected, not counted as built", () => {
+  // Settled by running `diagnose` in Max. `newdefault` returns neither null nor
+  // a throw for an unknown class: Max logs `No such object` and hands back a
+  // real box whose maxclass is `jbogus`. Everything else about it looks healthy
+  // -- `valid` is 1 and `boxtext` is the text asked for -- so before this,
+  // `instantiate` reported it as successfully created and the patch quietly
+  // gained a dead box.
+  const bogus = () =>
+    new MockPatcher({ bogusClasses: ["js2max.nosuchobject~"] });
+
+  test("the placeholder is reported as an unknown class", () => {
+    const p = new Patcher();
+    const dead = p.add("js2max.nosuchobject~ 1");
+    const host = bogus();
+    const result = instantiate(asHost(host), p.toPatcherDict());
+
+    expect(result.created).toBe(0);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]?.id).toBe(dead.id);
+    expect(result.skipped[0]?.reason).toContain("unknown object class");
+    expect(result.skipped[0]?.reason).toContain("jbogus");
+  });
+
+  test("the placeholder box is removed rather than left in the patcher", () => {
+    // `skipped` means "not built". A caller that trusts it would otherwise be
+    // handed a patcher containing a box it was told nothing about.
+    const p = new Patcher();
+    p.add("js2max.nosuchobject~ 1");
+    const host = bogus();
+    instantiate(asHost(host), p.toPatcherDict());
+
+    expect(host.count).toBe(0);
+  });
+
+  test("the rest of the patch still builds, and cords to it are skipped", () => {
+    const p = new Patcher();
+    const dead = p.add("js2max.nosuchobject~ 1");
+    const good = p.add("cycle~ 440");
+    p.connect(dead, good);
+    const host = bogus();
+    const result = instantiate(asHost(host), p.toPatcherDict());
+
+    expect(result.created).toBe(1);
+    expect(result.connected).toBe(0);
+    expect(result.objects.get(good.id)).toBeDefined();
+    expect(result.skipped).toHaveLength(2); // the box, and the cord to it
+  });
+
+  test("an alias is not mistaken for a placeholder", () => {
+    // The reason the detector is the class name `jbogus` and not "maxclass
+    // differs from what was asked for": Max resolves aliases, and `t b i` comes
+    // back as `trigger`. The naive test would call every alias broken.
+    const p = new Patcher();
+    p.add("t b i");
+    const host = new MockPatcher({ bogusClasses: ["js2max.nosuchobject~"] });
+    const object = host.newdefault(0, 0, "trigger", "b", "i");
+    expect(object?.maxclass).toBe("trigger");
+
+    const result = instantiate(asHost(host), p.toPatcherDict());
+    expect(result.skipped).toEqual([]);
+    expect(result.created).toBe(1);
+  });
+});
+
+describe("an object that will not enumerate its attributes", () => {
+  test("getattrnames returning null does not crash the build", () => {
+    // `trigger` and `jbogus` both return null rather than an array or an error,
+    // observed in Max. A `try` around the call does not help: the null arrives
+    // cleanly and the TypeError lands wherever the result is first used.
+    const p = new Patcher();
+    p.add("t b i", { hidden: 1 });
+    const host = new MockPatcher({ nullAttrNames: ["t"] });
+
+    const result = instantiate(asHost(host), p.toPatcherDict());
+    expect(result.created).toBe(1);
+    expect(host.objects[0]?.boxAttrs.get("hidden")).toBe(1);
   });
 });

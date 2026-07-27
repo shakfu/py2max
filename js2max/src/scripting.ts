@@ -30,6 +30,43 @@ import type { BoxDict, PatcherDict, PatchlineDict, Rect4 } from "./format.ts";
 const SET_CONTENT_CLASSES = new Set(["message", "comment"]);
 
 /**
+ * The class Max instantiates in place of one it cannot find.
+ *
+ * Established by running `diagnose` in Max, and it is the reason unknown object
+ * classes went undetected for as long as they did. `newdefault` does **not**
+ * return null for a class Max does not have: it logs `<name>: No such object`
+ * to the console and hands back a real box whose `maxclass` is `jbogus` -- the
+ * dashed-border placeholder you get by typing a bad name into a patcher. Every
+ * other field looks healthy (`valid` is 1, `boxtext` is the text asked for), so
+ * nothing short of the class name gives it away.
+ *
+ * The obvious alternative test -- does `maxclass` equal the class we asked for
+ * -- is wrong, and the same run proved it: Max resolves aliases, so `t b i`
+ * comes back as `trigger` and would read as broken.
+ */
+const BOGUS_CLASS = "jbogus";
+
+/**
+ * Names of the attributes an object or its box has, or none.
+ *
+ * `getattrnames()` **returns null** for some objects -- `trigger` and `jbogus`
+ * both do, observed in Max -- rather than an empty array or an error. Calling it
+ * inside a `try` is not enough, because there is nothing to catch: the null
+ * comes back cleanly and the `TypeError` happens later, wherever the result is
+ * first treated as an array. That is a crash in the caller, several frames from
+ * the cause.
+ */
+export function attrNamesOf(read: () => string[] | null | undefined): string[] {
+  let names: string[] | null | undefined;
+  try {
+    names = read();
+  } catch {
+    return [];
+  }
+  return Array.isArray(names) ? names : [];
+}
+
+/**
  * Max's message separators, which a `set` message cannot carry.
  *
  * In a `.maxpat` a message box's `text` may hold several messages -- `1, 2` is
@@ -82,10 +119,64 @@ function atomsOf(text: string): (string | number)[] {
     .map(atomOf);
 }
 
-/** Typed-in arguments for a `newobj` box: everything after the class name. */
-function typedArgsOf(box: BoxDict): (string | number)[] {
-  if (box.maxclass !== "newobj") return [];
-  return atomsOf(box.text ?? "").slice(1);
+/**
+ * The arguments to hand `newdefault` for this box: everything after the class
+ * name. `cycle~ 440` is the class `cycle~` with the argument `440`.
+ */
+function creationArgsOf(box: BoxDict): (string | number)[] {
+  if (box.maxclass === "newobj") return atomsOf(box.text ?? "").slice(1);
+  return [];
+}
+
+/**
+ * Create a box, by whichever call actually gives it its content.
+ *
+ * `newdefault` builds every kind of box, and cannot give a message box its
+ * text. Four routes were tried in Max and all four failed: `set` with separate
+ * atoms, `set` with one symbol, the content as `newdefault` arguments, and
+ * `setboxattr("text", ...)`. The box came out real -- its attribute list
+ * matches a file-loaded message box exactly -- and empty, and the box did not
+ * even resize, which a message box does to fit its contents.
+ *
+ * `newobject` is a different call rather than a different argument: it takes
+ * the box's parameters explicitly, the way a `.maxpat` describes one. Two
+ * shapes were tried and together they decode the signature:
+ *
+ *     newobject("message", 24, 720, 1, 2, 3)          boxtext "3"
+ *     newobject("message", 24, 752, 100, 0, "1 2 3")  boxtext "\"1 2 3\""
+ *
+ * The first consumed `1` and `2` as width and font size and left `3` as the
+ * text; the second took the content as one symbol, which Max quoted because it
+ * contains spaces. So the signature is
+ * `(class, left, top, width, fontsize, ...text atoms)`, and the atoms must be
+ * passed separately -- handing it `"1 2 3"` produces a box containing the
+ * literal string with quotes, not three atoms.
+ *
+ * A font size of `0` means the patcher default; an explicit `fontsize` in the
+ * description is applied afterwards with the rest of the box attributes.
+ */
+function createBox(
+  target: MaxPatcher,
+  box: BoxDict,
+  className: string,
+  left: number,
+  top: number,
+): Maxobj | null | undefined {
+  // Both content-carrying box classes go this way. Message boxes were fixed
+  // first and confirmed in Max (`verify` check 1 reads back `"1 2 3"`);
+  // comments followed, on the same signature, and `verify` check 5 is there to
+  // hold that to the same standard rather than assuming it.
+  if (SET_CONTENT_CLASSES.has(box.maxclass)) {
+    return target.newobject(
+      className,
+      left,
+      top,
+      box.patching_rect[2],
+      0,
+      ...atomsOf(box.text ?? ""),
+    );
+  }
+  return target.newdefault(left, top, className, ...creationArgsOf(box));
 }
 
 /**
@@ -174,12 +265,8 @@ export function isPlain(value: unknown): boolean {
  * guess.
  */
 function applyBoxAttrs(object: Maxobj, box: BoxDict): string[] {
-  let known: Set<string>;
-  try {
-    known = new Set(object.getboxattrnames());
-  } catch {
-    return [];
-  }
+  const known = new Set(attrNamesOf(() => object.getboxattrnames()));
+  if (known.size === 0) return [];
 
   const failed: string[] = [];
   for (const [name, value] of Object.entries(box)) {
@@ -318,11 +405,11 @@ export function instantiate(
     const [x, y, w, h] = box.patching_rect;
     const className = classNameOf(box);
 
-    let object: Maxobj | null = null;
+    let object: Maxobj | null | undefined = null;
     try {
-      object = target.newdefault(x + dx, y + dy, className, ...typedArgsOf(box));
+      object = createBox(target, box, className, x + dx, y + dy);
     } catch (err) {
-      skipped.push({ id: box.id, reason: `newdefault threw: ${String(err)}` });
+      skipped.push({ id: box.id, reason: `creating the box threw: ${String(err)}` });
       continue;
     }
     if (object === null || object === undefined) {
@@ -330,15 +417,34 @@ export function instantiate(
       continue;
     }
 
+    // What Max actually does for a class it does not have: a `jbogus`
+    // placeholder box, reported only to the console. Removed rather than left
+    // behind, because `skipped` means "not built" and a caller that trusts it
+    // would otherwise be handed a patcher containing a dead box it was told
+    // nothing about.
+    if (object.maxclass === BOGUS_CLASS) {
+      skipped.push({
+        id: box.id,
+        reason:
+          `unknown object class "${className}" -- Max built a placeholder ` +
+          `(${BOGUS_CLASS}) and logged "No such object"`,
+      });
+      try {
+        target.remove(object);
+      } catch {
+        // Left in place, but still reported: the caller knows either way.
+      }
+      continue;
+    }
+
     objects.set(box.id, object);
     created += 1;
 
     if (SET_CONTENT_CLASSES.has(box.maxclass) && box.text !== undefined) {
-      // A message or comment carries its content as text rather than as
-      // typed-in arguments; `set` fills it without triggering output. The atoms
-      // are the ones Max would parse from the text, so a message box `1 2 3`
-      // holds three ints rather than three symbols.
-      object.message("set", ...atomsOf(box.text));
+      // No `set` any more, for either class: four `set`-based routes were
+      // tried in Max and every one left the box empty. The content arrives at
+      // creation, from `newobject`.
+      //
       // Only for a message box: there `,` and `;` separate messages and their
       // loss changes what the box does. In a comment they are prose.
       if (box.maxclass === "message" && SEPARATORS.test(box.text)) {
@@ -346,7 +452,7 @@ export function instantiate(
           id: box.id,
           reason:
             `message text "${box.text}" contains a message separator ` +
-            `(, or ;), which a "set" message cannot carry -- the box holds it ` +
+            `(, or ;), which cannot be passed as an atom -- the box holds it ` +
             `as an ordinary symbol. Write the patch to a file instead if the ` +
             `separator matters.`,
         });

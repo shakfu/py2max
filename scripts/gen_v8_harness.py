@@ -62,7 +62,7 @@ def build(path: Path) -> Patcher:
     # Taller than the default 480 so the objects `demo` builds, which land
     # below this patch's own controls, are on screen without scrolling.
     p = Patcher(str(path))
-    p.rect = Rect(85.0, 104.0, 640.0, 560.0)
+    p.rect = Rect(85.0, 104.0, 640.0, 620.0)
 
     p.add_comment(
         "js2max -- v8 verification harness",
@@ -93,23 +93,74 @@ def build(path: Path) -> Patcher:
     )
     probe = p.add_message("probe", patching_rect=Rect(408, 140, 50, 22))
 
+    # The assumptions the rest of the bridge rests on. `verify` builds what each
+    # check needs, observes what Max does, and removes it again -- so it is safe
+    # to click on any patch, and one click settles all four.
+    verify = p.add_message("verify", patching_rect=Rect(24, 172, 56, 22))
+
+    # The follow-up to a `verify` failure: where `verify` says whether an
+    # assumption held, `diagnose` builds the variants side by side and prints
+    # every field, so a fix can be written from evidence. Expect Max to log
+    # `No such object` -- that is the experiment, not a fault.
+    diagnose = p.add_message("diagnose", patching_rect=Rect(88, 172, 68, 22))
+
+    # The usable form of `build`, as a three-click chain that needs nothing
+    # from outside this patch. `save` writes the built-in synth description to
+    # a file -- 9 boxes, no [v8] object, so what gets built is unmistakably not
+    # a copy of this patch. `import_json` loads that file into the dict, and
+    # `builddict` tells js2max to build what the dict holds.
+    #
+    # Deliberately not `write`'s output: that is this whole patcher serialized,
+    # [v8] box included, so building it would drop a second copy of the script
+    # into the patch.
+    # `import`, not `import_json` -- the latter does not exist, and `dict`
+    # answers `doesn't understand "import_json"`. Confirmed against the dict
+    # reference: `import` reads a dictionary's contents from a .json or .yaml
+    # file, `export` writes one.
+    #
+    # The file is `.json` rather than `.maxpat` for the same reason: `import`
+    # chooses its reader by extension, and a `.maxpat` is JSON by content but
+    # not by name. `save` writes whatever path it is given, so the extension
+    # costs nothing.
+    save_dict = p.add_message(
+        "save js2max-dict-test.json", patching_rect=Rect(164, 172, 190, 22)
+    )
+    load_dict = p.add_message(
+        "import js2max-dict-test.json",
+        patching_rect=Rect(164, 204, 190, 22),
+    )
+    patch_dict = p.add_textbox(
+        "dict js2max_patch",
+        patching_rect=Rect(164, 236, 120, 22),
+        numinlets=2,
+        numoutlets=4,
+        outlettype=["dictionary", "", "", ""],
+    )
+    build_dict = p.add_message(
+        "builddict js2max_patch", patching_rect=Rect(300, 236, 150, 22)
+    )
 
     v8 = p.add_textbox(
         f"v8 {BUNDLE}",
-        patching_rect=Rect(24, 180, 200, 22),
+        patching_rect=Rect(24, 244, 200, 22),
         numinlets=1,
         numoutlets=1,
         outlettype=[""],
     )
     printer = p.add_textbox(
         "print js2max",
-        patching_rect=Rect(24, 228, 90, 22),
+        patching_rect=Rect(24, 292, 90, 22),
         numinlets=1,
         numoutlets=0,
     )
 
-    for source in (demo, count, clear, clearall, read, write, probe):
+    sources = (
+        demo, count, clear, clearall, read, write, probe, verify, diagnose,
+        save_dict, build_dict,
+    )
+    for source in sources:
         p.add_line(source, v8)
+    p.add_line(load_dict, patch_dict)
     p.add_line(v8, printer)
 
     p.add_comment(
@@ -121,7 +172,25 @@ def build(path: Path) -> Patcher:
         "resembles this patch by design; it is a round-trip check, not an "
         "export of just what you built. It refuses to write over this patch's "
         "own file. 'probe' logs what each box reports about itself.",
-        patching_rect=Rect(24, 264, 460, 90),
+        patching_rect=Rect(24, 328, 460, 90),
+    )
+    p.add_comment(
+        "'verify' is the one to click first. It settles the four assumptions "
+        "everything else rests on -- whether 'set' fills a message box, whether "
+        "newdefault returns null or throws for an unknown class, whether a "
+        "subpatcher box exposes its patcher, and whether snapshot reads a live "
+        "one -- by doing each in turn and reading back what Max did. It builds "
+        "what it needs and removes it again, so the patcher is left as found. "
+        "Any line logged '[NO ]' is a real finding: copy the console output. "
+        "'diagnose' is the follow-up: it builds the variants side by side and "
+        "prints every field, which is what a fix gets written from. "
+        "The dict chain is the usable form of 'build', in three clicks: "
+        "'save' writes the built-in synth to a .json file, 'import' loads that "
+        "file into the [dict], and 'builddict' builds what the dict holds. A "
+        "message box ends its message at the first comma, so a .maxpat cannot "
+        "be sent as a message at all; a dict is passed by name instead. "
+        "'clear' removes what was built.",
+        patching_rect=Rect(24, 422, 460, 114),
     )
     return p
 

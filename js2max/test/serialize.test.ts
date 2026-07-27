@@ -433,14 +433,42 @@ describe("fonts are judged against the patcher's defaults", () => {
     expect(box?.fontsize).toBe(14);
   });
 
-  test("a host with no patcher defaults keeps whatever it finds", () => {
+  test("a patcher that will not report its defaults falls back to Max's", () => {
+    // MEASURED: `getattr("default_fontsize")` and its siblings return null in
+    // Max, so the filter was inert and a written patch carried `fontname` and
+    // `fontsize` on every box -- neither of which the source file had, because
+    // they are Max's own defaults and Max omits them.
     const host = new MockPatcher();
     const object = host.newdefault(10, 10, "comment");
     object!.boxtext = "prose";
+    object!.boxAttrs.set("fontname", "Arial");
     object!.boxAttrs.set("fontsize", 12);
 
     const box = serialize(asHost(host)).patcher.boxes[0]?.box;
-    expect(box?.fontsize).toBe(12);
+    expect(box).not.toHaveProperty("fontsize");
+    expect(box).not.toHaveProperty("fontname");
+  });
+
+  test("a font that differs from Max's default still survives the fallback", () => {
+    const host = new MockPatcher();
+    const object = host.newdefault(10, 10, "comment");
+    object!.boxtext = "prose";
+    object!.boxAttrs.set("fontsize", 14);
+
+    const box = serialize(asHost(host)).patcher.boxes[0]?.box;
+    expect(box?.fontsize).toBe(14);
+  });
+
+  test("a default the patcher does report wins over the fallback", () => {
+    const host = new MockPatcher();
+    host.attrs.set("default_fontsize", 14);
+    const object = host.newdefault(10, 10, "comment");
+    object!.boxtext = "prose";
+    object!.boxAttrs.set("fontsize", 14);
+
+    const { patcher } = serialize(asHost(host));
+    expect(patcher.boxes[0]?.box).not.toHaveProperty("fontsize");
+    expect(patcher.default_fontsize).toBe(14);
   });
 
   test("a default read as a string still matches a box that holds a number", () => {
@@ -722,5 +750,88 @@ describe("extracting a subset is what reading a patcher is for", () => {
 
     expect(patcher.boxes).toHaveLength(1);
     expect(patcher.lines).toEqual([]);
+  });
+});
+
+describe("an object that will not enumerate its attributes", () => {
+  test("a full write survives getattrnames() returning null", () => {
+    // Observed in Max: `trigger` and the `jbogus` placeholder both return null
+    // rather than an array or an error. A `try` around the call does not save
+    // the caller -- the null arrives cleanly and the TypeError lands on the
+    // loop, so `write <path> full` crashed on any patcher holding a trigger.
+    const host = new MockPatcher({ nullAttrNames: ["t"] });
+    const object = host.newdefault(10, 10, "t", "b", "i");
+    object!.boxtext = "t b i";
+
+    const { patcher, incomplete } = serialize(asHost(host), {
+      objectAttributes: true,
+    });
+
+    expect(incomplete).toEqual([]);
+    expect(patcher.boxes[0]?.box.text).toBe("t b i");
+    expect(patcher.boxes[0]?.box).not.toHaveProperty("saved_object_attributes");
+  });
+
+  test("allAttributes falls back to the curated list, not to nothing", () => {
+    const host = new MockPatcher();
+    const object = host.newdefault(10, 10, "comment");
+    object!.boxtext = "prose";
+    object!.boxAttrs.set("hidden", 1);
+
+    const box = serialize(asHost(host), { allAttributes: true }).patcher
+      .boxes[0]?.box;
+    expect(box?.hidden).toBe(1);
+  });
+});
+
+describe("what a round trip through Max added, and no longer does", () => {
+  // Every case here comes from diffing a patch js2max wrote in Max against the
+  // patch it was serialized from (scripts/check_js2max_roundtrip.py). Each was
+  // a key the source did not have and Max would not write.
+
+  test("presentation_rect is written only for a box in presentation mode", () => {
+    // MEASURED: a box reports `presentation_rect` whether or not presentation
+    // is on -- Max hands back a copy of the patching rect -- so writing it on
+    // sight put one on all fifteen boxes of a round-tripped patch.
+    const host = new MockPatcher();
+    const plain = host.newdefault(10, 10, "cycle~", 440);
+    plain!.boxAttrs.set("presentation_rect", [10, 10, 66, 22]);
+
+    const box = serialize(asHost(host)).patcher.boxes[0]?.box;
+    expect(box).not.toHaveProperty("presentation_rect");
+  });
+
+  test("a box that is in presentation mode keeps its presentation_rect", () => {
+    const host = new MockPatcher();
+    const shown = host.newdefault(10, 10, "cycle~", 440);
+    shown!.boxAttrs.set("presentation", 1);
+    shown!.boxAttrs.set("presentation_rect", [100, 200, 66, 22]);
+
+    const box = serialize(asHost(host)).patcher.boxes[0]?.box;
+    expect(box?.presentation).toBe(1);
+    expect(box?.presentation_rect).toEqual([100, 200, 66, 22]);
+  });
+
+  test("the patcher's own window geometry is read back", () => {
+    // MEASURED: a patcher's `rect` answers in the file's [x, y, w, h], not the
+    // [left, top, right, bottom] every *box* rect uses. Confirmed against a
+    // patcher 640x560 at (85, 104), which read back as its own dimensions and
+    // not as a bottom-right corner.
+    const host = new MockPatcher();
+    host.attrs.set("rect", [85, 104, 640, 560]);
+    host.newdefault(10, 10, "cycle~", 440);
+
+    expect(serialize(asHost(host)).patcher.rect).toEqual([85, 104, 640, 560]);
+  });
+
+  test("an explicit rect still wins, and a silent patcher still defaults", () => {
+    const host = new MockPatcher();
+    host.newdefault(10, 10, "cycle~", 440);
+    expect(serialize(asHost(host)).patcher.rect).toEqual([85, 104, 640, 480]);
+
+    host.attrs.set("rect", [85, 104, 640, 560]);
+    expect(
+      serialize(asHost(host), { rect: [0, 0, 100, 100] }).patcher.rect,
+    ).toEqual([0, 0, 100, 100]);
   });
 });

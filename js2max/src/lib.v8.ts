@@ -70,6 +70,9 @@ export {
 } from "./fileio.ts";
 export type { FileAccess, FileFactory, FileOptions, MaxFile } from "./fileio.ts";
 
+export { maxDictFactory, readDictPatch } from "./dict.ts";
+export type { DictFactory, DictOptions, MaxDict } from "./dict.ts";
+
 export { serialize } from "./serialize.ts";
 export type {
   IncompleteBox,

@@ -47,7 +47,9 @@ __export(exports_lib_v8, {
   remove: () => remove,
   readText: () => readText,
   readPatch: () => readPatch,
+  readDictPatch: () => readDictPatch,
   maxFileFactory: () => maxFileFactory,
+  maxDictFactory: () => maxDictFactory,
   instantiate: () => instantiate,
   fromMaxobjRect: () => fromMaxobjRect,
   describeBox: () => describeBox,
@@ -1348,6 +1350,16 @@ class LoadedPatcher {
 }
 // src/scripting.ts
 var SET_CONTENT_CLASSES = new Set(["message", "comment"]);
+var BOGUS_CLASS = "jbogus";
+function attrNamesOf(read) {
+  let names;
+  try {
+    names = read();
+  } catch {
+    return [];
+  }
+  return Array.isArray(names) ? names : [];
+}
 var SEPARATORS = /[,;]/;
 function classNameOf2(box) {
   if (box.maxclass !== "newobj")
@@ -1365,10 +1377,16 @@ function atomOf(token) {
 function atomsOf(text) {
   return text.trim().split(/\s+/).filter((token) => token !== "").map(atomOf);
 }
-function typedArgsOf(box) {
-  if (box.maxclass !== "newobj")
-    return [];
-  return atomsOf(box.text ?? "").slice(1);
+function creationArgsOf(box) {
+  if (box.maxclass === "newobj")
+    return atomsOf(box.text ?? "").slice(1);
+  return [];
+}
+function createBox(target, box, className, left, top) {
+  if (SET_CONTENT_CLASSES.has(box.maxclass)) {
+    return target.newobject(className, left, top, box.patching_rect[2], 0, ...atomsOf(box.text ?? ""));
+  }
+  return target.newdefault(left, top, className, ...creationArgsOf(box));
 }
 function toMaxobjRect(rect) {
   const [x, y, w, h] = rect;
@@ -1405,12 +1423,9 @@ function isPlain(value) {
   return false;
 }
 function applyBoxAttrs(object, box) {
-  let known;
-  try {
-    known = new Set(object.getboxattrnames());
-  } catch {
+  const known = new Set(attrNamesOf(() => object.getboxattrnames()));
+  if (known.size === 0)
     return [];
-  }
   const failed = [];
   for (const [name, value] of Object.entries(box)) {
     if (STRUCTURAL.has(name) || !known.has(name))
@@ -1464,23 +1479,32 @@ function instantiate(target, source, options = {}) {
     const className = classNameOf2(box);
     let object = null;
     try {
-      object = target.newdefault(x + dx, y + dy, className, ...typedArgsOf(box));
+      object = createBox(target, box, className, x + dx, y + dy);
     } catch (err) {
-      skipped.push({ id: box.id, reason: `newdefault threw: ${String(err)}` });
+      skipped.push({ id: box.id, reason: `creating the box threw: ${String(err)}` });
       continue;
     }
     if (object === null || object === undefined) {
       skipped.push({ id: box.id, reason: `unknown object class "${className}"` });
       continue;
     }
+    if (object.maxclass === BOGUS_CLASS) {
+      skipped.push({
+        id: box.id,
+        reason: `unknown object class "${className}" -- Max built a placeholder ` + `(${BOGUS_CLASS}) and logged "No such object"`
+      });
+      try {
+        target.remove(object);
+      } catch {}
+      continue;
+    }
     objects.set(box.id, object);
     created += 1;
     if (SET_CONTENT_CLASSES.has(box.maxclass) && box.text !== undefined) {
-      object.message("set", ...atomsOf(box.text));
       if (box.maxclass === "message" && SEPARATORS.test(box.text)) {
         warnings.push({
           id: box.id,
-          reason: `message text "${box.text}" contains a message separator ` + `(, or ;), which a "set" message cannot carry -- the box holds it ` + `as an ordinary symbol. Write the patch to a file instead if the ` + `separator matters.`
+          reason: `message text "${box.text}" contains a message separator ` + `(, or ;), which cannot be passed as an atom -- the box holds it ` + `as an ordinary symbol. Write the patch to a file instead if the ` + `separator matters.`
         });
       }
     }
@@ -1684,6 +1708,50 @@ function readPatch(path, options = {}) {
 function writePatch(path, patcher, options = {}) {
   writeText(path, patcher.toJSON(options.indent ?? 4), options);
 }
+// src/dict.ts
+var maxDictFactory = (name) => {
+  const ctor = globalThis.Dict;
+  if (ctor === undefined) {
+    throw new Error("js2max: no Max Dict class -- dictionaries are only available inside Max");
+  }
+  return new ctor(name);
+};
+function readDictPatch(name, options = {}) {
+  const factory = options.factory ?? maxDictFactory;
+  const dict = factory(name);
+  let text;
+  try {
+    text = dict.stringify();
+  } catch (err) {
+    throw new Error(`js2max: could not read dictionary "${name}" -- ${String(err)}`);
+  }
+  if (typeof text !== "string" || text.trim() === "") {
+    throw new Error(emptyMessage(name));
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    throw new Error(`js2max: dictionary "${name}" did not parse as JSON -- ${String(err)}; ` + `it begins ${JSON.stringify(text.slice(0, 120))}`);
+  }
+  if (parsed !== null && typeof parsed === "object" && Object.keys(parsed).length === 0) {
+    throw new Error(emptyMessage(name));
+  }
+  return patcherOf(parsed, `dictionary "${name}"`);
+}
+function emptyMessage(name) {
+  return `js2max: dictionary "${name}" is empty -- load it first, e.g. send ` + `[dict ${name}] the message "import my-patch.json", and check the name ` + `matches`;
+}
+function patcherOf(parsed, source) {
+  if (parsed === null || typeof parsed !== "object") {
+    throw new Error(`js2max: ${source} does not hold a patch description`);
+  }
+  const patcher = "patcher" in parsed ? parsed.patcher : parsed;
+  if (patcher === null || patcher === undefined || !Array.isArray(patcher.boxes)) {
+    throw new Error(`js2max: ${source} has no patcher.boxes -- not a .maxpat?`);
+  }
+  return patcher;
+}
 // src/serialize.ts
 var DERIVED = new Set([...STRUCTURAL].filter((name) => name !== "varname"));
 var OPTIONAL = [
@@ -1742,14 +1810,10 @@ function asRect(value) {
   return numbers;
 }
 function readObjectAttrs(object, box) {
-  let names;
-  let boxNames;
-  try {
-    names = object.getattrnames();
-    boxNames = object.getboxattrnames();
-  } catch {
+  const names = attrNamesOf(() => object.getattrnames());
+  const boxNames = attrNamesOf(() => object.getboxattrnames());
+  if (names.length === 0)
     return {};
-  }
   const isBoxAttr = new Set(boxNames);
   const saved = {};
   const already = box;
@@ -1769,19 +1833,24 @@ function readObjectAttrs(object, box) {
   return saved;
 }
 function patcherFontDefaults(target) {
-  const defaults = {};
+  const reported = {};
   for (const name of ["fontname", "fontsize", "fontface"]) {
     try {
       const value = first(target.getattr(`default_${name}`));
       if (value !== undefined && value !== null)
-        defaults[name] = value;
+        reported[name] = value;
     } catch {}
   }
-  return defaults;
+  return { filter: { ...MAX_FONT_DEFAULTS, ...reported }, reported };
 }
 function matchesDefault(value, fallback) {
   return value === fallback || String(value) === String(fallback);
 }
+var MAX_FONT_DEFAULTS = {
+  fontname: "Arial",
+  fontsize: 12,
+  fontface: 0
+};
 function defaultFontEntries(defaults) {
   const name = defaults["fontname"];
   const size = asNumber(defaults["fontsize"]);
@@ -1791,6 +1860,13 @@ function defaultFontEntries(defaults) {
     ...face === undefined ? {} : { default_fontface: face },
     ...typeof name === "string" && name !== "" ? { default_fontname: name } : {}
   };
+}
+function readPatcherRect(target) {
+  try {
+    return asRect(target.getattr("rect"));
+  } catch {
+    return;
+  }
 }
 function describe(object, id, options, fontDefaults = {}) {
   const objectClass = object.maxclass ?? "";
@@ -1820,15 +1896,13 @@ function describe(object, id, options, fontDefaults = {}) {
   const outlettype = ports !== undefined && ports.length === 3 ? ports[2] : undefined;
   if (outlettype !== undefined)
     box.outlettype = [...outlettype];
-  const names = options.allAttributes ? (() => {
-    try {
-      return object.getboxattrnames();
-    } catch {
-      return OPTIONAL;
-    }
-  })() : OPTIONAL;
+  const reported = options.allAttributes ? attrNamesOf(() => object.getboxattrnames()) : [];
+  const names = reported.length > 0 ? reported : OPTIONAL;
+  const inPresentation = isSet(first(readBoxAttr(object, "presentation")));
   for (const name of names) {
     if (DERIVED.has(name))
+      continue;
+    if (name === "presentation_rect" && !inPresentation)
       continue;
     const value = first(readBoxAttr(object, name));
     if (!isSet(value))
@@ -1857,10 +1931,10 @@ function serialize(target, options = {}) {
   const boxes = [];
   const incomplete = [];
   const ids = new Map;
-  const fontDefaults = patcherFontDefaults(target);
+  const fonts = patcherFontDefaults(target);
   objects.forEach((object, index) => {
     const id = `obj-${index + 1}`;
-    const { box, missing, maxclass } = describe(object, id, options, fontDefaults);
+    const { box, missing, maxclass } = describe(object, id, options, fonts.filter);
     if (box === undefined) {
       incomplete.push({ id, maxclass, missing });
       if (options.emitIncomplete !== true)
@@ -1899,8 +1973,8 @@ function serialize(target, options = {}) {
       fileversion: 1,
       appversion: { ...MAX_VERSION },
       classnamespace: "box",
-      rect: options.rect ?? [85, 104, 640, 480],
-      ...defaultFontEntries(fontDefaults),
+      rect: options.rect ?? readPatcherRect(target) ?? [85, 104, 640, 480],
+      ...defaultFontEntries(fonts.reported),
       boxes,
       lines
     },

@@ -36,6 +36,7 @@ import { MAX_VERSION } from "./model.ts";
 import { PORTS, boxClassOf } from "./objects.ts";
 import {
   STRUCTURAL,
+  attrNamesOf,
   fromMaxobjRect,
   isPlain,
   objectsOf,
@@ -224,14 +225,13 @@ function readObjectAttrs(
   object: Maxobj,
   box: BoxDict,
 ): Record<string, unknown> {
-  let names: string[];
-  let boxNames: string[];
-  try {
-    names = object.getattrnames();
-    boxNames = object.getboxattrnames();
-  } catch {
-    return {};
-  }
+  // `getattrnames()` returns **null** for some objects -- `trigger` and the
+  // `jbogus` placeholder both do, observed in Max. A `try` does not catch that:
+  // the null arrives cleanly and the `TypeError` lands on the `for` below, so a
+  // `full` write crashed on any patcher containing a `trigger`.
+  const names = attrNamesOf(() => object.getattrnames());
+  const boxNames = attrNamesOf(() => object.getboxattrnames());
+  if (names.length === 0) return {};
 
   const isBoxAttr = new Set(boxNames);
   const saved: Record<string, unknown> = {};
@@ -265,17 +265,30 @@ function readObjectAttrs(
  * recorded to restore it, so the file reopened at Max's own 12pt -- every box
  * changed size, and nothing said so.
  */
-function patcherFontDefaults(target: MaxPatcher): Record<string, unknown> {
-  const defaults: Record<string, unknown> = {};
+function patcherFontDefaults(target: MaxPatcher): {
+  filter: Record<string, unknown>;
+  reported: Record<string, unknown>;
+} {
+  const reported: Record<string, unknown> = {};
   for (const name of ["fontname", "fontsize", "fontface"]) {
     try {
       const value = first(target.getattr(`default_${name}`));
-      if (value !== undefined && value !== null) defaults[name] = value;
+      if (value !== undefined && value !== null) reported[name] = value;
     } catch {
-      // A host without patcher attributes just gets no filtering.
+      // A host without patcher attributes just gets the fallback below.
     }
   }
-  return defaults;
+  // MEASURED: in Max, `getattr("default_fontname")` and its two siblings all
+  // return **null** -- so the filter this was written for was inert, and a
+  // written patch carried `fontname: "Arial"` and `fontsize: 12` on every
+  // single box. The source file it was serialized from has neither on any box,
+  // because those are Max's own defaults and Max omits them.
+  //
+  // So when the patcher will not say, fall back to what Max's defaults are.
+  // Being wrong here is cheap and visible: a patcher whose real default is 14pt
+  // has every box report 14, which no longer matches the fallback, so the size
+  // is written per box -- verbose, and still correct on screen.
+  return { filter: { ...MAX_FONT_DEFAULTS, ...reported }, reported };
 }
 
 /**
@@ -289,6 +302,19 @@ function patcherFontDefaults(target: MaxPatcher): Record<string, unknown> {
 function matchesDefault(value: unknown, fallback: unknown): boolean {
   return value === fallback || String(value) === String(fallback);
 }
+
+/**
+ * Max's own font defaults, used when a patcher will not report its own.
+ *
+ * Confirmed by probing a real patcher: every box came back `fontname "Arial"`,
+ * `fontsize 12`, `fontface 0`, and the file those boxes were loaded from
+ * records none of the three.
+ */
+const MAX_FONT_DEFAULTS: Record<string, unknown> = {
+  fontname: "Arial",
+  fontsize: 12,
+  fontface: 0,
+};
 
 /** The patcher-level font defaults, as the keys a `.maxpat` records them under. */
 function defaultFontEntries(
@@ -307,6 +333,15 @@ function defaultFontEntries(
       ? { default_fontname: name }
       : {}),
   };
+}
+
+/** The patcher's own window geometry, in the file's `[x, y, w, h]` convention. */
+function readPatcherRect(target: MaxPatcher): Rect4 | undefined {
+  try {
+    return asRect(target.getattr("rect"));
+  } catch {
+    return undefined;
+  }
 }
 
 function describe(
@@ -360,18 +395,22 @@ function describe(
   const outlettype = ports !== undefined && ports.length === 3 ? ports[2] : undefined;
   if (outlettype !== undefined) box.outlettype = [...outlettype];
 
-  const names = options.allAttributes
-    ? (() => {
-        try {
-          return object.getboxattrnames();
-        } catch {
-          return OPTIONAL;
-        }
-      })()
-    : OPTIONAL;
+  const reported = options.allAttributes
+    ? attrNamesOf(() => object.getboxattrnames())
+    : [];
+  // Falling back to the curated list rather than to nothing: a box that will
+  // not enumerate its attributes still has the common ones.
+  const names = reported.length > 0 ? reported : OPTIONAL;
+
+  // MEASURED: a box reports `presentation_rect` whether or not it is in
+  // presentation mode -- Max hands back a copy of the patching rect. Written
+  // unconditionally, that put a `presentation_rect` on every box of a
+  // round-tripped patch, none of which the source had.
+  const inPresentation = isSet(first(readBoxAttr(object, "presentation")));
 
   for (const name of names) {
     if (DERIVED.has(name)) continue;
+    if (name === "presentation_rect" && !inPresentation) continue;
     const value = first(readBoxAttr(object, name));
     if (!isSet(value)) continue;
     // Equal to the patcher default means unstyled: Max omits it, so do we --
@@ -417,11 +456,11 @@ export function serialize(
   const boxes: BoxEntry[] = [];
   const incomplete: IncompleteBox[] = [];
   const ids = new Map<Maxobj, string>();
-  const fontDefaults = patcherFontDefaults(target);
+  const fonts = patcherFontDefaults(target);
 
   objects.forEach((object, index) => {
     const id = `obj-${index + 1}`;
-    const { box, missing, maxclass } = describe(object, id, options, fontDefaults);
+    const { box, missing, maxclass } = describe(object, id, options, fonts.filter);
     if (box === undefined) {
       incomplete.push({ id, maxclass, missing });
       if (options.emitIncomplete !== true) return;
@@ -466,17 +505,17 @@ export function serialize(
       fileversion: 1,
       appversion: { ...MAX_VERSION },
       classnamespace: "box",
-      // The window geometry is deliberately not read back from the patcher.
-      // `.maxpat` stores `rect` as `[x, y, w, h]` and the JS API's rects are
-      // `[left, top, right, bottom]`; which convention a patcher attribute
-      // answers in is not settled outside Max, and a wrong window rect is a
-      // patch that opens the wrong size. `probe` now reports it, so the harness
-      // can settle it. Until then, pass `rect` if you know it.
-      rect: options.rect ?? [85, 104, 640, 480],
+      // MEASURED: a patcher's `rect` attribute answers in the **file's**
+      // convention, `[x, y, w, h]` -- not the `[left, top, right, bottom]` that
+      // every *box* rect in the JS API uses. A patcher 640 wide at x=85 reads
+      // back `[85, 104, 640, 560]`, where the other convention would have given
+      // `[85, 104, 725, 664]`. That is why this is now read rather than
+      // defaulted: the ambiguity was the only thing stopping it.
+      rect: options.rect ?? readPatcherRect(target) ?? [85, 104, 640, 480],
       // Written because they are what the box fonts above were filtered
       // against: a box equal to the default is omitted, so the default has to
       // be in the file for it to mean anything.
-      ...defaultFontEntries(fontDefaults),
+      ...defaultFontEntries(fonts.reported),
       boxes,
       lines,
     },

@@ -13,7 +13,7 @@
             85.0,
             104.0,
             640.0,
-            560.0
+            620.0
         ],
         "bglocked": 0,
         "openinpresentation": 0,
@@ -206,12 +206,123 @@
             {
                 "box": {
                     "id": "obj-10",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "patching_rect": [
+                        24,
+                        172,
+                        56,
+                        22
+                    ],
+                    "text": "verify",
+                    "outlettype": [
+                        ""
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-11",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "patching_rect": [
+                        88,
+                        172,
+                        68,
+                        22
+                    ],
+                    "text": "diagnose",
+                    "outlettype": [
+                        ""
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-12",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "patching_rect": [
+                        164,
+                        172,
+                        190,
+                        22
+                    ],
+                    "text": "save js2max-dict-test.json",
+                    "outlettype": [
+                        ""
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-13",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "patching_rect": [
+                        164,
+                        204,
+                        190,
+                        22
+                    ],
+                    "text": "import js2max-dict-test.json",
+                    "outlettype": [
+                        ""
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-14",
+                    "maxclass": "newobj",
+                    "numinlets": 2,
+                    "numoutlets": 4,
+                    "patching_rect": [
+                        164,
+                        236,
+                        120,
+                        22
+                    ],
+                    "text": "dict js2max_patch",
+                    "outlettype": [
+                        "dictionary",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-15",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "patching_rect": [
+                        300,
+                        236,
+                        150,
+                        22
+                    ],
+                    "text": "builddict js2max_patch",
+                    "outlettype": [
+                        ""
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-16",
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
                     "patching_rect": [
                         24,
-                        180,
+                        244,
                         200,
                         22
                     ],
@@ -223,13 +334,13 @@
             },
             {
                 "box": {
-                    "id": "obj-11",
+                    "id": "obj-17",
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         24,
-                        228,
+                        292,
                         90,
                         22
                     ],
@@ -241,17 +352,32 @@
             },
             {
                 "box": {
-                    "id": "obj-12",
+                    "id": "obj-18",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         24,
-                        264,
+                        328,
                         460,
                         90
                     ],
                     "text": "Expected on 'demo': three objects appear (cycle~ 440 -> gain~ -> ezdac~) and the Max window logs 'created 3 object(s), 3 connection(s)'. 'clear' then removes exactly those three, leaving this patch intact. 'read' opens a .maxpat and builds it. 'write' serializes THIS WHOLE patcher -- these boxes and the [v8] object included -- so its output resembles this patch by design; it is a round-trip check, not an export of just what you built. It refuses to write over this patch's own file. 'probe' logs what each box reports about itself."
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-19",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        24,
+                        422,
+                        460,
+                        114
+                    ],
+                    "text": "'verify' is the one to click first. It settles the four assumptions everything else rests on -- whether 'set' fills a message box, whether newdefault returns null or throws for an unknown class, whether a subpatcher box exposes its patcher, and whether snapshot reads a live one -- by doing each in turn and reading back what Max did. It builds what it needs and removes it again, so the patcher is left as found. Any line logged '[NO ]' is a real finding: copy the console output. 'diagnose' is the follow-up: it builds the variants side by side and prints every field, which is what a fix gets written from. The dict chain is the usable form of 'build', in three clicks: 'save' writes the built-in synth to a .json file, 'import' loads that file into the [dict], and 'builddict' builds what the dict holds. A message box ends its message at the first comma, so a .maxpat cannot be sent as a message at all; a dict is passed by name instead. 'clear' removes what was built."
                 }
             }
         ],
@@ -263,7 +389,7 @@
                         0
                     ],
                     "destination": [
-                        "obj-10",
+                        "obj-16",
                         0
                     ],
                     "order": 0
@@ -276,7 +402,7 @@
                         0
                     ],
                     "destination": [
-                        "obj-10",
+                        "obj-16",
                         0
                     ],
                     "order": 0
@@ -289,7 +415,7 @@
                         0
                     ],
                     "destination": [
-                        "obj-10",
+                        "obj-16",
                         0
                     ],
                     "order": 0
@@ -302,7 +428,7 @@
                         0
                     ],
                     "destination": [
-                        "obj-10",
+                        "obj-16",
                         0
                     ],
                     "order": 0
@@ -315,7 +441,7 @@
                         0
                     ],
                     "destination": [
-                        "obj-10",
+                        "obj-16",
                         0
                     ],
                     "order": 0
@@ -328,7 +454,7 @@
                         0
                     ],
                     "destination": [
-                        "obj-10",
+                        "obj-16",
                         0
                     ],
                     "order": 0
@@ -341,7 +467,7 @@
                         0
                     ],
                     "destination": [
-                        "obj-10",
+                        "obj-16",
                         0
                     ],
                     "order": 0
@@ -354,7 +480,72 @@
                         0
                     ],
                     "destination": [
+                        "obj-16",
+                        0
+                    ],
+                    "order": 0
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
                         "obj-11",
+                        0
+                    ],
+                    "destination": [
+                        "obj-16",
+                        0
+                    ],
+                    "order": 0
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-12",
+                        0
+                    ],
+                    "destination": [
+                        "obj-16",
+                        0
+                    ],
+                    "order": 0
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-15",
+                        0
+                    ],
+                    "destination": [
+                        "obj-16",
+                        0
+                    ],
+                    "order": 0
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-13",
+                        0
+                    ],
+                    "destination": [
+                        "obj-14",
+                        0
+                    ],
+                    "order": 0
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-16",
+                        0
+                    ],
+                    "destination": [
+                        "obj-17",
                         0
                     ],
                     "order": 0

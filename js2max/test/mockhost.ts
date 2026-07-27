@@ -102,8 +102,11 @@ export class MockMaxobj {
     return this.objectAttrs.get(name);
   }
 
-  getattrnames(): string[] {
-    return [...this.objectAttrs.keys()];
+  /** Null for some classes, exactly as Max does. See `nullAttrNames`. */
+  nullAttrNames = false;
+
+  getattrnames(): string[] | null {
+    return this.nullAttrNames ? null : [...this.objectAttrs.keys()];
   }
 
   setattr(name: string, value: unknown): void {
@@ -141,8 +144,16 @@ export class MockMaxobj {
     return this.nested;
   }
 
+  /** Whether `set` rewrites this box's text, as it does for a message box. */
+  setFillsText = false;
+
   message(name: string, ...args: unknown[]): void {
     this.messages.push({ name, args });
+    // A real message box's contents *are* its text: `set 1 2 3` is what a later
+    // `boxtext` reads back, and what a save writes to the file.
+    if (name === "set" && this.setFillsText) {
+      this.boxtext = args.join(" ");
+    }
   }
 }
 
@@ -184,6 +195,46 @@ export interface MockPatcherOptions {
   uiClasses?: readonly string[];
   /** Attribute names every box refuses to set, for the failure path. */
   refusedBoxAttrs?: readonly string[];
+  /**
+   * Whether a `set` message fills a message box's text.
+   *
+   * The assumption `verify`'s first check exists to settle, and therefore one
+   * the mock must be able to *break*: a check that cannot fail proves nothing.
+   * Left undefined, a message box behaves like any other object and ignores it.
+   */
+  setFillsMessageBox?: boolean;
+  /**
+   * Class names for which `newdefault` throws instead of returning null.
+   *
+   * Max was assumed to return null for a class it does not know. Both are
+   * handled, but only one keeps the reported reason accurate, so the check has
+   * to be able to see the difference.
+   */
+  throwingClasses?: readonly string[];
+  /**
+   * Class names Max cannot build, modelled the way it actually behaves.
+   *
+   * Observed by running `diagnose`: `newdefault` returns neither null nor a
+   * throw for an unknown class. It logs `No such object` and hands back a real
+   * box whose `maxclass` is `jbogus`, with `valid` true and `boxtext` set to
+   * the text asked for -- so only the class name gives it away.
+   */
+  bogusClasses?: readonly string[];
+  /**
+   * Class names whose `getattrnames()` returns null rather than an array.
+   *
+   * `trigger` and `jbogus` both do, in Max. Not an empty array and not a throw,
+   * which is why a `try` around the call did not save the caller from a
+   * `TypeError` several frames later.
+   */
+  nullAttrNames?: readonly string[];
+  /**
+   * Whether `newobject` leaves a message box empty despite being given text.
+   *
+   * The route that finally worked in Max, so the mock must be able to break it:
+   * a check that cannot fail reports "yes" either way.
+   */
+  newobjectIgnoresText?: boolean;
 }
 
 export class MockPatcher {
@@ -230,12 +281,20 @@ export class MockPatcher {
     className: string,
     ...args: (string | number)[]
   ): MockMaxobj | null {
+    if (this.options.throwingClasses?.includes(className)) {
+      throw new Error(`mock: newdefault refuses "${className}"`);
+    }
     if (this.options.unknownClasses?.includes(className)) return null;
+    // What Max really does: a placeholder box, reported only to the console.
+    const bogus = this.options.bogusClasses?.includes(className) === true;
     const object = new MockMaxobj(
-      className,
+      bogus ? "jbogus" : className,
       { left, top, className, args },
       this,
     );
+    if (this.options.nullAttrNames?.includes(className) === true || bogus) {
+      object.nullAttrNames = true;
+    }
     const ui = this.options.uiClasses ?? [];
     const boxclass = ui.includes(className) ? className : "newobj";
     const text = [className, ...args].join(" ");
@@ -251,6 +310,9 @@ export class MockPatcher {
     for (const name of this.options.refusedBoxAttrs ?? []) {
       object.refuses.add(name);
     }
+    if (boxclass === "message" && this.options.setFillsMessageBox === true) {
+      object.setFillsText = true;
+    }
     if (this.options.subpatcherClasses?.includes(className)) {
       object.nested = new MockPatcher(this.options);
     }
@@ -258,13 +320,30 @@ export class MockPatcher {
     return object;
   }
 
+  /**
+   * As Max: `(class, left, top, width, fontsize, ...text atoms)`.
+   *
+   * The signature was decoded from two calls run in Max, which is also how the
+   * bridge learned to give a message box its content at all:
+   *
+   *     newobject("message", 24, 720, 1, 2, 3)          boxtext "3"
+   *     newobject("message", 24, 752, 100, 0, "1 2 3")  boxtext "\"1 2 3\""
+   *
+   * The first consumed `1` and `2` as width and font size; the second took the
+   * content as one symbol and Max quoted it, which is why the atoms have to be
+   * passed separately rather than joined.
+   */
   newobject(className: string, ...params: (string | number)[]): MockMaxobj {
-    const object = new MockMaxobj(
-      className,
-      { left: 0, top: 0, className, args: params },
-      this,
-    );
-    this.objects.push(object);
+    const [left = 0, top = 0, width = 66, , ...text] = params;
+    const object = this.newdefault(Number(left), Number(top), className);
+    if (object === null) {
+      throw new Error(`mock: newobject cannot build "${className}"`);
+    }
+    object.created.args = text;
+    object.boxAttrs.set("patching_rect", [left, top, width, 22]);
+    // The content, which is the whole reason this call exists.
+    object.boxtext =
+      this.options.newobjectIgnoresText === true ? "" : text.join(" ");
     return object;
   }
 

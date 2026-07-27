@@ -284,12 +284,47 @@ Deferred; each is a sizeable, self-contained effort.
   before adding to `scripting.ts` -- one wrong assumption about it (that
   patchlines could not be enumerated) already cost a feature.
 
-- [ ] **Finish verifying the v8 bridge in Max.** Still unexercised by the
-  harness: `message("set", ...)` on a `newdefault`-created message box, whether
-  `newdefault` returns null or throws for an unknown class, `build <json>`,
-  subpatcher recursion, and `snapshotBoxes`. Extend the harness to cover them --
-  a message box and a deliberately bogus object class would settle the first
-  two, which are the assumptions the rest of the bridge rests on.
+- [x] **Finish verifying the v8 bridge in Max.** DONE, over four runs of
+  `verify` / `diagnose`. Three real bugs came out of it, all now fixed:
+  `newdefault` returns a `jbogus` placeholder rather than null for an unknown
+  class (so unknown classes had never been detected); a message box has to be
+  built with `newobject`, since every `newdefault` route leaves it empty (so
+  every message box the bridge built was blank); and `getattrnames()` returns
+  null for some objects, which crashed `write ... full` on any patcher holding a
+  `trigger`. Subpatcher recursion and `snapshot` were confirmed working.
+
+  A later run confirmed the message-box fix (`verify` 4/4) and, via `probe` and
+  a real `write`, turned up three more fidelity bugs -- fonts and
+  `presentation_rect` written onto every box, and the window geometry defaulted
+  rather than read. All fixed.
+
+  **A patch js2max wrote now opens in Max**, ten of fifteen boxes byte-identical
+  to the source; the three residual differences are understood and benign.
+
+  The `dict` route is confirmed too: `save` -> `import` -> `builddict` builds
+  the nine boxes, so `Dict.stringify()` returns parseable JSON for a whole
+  patch.
+
+  Still open, and small: comments are built by the same `newobject` signature by
+  inference, which `verify` check 4 reports on; `write ... full` has not been
+  opened in Max; and `read` has not been run at all, though `builddict` shares
+  every step of it but the file access. `verify` (in `js2max/max/v8-harness.maxpat`)
+  exercises all four assumptions the bridge rests on -- `message("set", ...)` on
+  a `newdefault`-created message box, whether `newdefault` returns null or
+  throws for an unknown class, whether a subpatcher box exposes its patcher, and
+  `snapshot` -- building what each check needs, reading back what Max did, and
+  removing it again. One click; any line logged `[NO ]` is a real finding.
+
+  The checks are in `js2max/src/verify.ts` and are themselves tested against a
+  mock host configured to fail in each of those ways (`test/verify.test.ts`),
+  since a check that cannot fail reports "yes" either way.
+
+  `build <json>` is deliberately not in the harness: a message box ends the
+  message at the first `,`, so the document never reaches the handler whole and
+  there is nothing to learn from watching it fail. The handler rejoins every
+  atom it is given and reports what arrived; a real fix is the `dict`-based
+  route. Also worth doing in the same session: `probe` prints the patcher's `rect` and font defaults, which settles
+  whether `serialize` can read the window geometry back (see below).
 
 - [ ] **Decide whether Python should emit v8 scripts.** Now that `v8` is a
   target, the alternative to a TS core is codegen: py2max writes the patch *and*

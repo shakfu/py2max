@@ -41,20 +41,33 @@
   var exports_entry_v8 = {};
   __export(exports_entry_v8, {
     write: () => write,
+    verify: () => verify,
     synth: () => synth,
     save: () => save,
     read: () => read,
     probe: () => probe,
     extract: () => extract,
+    diagnose: () => diagnose,
     demo: () => demo,
     count: () => count,
     clearall: () => clearall,
     clear: () => clear2,
+    builddict: () => builddict,
     build: () => build
   });
 
   // src/scripting.ts
   var SET_CONTENT_CLASSES = new Set(["message", "comment"]);
+  var BOGUS_CLASS = "jbogus";
+  function attrNamesOf(read) {
+    let names;
+    try {
+      names = read();
+    } catch {
+      return [];
+    }
+    return Array.isArray(names) ? names : [];
+  }
   var SEPARATORS = /[,;]/;
   function classNameOf(box) {
     if (box.maxclass !== "newobj")
@@ -72,10 +85,16 @@
   function atomsOf(text) {
     return text.trim().split(/\s+/).filter((token) => token !== "").map(atomOf);
   }
-  function typedArgsOf(box) {
-    if (box.maxclass !== "newobj")
-      return [];
-    return atomsOf(box.text ?? "").slice(1);
+  function creationArgsOf(box) {
+    if (box.maxclass === "newobj")
+      return atomsOf(box.text ?? "").slice(1);
+    return [];
+  }
+  function createBox(target, box, className, left, top) {
+    if (SET_CONTENT_CLASSES.has(box.maxclass)) {
+      return target.newobject(className, left, top, box.patching_rect[2], 0, ...atomsOf(box.text ?? ""));
+    }
+    return target.newdefault(left, top, className, ...creationArgsOf(box));
   }
   function toMaxobjRect(rect) {
     const [x, y, w, h] = rect;
@@ -112,12 +131,9 @@
     return false;
   }
   function applyBoxAttrs(object, box) {
-    let known;
-    try {
-      known = new Set(object.getboxattrnames());
-    } catch {
+    const known = new Set(attrNamesOf(() => object.getboxattrnames()));
+    if (known.size === 0)
       return [];
-    }
     const failed = [];
     for (const [name, value] of Object.entries(box)) {
       if (STRUCTURAL.has(name) || !known.has(name))
@@ -171,23 +187,32 @@
       const className = classNameOf(box);
       let object = null;
       try {
-        object = target.newdefault(x + dx, y + dy, className, ...typedArgsOf(box));
+        object = createBox(target, box, className, x + dx, y + dy);
       } catch (err) {
-        skipped.push({ id: box.id, reason: `newdefault threw: ${String(err)}` });
+        skipped.push({ id: box.id, reason: `creating the box threw: ${String(err)}` });
         continue;
       }
       if (object === null || object === undefined) {
         skipped.push({ id: box.id, reason: `unknown object class "${className}"` });
         continue;
       }
+      if (object.maxclass === BOGUS_CLASS) {
+        skipped.push({
+          id: box.id,
+          reason: `unknown object class "${className}" -- Max built a placeholder ` + `(${BOGUS_CLASS}) and logged "No such object"`
+        });
+        try {
+          target.remove(object);
+        } catch {}
+        continue;
+      }
       objects.set(box.id, object);
       created += 1;
       if (SET_CONTENT_CLASSES.has(box.maxclass) && box.text !== undefined) {
-        object.message("set", ...atomsOf(box.text));
         if (box.maxclass === "message" && SEPARATORS.test(box.text)) {
           warnings.push({
             id: box.id,
-            reason: `message text "${box.text}" contains a message separator ` + `(, or ;), which a "set" message cannot carry -- the box holds it ` + `as an ordinary symbol. Write the patch to a file instead if the ` + `separator matters.`
+            reason: `message text "${box.text}" contains a message separator ` + `(, or ;), which cannot be passed as an atom -- the box holds it ` + `as an ordinary symbol. Write the patch to a file instead if the ` + `separator matters.`
           });
         }
       }
@@ -294,6 +319,41 @@
     }
     return objects;
   }
+  function snapshot(target) {
+    const objects = objectsOf(target);
+    const ids = new Map;
+    const byVarname = new Map;
+    const boxes = objects.map((object, index) => {
+      const id = object.varname === "" ? `obj-${index + 1}` : object.varname;
+      ids.set(object, id);
+      if (object.varname !== "")
+        byVarname.set(object.varname, id);
+      return {
+        id,
+        maxclass: object.maxclass,
+        patching_rect: fromMaxobjRect(object.rect),
+        ...object.varname === "" ? {} : { varname: object.varname }
+      };
+    });
+    const identify = (object) => ids.get(object) ?? (object.varname === "" ? undefined : byVarname.get(object.varname));
+    const lines = [];
+    let unresolved = 0;
+    for (const object of objects) {
+      for (const cord of object.patchcords.outputs) {
+        const from = identify(cord.srcobject);
+        const to = identify(cord.dstobject);
+        if (from === undefined || to === undefined) {
+          unresolved += 1;
+          continue;
+        }
+        lines.push({
+          source: [from, cord.srcoutlet],
+          destination: [to, cord.dstinlet]
+        });
+      }
+    }
+    return { boxes, lines, unresolved };
+  }
 
   // src/commands.ts
   var WRITE_MODES = ["built", "partial", "full"];
@@ -322,6 +382,51 @@
       const text = object.boxtext ?? "";
       return object.maxclass.indexOf(needle) >= 0 || text.indexOf(needle) >= 0;
     });
+  }
+
+  // src/dict.ts
+  var maxDictFactory = (name) => {
+    const ctor = globalThis.Dict;
+    if (ctor === undefined) {
+      throw new Error("js2max: no Max Dict class -- dictionaries are only available inside Max");
+    }
+    return new ctor(name);
+  };
+  function readDictPatch(name, options = {}) {
+    const factory = options.factory ?? maxDictFactory;
+    const dict = factory(name);
+    let text;
+    try {
+      text = dict.stringify();
+    } catch (err) {
+      throw new Error(`js2max: could not read dictionary "${name}" -- ${String(err)}`);
+    }
+    if (typeof text !== "string" || text.trim() === "") {
+      throw new Error(emptyMessage(name));
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      throw new Error(`js2max: dictionary "${name}" did not parse as JSON -- ${String(err)}; ` + `it begins ${JSON.stringify(text.slice(0, 120))}`);
+    }
+    if (parsed !== null && typeof parsed === "object" && Object.keys(parsed).length === 0) {
+      throw new Error(emptyMessage(name));
+    }
+    return patcherOf(parsed, `dictionary "${name}"`);
+  }
+  function emptyMessage(name) {
+    return `js2max: dictionary "${name}" is empty -- load it first, e.g. send ` + `[dict ${name}] the message "import my-patch.json", and check the name ` + `matches`;
+  }
+  function patcherOf(parsed, source) {
+    if (parsed === null || typeof parsed !== "object") {
+      throw new Error(`js2max: ${source} does not hold a patch description`);
+    }
+    const patcher = "patcher" in parsed ? parsed.patcher : parsed;
+    if (patcher === null || patcher === undefined || !Array.isArray(patcher.boxes)) {
+      throw new Error(`js2max: ${source} has no patcher.boxes -- not a .maxpat?`);
+    }
+    return patcher;
   }
 
   // src/objects.ts
@@ -1769,14 +1874,10 @@
     return numbers;
   }
   function readObjectAttrs(object, box) {
-    let names;
-    let boxNames;
-    try {
-      names = object.getattrnames();
-      boxNames = object.getboxattrnames();
-    } catch {
+    const names = attrNamesOf(() => object.getattrnames());
+    const boxNames = attrNamesOf(() => object.getboxattrnames());
+    if (names.length === 0)
       return {};
-    }
     const isBoxAttr = new Set(boxNames);
     const saved = {};
     const already = box;
@@ -1796,19 +1897,24 @@
     return saved;
   }
   function patcherFontDefaults(target) {
-    const defaults = {};
+    const reported = {};
     for (const name of ["fontname", "fontsize", "fontface"]) {
       try {
         const value = first(target.getattr(`default_${name}`));
         if (value !== undefined && value !== null)
-          defaults[name] = value;
+          reported[name] = value;
       } catch {}
     }
-    return defaults;
+    return { filter: { ...MAX_FONT_DEFAULTS, ...reported }, reported };
   }
   function matchesDefault(value, fallback) {
     return value === fallback || String(value) === String(fallback);
   }
+  var MAX_FONT_DEFAULTS = {
+    fontname: "Arial",
+    fontsize: 12,
+    fontface: 0
+  };
   function defaultFontEntries(defaults) {
     const name = defaults["fontname"];
     const size = asNumber(defaults["fontsize"]);
@@ -1818,6 +1924,13 @@
       ...face === undefined ? {} : { default_fontface: face },
       ...typeof name === "string" && name !== "" ? { default_fontname: name } : {}
     };
+  }
+  function readPatcherRect(target) {
+    try {
+      return asRect(target.getattr("rect"));
+    } catch {
+      return;
+    }
   }
   function describe(object, id, options, fontDefaults = {}) {
     const objectClass = object.maxclass ?? "";
@@ -1847,15 +1960,13 @@
     const outlettype = ports !== undefined && ports.length === 3 ? ports[2] : undefined;
     if (outlettype !== undefined)
       box.outlettype = [...outlettype];
-    const names = options.allAttributes ? (() => {
-      try {
-        return object.getboxattrnames();
-      } catch {
-        return OPTIONAL;
-      }
-    })() : OPTIONAL;
+    const reported = options.allAttributes ? attrNamesOf(() => object.getboxattrnames()) : [];
+    const names = reported.length > 0 ? reported : OPTIONAL;
+    const inPresentation = isSet(first(readBoxAttr(object, "presentation")));
     for (const name of names) {
       if (DERIVED.has(name))
+        continue;
+      if (name === "presentation_rect" && !inPresentation)
         continue;
       const value = first(readBoxAttr(object, name));
       if (!isSet(value))
@@ -1884,10 +1995,10 @@
     const boxes = [];
     const incomplete = [];
     const ids = new Map;
-    const fontDefaults = patcherFontDefaults(target);
+    const fonts = patcherFontDefaults(target);
     objects.forEach((object, index) => {
       const id = `obj-${index + 1}`;
-      const { box, missing, maxclass } = describe(object, id, options, fontDefaults);
+      const { box, missing, maxclass } = describe(object, id, options, fonts.filter);
       if (box === undefined) {
         incomplete.push({ id, maxclass, missing });
         if (options.emitIncomplete !== true)
@@ -1926,14 +2037,270 @@
         fileversion: 1,
         appversion: { ...MAX_VERSION },
         classnamespace: "box",
-        rect: options.rect ?? [85, 104, 640, 480],
-        ...defaultFontEntries(fontDefaults),
+        rect: options.rect ?? readPatcherRect(target) ?? [85, 104, 640, 480],
+        ...defaultFontEntries(fonts.reported),
         boxes,
         lines
       },
       incomplete,
       unresolved
     };
+  }
+
+  // src/verify.ts
+  var AWAY = [24, 560];
+  var STEP = 32;
+  function messageBoxPatch() {
+    const p = new Patcher;
+    p.add("1 2 3", {
+      maxclass: "message",
+      patching_rect: [AWAY[0], AWAY[1], 60, 22]
+    });
+    return p.toPatcherDict();
+  }
+  function commentPatch() {
+    const p = new Patcher;
+    p.add("js2max check 440 Hz", {
+      maxclass: "comment",
+      patching_rect: [AWAY[0], AWAY[1] + STEP * 6, 140, 22]
+    });
+    return p.toPatcherDict();
+  }
+  function unknownClassPatch() {
+    const p = new Patcher;
+    p.add("js2max.nosuchobject~ 1", {
+      patching_rect: [AWAY[0], AWAY[1] + STEP, 160, 22]
+    });
+    return p.toPatcherDict();
+  }
+  function subpatcherPatch() {
+    const p = new Patcher;
+    const { sub } = p.addSubpatcher("p js2max_check", {
+      patching_rect: [AWAY[0], AWAY[1] + STEP * 2, 110, 22]
+    });
+    sub.add("cycle~ 220", { patching_rect: [40, 40, 70, 22] });
+    sub.add("gain~", { patching_rect: [40, 80, 22, 140] });
+    return p.toPatcherDict();
+  }
+  function verifyBridge(target, self) {
+    const checks = [];
+    const built = [];
+    let removed = 0;
+    try {
+      const message = instantiate(target, messageBoxPatch());
+      built.push(...message.objects.values());
+      const box = [...message.objects.values()][0];
+      const text = box?.boxtext;
+      checks.push({
+        name: "message content",
+        assumption: 'a message box built from a description holds "1 2 3"',
+        observed: box === undefined ? "no message box was created at all" : `boxtext = ${JSON.stringify(text ?? null)}`,
+        held: box === undefined ? undefined : (text ?? "").trim() === "1 2 3"
+      });
+      const unknown = instantiate(target, unknownClassPatch());
+      built.push(...unknown.objects.values());
+      const reason = unknown.skipped[0]?.reason ?? "";
+      checks.push({
+        name: "unknown class",
+        assumption: "an object class Max does not have is detected and reported",
+        observed: unknown.created > 0 ? `Max created an object for "js2max.nosuchobject~" -- neither` : reason === "" ? "nothing was created and nothing was reported" : reason,
+        held: unknown.created > 0 ? false : reason.indexOf("unknown object class") >= 0
+      });
+      const sub = instantiate(target, subpatcherPatch());
+      built.push(...sub.objects.values());
+      const subSkips = sub.skipped.filter((s) => s.reason.indexOf("subpatcher()") >= 0);
+      checks.push({
+        name: "subpatcher",
+        assumption: "a box with a nested patcher builds its contents too",
+        observed: `created ${sub.created} object(s) ` + `(1 box + 2 inside expected)` + (subSkips.length > 0 ? `; ${subSkips[0]?.reason}` : ""),
+        held: sub.created === 3 && subSkips.length === 0
+      });
+      const comment = instantiate(target, commentPatch());
+      built.push(...comment.objects.values());
+      const commentBox = [...comment.objects.values()][0];
+      const commentText = commentBox?.boxtext;
+      checks.push({
+        name: "comment content",
+        assumption: "newobject gives a comment its text, as it does a message box",
+        observed: commentBox === undefined ? "no comment was created at all" : `boxtext = ${JSON.stringify(commentText ?? null)}`,
+        held: commentBox === undefined ? undefined : (commentText ?? "").trim() === "js2max check 440 Hz"
+      });
+      const shot = snapshot(target);
+      checks.push({
+        name: "snapshot",
+        assumption: "snapshot reads boxes and cords from a live patcher",
+        observed: `${shot.boxes.length} box(es), ${shot.lines.length} cord(s), ` + `${shot.unresolved} unresolved`,
+        held: shot.boxes.length > 0 && shot.unresolved === 0
+      });
+    } finally {
+      removed = remove(target, built, {
+        keep: self === undefined ? [] : [self]
+      });
+    }
+    return { checks, removed };
+  }
+  function describeObject(object) {
+    if (object === undefined)
+      return "<not created>";
+    const read = (name, fn) => {
+      try {
+        return `${name}=${JSON.stringify(fn()) ?? "undefined"}`;
+      } catch (err) {
+        return `${name}=<threw ${String(err)}>`;
+      }
+    };
+    return [
+      read("maxclass", () => object.maxclass),
+      read("boxtext", () => object.boxtext),
+      read("valid", () => object.valid),
+      read("understands(bang)", () => object.understands("bang")),
+      read("boxattrs", () => object.getboxattrnames().length),
+      read("objattrs", () => object.getattrnames()?.length ?? null)
+    ].join(" ");
+  }
+  function diagnoseBridge(target, self) {
+    const observations = [];
+    const built = [];
+    let removed = 0;
+    const make = (x, y, className, ...args) => {
+      try {
+        const object = target.newdefault(x, y, className, ...args);
+        if (object === null || object === undefined)
+          return;
+        built.push(object);
+        return object;
+      } catch (err) {
+        observations.push({
+          label: `newdefault("${className}")`,
+          detail: `threw: ${String(err)}`
+        });
+        return;
+      }
+    };
+    try {
+      const fromFile = objectsOf(target).find((object) => object.maxclass === "message");
+      observations.push({
+        label: "control: a message box loaded from the patch file",
+        detail: fromFile === undefined ? "<none in this patcher -- open the harness, which has several>" : `boxtext=${JSON.stringify(fromFile.boxtext ?? null)}`
+      });
+      const viaSet = make(AWAY[0], AWAY[1], "message");
+      viaSet?.message("set", 1, 2, 3);
+      observations.push({
+        label: "message via set(1, 2, 3)",
+        detail: `boxtext=${JSON.stringify(viaSet?.boxtext ?? null)}`
+      });
+      const viaArgs = make(AWAY[0], AWAY[1] + STEP, "message", 1, 2, 3);
+      observations.push({
+        label: "message via creation args",
+        detail: `boxtext=${JSON.stringify(viaArgs?.boxtext ?? null)}`
+      });
+      const viaSymbol = make(AWAY[0], AWAY[1] + STEP * 2, "message");
+      viaSymbol?.message("set", "1 2 3");
+      observations.push({
+        label: 'message via set("1 2 3")',
+        detail: `boxtext=${JSON.stringify(viaSymbol?.boxtext ?? null)}`
+      });
+      const viaAttr = make(AWAY[0], AWAY[1] + STEP * 3, "message");
+      try {
+        viaAttr?.setboxattr("text", "1 2 3");
+      } catch (err) {
+        observations.push({
+          label: 'message via setboxattr("text")',
+          detail: `threw: ${String(err)}`
+        });
+      }
+      observations.push({
+        label: 'message via setboxattr("text")',
+        detail: `boxtext=${JSON.stringify(viaAttr?.boxtext ?? null)} ` + `getboxattr(text)=${JSON.stringify(viaAttr?.getboxattr("text") ?? null)}`
+      });
+      const sized = make(AWAY[0], AWAY[1] + STEP * 4, "message");
+      const before = JSON.stringify(sized?.getboxattr("patching_rect") ?? null);
+      sized?.message("set", "wwwwwwwwwwwwwwwwwwww");
+      const after = JSON.stringify(sized?.getboxattr("patching_rect") ?? null);
+      observations.push({
+        label: "does the box resize when set",
+        detail: `before=${before} after=${after} (a message box fits its content)`
+      });
+      for (const [label, args] of [
+        ["newobject(message, x, y, 1, 2, 3)", [AWAY[0], AWAY[1] + STEP * 5, 1, 2, 3]],
+        [
+          'newobject(message, x, y, w, 0, "1 2 3")',
+          [AWAY[0], AWAY[1] + STEP * 6, 100, 0, "1 2 3"]
+        ]
+      ]) {
+        try {
+          const object = target.newobject("message", ...args);
+          if (object !== null && object !== undefined)
+            built.push(object);
+          observations.push({
+            label,
+            detail: `boxtext=${JSON.stringify(object?.boxtext ?? null)} maxclass=${JSON.stringify(object?.maxclass ?? null)}`
+          });
+        } catch (err) {
+          observations.push({ label, detail: `threw: ${String(err)}` });
+        }
+      }
+      const fileBox = objectsOf(target).find((object) => object.maxclass === "message" && !built.includes(object));
+      for (const [label, object] of [
+        ["built message box", viaSet],
+        ["file message box", fileBox]
+      ]) {
+        if (object === undefined) {
+          observations.push({ label: `${label} attrs`, detail: "<none>" });
+          continue;
+        }
+        const dump = (kind, names) => names.length === 0 ? `${kind}=<none>` : `${kind}: ` + names.map((name) => {
+          try {
+            const value = kind === "box" ? object.getboxattr(name) : object.getattr(name);
+            return `${name}=${JSON.stringify(value) ?? "undefined"}`;
+          } catch {
+            return `${name}=<threw>`;
+          }
+        }).join(" ");
+        observations.push({
+          label: `${label} attrs`,
+          detail: dump("box", attrNamesOf(() => object.getboxattrnames()))
+        });
+        observations.push({
+          label: `${label} objattrs`,
+          detail: dump("obj", attrNamesOf(() => object.getattrnames()))
+        });
+      }
+      observations.push({
+        label: "-- the next line is expected in the console --",
+        detail: "Max logs `No such object` for the bogus class below"
+      });
+      const good = make(AWAY[0], AWAY[1] + STEP * 3, "cycle~", 440);
+      observations.push({ label: "good box (cycle~ 440)", detail: describeObject(good) });
+      const alias = make(AWAY[0], AWAY[1] + STEP * 4, "t", "b", "i");
+      observations.push({
+        label: "aliased box (t b i)",
+        detail: describeObject(alias)
+      });
+      const broken = make(AWAY[0], AWAY[1] + STEP * 5, "js2max.nosuchobject~", 1);
+      observations.push({
+        label: "bogus box (js2max.nosuchobject~ 1)",
+        detail: describeObject(broken)
+      });
+    } finally {
+      removed = remove(target, built, {
+        keep: self === undefined ? [] : [self]
+      });
+    }
+    return { observations, removed };
+  }
+  function formatDiagnosis(result) {
+    const lines = result.observations.map((o) => `js2max diagnose: ${o.label} -- ${o.detail}`);
+    lines.push(`js2max diagnose: removed ${result.removed} object(s)`);
+    return lines;
+  }
+  function formatChecks(result) {
+    const lines = result.checks.map((check, index) => {
+      const verdict = check.held === undefined ? "???" : check.held ? "yes" : "NO ";
+      return `js2max verify ${index + 1}/${result.checks.length} [${verdict}] ` + `${check.name}: ${check.observed}`;
+    });
+    lines.push(`js2max verify: removed ${result.removed} object(s); ` + `patcher left as found`);
+    return lines;
   }
 
   // src/entry.v8.ts
@@ -1949,7 +2316,7 @@
       return global.this;
     throw new Error("js2max: no patcher handle -- this script must be loaded by a [v8] object");
   }
-  function patcherOf(context) {
+  function patcherOfContext(context) {
     return contextOf(context).patcher;
   }
   function selfBox(context) {
@@ -1980,31 +2347,53 @@
 `);
     }
   }
-  function build(json) {
+  function build(...atoms) {
     const target = this;
     guard(() => {
+      const json = atoms.join(" ");
       let parsed;
       try {
         parsed = JSON.parse(json);
       } catch (err) {
         error(`js2max: could not parse patch description -- ${String(err)}
 `);
+        error(`js2max: received ${atoms.length} atom(s), ${json.length} chars: ` + `${JSON.stringify(json.slice(0, 200))}
+`);
+        outlet(0, "error", "parse", atoms.length);
         return;
       }
-      const patcher = parsed !== null && typeof parsed === "object" && "patcher" in parsed ? parsed.patcher : parsed;
-      if (patcher === null || patcher === undefined || !Array.isArray(patcher.boxes)) {
-        error(`js2max: patch description has no boxes
+      let patcher;
+      try {
+        patcher = patcherOf(parsed, "the patch description");
+      } catch (err) {
+        error(`${String(err)}
 `);
         return;
       }
       described = patcher;
-      report(instantiate(patcherOf(target), patcher));
+      report(instantiate(patcherOfContext(target), patcher));
+    });
+  }
+  function builddict(name) {
+    const target = this;
+    guard(() => {
+      if (name === undefined || String(name) === "") {
+        error(`js2max: builddict needs a dictionary name, e.g. "builddict my_patch"
+`);
+        outlet(0, "error", "no-name");
+        return;
+      }
+      const patcher = readDictPatch(String(name));
+      described = patcher;
+      post(`js2max: read dictionary ${String(name)}
+`);
+      report(instantiate(patcherOfContext(target), patcher, { offset: DEMO_OFFSET }));
     });
   }
   function demo() {
     const target = this;
     guard(() => {
-      report(instantiate(patcherOf(target), demoPatch(), { offset: DEMO_OFFSET }));
+      report(instantiate(patcherOfContext(target), demoPatch(), { offset: DEMO_OFFSET }));
     });
   }
   function synth() {
@@ -2012,7 +2401,7 @@
     guard(() => {
       const description = synthPatch();
       described = description;
-      report(instantiate(patcherOf(target), description, { offset: [0, 40] }));
+      report(instantiate(patcherOfContext(target), description, { offset: [0, 40] }));
     });
   }
   function save(path) {
@@ -2028,7 +2417,7 @@
     const target = this;
     guard(() => {
       const self = selfBox(target);
-      const removed = remove(patcherOf(target), built, {
+      const removed = remove(patcherOfContext(target), built, {
         keep: self === undefined ? [] : [self]
       });
       built = [];
@@ -2046,7 +2435,7 @@
 `);
         return;
       }
-      const removed = clear(patcherOf(target), { keep: [self] });
+      const removed = clear(patcherOfContext(target), { keep: [self] });
       built = [];
       post(`js2max: removed ${removed} object(s)
 `);
@@ -2059,14 +2448,14 @@
       const loaded = readPatch(path);
       post(`js2max: read ${path}
 `);
-      report(instantiate(patcherOf(target), loaded.patcher, { offset: DEMO_OFFSET }));
+      report(instantiate(patcherOfContext(target), loaded.patcher, { offset: DEMO_OFFSET }));
     });
   }
   function write(path, ...modes) {
     const { modes: mode, unknown } = parseWriteModes(modes);
     const target = this;
     guard(() => {
-      const patcher = patcherOf(target);
+      const patcher = patcherOfContext(target);
       if (unknown.length > 0) {
         error(`js2max: "${unknown.join('", "')}" is not a write mode. ` + `Use any of: ${WRITE_MODES.join(", ")}.
 `);
@@ -2115,7 +2504,7 @@
   function probe() {
     const target = this;
     guard(() => {
-      const patcher = patcherOf(target);
+      const patcher = patcherOfContext(target);
       for (const name of [
         "rect",
         "default_fontname",
@@ -2134,22 +2523,10 @@
       let index = 0;
       for (const object of objectsOf(patcher)) {
         index += 1;
-        const names = (() => {
-          try {
-            return object.getboxattrnames();
-          } catch (err) {
-            return [`<getboxattrnames failed: ${String(err)}>`];
-          }
-        })();
+        const names = attrNamesOf(() => object.getboxattrnames());
         post(`js2max probe ${index}: maxclass=${object.maxclass} ` + `boxclass=${String(object.getboxattr("maxclass"))} ` + `boxtext=${JSON.stringify(object.boxtext)} ` + `numinlets=${String(object.getboxattr("numinlets"))} ` + `numoutlets=${String(object.getboxattr("numoutlets"))}
 `);
-        const objectAttrs = (() => {
-          try {
-            return object.getattrnames();
-          } catch (err) {
-            return [`<getattrnames failed: ${String(err)}>`];
-          }
-        })();
+        const objectAttrs = attrNamesOf(() => object.getattrnames());
         const boxOnly = new Set(names);
         const objectOnly = objectAttrs.filter((n) => !boxOnly.has(n));
         post(`js2max probe ${index} boxattrs: ${names.join(" ")}
@@ -2174,7 +2551,7 @@
     const target = this;
     const needle = match ?? "~";
     guard(() => {
-      const patcher = patcherOf(target);
+      const patcher = patcherOfContext(target);
       const chosen = selectMatching(objectsOf(patcher), needle);
       if (chosen.length === 0) {
         error(`js2max: nothing in this patcher matches "${needle}"
@@ -2193,23 +2570,51 @@
       outlet(0, "extracted", result.patcher.boxes.length, result.patcher.lines.length);
     });
   }
+  function verify() {
+    const target = this;
+    guard(() => {
+      const result = verifyBridge(patcherOfContext(target), selfBox(target));
+      for (const line of formatChecks(result))
+        post(`${line}
+`);
+      const failed = result.checks.filter((c) => c.held !== true).length;
+      if (failed > 0) {
+        error(`js2max verify: ${failed} assumption(s) did not hold -- ` + `js2max/README.md records what each one costs
+`);
+      }
+      outlet(0, "verified", result.checks.length - failed, failed);
+    });
+  }
+  function diagnose() {
+    const target = this;
+    guard(() => {
+      const result = diagnoseBridge(patcherOfContext(target), selfBox(target));
+      for (const line of formatDiagnosis(result))
+        post(`${line}
+`);
+      outlet(0, "diagnosed", result.observations.length);
+    });
+  }
   function count() {
     const target = this;
     guard(() => {
-      outlet(0, "count", patcherOf(target).count);
+      outlet(0, "count", patcherOfContext(target).count);
     });
   }
   Object.assign(globalThis, {
     build,
+    builddict,
     clear: clear2,
     clearall,
     count,
     demo,
+    diagnose,
     extract,
     probe,
     read,
     save,
     synth,
+    verify,
     write
   });
 })();

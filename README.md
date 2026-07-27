@@ -84,6 +84,29 @@ Helpers: `Patcher.enable_presentation(devicewidth=...)`,
 rounds fractional coordinates), and `Patcher.enforce_integer_coords()`. M4L
 binary helpers live in `py2max.m4l`.
 
+### Building patches inside Max (js2max)
+
+py2max writes `.maxpat` files that Max later opens. [`js2max/`](js2max/) is the
+JavaScript counterpart, and does the one thing Python cannot: Max embeds a
+JavaScript engine, so a `v8` script runs **inside an open patcher** and builds
+into it directly, from the same patch description py2max writes.
+
+```
+[import my-patch.json(        [builddict my_patch(
+        |                              |
+[dict my_patch]                [v8 js2max.v8.js]
+```
+
+Both directions work and are confirmed against Max: a description becomes live
+objects, and a live patcher serializes back to a `.maxpat` that Max reopens. The
+loadable artifacts are committed, so using it needs no toolchain -- drop
+`js2max/max/js2max.v8.js` beside a patch, or `require("js2max.js")` from your own
+script. `js2max/src/objects.ts` is generated from py2max's maxref bundle, so both
+packages agree on what every Max object is.
+
+See [`js2max/README.md`](js2max/README.md). Building it needs [Bun](https://bun.sh)
+(`make js2max`); using it does not.
+
 ### Interactive Server (separate package)
 
 Real-time browser-based patch editing with bidirectional sync lives in the
@@ -361,14 +384,16 @@ py2max maxref cycle~ --json
 - **Container population** - Prepopulate `coll`, `dict`, `table` objects with data
 - **Generative patching** - Algorithmic patch creation
 - **CI/CD integration** - SVG previews for documentation and version control
+- **Live patch building** - generate a description in Python, build it into a running patcher with [js2max](js2max/)
 
 ## Testing
 
 ```bash
-make test        # Run all tests
-make typecheck   # Type checking with mypy
-make lint        # Linting with ruff
-make docs        # Build documentation
+make test          # Run all tests
+make typecheck     # Type checking with mypy
+make lint          # Linting with ruff
+make docs          # Build documentation
+make js2max-check  # Typecheck and test js2max, and verify its artifacts are current (needs bun)
 ```
 
 ## Design Notes
