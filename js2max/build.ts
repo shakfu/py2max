@@ -20,7 +20,31 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 const ROOT = dirname(Bun.fileURLToPath(import.meta.url));
+
+/**
+ * Where Max loads the bundles from: beside the harness patches, because Max
+ * resolves a bare filename through its search path and a patch expects the
+ * script next to it.
+ */
 const OUT = join(ROOT, "max");
+
+/**
+ * The second home: inside the Python package, so `pip install py2max` ships the
+ * runtime and `py2max.js2max_runtime` can write it beside a generated patch.
+ *
+ * A mirror rather than a move. `js2max/max/` has to stay where it is for Max,
+ * and the alternatives to copying are worse -- a symlink is not portable to
+ * Windows, and making the package directory the only home breaks how the
+ * harness finds its bundle. The cost is 160 KB duplicated in the tree; the
+ * `--check` pass below is what stops the two drifting apart.
+ *
+ * Shipping them together is also a correctness guarantee, not only a
+ * convenience: `src/objects.ts` is generated from py2max's maxref bundle, so a
+ * bundle built against one version of py2max and used with another declares
+ * wrong port counts -- and a box that declares a port it does not have loses
+ * the cord attached to it when Max opens the file.
+ */
+const PKG = join(ROOT, "..", "py2max", "data", "js2max");
 
 interface Artifact {
   entry: string;
@@ -52,26 +76,36 @@ const check = process.argv.includes("--check");
 let stale = false;
 
 await mkdir(OUT, { recursive: true });
+await mkdir(PKG, { recursive: true });
+
+/** Both homes for one artifact, labelled as they appear in messages. */
+function destinations(outfile: string): { label: string; path: string }[] {
+  return [
+    { label: `max/${outfile}`, path: join(OUT, outfile) },
+    { label: `py2max/data/js2max/${outfile}`, path: join(PKG, outfile) },
+  ];
+}
 
 for (const artifact of ARTIFACTS) {
-  const path = join(OUT, artifact.outfile);
   const fresh = await bundle(artifact);
 
-  if (check) {
-    const current = existsSync(path) ? await readFile(path, "utf8") : null;
-    if (current !== fresh) {
-      console.error(`max/${artifact.outfile} is stale; run: bun run build`);
-      stale = true;
-    } else {
-      console.log(`max/${artifact.outfile} is up to date`);
+  for (const { label, path } of destinations(artifact.outfile)) {
+    if (check) {
+      const current = existsSync(path) ? await readFile(path, "utf8") : null;
+      if (current !== fresh) {
+        console.error(`${label} is stale; run: bun run build`);
+        stale = true;
+      } else {
+        console.log(`${label} is up to date`);
+      }
+      continue;
     }
-    continue;
-  }
 
-  await writeFile(path, fresh);
-  console.log(
-    `wrote max/${artifact.outfile} (${artifact.format}, ${(fresh.length / 1024).toFixed(1)} KB)`,
-  );
+    await writeFile(path, fresh);
+    console.log(
+      `wrote ${label} (${artifact.format}, ${(fresh.length / 1024).toFixed(1)} KB)`,
+    );
+  }
 }
 
 if (stale) process.exit(1);

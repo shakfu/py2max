@@ -3,7 +3,10 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A pure Python library for offline generation of Max/MSP patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`).
+A pure Python library for generating Max/MSP patcher files (`.maxpat`,
+`.maxhelp`, `.rbnopat`) -- offline, and, via its
+[js2max](#building-patches-inside-max-js2max) bridge, *inside a running Max
+patcher*.
 
 If you are looking for Python 3 externals for Max/MSP, check out the [py-js](https://github.com/shakfu/py-js) project.
 
@@ -50,11 +53,52 @@ That's it! Open `my-synth.maxpat` in Max to see your patch.
 ### Core Capabilities
 
 - **Offline Patch Generation** - Create Max patches programmatically without Max running
+- **Live Patch Building ([js2max](#building-patches-inside-max-js2max))** - Build into an *open* patcher through Max's `v8` object, and serialize one back out; the JavaScript runtime ships in the wheel
 - **Round-trip Conversion** - Load, modify, and save existing `.maxpat` files
 - **Max for Live (.amxd)** - Read/write binary `.amxd` device files with presentation-mode helpers
 - **Universal Object Support** - Works with any Max/MSP/Jitter object
 - **Fully typed** - Passes `mypy --strict`; no runtime dependencies
 - **High Test Coverage** - 420+ tests ensure reliability
+
+### Building patches inside Max (js2max)
+
+py2max writes `.maxpat` files that Max later opens. [`js2max/`](js2max/) is the
+JavaScript counterpart, and does the one thing Python cannot: Max embeds a
+JavaScript engine, so a `v8` script runs **inside an open patcher** and builds
+into it directly, from the same patch description py2max writes.
+
+```
+[import my-patch.json(        [builddict my_patch(
+        |                              |
+[dict my_patch]                [v8 js2max.v8.js]
+```
+
+Both directions work and are confirmed against Max: a description becomes live
+objects, and a live patcher serializes back to a `.maxpat` that Max reopens.
+
+**The runtime ships with py2max**, so `pip install py2max` is all you need:
+
+```python
+p = Patcher('builder.maxpat')
+p.add_v8_bridge()   # adds [v8 js2max.v8.js]
+p.save()            # writes builder.maxpat AND js2max.v8.js beside it
+```
+
+Max resolves a bare filename through the folder holding the patch, so the two
+sitting together need no configuration. Nothing is written for a patch that
+never asked for the bridge. `py2max.js2max_runtime.path()` and `install()` are
+there if you would rather place it yourself.
+
+Shipping them together is a correctness guarantee, not just a convenience:
+`js2max/src/objects.ts` -- the port counts for 1098 object classes -- is
+generated from py2max's own maxref data, so a runtime paired with a different
+py2max version would declare wrong ports, and a box declaring a port it does not
+have loses the cord attached to it when Max opens the file.
+
+Full guide: [Building Patches Inside Max](docs/user_guide/js2max.md). Source and
+what has been confirmed against Max: [`js2max/README.md`](js2max/README.md).
+Building the runtime needs [Bun](https://bun.sh) (`make js2max`); using it does
+not.
 
 ### Max for Live (.amxd)
 
@@ -83,29 +127,6 @@ Helpers: `Patcher.enable_presentation(devicewidth=...)`,
 `Box.add_to_presentation([x, y, w, h])` (rejects M4L infrastructure objects and
 rounds fractional coordinates), and `Patcher.enforce_integer_coords()`. M4L
 binary helpers live in `py2max.m4l`.
-
-### Building patches inside Max (js2max)
-
-py2max writes `.maxpat` files that Max later opens. [`js2max/`](js2max/) is the
-JavaScript counterpart, and does the one thing Python cannot: Max embeds a
-JavaScript engine, so a `v8` script runs **inside an open patcher** and builds
-into it directly, from the same patch description py2max writes.
-
-```
-[import my-patch.json(        [builddict my_patch(
-        |                              |
-[dict my_patch]                [v8 js2max.v8.js]
-```
-
-Both directions work and are confirmed against Max: a description becomes live
-objects, and a live patcher serializes back to a `.maxpat` that Max reopens. The
-loadable artifacts are committed, so using it needs no toolchain -- drop
-`js2max/max/js2max.v8.js` beside a patch, or `require("js2max.js")` from your own
-script. `js2max/src/objects.ts` is generated from py2max's maxref bundle, so both
-packages agree on what every Max object is.
-
-See [`js2max/README.md`](js2max/README.md). Building it needs [Bun](https://bun.sh)
-(`make js2max`); using it does not.
 
 ### Interactive Server (separate package)
 

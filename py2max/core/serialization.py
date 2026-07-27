@@ -24,7 +24,20 @@ class SerializationMixin(AbstractPatcher):
     """Instance serialization (to dict/json and saving to disk) for Patcher."""
 
     def to_dict(self) -> Dict[str, Any]:
-        """create dict from object with extra kwds included"""
+        """Return the patcher as a ``.maxpat`` dictionary.
+
+        Renders first, so the result is the patcher as it stands rather than as
+        it stood after whatever last happened to render it. It did not, and the
+        failure was silent and order-dependent: ``to_dict()`` returned a patcher
+        with *no boxes* until something else called ``render()``, and the same
+        call on the same object then started returning them. A test asserting
+        over ``to_dict()`` examined an empty patcher and passed for the wrong
+        reason, which is how this was found.
+
+        Rendering here also removes the asymmetry with ``Box.to_dict()``, which
+        has always returned a populated box with no preparation required.
+        """
+        self.render()
         d = vars(self).copy()
         to_del = [k for k in d if k.startswith("_")]
         for k in to_del:
@@ -35,7 +48,8 @@ class SerializationMixin(AbstractPatcher):
 
     def to_json(self) -> str:
         """cascade convert to json"""
-        self.render()
+        # No `render()` here: `to_dict()` does its own, and rendering twice was
+        # only ever safe because it is idempotent.
         return json.dumps(self.to_dict(), indent=4)
 
     def save_as(self, path: Union[str, Path]) -> None:
@@ -96,6 +110,15 @@ class SerializationMixin(AbstractPatcher):
             else:
                 with open(resolved_path, "w", encoding="utf8") as f:
                     json.dump(self.to_dict(), f, indent=4)
+
+            # A patch holding a [v8 js2max.v8.js] box needs that file beside
+            # it, or it opens with a broken object. Only patchers that asked for
+            # the bridge get one, so an ordinary save never writes a second file.
+            if getattr(self, "_needs_js2max_runtime", False):
+                from py2max import js2max_runtime
+
+                installed = js2max_runtime.install(resolved_path.parent)
+                logger.info(f"Installed js2max runtime: {installed}")
 
             logger.info(
                 f"Saved patcher to: {resolved_path} ({len(self._boxes)} objects, {len(self._lines)} connections)"

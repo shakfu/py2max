@@ -126,13 +126,23 @@ Two items remain, both gated on field experience:
 
 ### `Patcher.to_dict()` returns an unrendered patcher
 
-- [ ] `p.to_dict()["patcher"]["boxes"]` is empty until something calls
-  `render()`, which `to_json()`/`save()` do and `to_dict()` does not. The name
-  says otherwise, and the failure is silent: a test asserting over `to_dict()`
-  examines an empty patcher and passes for the wrong reason (this happened while
-  writing `test_no_nulls_anywhere_in_a_representative_patch`). Either render in
-  `to_dict()` or rename it; check `from_dict`/round-trip callers first, since
-  `Box.to_dict()` *does* return a populated box and the asymmetry may be load-bearing.
+- [x] `p.to_dict()["patcher"]["boxes"]` was empty until something called
+  `render()`. DONE: `to_dict()` renders on its own behalf, which also removes
+  the asymmetry with `Box.to_dict()` -- that has always returned a populated box
+  with no preparation. Renaming was the alternative and would have left the trap
+  in place under a new name, for 104 call sites.
+
+  The failure was worse than "empty": it was **order-dependent**, so the same
+  call on the same object returned nothing and then started returning boxes once
+  anything else rendered. That is what let a test assert over an empty patcher
+  and pass.
+
+  Fixing it required making `render()` idempotent first, since `to_dict()` now
+  renders underneath `save_as()`'s own render. `self.boxes` was *appended* to
+  while `self.lines` was rebuilt, so a second render duplicated every box and no
+  line -- reachable only via `reset_on_render=False`, which nothing in the
+  repository passes, which is why it had never bitten. `tests/test_serialization.py`
+  pins both properties.
 
 ### Database Improvements
 
@@ -257,74 +267,73 @@ Deferred; each is a sizeable, self-contained effort.
   unaffected, since it never reads anything back. `bgcolor` / `textcolor` are out of
   the default attribute set, so a deliberately coloured box loses its colour on
   a round trip; `allAttributes` recovers it at the cost of writing Max's
-  defaults everywhere. The font fix works because a patcher records
-  `default_fontsize`; there is no `default_bgcolor` to compare against, so this
-  needs a different discriminator -- possibly reading a freshly created object
-  of the same class, which is precise but creates and destroys objects in the
+  defaults everywhere.
+
+  The rationale recorded here was wrong and is worth correcting, because it also
+  rules out the obvious fix. Fonts do **not** work by reading the patcher's
+  `default_fontsize`: `getattr` returns null for that and for both its siblings,
+  measured in Max. They work because the filter falls back to Max's *own*
+  defaults -- Arial, 12, face 0 -- which are fixed values a box can be compared
+  against. Colours cannot use the same trick: the default `textcolor` observed
+  on a real box was `[0.9, 0.9, 0.9, 1]`, a **dark-theme** value, so Max's
+  default colours move with the theme while its default font does not. A
+  discriminator would have to come from elsewhere -- reading a freshly created
+  object of the same class is precise, but creates and destroys objects in the
   user's patch.
 
-- [ ] **Check whether the unrecoverable keys matter.** `filename` / `textfile`
-  are redundant with `text` on a `[v8]` box and `linecount` is display state Max
-  recomputes, so a written patch may reopen perfectly without them. Open one and
-  find out; if it does, nothing further is needed here.
+- [x] **Open a written patch in Max.** DONE. The whole harness -- 15 boxes, 10
+  cords, comments, message boxes, a `[v8]` object and a `print` -- was
+  serialized out of the live patcher and **opened cleanly**, with ten of the
+  fifteen boxes byte-identical to the source. The three residual differences are
+  understood: one deliberately styled comment keeps its `fontsize`, four comment
+  heights were recomputed by Max's own text wrapping, and `print` is written
+  without port counts because maxref states none for it.
 
-- [ ] **Open a written patch in Max.** `serialize` produces boxes matching
-  py2max's own output for the same objects, but no file it wrote has been opened
-  yet. Send `write out.maxpat` in the harness and open the result.
+- [x] **Check whether the unrecoverable keys matter.** DONE, by the same run:
+  they do not. The patch that opened has no `filename`, `textfile` or
+  `linecount` anywhere, and Max neither complained nor behaved differently. They
+  are save-time bookkeeping, as suspected. Nothing further needed.
 
-- [ ] `js2max/src/objects.ts` adds ~45 KB, taking the bundle from 20 KB to
-  67 KB. Acceptable for a Max artifact, but if it matters: only the 43
-  own-maxclass entries are needed for correctness, since port counts can be
-  omitted. Consider splitting the table so `serialize` can be used without it.
+- [ ] `js2max/src/objects.ts` is 44 KB of the 92 KB `js2max.v8.js` bundle (the
+  CommonJS build is 68 KB). Acceptable for a Max artifact, but if it matters:
+  only the 43 own-maxclass entries are needed for correctness, since port counts
+  can be omitted and Max derives them -- confirmed, since the patch that opened
+  in Max has no ports on its `print` box. Consider splitting the table so
+  `serialize` can be used without it.
 
-- [ ] **Use more of the Max JS API rather than hand-rolling.** The bridge
-  currently walks `firstobject`/`nextobject` where `applydeep` / `applyif` /
-  `getlogical` exist, and ignores `MaxobjListener`, `Dict`, `Task` and `File`
-  entirely. Check the [API reference](https://docs.cycling74.com/apiref/js/)
-  before adding to `scripting.ts` -- one wrong assumption about it (that
-  patchlines could not be enumerated) already cost a feature.
+- [ ] **Use more of the Max JS API rather than hand-rolling.** Partly done:
+  `File` backs `src/fileio.ts` and `Dict` backs `src/dict.ts`, and the
+  `firstobject` walk that was copied five times is now one exported `objectsOf`.
+  Still unused: `applydeep` / `applyif` / `getlogical` for iteration, and
+  `MaxobjListener` and `Task` entirely. Check the
+  [API reference](https://docs.cycling74.com/apiref/js/) before adding to
+  `scripting.ts` -- one wrong assumption about it (that patchlines could not be
+  enumerated) already cost a feature, and a second (that `newdefault` reports an
+  unknown class) hid a bug for the life of the bridge.
 
-- [x] **Finish verifying the v8 bridge in Max.** DONE, over four runs of
-  `verify` / `diagnose`. Three real bugs came out of it, all now fixed:
-  `newdefault` returns a `jbogus` placeholder rather than null for an unknown
-  class (so unknown classes had never been detected); a message box has to be
-  built with `newobject`, since every `newdefault` route leaves it empty (so
-  every message box the bridge built was blank); and `getattrnames()` returns
-  null for some objects, which crashed `write ... full` on any patcher holding a
-  `trigger`. Subpatcher recursion and `snapshot` were confirmed working.
+- [x] **Finish verifying the v8 bridge in Max.** DONE, over six runs of
+  `verify` / `diagnose` / `probe`. Seven defects came out of it, all fixed and
+  recorded in `js2max/CHANGELOG.md`. The two that had been shipping longest:
+  `newdefault` returns a `jbogus` placeholder rather than null for a class Max
+  does not have, so unknown classes had never been detected at all; and a
+  message box needs `newobject` to receive its text, since every `newdefault`
+  route leaves it empty, so every message box the bridge built was blank. The
+  other five were `getattrnames()` returning null (which crashed
+  `write ... full` on any patcher holding a `trigger`), three fidelity bugs in
+  what a serialized patch carried, and `dict` having no `import_json` message.
 
-  A later run confirmed the message-box fix (`verify` 4/4) and, via `probe` and
-  a real `write`, turned up three more fidelity bugs -- fonts and
-  `presentation_rect` written onto every box, and the window geometry defaulted
-  rather than read. All fixed.
+  `verify` (in `js2max/max/v8-harness.maxpat`) is the standing check: five
+  assumptions, one click, and `[NO ]` on any line is a real finding. The checks
+  are themselves tested against a mock host rigged to fail in each of those ways
+  (`js2max/test/verify.test.ts`), since a check that cannot fail reports "yes"
+  whether or not the assumption holds. `diagnose` is the follow-up for when one
+  fails: it builds the variants side by side and prints every readable field,
+  which is what each fix was written from.
 
-  **A patch js2max wrote now opens in Max**, ten of fifteen boxes byte-identical
-  to the source; the three residual differences are understood and benign.
-
-  The `dict` route is confirmed too: `save` -> `import` -> `builddict` builds
-  the nine boxes, so `Dict.stringify()` returns parseable JSON for a whole
-  patch.
-
-  Still open, and small: comments are built by the same `newobject` signature by
-  inference, which `verify` check 4 reports on; `write ... full` has not been
-  opened in Max; and `read` has not been run at all, though `builddict` shares
-  every step of it but the file access. `verify` (in `js2max/max/v8-harness.maxpat`)
-  exercises all four assumptions the bridge rests on -- `message("set", ...)` on
-  a `newdefault`-created message box, whether `newdefault` returns null or
-  throws for an unknown class, whether a subpatcher box exposes its patcher, and
-  `snapshot` -- building what each check needs, reading back what Max did, and
-  removing it again. One click; any line logged `[NO ]` is a real finding.
-
-  The checks are in `js2max/src/verify.ts` and are themselves tested against a
-  mock host configured to fail in each of those ways (`test/verify.test.ts`),
-  since a check that cannot fail reports "yes" either way.
-
-  `build <json>` is deliberately not in the harness: a message box ends the
-  message at the first `,`, so the document never reaches the handler whole and
-  there is nothing to learn from watching it fail. The handler rejoins every
-  atom it is given and reports what arrived; a real fix is the `dict`-based
-  route. Also worth doing in the same session: `probe` prints the patcher's `rect` and font defaults, which settles
-  whether `serialize` can read the window geometry back (see below).
+  Still open, all small: comments are built by the `newobject` signature by
+  inference from the message-box case, which `verify` check 4 reports on;
+  `write ... full` has not been opened in Max; and `read` has not been run,
+  though `builddict` shares every step of it but the file access.
 
 - [ ] **Decide whether Python should emit v8 scripts.** Now that `v8` is a
   target, the alternative to a TS core is codegen: py2max writes the patch *and*

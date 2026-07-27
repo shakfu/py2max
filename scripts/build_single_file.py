@@ -127,6 +127,47 @@ class GraphLayoutManager:  # pragma: no cover - excluded from the single file
         )
 '''
 
+# py2max/js2max_runtime.py is excluded: the single file cannot carry 160 KB of
+# bundled JavaScript, and the runtime is package *data* rather than code, so
+# there is nothing to amalgamate. `add_v8_bridge` refers to both names below.
+JS2MAX_STUB = '''
+#: Filename of the js2max drop-in build, as a patch refers to it.
+V8_BUNDLE = "js2max.v8.js"
+
+
+class _JS2MaxRuntimeStub:  # pragma: no cover - excluded from the single file
+    """Placeholder: the js2max runtime is package *data*, not code.
+
+    The two bundles are 160 KB of built JavaScript. A single file whose point is
+    to be one readable, dependency-free module cannot carry them, and there is
+    nothing to amalgamate in any case -- they are assets, not Python.
+
+    ``add_v8_bridge()`` still builds the box, so a patch can be generated here
+    and the runtime placed beside it by hand. Pass its filename with
+    ``add_v8_bridge(bundle=...)`` and nothing is installed for you.
+    """
+
+    V8_BUNDLE = V8_BUNDLE
+
+    @staticmethod
+    def path(flavor: str = "v8") -> Any:
+        raise NotImplementedError(_JS2MaxRuntimeStub._message)
+
+    @staticmethod
+    def install(dest: Any, flavor: str = "v8") -> Any:
+        raise NotImplementedError(_JS2MaxRuntimeStub._message)
+
+    _message = (
+        "the js2max runtime is not bundled in the single-file edition of "
+        "py2max; install the full package (pip install py2max), or copy "
+        "js2max.v8.js beside the patch yourself and name it with "
+        "add_v8_bridge(bundle=...)"
+    )
+
+
+js2max_runtime = _JS2MaxRuntimeStub()
+'''
+
 PUBLIC_API = [
     "Patcher",
     "Box",
@@ -548,6 +589,7 @@ from __future__ import annotations
         rendered.insert(shim_index, render_shim(build_maxref_table()))
     parts.extend(rendered)
     parts.append(GRAPH_STUB)
+    parts.append(JS2MAX_STUB)
 
     # Re-emit aliases lost with their stripped imports. Emitted last because the
     # targets must already be defined; every use is inside a function body, so

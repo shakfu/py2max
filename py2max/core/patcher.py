@@ -150,6 +150,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._semantic_ids = semantic_ids
         self._semantic_counters: dict[str, int] = {}  # Track counts per object type
         self._device_type = device_type  # M4L device type for .amxd writes
+        # Set by add_v8_bridge(); save() then writes the js2max runtime beside
+        # the patch. Only when asked for, so an ordinary save never drops a
+        # stray .js file next to someone's patcher.
+        self._needs_js2max_runtime = False
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
         self._num_dimensions = num_dimensions
@@ -494,14 +498,26 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         return None
 
     def render(self, reset: bool = False) -> None:
-        """cascade convert py2max objects to dicts."""
+        """cascade convert py2max objects to dicts.
+
+        Idempotent: rendering twice produces the same patcher, not two copies of
+        it. That matters because ``to_dict()`` renders on its own behalf, so a
+        ``save_as()`` renders once for its own log line and again underneath --
+        and because a caller has no way to know whether a render already
+        happened.
+
+        ``self.boxes`` used to be *appended* to while ``self.lines`` was
+        rebuilt, so a second render duplicated every box and no line. Nothing in
+        the repository passed ``reset_on_render=False``, which is the only way
+        to reach that path, so the asymmetry had never bitten -- but it made
+        rendering order-dependent in exactly the way ``to_dict()`` was.
+        """
         # Flush deferred associated comments here (not only in save()) so every
         # serialization entry point -- save, save_as, to_json -- emits them.
         # Idempotent: _process_pending_comments clears its queue after running.
         self._process_pending_comments()
-        if reset or self._reset_on_render:
-            self.boxes = []
-            self.lines = []
+        self.boxes = []
+        self.lines = []
         for box in self._boxes:
             box.render()
             self.boxes.append(box.to_dict())

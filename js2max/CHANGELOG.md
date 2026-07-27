@@ -6,26 +6,36 @@ patches live inside Max through the `v8` object.
 
 Kept separate from the Python package's [CHANGELOG](../CHANGELOG.md) for one
 reason: **audience**. That file ships in py2max's sdist and is read by people who
-installed py2max from PyPI, and js2max is not in the wheel -- so entries about
-`newobject` signatures and Max's `jbogus` placeholder are noise to every reader
-it reaches. js2max also changes far faster than the Python package, which was
-turning that noise into most of the file. The root changelog announces js2max's
-existence and points here; everything after the announcement lives in this file.
+installed py2max from PyPI, most of whom will never open Max's `v8` object -- so
+entries about `newobject` signatures and Max's `jbogus` placeholder are noise to
+almost every reader it reaches. js2max also changes far faster than the Python
+package, which was turning that noise into most of the file. The root changelog
+announces js2max's existence and points here; everything after the announcement
+lives in this file.
 
-**Not** because js2max is versioned separately -- it is not versioned at all
-(`package.json` says `0.0.0`, `private`). It is unpublished, ships by being
-committed to this repository, and is generated from and checked against py2max:
-`src/objects.ts` comes from py2max's maxref bundle, the verification patches are
-emitted by py2max, and `make js2max-check` runs in py2max's CI. The two are
-tightly coupled, and this split is about who reads what, not about independence.
-Everything below is therefore unreleased, and will stay that way unless js2max
-ever ships on its own.
+**Not** because js2max is independent. It is not versioned at all
+(`package.json` says `0.0.0`, `private`), it is unpublished, and its built
+bundles ship *inside* the py2max wheel as package data, so the two are
+distributed as a single artifact. It is generated from and checked against
+py2max at every turn: `src/objects.ts` comes from py2max's maxref bundle, the
+verification patches are emitted by py2max, `make js2max-check` runs in py2max's
+CI, and `py2max.js2max_runtime` is what writes the runtime beside a generated
+patch. The coupling is tighter now than when this file was split off, and the
+split is about who reads what, not about independence.
+
+js2max therefore has no version of its own. The headings below carry the py2max
+release its bundles shipped in, because that is the only sense in which any of
+it is released.
 
 Entries are newest-first, and describe what changed and why. Much of what
 follows was established by running the code inside Max rather than by reading
 the reference; where the two disagreed, the reference lost.
 
 ## [Unreleased]
+
+## [0.4.0] - 2026-07-27
+
+Shipped inside py2max 0.4.0, which is where the built bundles now live.
 
 ### New: the TypeScript core builds patches live inside Max via `v8`
 
@@ -36,9 +46,10 @@ patcher through the `v8` object, and serializes a running patcher back to a
 matters most: a file js2max wrote **opens in Max**, ten of its fifteen boxes
 byte-identical to the patch it was serialized from. A description reaches it
 from a file (`read`), from a Max `dict` (`builddict`), or from py2max directly.
-Two loadable artifacts are committed, so a Max user needs no toolchain, and
-`src/objects.ts` is generated from py2max's maxref bundle so both packages agree
-on what every Max object is. 236 tests; `make js2max-check` verifies the lot.
+Two loadable artifacts are committed *and* ship inside the py2max wheel, so
+neither a Max user nor a `pip install` user needs a toolchain;
+`src/objects.ts` is generated from py2max's maxref bundle, so both packages
+agree on what every Max object is and cannot be paired out of step. 236 tests; `make js2max-check` verifies the lot.
 
 Nine defects were found and fixed along the way. Two were found by reading the
 code; **seven were only findable by running it inside Max**, and several had

@@ -286,7 +286,7 @@ processors, outputs):
 You can override automatic layout for specific objects:
 
 ``` python
-from py2max.common import Rect
+from py2max.core.common import Rect
 
 p = Patcher('custom-positions.maxpat', layout="grid")
 

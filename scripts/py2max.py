@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.3.6, generated from bded55c (working tree modified)
+py2max 0.3.6, generated from 49a7a0f (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
@@ -2897,6 +2897,7 @@ class AbstractPatcher(ABC):
     _semantic_ids: bool
     _semantic_counters: dict[str, int]
     _device_type: str
+    _needs_js2max_runtime: bool
     classnamespace: str
     _pending_comments: list[tuple[str, str, Optional[str]]]
     # Rendered (dict) forms, populated by render() and read by serialization.
@@ -5016,7 +5017,20 @@ class SerializationMixin(AbstractPatcher):
     """Instance serialization (to dict/json and saving to disk) for Patcher."""
 
     def to_dict(self) -> Dict[str, Any]:
-        """create dict from object with extra kwds included"""
+        """Return the patcher as a ``.maxpat`` dictionary.
+
+        Renders first, so the result is the patcher as it stands rather than as
+        it stood after whatever last happened to render it. It did not, and the
+        failure was silent and order-dependent: ``to_dict()`` returned a patcher
+        with *no boxes* until something else called ``render()``, and the same
+        call on the same object then started returning them. A test asserting
+        over ``to_dict()`` examined an empty patcher and passed for the wrong
+        reason, which is how this was found.
+
+        Rendering here also removes the asymmetry with ``Box.to_dict()``, which
+        has always returned a populated box with no preparation required.
+        """
+        self.render()
         d = vars(self).copy()
         to_del = [k for k in d if k.startswith("_")]
         for k in to_del:
@@ -5027,7 +5041,8 @@ class SerializationMixin(AbstractPatcher):
 
     def to_json(self) -> str:
         """cascade convert to json"""
-        self.render()
+        # No `render()` here: `to_dict()` does its own, and rendering twice was
+        # only ever safe because it is idempotent.
         return json.dumps(self.to_dict(), indent=4)
 
     def save_as(self, path: Union[str, Path]) -> None:
@@ -5087,6 +5102,13 @@ class SerializationMixin(AbstractPatcher):
             else:
                 with open(resolved_path, "w", encoding="utf8") as f:
                     json.dump(self.to_dict(), f, indent=4)
+
+            # A patch holding a [v8 js2max.v8.js] box needs that file beside
+            # it, or it opens with a broken object. Only patchers that asked for
+            # the bridge get one, so an ordinary save never writes a second file.
+            if getattr(self, "_needs_js2max_runtime", False):
+                installed = js2max_runtime.install(resolved_path.parent)
+                logger.info(f"Installed js2max runtime: {installed}")
 
             logger.info(
                 f"Saved patcher to: {resolved_path} ({len(self._boxes)} objects, {len(self._lines)} connections)"
@@ -5814,6 +5836,63 @@ class BoxFactoryMixin(AbstractPatcher):
             ),
             comment,
             comment_pos,
+        )
+
+    def add_v8_bridge(
+        self,
+        bundle: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds: "Unpack[TextboxProps]",
+    ) -> "Box":
+        """Add a ``[v8]`` box running the js2max bridge, and ship it with the patch.
+
+        js2max is the JavaScript counterpart to this package: it runs *inside*
+        an open patcher and can build objects into it from a patch description,
+        or serialize the patcher back out to a ``.maxpat``. Adding this box is
+        what makes a generated patch able to do either.
+
+        The runtime is written next to the patch when it is saved -- Max
+        resolves a bare filename through the folder holding the patch, so the
+        two sitting together need no configuration. Nothing is written for a
+        patcher that never called this, so an ordinary ``save()`` cannot leave a
+        stray ``.js`` file behind.
+
+        Args:
+            bundle: Filename of the runtime to load. Defaults to the shipped
+                drop-in build; pass another name only if you are installing the
+                runtime yourself under a different name.
+            patching_rect: Position and size of the box.
+            id: Explicit object id.
+            comment: Associated comment text.
+            comment_pos: Where to place the associated comment.
+            **kwds: Further box properties.
+
+        Returns:
+            The ``[v8]`` box, so it can be wired up like any other.
+
+        Example:
+            >>> p = Patcher('builder.maxpat')
+            >>> bridge = p.add_v8_bridge()
+            >>> p.save()   # writes builder.maxpat and js2max.v8.js beside it
+        """
+
+        # Marks the patcher, not the box: `save_as` needs to know whether to
+        # install the runtime, and it is the patcher that gets saved.
+        #
+        # Only for the shipped bundle. A caller naming their own file has placed
+        # it themselves, and copying `js2max.v8.js` next to a patch that refers
+        # to something else would be both useless and surprising.
+        self._needs_js2max_runtime = bundle is None or bundle == V8_BUNDLE
+        return self.add_textbox(
+            f"v8 {bundle or V8_BUNDLE}",
+            patching_rect=patching_rect,
+            id=id,
+            comment=comment,
+            comment_pos=comment_pos,
+            **kwds,
         )
 
     def add_message(
@@ -8761,6 +8840,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._semantic_ids = semantic_ids
         self._semantic_counters: dict[str, int] = {}  # Track counts per object type
         self._device_type = device_type  # M4L device type for .amxd writes
+        # Set by add_v8_bridge(); save() then writes the js2max runtime beside
+        # the patch. Only when asked for, so an ordinary save never drops a
+        # stray .js file next to someone's patcher.
+        self._needs_js2max_runtime = False
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
         self._num_dimensions = num_dimensions
@@ -9103,14 +9186,26 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         return None
 
     def render(self, reset: bool = False) -> None:
-        """cascade convert py2max objects to dicts."""
+        """cascade convert py2max objects to dicts.
+
+        Idempotent: rendering twice produces the same patcher, not two copies of
+        it. That matters because ``to_dict()`` renders on its own behalf, so a
+        ``save_as()`` renders once for its own log line and again underneath --
+        and because a caller has no way to know whether a render already
+        happened.
+
+        ``self.boxes`` used to be *appended* to while ``self.lines`` was
+        rebuilt, so a second render duplicated every box and no line. Nothing in
+        the repository passed ``reset_on_render=False``, which is the only way
+        to reach that path, so the asymmetry had never bitten -- but it made
+        rendering order-dependent in exactly the way ``to_dict()`` was.
+        """
         # Flush deferred associated comments here (not only in save()) so every
         # serialization entry point -- save, save_as, to_json -- emits them.
         # Idempotent: _process_pending_comments clears its queue after running.
         self._process_pending_comments()
-        if reset or self._reset_on_render:
-            self.boxes = []
-            self.lines = []
+        self.boxes = []
+        self.lines = []
         for box in self._boxes:
             box.render()
             self.boxes.append(box.to_dict())
@@ -10599,6 +10694,43 @@ class GraphLayoutManager:  # pragma: no cover - excluded from the single file
             "graph layouts are not available in the single-file edition of "
             'py2max; install the full package: pip install "py2max[graph]"'
         )
+
+
+#: Filename of the js2max drop-in build, as a patch refers to it.
+V8_BUNDLE = "js2max.v8.js"
+
+
+class _JS2MaxRuntimeStub:  # pragma: no cover - excluded from the single file
+    """Placeholder: the js2max runtime is package *data*, not code.
+
+    The two bundles are 160 KB of built JavaScript. A single file whose point is
+    to be one readable, dependency-free module cannot carry them, and there is
+    nothing to amalgamate in any case -- they are assets, not Python.
+
+    ``add_v8_bridge()`` still builds the box, so a patch can be generated here
+    and the runtime placed beside it by hand. Pass its filename with
+    ``add_v8_bridge(bundle=...)`` and nothing is installed for you.
+    """
+
+    V8_BUNDLE = V8_BUNDLE
+
+    @staticmethod
+    def path(flavor: str = "v8") -> Any:
+        raise NotImplementedError(_JS2MaxRuntimeStub._message)
+
+    @staticmethod
+    def install(dest: Any, flavor: str = "v8") -> Any:
+        raise NotImplementedError(_JS2MaxRuntimeStub._message)
+
+    _message = (
+        "the js2max runtime is not bundled in the single-file edition of "
+        "py2max; install the full package (pip install py2max), or copy "
+        "js2max.v8.js beside the patch yourself and name it with "
+        "add_v8_bridge(bundle=...)"
+    )
+
+
+js2max_runtime = _JS2MaxRuntimeStub()
 
 
 # Aliases from stripped intra-package imports (e.g. `from .lint import lint as _lint_patch`).

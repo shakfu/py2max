@@ -1037,9 +1037,7 @@ class MaxRefDB:
         setup is visible -- and where it goes -- is the application's call.
         `py2max.setup_logging("INFO")` shows it.
         """
-        logger.info(
-            "initializing py2max cache (one-time setup) at %s", self.db_path
-        )
+        logger.info("initializing py2max cache (one-time setup) at %s", self.db_path)
         self.populate()
         logger.info("cache ready with %d objects", self.count)
 

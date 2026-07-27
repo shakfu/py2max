@@ -148,6 +148,7 @@ class AbstractPatcher(ABC):
     _semantic_ids: bool
     _semantic_counters: dict[str, int]
     _device_type: str
+    _needs_js2max_runtime: bool
     classnamespace: str
     _pending_comments: list[tuple[str, str, Optional[str]]]
     # Rendered (dict) forms, populated by render() and read by serialization.

@@ -72,6 +72,7 @@ def _first_param_name(method: Callable[..., Any]) -> Optional[str]:
         _FIRST_PARAM_CACHE[func] = name
     return _FIRST_PARAM_CACHE[func]
 
+
 # Max objects whose inlet/outlet counts are determined by their code rather
 # than by a fixed maxref entry. Connection validation for these consults the
 # box's own declared numinlets/numoutlets instead of the static maxref data.
@@ -500,9 +501,7 @@ class BoxFactoryMixin(AbstractPatcher):
             comment_pos,
         )
 
-    def _textbox_helper(
-        self, maxclass: str, kwds: "TextboxProps"
-    ) -> "TextboxProps":
+    def _textbox_helper(self, maxclass: str, kwds: "TextboxProps") -> "TextboxProps":
         """adds special case support for textbox"""
         if self.classnamespace == "rnbo":
             kwds["rnbo_classname"] = maxclass
@@ -554,8 +553,7 @@ class BoxFactoryMixin(AbstractPatcher):
         if not isinstance(longname, str):
             kind = "int" if isinstance(value, int) else "float"
             raise ValueError(
-                f"should be: .add(<{kind}>, '<name>')"
-                f" OR .add(<{kind}>, name='<name>')"
+                f"should be: .add(<{kind}>, '<name>') OR .add(<{kind}>, name='<name>')"
             )
         # explicit keywords win over the values derived from the call
         return cast(
@@ -719,6 +717,64 @@ class BoxFactoryMixin(AbstractPatcher):
             ),
             comment,
             comment_pos,
+        )
+
+    def add_v8_bridge(
+        self,
+        bundle: Optional[str] = None,
+        patching_rect: Optional[Rect] = None,
+        id: Optional[str] = None,
+        comment: Optional[str] = None,
+        comment_pos: Optional[str] = None,
+        **kwds: "Unpack[TextboxProps]",
+    ) -> "Box":
+        """Add a ``[v8]`` box running the js2max bridge, and ship it with the patch.
+
+        js2max is the JavaScript counterpart to this package: it runs *inside*
+        an open patcher and can build objects into it from a patch description,
+        or serialize the patcher back out to a ``.maxpat``. Adding this box is
+        what makes a generated patch able to do either.
+
+        The runtime is written next to the patch when it is saved -- Max
+        resolves a bare filename through the folder holding the patch, so the
+        two sitting together need no configuration. Nothing is written for a
+        patcher that never called this, so an ordinary ``save()`` cannot leave a
+        stray ``.js`` file behind.
+
+        Args:
+            bundle: Filename of the runtime to load. Defaults to the shipped
+                drop-in build; pass another name only if you are installing the
+                runtime yourself under a different name.
+            patching_rect: Position and size of the box.
+            id: Explicit object id.
+            comment: Associated comment text.
+            comment_pos: Where to place the associated comment.
+            **kwds: Further box properties.
+
+        Returns:
+            The ``[v8]`` box, so it can be wired up like any other.
+
+        Example:
+            >>> p = Patcher('builder.maxpat')
+            >>> bridge = p.add_v8_bridge()
+            >>> p.save()   # writes builder.maxpat and js2max.v8.js beside it
+        """
+        from py2max.js2max_runtime import V8_BUNDLE
+
+        # Marks the patcher, not the box: `save_as` needs to know whether to
+        # install the runtime, and it is the patcher that gets saved.
+        #
+        # Only for the shipped bundle. A caller naming their own file has placed
+        # it themselves, and copying `js2max.v8.js` next to a patch that refers
+        # to something else would be both useless and surprising.
+        self._needs_js2max_runtime = bundle is None or bundle == V8_BUNDLE
+        return self.add_textbox(
+            f"v8 {bundle or V8_BUNDLE}",
+            patching_rect=patching_rect,
+            id=id,
+            comment=comment,
+            comment_pos=comment_pos,
+            **kwds,
         )
 
     def add_message(
