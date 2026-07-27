@@ -1173,10 +1173,15 @@
 
 
 <h1 id="py2max-documentation">py2max Documentation<a class="headerlink" href="#py2max-documentation" title="Permanent link">&para;</a></h1>
-<p><strong>py2max</strong> is a pure Python library for offline generation of Max/MSP patcher files (.maxpat, .maxhelp, .rbnopat). It provides a Python object model that mirrors Max's patch organization with round-trip conversion capabilities.</p>
+<p><strong>py2max</strong> is a pure Python library for generating Max/MSP patcher files
+(.maxpat, .maxhelp, .rbnopat). It provides a Python object model that mirrors
+Max's patch organization with round-trip conversion capabilities -- and, through
+its <a href="user_guide/js2max/">js2max</a> bridge, can build a patch <em>inside a running
+Max patcher</em> rather than only writing a file for Max to open later.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Scripted offline generation</strong> of Max patcher files using Python objects</li>
+<li><strong>Live patch building inside Max</strong> (<a href="user_guide/js2max/">js2max</a>) -- a JavaScript bridge that runs in an open patcher through Max's <code>v8</code> object, builds a description into it, and serializes one back out; the runtime ships in the wheel</li>
 <li><strong>Round-trip conversion</strong> between JSON .maxpat files and corresponding Python objects</li>
 <li><strong>Max for Live (.amxd)</strong> binary read/write with presentation-mode helpers</li>
 <li><strong>Encapsulation</strong> -- wrap a selection of objects into a subpatcher with auto-generated inlets/outlets</li>
@@ -1190,7 +1195,7 @@
 <li><strong>SVG preview generation</strong> with a Max-faithful look (signal vs message ports/cables, subpatcher tinting)</li>
 <li><strong>SQLite database</strong> for Max object metadata with automatic caching</li>
 <li><strong>Fully typed</strong> (passes <code>mypy --strict</code>) with no runtime dependencies</li>
-<li><strong>High test coverage</strong> with 420+ tests</li>
+<li><strong>High test coverage</strong> with 700+ tests, plus 230+ for the js2max bridge</li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1223,6 +1228,7 @@ separate <a href="https://github.com/shakfu/py2max-server">py2max-server</a> pac
 <li><a href="user_guide/tutorial/">Tutorial</a> -- a guided walkthrough</li>
 <li><a href="user_guide/layout_managers/">Layout Managers</a> -- automatic positioning</li>
 <li><a href="user_guide/advanced_usage/">Advanced Usage</a> -- subpatchers, presets, mc./poly~, theming</li>
+<li><a href="user_guide/js2max/">Building Patches Inside Max</a> -- the js2max bridge and its runtime</li>
 <li><a href="api/py2max/">API Reference</a> -- the full API</li>
 </ul>
 

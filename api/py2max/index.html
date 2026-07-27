@@ -1397,6 +1397,10 @@ patcher files.</p>
 <p>The SQLite Max-reference database is available lazily as
 <code>from py2max.maxref import MaxRefDB</code> (kept off the top-level import so
 <code>import py2max</code> stays light and dependency-free).</p>
+<p>The js2max JavaScript runtime -- which builds patches <em>inside</em> a running Max
+patcher -- is reached through <code>py2max.js2max_runtime</code> and
+<code>Patcher.add_v8_bridge()</code>. See
+<a href="../../user_guide/js2max/">Building Patches Inside Max</a>.</p>
 <h2 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h2>
 
 
