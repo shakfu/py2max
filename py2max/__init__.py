@@ -44,7 +44,7 @@ Example:
     >>> p.save()
 """
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 from .core import Box, Patcher, Patchline
 from .core.props import BoxProps, TextboxProps

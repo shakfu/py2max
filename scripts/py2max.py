@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.4.0, generated from 15e972f (working tree modified)
+py2max 0.4.1, generated from a7c171c (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
