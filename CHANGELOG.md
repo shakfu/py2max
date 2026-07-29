@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Layout operations work on patches loaded from disk.** JSON has no tuple type, so every rect in a loaded patch arrived as a plain list, while `Box.patching_rect` is declared `Optional[Rect]` and read attribute-wise (`rect.y`) by the layout managers. Any layout call on a loaded patch therefore died with `AttributeError: 'list' object has no attribute 'y'` -- including the documented `py2max optimize <file>` CLI subcommand, which failed on every input file. `Patcher.from_dict` and `Box.from_dict` now restore rect-valued keys (`rect`, `patching_rect`, `presentation_rect`) to `Rect`.
+
+  Round-trip fidelity is unaffected: `to_dict()` normalizes those keys back to plain lists, so the serialized form stays pure JSON and a load/save cycle still reproduces its input exactly. Only the three keys py2max actually interprets are touched; opaque passthrough props such as `client_rect`, `dstrect` and `storage_rect` are left alone.
+
+- **`enforce_integer_coords()` no longer crashes on a `Rect`.** The rounding helper assigned to `rect.x`/`rect.y`/`rect.w`/`rect.h`, but `Rect` is a `NamedTuple` and immutable, so rounding any programmatically built patch with non-integer coordinates raised `AttributeError: can't set attribute`. A rounded rect is now rebuilt and assigned back, preserving the storage form (`Rect` in, `Rect` out; list in, list out).
+
 ## [0.4.0] - 2026-07-27
 
 Two things dominate this release.

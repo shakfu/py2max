@@ -16,6 +16,7 @@ from typing import Any, Dict, Union
 from ..exceptions import PatcherIOError
 from ..log import get_logger, log_operation
 from .abstract import AbstractPatcher
+from .common import rects_to_lists
 
 logger = get_logger(__name__)
 
@@ -42,6 +43,7 @@ class SerializationMixin(AbstractPatcher):
         to_del = [k for k in d if k.startswith("_")]
         for k in to_del:
             del d[k]
+        rects_to_lists(d)
         if not self._parent:
             return dict(patcher=d)
         return d

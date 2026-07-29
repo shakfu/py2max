@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.3.6, generated from 49a7a0f (working tree modified)
+py2max 0.4.0, generated from 15e972f (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
@@ -69,8 +69,8 @@ from typing import (
     Iterator,
 )
 from typing import Set
-from typing import Sequence, TypedDict
 from typing import NamedTuple
+from typing import Sequence, TypedDict
 from typing import Mapping
 
 
@@ -949,6 +949,43 @@ class Rect(NamedTuple):
     y: float
     w: float
     h: float
+
+
+# Keys whose values carry ``.x/.y/.w/.h`` semantics, i.e. the ones py2max reads
+# attribute-wise. Deliberately excludes the other ``*rect`` props
+# (``client_rect``, ``dstrect``, ``storage_rect``, ...), which are opaque
+# passthrough values the library never interprets.
+RECT_KEYS = ("rect", "patching_rect", "presentation_rect")
+
+
+def as_rect(value: Any) -> Any:
+    """Coerce a 4-element JSON array into a ``Rect``, else pass it through.
+
+    JSON has no tuple type, so a patch read off disk carries every rect as a
+    plain list. ``Box.patching_rect`` is declared ``Optional[Rect]`` and read as
+    ``rect.x``/``rect.y`` by the layout managers, so leaving the list in place
+    breaks ``optimize_layout()`` on any loaded patch. Anything that is not a
+    4-element sequence is left untouched rather than guessed at.
+    """
+    if isinstance(value, (list, tuple)) and len(value) == 4:
+        return Rect(*value)
+    return value
+
+
+def rects_to_lists(d: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize ``Rect`` values in a serialization dict back to plain lists.
+
+    ``Rect`` is an internal convenience type; the ``.maxpat`` format has only
+    JSON arrays. Both forms encode identically via ``json.dump``, but leaking a
+    NamedTuple out of ``to_dict()`` makes the result compare unequal to the dict
+    it was loaded from, so the mapping is undone at the serialization boundary.
+    Mutates and returns ``d``, which is always a fresh copy at the call sites.
+    """
+    for key in RECT_KEYS:
+        value = d.get(key)
+        if isinstance(value, Rect):
+            d[key] = list(value)
+    return d
 
 
 # --------------------------------------------------------------------------
@@ -4783,13 +4820,16 @@ class Box(AbstractBox):
         for k in to_del:
             del d[k]
         d.update(self._kwds)
-        return dict(box=d)
+        return dict(box=rects_to_lists(d))
 
     @classmethod
     def from_dict(cls, obj_dict: Dict[str, Any]) -> "Box":
         """create instance from dict"""
         box = cls()
         box.__dict__.update(obj_dict)
+        for key in RECT_KEYS:
+            if key in box.__dict__:
+                box.__dict__[key] = as_rect(box.__dict__[key])
         if hasattr(box, "patcher"):
             # Lazy import to avoid circular dependency
 
@@ -5035,6 +5075,7 @@ class SerializationMixin(AbstractPatcher):
         to_del = [k for k in d if k.startswith("_")]
         for k in to_del:
             del d[k]
+        rects_to_lists(d)
         if not self._parent:
             return dict(patcher=d)
         return d
@@ -9031,9 +9072,9 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     @property
     def width(self) -> float:
         """width of patcher window."""
-        # ``rect`` is a Rect when built programmatically but a plain list when
-        # loaded from JSON (from_dict preserves it as-is for round-trip
-        # fidelity); index by position so both work.
+        # Indexed rather than ``.w`` so a hand-assigned plain list still works;
+        # ``from_dict`` normalizes loaded rects to Rect, but nothing stops a
+        # caller assigning ``patcher.rect = [0, 0, 640, 480]`` directly.
         return self.rect[2]
 
     @property
@@ -9063,6 +9104,11 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             if key not in patcher_dict:
                 delattr(patcher, key)
         patcher.__dict__.update(patcher_dict)
+        # JSON has no tuple type, so a loaded window rect arrives as a list.
+        # Restore it to a Rect for parity with a programmatically built patcher;
+        # Rect is a NamedTuple, so this re-serializes identically.
+        if "rect" in patcher.__dict__:
+            patcher.__dict__["rect"] = as_rect(patcher.__dict__["rect"])
 
         for box_dict in patcher.boxes:
             box = box_dict["box"]
@@ -10119,28 +10165,37 @@ def enforce_integer_coords(patcher: "Patcher") -> int:
     Recurses into nested subpatchers.
     """
 
-    def _round_rect(rect: Any) -> int:
-        """Round a rect in-place. Returns 1 if any coord was non-integer."""
-        # Rect dataclass with .x/.y/.w/.h or a plain [x,y,w,h] list.
-        if hasattr(rect, "x"):
-            coords = [rect.x, rect.y, rect.w, rect.h]
-            if any(isinstance(v, float) and not v.is_integer() for v in coords):
-                rect.x, rect.y, rect.w, rect.h = (int(round(v)) for v in coords)
-                return 1
-        elif isinstance(rect, list):
-            if any(isinstance(v, float) and not v.is_integer() for v in rect):
-                rect[:] = [int(round(v)) for v in rect]
-                return 1
-        return 0
+    def _round_rect(owner: Any, attr: str) -> int:
+        """Round a rect's coords to ints. Returns 1 if any was non-integer.
+
+        ``Rect`` is a NamedTuple and therefore immutable, so a rounded rect is
+        rebuilt and assigned back to the owner rather than mutated in place. A
+        plain list is likewise replaced rather than sliced, so both storage
+        forms take the same path.
+        """
+        rect = getattr(owner, attr, None)
+        if rect is None:
+            return 0
+        try:
+            coords = list(rect)
+        except TypeError:
+            return 0
+        if len(coords) != 4:
+            return 0
+        if not any(isinstance(v, float) and not v.is_integer() for v in coords):
+            return 0
+
+        rounded = [int(round(float(v))) for v in coords]
+        # Preserve the storage form: Rect in, Rect out; list in, list out.
+        setattr(owner, attr, Rect(*rounded) if isinstance(rect, Rect) else rounded)
+        return 1
 
     changed = 0
     for box in patcher._boxes:
-        pr = getattr(box, "patching_rect", None)
-        if pr is not None:
-            changed += _round_rect(pr)
+        changed += _round_rect(box, "patching_rect")
 
         if hasattr(box, "presentation_rect"):
-            changed += _round_rect(box.presentation_rect)
+            changed += _round_rect(box, "presentation_rect")
 
         sub = getattr(box, "_patcher", None)
         if sub is not None:

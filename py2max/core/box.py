@@ -9,7 +9,7 @@ import re
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Mapping, Optional
 
 from .abstract import AbstractBox
-from .common import Rect
+from .common import RECT_KEYS, Rect, as_rect, rects_to_lists
 from .props import BoxProps
 
 if TYPE_CHECKING:
@@ -187,13 +187,16 @@ class Box(AbstractBox):
         for k in to_del:
             del d[k]
         d.update(self._kwds)
-        return dict(box=d)
+        return dict(box=rects_to_lists(d))
 
     @classmethod
     def from_dict(cls, obj_dict: Dict[str, Any]) -> "Box":
         """create instance from dict"""
         box = cls()
         box.__dict__.update(obj_dict)
+        for key in RECT_KEYS:
+            if key in box.__dict__:
+                box.__dict__[key] = as_rect(box.__dict__[key])
         if hasattr(box, "patcher"):
             # Lazy import to avoid circular dependency
             from .patcher import Patcher

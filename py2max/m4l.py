@@ -57,6 +57,7 @@ from typing import (
     Union,
 )
 
+from .core.common import Rect
 from .exceptions import PatcherIOError
 
 if TYPE_CHECKING:
@@ -596,28 +597,37 @@ def enforce_integer_coords(patcher: "Patcher") -> int:
     Recurses into nested subpatchers.
     """
 
-    def _round_rect(rect: Any) -> int:
-        """Round a rect in-place. Returns 1 if any coord was non-integer."""
-        # Rect dataclass with .x/.y/.w/.h or a plain [x,y,w,h] list.
-        if hasattr(rect, "x"):
-            coords = [rect.x, rect.y, rect.w, rect.h]
-            if any(isinstance(v, float) and not v.is_integer() for v in coords):
-                rect.x, rect.y, rect.w, rect.h = (int(round(v)) for v in coords)
-                return 1
-        elif isinstance(rect, list):
-            if any(isinstance(v, float) and not v.is_integer() for v in rect):
-                rect[:] = [int(round(v)) for v in rect]
-                return 1
-        return 0
+    def _round_rect(owner: Any, attr: str) -> int:
+        """Round a rect's coords to ints. Returns 1 if any was non-integer.
+
+        ``Rect`` is a NamedTuple and therefore immutable, so a rounded rect is
+        rebuilt and assigned back to the owner rather than mutated in place. A
+        plain list is likewise replaced rather than sliced, so both storage
+        forms take the same path.
+        """
+        rect = getattr(owner, attr, None)
+        if rect is None:
+            return 0
+        try:
+            coords = list(rect)
+        except TypeError:
+            return 0
+        if len(coords) != 4:
+            return 0
+        if not any(isinstance(v, float) and not v.is_integer() for v in coords):
+            return 0
+
+        rounded = [int(round(float(v))) for v in coords]
+        # Preserve the storage form: Rect in, Rect out; list in, list out.
+        setattr(owner, attr, Rect(*rounded) if isinstance(rect, Rect) else rounded)
+        return 1
 
     changed = 0
     for box in patcher._boxes:
-        pr = getattr(box, "patching_rect", None)
-        if pr is not None:
-            changed += _round_rect(pr)
+        changed += _round_rect(box, "patching_rect")
 
         if hasattr(box, "presentation_rect"):
-            changed += _round_rect(box.presentation_rect)
+            changed += _round_rect(box, "presentation_rect")
 
         sub = getattr(box, "_patcher", None)
         if sub is not None:

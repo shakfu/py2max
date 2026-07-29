@@ -42,7 +42,7 @@ from .abstract import (
 )
 from .box import Box
 from .colors import ColorLike
-from .common import Rect
+from .common import Rect, as_rect
 from .factory import BoxFactoryMixin
 from .patchline import Patchline
 from .serialization import SerializationMixin
@@ -342,9 +342,9 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     @property
     def width(self) -> float:
         """width of patcher window."""
-        # ``rect`` is a Rect when built programmatically but a plain list when
-        # loaded from JSON (from_dict preserves it as-is for round-trip
-        # fidelity); index by position so both work.
+        # Indexed rather than ``.w`` so a hand-assigned plain list still works;
+        # ``from_dict`` normalizes loaded rects to Rect, but nothing stops a
+        # caller assigning ``patcher.rect = [0, 0, 640, 480]`` directly.
         return self.rect[2]
 
     @property
@@ -374,6 +374,11 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             if key not in patcher_dict:
                 delattr(patcher, key)
         patcher.__dict__.update(patcher_dict)
+        # JSON has no tuple type, so a loaded window rect arrives as a list.
+        # Restore it to a Rect for parity with a programmatically built patcher;
+        # Rect is a NamedTuple, so this re-serializes identically.
+        if "rect" in patcher.__dict__:
+            patcher.__dict__["rect"] = as_rect(patcher.__dict__["rect"])
 
         for box_dict in patcher.boxes:
             box = box_dict["box"]
