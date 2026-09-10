@@ -3,7 +3,7 @@
 Without this, js2max exists only in the source repository and nobody who
 installs py2max from PyPI can use it at all.
 
-The load-bearing guarantee is not convenience but **version agreement**:
+The structural guarantee is not convenience but **version agreement**:
 ``js2max/src/objects.ts`` -- box classes, port counts and outlet types for 1098
 object classes -- is generated from this package's maxref bundle. A runtime
 built against one version of py2max and used with another declares wrong port
