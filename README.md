@@ -1,12 +1,8 @@
 # py2max
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A pure Python library for generating Max/MSP patcher files (`.maxpat`,
-`.maxhelp`, `.rbnopat`) -- offline, and, via its
-[js2max](#building-patches-inside-max-js2max) bridge, *inside a running Max
-patcher*.
+A pure Python library for generating Max/MSP patcher files (`.maxpat`, `.maxhelp`, `.rbnopat`) -- offline, and, via its [js2max](#building-patches-inside-max-js2max) bridge, *inside a running Max patcher*.
 
 If you are looking for Python 3 externals for Max/MSP, check out the [py-js](https://github.com/shakfu/py-js) project.
 
@@ -16,8 +12,7 @@ If you are looking for Python 3 externals for Max/MSP, check out the [py-js](htt
 pip install py2max
 ```
 
-For the browser-based live editor and remote REPL, install the companion
-[`py2max-server`](https://github.com/shakfu/py2max-server) package:
+For the browser-based live editor and remote REPL, install the companion [`py2max-server`](https://github.com/shakfu/py2max-server) package:
 
 ```bash
 pip install py2max-server
@@ -53,18 +48,22 @@ That's it! Open `my-synth.maxpat` in Max to see your patch.
 ### Core Capabilities
 
 - **Offline Patch Generation** - Create Max patches programmatically without Max running
+
 - **Round-trip Conversion** - Load, modify, and save existing `.maxpat` files
+
 - **Max for Live (.amxd)** - Read/write binary `.amxd` device files with presentation-mode helpers
+
 - **Universal Object Support** - Works with any Max/MSP/Jitter object
+
 - **Fully typed** - Passes `mypy --strict`; no runtime dependencies
+
 - **Live Patch Building ([js2max](#building-patches-inside-max-js2max))** - Add generated objects to a patch that is already open in Max, and read an edited patch back into Python -- no save-and-reopen cycle
+
 - **High Test Coverage** - 700+ tests, plus 230+ for the js2max bridge
 
 ### Max for Live (.amxd)
 
-Generate Max for Live devices directly. `Patcher.save()` / `Patcher.from_file()`
-auto-detect the `.amxd` extension and read/write the binary device format,
-byte-for-byte compatible with Max-exported devices.
+Generate Max for Live devices directly. `Patcher.save()` / `Patcher.from_file()` auto-detect the `.amxd` extension and read/write the binary device format, byte-for-byte compatible with Max-exported devices.
 
 ```python
 from py2max import Patcher
@@ -83,17 +82,11 @@ p.add_line(gain, plugout, outlet=0, inlet=0)
 p.save()                                       # writes a binary .amxd
 ```
 
-Helpers: `Patcher.enable_presentation(devicewidth=...)`,
-`Box.add_to_presentation([x, y, w, h])` (rejects M4L infrastructure objects and
-rounds fractional coordinates), and `Patcher.enforce_integer_coords()`. M4L
-binary helpers live in `py2max.m4l`.
+Helpers: `Patcher.enable_presentation(devicewidth=...)`, `Box.add_to_presentation([x, y, w, h])` (rejects M4L infrastructure objects and rounds fractional coordinates), and `Patcher.enforce_integer_coords()`. M4L binary helpers live in `py2max.m4l`.
 
 ### Building patches inside Max (js2max)
 
-py2max writes `.maxpat` files that Max later opens. [`js2max/`](js2max/) is the
-JavaScript counterpart, and does the one thing Python cannot: Max embeds a
-JavaScript engine, so a `v8` script runs **inside an open patcher** and builds
-into it directly, from the same patch description py2max writes.
+py2max writes `.maxpat` files that Max later opens. [`js2max/`](js2max/) is the JavaScript counterpart, and does the one thing Python cannot: Max embeds a JavaScript engine, so a `v8` script runs **inside an open patcher** and builds into it directly, from the same patch description py2max writes.
 
 ```text
 [import my-patch.json(        [builddict my_patch(
@@ -101,8 +94,7 @@ into it directly, from the same patch description py2max writes.
 [dict my_patch]                [v8 js2max.v8.js]
 ```
 
-Both directions work and are confirmed against Max: a description becomes live
-objects, and a live patcher serializes back to a `.maxpat` that Max reopens.
+Both directions work and are confirmed against Max: a description becomes live objects, and a live patcher serializes back to a `.maxpat` that Max reopens.
 
 **The runtime ships with py2max**, so `pip install py2max` is all you need:
 
@@ -112,27 +104,15 @@ p.add_v8_bridge()   # adds [v8 js2max.v8.js]
 p.save()            # writes builder.maxpat AND js2max.v8.js beside it
 ```
 
-Max resolves a bare filename through the folder holding the patch, so the two
-sitting together need no configuration. Nothing is written for a patch that
-never asked for the bridge. `py2max.js2max_runtime.path()` and `install()` are
-there if you would rather place it yourself.
+Max resolves a bare filename through the folder holding the patch, so the two sitting together need no configuration. Nothing is written for a patch that never asked for the bridge. `py2max.js2max_runtime.path()` and `install()` are there if you would rather place it yourself.
 
-Shipping them together is a correctness guarantee, not just a convenience:
-`js2max/src/objects.ts` -- the port counts for 1098 object classes -- is
-generated from py2max's own maxref data, so a runtime paired with a different
-py2max version would declare wrong ports, and a box declaring a port it does not
-have loses the cord attached to it when Max opens the file.
+Shipping them together is a correctness guarantee, not just a convenience: `js2max/src/objects.ts` -- the port counts for 1098 object classes -- is generated from py2max's own maxref data, so a runtime paired with a different py2max version would declare wrong ports, and a box declaring a port it does not have loses the cord attached to it when Max opens the file.
 
-Full guide: [Building Patches Inside Max](docs/user_guide/js2max.md). Source and
-what has been confirmed against Max: [`js2max/README.md`](js2max/README.md).
-Building the runtime needs [Bun](https://bun.sh) (`make js2max`); using it does
-not.
+Full guide: [Building Patches Inside Max](docs/user_guide/js2max.md). Source and what has been confirmed against Max: [`js2max/README.md`](js2max/README.md). Building the runtime needs [Bun](https://bun.sh) (`make js2max`); using it does not.
 
 ### Interactive Server (separate package)
 
-Real-time browser-based patch editing with bidirectional sync lives in the
-companion [`py2max-server`](https://github.com/shakfu/py2max-server) package, so
-the core library stays small and offline:
+Real-time browser-based patch editing with bidirectional sync lives in the companion [`py2max-server`](https://github.com/shakfu/py2max-server) package, so the core library stays small and offline:
 
 ```bash
 pip install py2max-server
@@ -143,9 +123,13 @@ py2max-server serve my-patch.maxpat
 **Features:**
 
 - Drag objects, draw connections visually
+
 - Three layout engines: **WebCola**, **ELK**, and **Dagre**
+
 - Auto-save with debouncing
+
 - Navigate into subpatchers
+
 - REPL mode for Python interaction
 
 ### SVG Preview
@@ -295,11 +279,7 @@ p.save()
 
 ### Gen Codebox
 
-`add_gen_codebox()` adds a standalone `gen.codebox~` object -- a complete gen
-patch in a single box that sits directly in a regular Max patcher (unlike the
-inner `codebox~` from `add_codebox()`, which belongs inside a `gen~`/`rnbo~`
-subpatcher). Inlet/outlet counts are derived automatically from the highest
-`inN`/`outN` references in the code:
+`add_gen_codebox()` adds a standalone `gen.codebox~` object -- a complete gen patch in a single box that sits directly in a regular Max patcher (unlike the inner `codebox~` from `add_codebox()`, which belongs inside a `gen~`/`rnbo~` subpatcher). Inlet/outlet counts are derived automatically from the highest `inN`/`outN` references in the code:
 
 ```python
 p = Patcher('fbdelay.maxpat')
@@ -359,8 +339,7 @@ py2max validate demo.maxpat
 
 ### Interactive Server
 
-Provided by the separate [`py2max-server`](https://github.com/shakfu/py2max-server)
-package (`pip install py2max-server`):
+Provided by the separate [`py2max-server`](https://github.com/shakfu/py2max-server) package (`pip install py2max-server`):
 
 ```bash
 # Start server with browser editing
@@ -399,12 +378,19 @@ py2max maxref cycle~ --json
 ## Use Cases
 
 - **Scripted patch generation** - Automate repetitive patch creation
+
 - **Batch processing** - Modify multiple `.maxpat` files programmatically
+
 - **Parametric patches** - Generate variations from configuration files
+
 - **Test generation** - Create `.maxhelp` files during external development
+
 - **Container population** - Prepopulate `coll`, `dict`, `table` objects with data
+
 - **Generative patching** - Algorithmic patch creation
+
 - **CI/CD integration** - SVG previews for documentation and version control
+
 - **Live patch building** - iterate on a patch while it stays open in Max, with [js2max](#building-patches-inside-max-js2max)
 
 ## Testing
@@ -422,7 +408,9 @@ make js2max-check  # Typecheck and test js2max, and verify its artifacts are cur
 The `.maxpat` JSON format maps directly to three Python classes:
 
 - **`Patcher`** - The patch container with boxes and patchlines
+
 - **`Box`** - Individual Max objects
+
 - **`Patchline`** - Connections between boxes
 
 All classes are extendable via `**kwargs`, allowing any Max object configuration. The `add_textbox()` method handles most objects, with specialized methods (`add_subpatcher()`, `add_coll()`, etc.) for objects requiring extra configuration.
@@ -430,19 +418,25 @@ All classes are extendable via `**kwargs`, allowing any Max object configuration
 ## Caveats
 
 - Max doesn't refresh from file when open - close and reopen to see changes, or build straight into the open patch with [js2max](#building-patches-inside-max-js2max), or use `py2max-server serve` (from the separate `py2max-server` package) for live editing
+
 - For tilde variants, use the `_tilde` suffix: `p.add_gen()` vs `p.add_gen_tilde()`
+
 - API docs in progress - see `CLAUDE.md` for comprehensive usage
 
 ## Examples
 
-The [`tests/examples/`](tests/examples/) directory contains working, tested
-examples organized by topic (see its [README](tests/examples/README.md)):
+The [`tests/examples/`](tests/examples/) directory contains working, tested examples organized by topic (see its [README](tests/examples/README.md)):
 
 - `quickstart/basic_patch.py` - Simple oscillator patch
+
 - `tutorial/signal_processing_chain.py` - Complex audio processing chain
+
 - `tutorial/generative_music.py` - Generative music system with patterns
+
 - `layout/grid_layout_examples.py` - Grid layout with clustering
+
 - `advanced/data_containers.py` - Tables, collections, and dictionaries
+
 - `api/patcher_api_examples.py` - Patcher API reference examples
 
 External usage:
@@ -468,5 +462,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 ## Credits
 
 - HOLA algorithm: Kieffer, Dwyer, Marriott, Wybrow (IEEE 2016)
+
 - NetworkX: Hagberg, Schult, Swart (SciPy 2008)
+
 - Graph drawing techniques: Gansner, Koutsofios, North, Vo (IEEE 1993)

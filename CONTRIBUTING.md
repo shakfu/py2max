@@ -5,7 +5,9 @@ Thank you for your interest in contributing to py2max! This document provides gu
 ## Code of Conduct
 
 - Be respectful and inclusive in all interactions
+
 - Focus on constructive feedback
+
 - Help create a welcoming environment for all contributors
 
 ## Getting Started
@@ -43,7 +45,9 @@ Thank you for your interest in contributing to py2max! This document provides gu
 ### Before You Start
 
 1. **Check existing issues** to see if your feature/bug is already being worked on
+
 2. **Open an issue** to discuss major changes before implementing them
+
 3. **Fork the repository** and create a feature branch
 
 ### Making Changes
@@ -81,20 +85,27 @@ Thank you for your interest in contributing to py2max! This document provides gu
 ### Code Style
 
 - **Linter**: We use `ruff` for linting
+
 - **Auto-fix**: Run `make lint` to automatically fix issues
+
 - **Line length**: Maximum 100 characters (configured in `pyproject.toml`)
 
 ### Type Hints
 
 - **Required**: All function signatures must have type hints
+
 - **Type checker**: We use `mypy` for static type checking
+
 - **Run**: `make typecheck` or `mypy py2max`
 
 ### Testing
 
 - **Coverage requirement**: Maintain > 80% test coverage (current: 82%)
+
 - **Test framework**: pytest
+
 - **Test location**: `tests/` directory
+
 - **Naming**: Test files must start with `test_`
 
 #### Writing Tests
@@ -130,7 +141,9 @@ make coverage
 ### Documentation
 
 - **Docstrings**: All public classes, methods, and functions must have docstrings
+
 - **Format**: Google-style docstrings
+
 - **Examples**: Include usage examples in docstrings
 
 #### Docstring Example
@@ -164,12 +177,19 @@ def add_textbox(self, text: str, maxclass: Optional[str] = None) -> Box:
 Before submitting a pull request, ensure:
 
 - [ ] Code follows project style guidelines
+
 - [ ] All tests pass (`make test`)
+
 - [ ] Type checking passes (`make typecheck`)
+
 - [ ] Linting passes (`make lint`)
+
 - [ ] Test coverage remains > 80% (`make coverage`)
+
 - [ ] Documentation is updated (if applicable)
+
 - [ ] CHANGELOG.md is updated (for user-facing changes)
+
 - [ ] Commit messages are clear and descriptive
 
 ### Submitting
@@ -181,11 +201,17 @@ Before submitting a pull request, ensure:
    ```
 
 2. **Create a pull request** on GitHub with:
+
    - Clear title describing the change
+
    - Description explaining:
+
      - What changed
+
      - Why it changed
+
      - How to test it
+
    - Link to related issues
 
 3. **Respond to feedback** from reviewers
@@ -207,11 +233,17 @@ Before submitting a pull request, ensure:
 ### Types
 
 - `feat`: New feature
+
 - `fix`: Bug fix
+
 - `docs`: Documentation changes
+
 - `style`: Code style changes (formatting, no logic change)
+
 - `refactor`: Code refactoring
+
 - `test`: Adding or updating tests
+
 - `chore`: Maintenance tasks
 
 ### Examples
@@ -318,7 +350,9 @@ make build
 ## Getting Help
 
 - **Issues**: Open an issue on GitHub for bugs or feature requests
+
 - **Discussions**: Use GitHub Discussions for questions
+
 - **Documentation**: Check the [docs](https://github.com/shakfu/py2max/tree/main/docs) directory
 
 ## License
@@ -330,7 +364,9 @@ By contributing to py2max, you agree that your contributions will be licensed un
 Contributors will be recognized in:
 
 - CHANGELOG.md (for significant contributions)
+
 - GitHub contributors page
+
 - Project documentation (for major features)
 
 ## Questions?
@@ -338,7 +374,9 @@ Contributors will be recognized in:
 If you have questions about contributing, please:
 
 1. Check existing issues and documentation
+
 2. Open a GitHub Discussion
+
 3. Reach out to maintainers
 
 Thank you for contributing to py2max!

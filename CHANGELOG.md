@@ -4,8 +4,7 @@
 
 ## [0.4.1]
 
-Two rect-handling bugs, both of which broke documented entry points on any
-patch that came off disk rather than out of a script.
+Two rect-handling bugs, both of which broke documented entry points on any patch that came off disk rather than out of a script.
 
 ### Fixed
 
@@ -19,21 +18,11 @@ patch that came off disk rather than out of a script.
 
 Two things dominate this release.
 
-**js2max**: a JavaScript counterpart to py2max that runs *inside* an open Max
-patcher through the `v8` object, so a patch can build objects into itself and
-serialize itself back out. Its runtime ships in the wheel, so
-`p.add_v8_bridge()` and `p.save()` are all it takes. Confirmed end to end
-against Max, including a file js2max wrote being opened by Max.
+**js2max**: a JavaScript counterpart to py2max that runs *inside* an open Max patcher through the `v8` object, so a patch can build objects into itself and serialize itself back out. Its runtime ships in the wheel, so `p.add_v8_bridge()` and `p.save()` are all it takes. Confirmed end to end against Max, including a file js2max wrote being opened by Max.
 
-**Typed box properties**: the Max property vocabulary reaches the emitted patch
-through `**kwds` no longer. `BoxProps` / `TextboxProps` mean a misspelled
-`bgcolour` or a wrongly-typed `fontsize` is rejected by mypy with a suggestion,
-where both previously shipped straight into the file.
+**Typed box properties**: the Max property vocabulary reaches the emitted patch through `**kwds` no longer. `BoxProps` / `TextboxProps` mean a misspelled `bgcolour` or a wrongly-typed `fontsize` is rejected by mypy with a suggestion, where both previously shipped straight into the file.
 
-The rest is nine fixes, several of them long-standing and silent -- comments
-written with their port counts backwards since the beginning, `to_dict()`
-returning an empty patcher depending on call order, and nulls reaching the patch
-one level down.
+The rest is nine fixes, several of them long-standing and silent -- comments written with their port counts backwards since the beginning, `to_dict()` returning an empty patcher depending on call order, and nulls reaching the patch one level down.
 
 ### New: js2max -- a JavaScript counterpart that builds patches inside Max
 
@@ -177,28 +166,17 @@ one level down.
 
 ### Notes for upgraders
 
-No API was removed and no call signature changed, but four things behave
-differently enough to mention.
+No API was removed and no call signature changed, but four things behave differently enough to mention.
 
-- **Every comment box changes shape.** `add_comment` wrote 0 inlets and 1 outlet;
-  a comment has 1 and 0. Regenerating a patch that contains comments produces a
-  different -- correct -- file, and Max was silently rewriting the values on save
-  anyway.
-- **`to_dict()` renders**, so it returns the patcher as it stands rather than as
-  it stood after whatever last rendered it. It previously returned an empty
-  patcher until something else called `render()`. If you were calling
-  `render()` first, you no longer need to; if you were relying on the empty
-  result, you were relying on a bug.
-- **`render()` is idempotent.** `reset_on_render=False` no longer accumulates
-  boxes across renders. It also never accumulated *lines*, so what it did before
-  was not coherent.
-- **`save()` may now write a second file** -- but only for a patcher that called
-  `add_v8_bridge()`, which is new in this release. Nothing that worked before
-  writes anything extra.
+- **Every comment box changes shape.** `add_comment` wrote 0 inlets and 1 outlet; a comment has 1 and 0. Regenerating a patch that contains comments produces a different -- correct -- file, and Max was silently rewriting the values on save anyway.
 
-Typed box properties are a static change: `mypy --strict` will now reject a
-misspelled or wrongly-typed property that it previously accepted. That is the
-point of them, and nothing changes at runtime.
+- **`to_dict()` renders**, so it returns the patcher as it stands rather than as it stood after whatever last rendered it. It previously returned an empty patcher until something else called `render()`. If you were calling `render()` first, you no longer need to; if you were relying on the empty result, you were relying on a bug.
+
+- **`render()` is idempotent.** `reset_on_render=False` no longer accumulates boxes across renders. It also never accumulated *lines*, so what it did before was not coherent.
+
+- **`save()` may now write a second file** -- but only for a patcher that called `add_v8_bridge()`, which is new in this release. Nothing that worked before writes anything extra.
+
+Typed box properties are a static change: `mypy --strict` will now reject a misspelled or wrongly-typed property that it previously accepted. That is the point of them, and nothing changes at runtime.
 
 ## [0.3.6]
 
