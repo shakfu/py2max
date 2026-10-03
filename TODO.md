@@ -4,6 +4,15 @@
 
 ## High
 
+  - [ ] `Port` counts ignore arguments. `route phase info` gets 2 outlets instead of 3, unpack with 7 arguments gets 2 instead of 7, sel 0 1 2 3 gets 1 instead of 5, and t f f gets 1 instead of 2. My generator passes explicit counts for these.
+  
+  - [ ] `Connection` validation uses the same counts. With
+    `validate_connections=True` it rejects valid cords such as route phase info outlet 2, so I left it off and do my own port check.
+  
+  - [ ] UI objects come out wrong from add_textbox. `add_textbox("flonum")` writes a newobj box with text flonum, and UI boxes get a text key. I create UI boxes with Box directly.
+  
+  - `to_svg` doesn't wrap comment text, so long comments run past their boxes in the preview images.
+
 ### Validation follow-ups
 
 - [ ] Turn connection validation on by default, in two stages. "Off vs. raise" is a false binary: raising is the highest-blast-radius option and it is gated on evidence only the opted-in minority can produce today.
