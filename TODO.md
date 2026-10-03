@@ -4,14 +4,24 @@
 
 ## High
 
-  - [ ] `Port` counts ignore arguments. `route phase info` gets 2 outlets instead of 3, unpack with 7 arguments gets 2 instead of 7, sel 0 1 2 3 gets 1 instead of 5, and t f f gets 1 instead of 2. My generator passes explicit counts for these.
-  
-  - [ ] `Connection` validation uses the same counts. With
-    `validate_connections=True` it rejects valid cords such as route phase info outlet 2, so I left it off and do my own port check.
-  
-  - [ ] UI objects come out wrong from add_textbox. `add_textbox("flonum")` writes a newobj box with text flonum, and UI boxes get a text key. I create UI boxes with Box directly.
-  
-  - `to_svg` doesn't wrap comment text, so long comments run past their boxes in the preview images.
+- [ ] **`add_textbox` declares class-default port counts, not argument-aware ones.** `MAXCLASS_DEFAULTS` (`maxref/parser.py:859`) is keyed by class name only, so the box written to the file declares the wrong `numinlets`/`numoutlets`/`outlettype` whenever the ports depend on arguments. `porttypes.port_counts()` already resolves these correctly, and `lint` and `validate_connection` use it, so the box and its cords disagree: `validate_connections=True` accepts `route phase info` outlet 2 while the box declares 2 outlets.
+
+  | text | declared by `add_textbox` | `port_counts()` | Max |
+  |-|-|-|-|
+  | `route phase info` | 2 out | 3 | 3 |
+  | `unpack 0. 0 0 0. 0. 0. 0` | 2 out | 7 | 7 |
+  | `sel 0 1 2 3` | 1 out | 5 | 5 |
+  | `t f f` | 1 out | unknown | 2 |
+
+  Fix: have `add_textbox` (`core/factory.py:418`) take counts from `porttypes.port_counts(name, text)` when it resolves them, and add `t`/`trigger` to `_ARG_RESOLVERS` (one outlet per argument). Whether Max rebuilds the ports from the text on load is unverified; `to_svg` and any consumer reading `numoutlets` see the wrong count either way. Found generating softkut~'s help patch, which now passes explicit counts.
+
+- [ ] **`add_textbox` mishandles UI objects.** `add_textbox("flonum")` writes `maxclass: newobj` with `text: "flonum"` (the defaults entry has no `maxclass`), and UI boxes such as `waveform~` and `ezdac~` get a `text` key. Route known UI classes to their box form (`add_floatbox` already does it right for `flonum`) and omit `text` for non-`newobj` boxes.
+
+- [ ] **`lint` gives a file-referenced `bpatcher` 0 ports.** `_effective_counts` (`lint.py:72`) takes counts from the nested patcher (`porttypes.subpatcher_counts`, `maxref/porttypes.py:194`); a `bpatcher` that loads a file by `name` has none, so it falls back to the maxref entry, `(0, 0)`, and every cord to it is an `E-INLET-RANGE`/`E-OUTLET-RANGE` error. Fall back to the box's declared `numinlets`/`numoutlets`, or read the referenced `.maxpat` when it resolves.
+
+- [ ] **`graph:ogdf-*` layouts are not reproducible.** `_run_ogdf` (`layout/external.py:193`) neither seeds OGDF nor limits its runs. Sugiyama's crossing minimization runs several randomized passes and keeps the best; ties differ between processes, so the same patch builds differently each time (23 of 28 boxes moved between runs). `ogdf.set_seed(n)` plus `SugiyamaLayout().set_runs(1)` gave identical output in 5 separate processes, with the same crossing count (0) on that graph. The COLA and Fruchterman-Reingold adapters already pass `random_seed`. Seed every OGDF call, and expose `runs` (default 1) for callers who want best-of-n.
+
+- [ ] `to_svg` does not wrap comment text, so long comments run past their boxes in previews.
 
 ### Validation follow-ups
 
@@ -54,6 +64,16 @@
 ## Medium
 
 ### Layout Managers
+
+- [ ] **Lay out a subset of boxes.** `optimize_layout()` moves every box. A patch whose UI must stay put (a `bpatcher` view, a presentation area) needs its logic laid out around fixed boxes. softkut~ works around this by copying the subgraph into a scratch patcher, laying it out, and copying positions back. Add `optimize_layout(boxes=...)` or a per-box `pinned` flag.
+
+- [ ] **External engines discard their own spacing.** `_normalize` (`layout/external.py:219`) rescales every engine's result to a fixed span (`max(300, 2.2 * box_width * sqrt(n))`). OGDF and HOLA already compute coordinates from the real box sizes; rescaling makes gaps arbitrary. For size-aware engines, translate to the margin and keep the scale.
+
+- [ ] **`graph:sugiyama` lays out bottom to top.** With graph-layout's `SugiyamaLayout`, sources (`inlet`, `loadbang`) land at the bottom and cords run upward, against Max's top-down convention. Flip y, or set the engine's direction.
+
+- [ ] **`flow` crossing reduction is weak.** On a 28-box message graph with two independent components, `FlowLayoutManager` (`_minimize_crossings`, `layout/flow.py:110`) interleaved the components and left many crossings that OGDF's Sugiyama removed entirely. Lay out connected components separately, and consider a barycenter pass per level.
+
+- [ ] **`graph:hola` left two boxes overlapping** on the same graph, after its `prevent_overlaps()` pass. Cause not investigated; possibly the 50-iteration cap.
 
 - [ ] Implement auto-scale to fit patcher bounds with margin
 
