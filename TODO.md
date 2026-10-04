@@ -21,6 +21,8 @@
 
 - [ ] **`graph:ogdf-*` layouts are not reproducible.** `_run_ogdf` (`layout/external.py:193`) neither seeds OGDF nor limits its runs. Sugiyama's crossing minimization runs several randomized passes and keeps the best; ties differ between processes, so the same patch builds differently each time (23 of 28 boxes moved between runs). `ogdf.set_seed(n)` plus `SugiyamaLayout().set_runs(1)` gave identical output in 5 separate processes, with the same crossing count (0) on that graph. The COLA and Fruchterman-Reingold adapters already pass `random_seed`. Seed every OGDF call, and expose `runs` (default 1) for callers who want best-of-n.
 
+- [ ] **`lint` should check inlet/outlet order in abstractions.** Max numbers a patcher's `inlet`/`outlet` objects by x position, not creation order, so a layout pass can silently swap a subpatcher's or abstraction's ports and every cord to it. Seen in softkut~: OGDF placed a view's second inlet 2 px left of its first, so `snapshot~` got no signal and the waveform~ cursor froze at 0. Warn when `inlet`/`outlet` boxes are not left to right in creation order (or share an x), and have layout managers keep them in that order.
+
 - [ ] `to_svg` does not wrap comment text, so long comments run past their boxes in previews.
 
 ### Validation follow-ups
