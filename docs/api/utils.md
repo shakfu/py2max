@@ -10,4 +10,7 @@ pitch2freq("C3")        # 130.81
 pitch2freq("A4", A4=442)
 ```
 
-::: py2max.utils options: show_root_heading: false members_order: source
+::: py2max.utils
+    options:
+      show_root_heading: false
+      members_order: source

@@ -8,4 +8,8 @@ p = Patcher('patch.maxpat', layout="flow", flow_direction="vertical")
 p.optimize_layout()
 ```
 
-::: py2max.layout options: show_root_heading: false members_order: source filters: ["!^_"]
+::: py2max.layout
+    options:
+      show_root_heading: false
+      members_order: source
+      filters: ["!^_"]

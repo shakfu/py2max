@@ -9,4 +9,8 @@ objects = get_available_objects()        # 1175+ objects
 print(get_object_help('umenu'))
 ```
 
-::: py2max.maxref options: show_root_heading: false members_order: source filters: ["!^_"]
+::: py2max.maxref
+    options:
+      show_root_heading: false
+      members_order: source
+      filters: ["!^_"]

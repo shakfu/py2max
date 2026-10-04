@@ -9,4 +9,7 @@ rect = Rect(100, 50, 200, 100)
 x, y, w, h = rect
 ```
 
-::: py2max.core.common options: show_root_heading: false members_order: source
+::: py2max.core.common
+    options:
+      show_root_heading: false
+      members_order: source

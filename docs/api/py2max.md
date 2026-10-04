@@ -29,4 +29,8 @@ The js2max JavaScript runtime -- which builds patches *inside* a running Max pat
 
 ## Exceptions
 
-::: py2max.exceptions options: show_root_heading: false show_root_toc_entry: false members_order: source
+::: py2max.exceptions
+    options:
+      show_root_heading: false
+      show_root_toc_entry: false
+      members_order: source
