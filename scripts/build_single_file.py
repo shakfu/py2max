@@ -66,6 +66,7 @@ MODULES: List[Spec] = [
     (
         "py2max/maxref/parser.py",
         [
+            "_DEFAULT_RECT",
             "get_legacy_defaults",
             "validate_connection",
             "get_inlet_count",
@@ -193,8 +194,9 @@ def build_maxref_table() -> Dict[str, Dict[str, Any]]:
     """Distill the maxref bundle down to what the included code consumes.
 
     Port types drive validation, method names drive inlet acceptance, attribute
-    names drive ``validate_attrs``. Every piece of prose (digests, descriptions,
-    examples, see-also) is dropped -- that is where the bundle's ~8 MB lives.
+    names drive ``validate_attrs``, the palette action picks a box's maxclass.
+    Every piece of prose (digests, descriptions, examples, see-also) is dropped
+    -- that is where the bundle's ~8 MB lives.
     """
     sys.path.insert(0, str(ROOT))
     from py2max.maxref import get_available_objects, get_object_info
@@ -209,6 +211,8 @@ def build_maxref_table() -> Dict[str, Dict[str, Any]]:
             "ot": [o.get("type", "") for o in (info.get("outlets") or [])],
             "m": sorted(info.get("methods", {}) or {}),
             "a": sorted(info.get("attributes", {}) or {}),
+            # palette action identifies box classes (UI, inlet, message)
+            "pa": (info.get("palette") or {}).get("action", ""),
         }
     return table
 
@@ -263,6 +267,7 @@ def get_object_info(name: str) -> Optional[Dict[str, Any]]:
         "outlets": [{{"type": t}} for t in entry["ot"]],
         "methods": {{m: {{}} for m in entry["m"]}},
         "attributes": {{a: {{}} for a in entry["a"]}},
+        "palette": {{"action": entry["pa"]}} if entry["pa"] else {{}},
     }}
 
 

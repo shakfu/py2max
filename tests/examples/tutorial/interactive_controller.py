@@ -24,7 +24,7 @@ def create_midi_controller():
     controllers = []
     for cc_num in range(1, 9):  # CC 1-8
         # CC number selection
-        cc_select = p.add_intbox(cc_num, name=f"CC{cc_num}")
+        cc_select = p.add_intparam(f"CC{cc_num}", initial=cc_num)
 
         # Route specific CC
         route = p.add_textbox(f"route {cc_num}")
@@ -33,7 +33,7 @@ def create_midi_controller():
         scale = p.add_textbox("/ 127.")
 
         # Value display
-        value_display = p.add_floatbox(0.0, name=f"value{cc_num}")
+        value_display = p.add_floatparam(f"value{cc_num}", initial=0.0)
 
         # Connect chain
         p.add_line(midi_in, route)
@@ -45,7 +45,7 @@ def create_midi_controller():
         )
 
     # Add preset management
-    preset_slot = p.add_intbox(1, name="preset_slot")
+    preset_slot = p.add_intparam("preset_slot", initial=1)
     preset_store = p.add_message("store $1")
     preset_recall = p.add_message("recall $1")
     preset_obj = p.add_textbox("preset")
@@ -55,10 +55,9 @@ def create_midi_controller():
     p.add_line(preset_store, preset_obj)
     p.add_line(preset_recall, preset_obj)
 
-    # Connect all value displays to preset system
-    for i, ctrl in enumerate(controllers):
-        p.add_line(preset_obj, ctrl["value"], outlet=i, inlet=0)
-        p.add_line(ctrl["value"], preset_obj, outlet=0, inlet=i)
+    # preset's left outlet names the objects whose values it stores
+    for ctrl in controllers:
+        p.add_line(preset_obj, ctrl["value"])
 
     # Add comments for clarity
     p.add_comment("MIDI Controller Interface")

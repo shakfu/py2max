@@ -100,7 +100,9 @@ def test_bundle_method_data_quality(monkeypatch):
     cache = parser.MaxRefCache()
     # a healthy fraction of objects should carry methods
     named = [n for n in cache.refdict if not n.startswith("_")]
-    with_methods = sum(1 for n in named if (cache.get_object_data(n) or {}).get("methods"))
+    with_methods = sum(
+        1 for n in named if (cache.get_object_data(n) or {}).get("methods")
+    )
     assert with_methods > 900, f"only {with_methods} objects have method data"
     # the specific vocabulary validation relies on
     assert "bang" in cache.get_object_data("metro")["methods"]

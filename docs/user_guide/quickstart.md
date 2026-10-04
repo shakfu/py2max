@@ -38,8 +38,11 @@ This creates a .maxpat file that you can open in Max/MSP!
 The `~py2max.Patcher` is the main container for your Max patch. It handles:
 
 - Adding Max objects
+
 - Managing connections between objects
+
 - Layout and positioning
+
 - Saving and loading patches
 
 ``` python
@@ -193,6 +196,9 @@ p.save()
 ## Next Steps
 
 - Read the `tutorial` for more detailed examples
+
 - Explore `layout_managers` for advanced positioning
+
 - Check the `../api/py2max` for complete API reference
+
 - See `advanced_usage` for complex scenarios

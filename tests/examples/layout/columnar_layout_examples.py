@@ -36,9 +36,7 @@ def create_typical_synth_patch():
         "lores~ 1000", comment="Low Pass Filter", comment_pos="above"
     )
     delay_fx = p.add_textbox("delay~ 500", comment="Delay Effect", comment_pos="above")
-    master_gain = p.add_textbox(
-        "*~ 0.7", comment="Master Volume", comment_pos="above"
-    )
+    master_gain = p.add_textbox("*~ 0.7", comment="Master Volume", comment_pos="above")
 
     # Add output objects (Column 4: Outputs)
     dac = p.add_textbox("ezdac~", comment="Audio Output", comment_pos="above")

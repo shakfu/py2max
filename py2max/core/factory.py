@@ -20,6 +20,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Iterable,
     List,
     Optional,
@@ -29,13 +30,14 @@ from typing import (
 )
 
 from py2max import maxref
+from py2max.maxref import porttypes
 
 from ..exceptions import InvalidConnectionError
 from ..log import get_logger
-from ..utils import kwds_filter
+from ..utils import kwds_filter, parse_attr_args
 from .abstract import AbstractBox, AbstractPatcher, AbstractPatchline
 from .box import Box
-from .common import Rect
+from .common import Rect, box_width_for
 from .patchline import Patchline
 from .props import TextboxProps
 
@@ -73,10 +75,11 @@ def _first_param_name(method: Callable[..., Any]) -> Optional[str]:
     return _FIRST_PARAM_CACHE[func]
 
 
-# Max objects whose inlet/outlet counts are determined by their code rather
-# than by a fixed maxref entry. Connection validation for these consults the
-# box's own declared numinlets/numoutlets instead of the static maxref data.
-DYNAMIC_IO_MAXCLASSES = frozenset({"gen.codebox~", "codebox", "codebox~"})
+# Max objects whose inlet/outlet counts are determined by their code (or, for
+# bpatcher, the patch it loads) rather than by a fixed maxref entry. Connection
+# validation for these consults the box's own declared numinlets/numoutlets
+# instead of the static maxref data.
+DYNAMIC_IO_MAXCLASSES = frozenset({"gen.codebox~", "codebox", "codebox~", "bpatcher"})
 
 
 def _max_gen_io_index(code: str, kind: str) -> int:
@@ -138,8 +141,64 @@ UNIVERSAL_BOX_ATTRS = frozenset(
         "border",
         "style",
         "comment",
+        "background",
+        "patcher",  # embedded subpatcher (p, gen~, rnbo~, bpatcher)
+        "rnbo_classname",  # every box in an rnbo~ patcher
+        "bgfillcolor_angle",
+        "bgfillcolor_autogradient",
+        "bgfillcolor_color",
+        "bgfillcolor_color1",
+        "bgfillcolor_color2",
+        "bgfillcolor_proportion",
+        "bgfillcolor_type",
     }
 )
+
+# Keys Max saves on these boxes that their maxref entries do not declare.
+# Measured on 868 boxes in 60 Max-written patches.
+SAVED_BOX_ATTRS: Dict[str, FrozenSet[str]] = {
+    "comment": frozenset({"linecount"}),
+    "message": frozenset({"linecount"}),
+    "flonum": frozenset({"format"}),
+    "inlet": frozenset({"index"}),
+    "outlet": frozenset({"index"}),
+    "waveform~": frozenset({"ruler"}),
+    "live.gain~": frozenset({"lastchannelcount"}),
+    "radiogroup": frozenset({"disabled", "value"}),
+    "preset": frozenset({"preset_data"}),
+    "function": frozenset({"addpoints"}),
+    "autopattr": frozenset({"restore"}),
+    "pattr": frozenset({"restore"}),
+    "table~": frozenset({"showeditor"}),
+    "table": frozenset({"showeditor"}),
+    # written by add_coll / add_bpatcher / add_beap
+    "coll": frozenset({"coll_data"}),
+    "bpatcher": frozenset({"viewvisibility", "extract"}),
+}
+
+
+def unknown_attrs(name: str, keys: Iterable[str]) -> List[str]:
+    """The ``keys`` that are not known attributes of Max object ``name``.
+
+    Known means the attributes maxref declares for ``name`` and for ``jbox``
+    (the base box class), ``UNIVERSAL_BOX_ATTRS``, ``SAVED_BOX_ATTRS``, and
+    the keys of ``name``'s curated defaults. An object with no maxref entry
+    cannot be checked, so nothing is reported for it.
+    """
+    from ..maxref.legacy import MAXCLASS_DEFAULTS as CURATED
+
+    info = maxref.get_object_info(name)
+    if not info:
+        return []
+    jbox = maxref.get_object_info("jbox") or {}
+    known = (
+        UNIVERSAL_BOX_ATTRS
+        | SAVED_BOX_ATTRS.get(name, frozenset())
+        | set(CURATED.get(name, {}))
+        | set(jbox.get("attributes", {}))
+        | set(info.get("attributes", {}))
+    )
+    return [k for k in keys if k not in known]
 
 
 class BoxFactoryMixin(AbstractPatcher):
@@ -153,18 +212,12 @@ class BoxFactoryMixin(AbstractPatcher):
         objects with no maxref entry are skipped (cannot be checked).
         """
         name = self._get_object_name(box)
-        info = maxref.get_object_info(name)
-        if not info:
-            return
-        known = UNIVERSAL_BOX_ATTRS | set(info.get("attributes", {}).keys())
-        for key in box._kwds:
-            if key not in known:
-                warnings.warn(
-                    f"Unknown attribute {key!r} for Max object {name!r} "
-                    f"(possible typo?)",
-                    UserWarning,
-                    stacklevel=3,
-                )
+        for key in unknown_attrs(name, box._kwds):
+            warnings.warn(
+                f"Unknown attribute {key!r} for Max object {name!r} (possible typo?)",
+                UserWarning,
+                stacklevel=3,
+            )
 
     def _get_object_name(self, obj: AbstractBox) -> str:
         """Get the actual object name for validation purposes.
@@ -267,6 +320,60 @@ class BoxFactoryMixin(AbstractPatcher):
         assert src.id and dst.id, f"object {src} and {dst} require ids"
         return self.add_patchline(src.id, src_outlet, dst.id, dst_inlet)
 
+    def _connection_error(
+        self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int
+    ) -> str:
+        """Why a connection is invalid, or ``""`` if it is fine or uncheckable."""
+        src_obj = self._objects.get(src_id)
+        dst_obj = self._objects.get(dst_id)
+        if not src_obj:
+            return f"Source object not found: {src_id}"
+        if not dst_obj:
+            return f"Destination object not found: {dst_id}"
+
+        src_name = self._get_object_name(src_obj)
+        dst_name = self._get_object_name(dst_obj)
+        src_dynamic = src_obj.maxclass in DYNAMIC_IO_MAXCLASSES
+        dst_dynamic = dst_obj.maxclass in DYNAMIC_IO_MAXCLASSES
+
+        if src_dynamic or dst_dynamic:
+            # Codeboxes and bpatchers derive their inlet/outlet counts from
+            # their content, so bound-check indices against the box's own
+            # declared counts rather than the fixed maxref entry. Type
+            # checking is skipped: the content's port types are unknown here.
+            src_outlets = (
+                src_obj.numoutlets if src_dynamic else maxref.get_outlet_count(src_name)
+            )
+            dst_inlets = (
+                dst_obj.numinlets if dst_dynamic else maxref.get_inlet_count(dst_name)
+            )
+            error_msg = ""
+            if src_outlets is not None and src_outlet >= src_outlets:
+                error_msg = (
+                    f"Object '{src_name}' only has {src_outlets} outlet(s), "
+                    f"cannot connect from outlet {src_outlet}"
+                )
+            elif dst_inlets is not None and dst_inlet >= dst_inlets:
+                error_msg = (
+                    f"Object '{dst_name}' only has {dst_inlets} inlet(s), "
+                    f"cannot connect to inlet {dst_inlet}"
+                )
+        else:
+            _, error_msg = maxref.validate_connection(
+                src_name,
+                src_outlet,
+                dst_name,
+                dst_inlet,
+                src_text=getattr(src_obj, "text", None),
+                dst_text=getattr(dst_obj, "text", None),
+            )
+        if not error_msg:
+            return ""
+        return (
+            f"Invalid connection from {src_name}[{src_outlet}] to "
+            f"{dst_name}[{dst_inlet}]: {error_msg}"
+        )
+
     def add_patchline(
         self, src_id: str, src_outlet: int, dst_id: str, dst_inlet: int
     ) -> "Patchline":
@@ -288,84 +395,18 @@ class BoxFactoryMixin(AbstractPatcher):
             f"Adding patchline: {src_id}[{src_outlet}] -> {dst_id}[{dst_inlet}]"
         )
 
-        # Validate connection if validation is enabled
         if self._validate_connections:
-            src_obj = self._objects.get(src_id)
-            dst_obj = self._objects.get(dst_id)
-
-            if not src_obj:
-                raise InvalidConnectionError(
-                    f"Source object not found: {src_id}",
-                    src=src_id,
-                    dst=dst_id,
-                    outlet=src_outlet,
-                    inlet=dst_inlet,
-                )
-
-            if not dst_obj:
-                raise InvalidConnectionError(
-                    f"Destination object not found: {dst_id}",
-                    src=src_id,
-                    dst=dst_id,
-                    outlet=src_outlet,
-                    inlet=dst_inlet,
-                )
-
-            # Get the actual object names for validation
-            src_name = self._get_object_name(src_obj)
-            dst_name = self._get_object_name(dst_obj)
-
-            src_dynamic = src_obj.maxclass in DYNAMIC_IO_MAXCLASSES
-            dst_dynamic = dst_obj.maxclass in DYNAMIC_IO_MAXCLASSES
-
-            if src_dynamic or dst_dynamic:
-                # Codeboxes derive their inlet/outlet counts from their code,
-                # so bound-check indices against the box's own declared counts
-                # rather than the fixed maxref entry. Type checking is skipped
-                # because codebox I/O is always signal.
-                src_outlets = (
-                    src_obj.numoutlets
-                    if src_dynamic
-                    else maxref.get_outlet_count(src_name)
-                )
-                dst_inlets = (
-                    dst_obj.numinlets
-                    if dst_dynamic
-                    else maxref.get_inlet_count(dst_name)
-                )
-                error_msg = ""
-                if src_outlets is not None and src_outlet >= src_outlets:
-                    error_msg = (
-                        f"Object '{src_name}' only has {src_outlets} outlet(s), "
-                        f"cannot connect from outlet {src_outlet}"
+            error = self._connection_error(src_id, src_outlet, dst_id, dst_inlet)
+            if error:
+                if self._on_invalid == "raise":
+                    raise InvalidConnectionError(
+                        error,
+                        src=src_id,
+                        dst=dst_id,
+                        outlet=src_outlet,
+                        inlet=dst_inlet,
                     )
-                elif dst_inlets is not None and dst_inlet >= dst_inlets:
-                    error_msg = (
-                        f"Object '{dst_name}' only has {dst_inlets} inlet(s), "
-                        f"cannot connect to inlet {dst_inlet}"
-                    )
-                is_valid = not error_msg
-            else:
-                is_valid, error_msg = maxref.validate_connection(
-                    src_name,
-                    src_outlet,
-                    dst_name,
-                    dst_inlet,
-                    src_text=getattr(src_obj, "text", None),
-                    dst_text=getattr(dst_obj, "text", None),
-                )
-
-            if not is_valid:
-                logger.warning(
-                    f"Connection validation failed: {src_name}[{src_outlet}] -> {dst_name}[{dst_inlet}]: {error_msg}"
-                )
-                raise InvalidConnectionError(
-                    f"Invalid connection from {src_name}[{src_outlet}] to {dst_name}[{dst_inlet}]: {error_msg}",
-                    src=src_id,
-                    dst=dst_id,
-                    outlet=src_outlet,
-                    inlet=dst_inlet,
-                )
+                logger.warning(error)
 
         # Order of lines between the same pair of objects: Max uses it to fan
         # parallel wires apart. Derive it from the connections that currently
@@ -458,6 +499,19 @@ class BoxFactoryMixin(AbstractPatcher):
 
         defaults = maxref.MAXCLASS_DEFAULTS.get(_maxclass)
 
+        arg_in, arg_out = porttypes.arg_port_counts(_maxclass, text)
+        code = kwds.get("code")
+        if _maxclass in ("codebox", "codebox~") and isinstance(code, str):
+            # like gen codeboxes, RNBO codeboxes take their ports from the code
+            arg_in, arg_out = (
+                _max_gen_io_index(code, "in"),
+                _max_gen_io_index(code, "out"),
+            )
+        if numinlets is None:
+            numinlets = arg_in
+        if numoutlets is None:
+            numoutlets = arg_out
+
         if defaults:
             if maxclass is None and defaults.get("maxclass"):
                 maxclass = defaults["maxclass"]
@@ -468,12 +522,12 @@ class BoxFactoryMixin(AbstractPatcher):
             if numoutlets is None and "numoutlets" in defaults:
                 numoutlets = defaults["numoutlets"]
 
-            if outlettype is None and "outlettype" in defaults:
-                outlettype = defaults["outlettype"]
-
         kwds = self._textbox_helper(_maxclass, kwds)
 
+        auto_rect = patching_rect is None
         layout_rect = self.get_pos(maxclass) if maxclass else self.get_pos()
+        if patching_rect is None and maxclass in ("inlet", "outlet"):
+            layout_rect = self._right_of_ports(maxclass, layout_rect)
         if patching_rect is None and defaults and defaults.get("patching_rect"):
             default_rect = defaults["patching_rect"]
             patching_rect = Rect(
@@ -482,24 +536,90 @@ class BoxFactoryMixin(AbstractPatcher):
         elif patching_rect is None:
             patching_rect = layout_rect
 
+        # An object with no maxref entry gets one outlet by default (not zero):
+        # a zero-outlet object cannot act as a connection source, which is wrong
+        # for the hand-typed long-tail objects that land here. Matches
+        # Box.__init__'s default.
+        if numoutlets is None:
+            numoutlets = 1
+        if outlettype is None:
+            outlettype = (list(defaults.get("outlettype", [])) if defaults else [])[
+                :numoutlets
+            ]
+            outlettype += [""] * (numoutlets - len(outlettype))
+
+        maxclass = maxclass or "newobj"
+        if maxclass in ("message", "comment"):
+            kwds["text"] = " ".join(tail)  # type: ignore[typeddict-unknown-key]
+        elif maxclass == "newobj":
+            kwds["text"] = text  # type: ignore[typeddict-unknown-key]
+        elif tail:
+            # UI boxes store state as box attributes; explicit kwds win
+            positional, attrs = parse_attr_args(tail)
+            if positional:
+                logger.warning(
+                    f"{maxclass!r} is a UI box; ignoring arguments {positional} "
+                    "(use @attr value or a keyword argument)"
+                )
+            # Text attributes escape the type checker, so check them even when
+            # validate_attrs is off (add_box checks every key when it is on).
+            if not self._validate_attrs:
+                for key in unknown_attrs(_maxclass, attrs):
+                    warnings.warn(
+                        f"Unknown attribute {key!r} for Max object {_maxclass!r} "
+                        f"(possible typo?)",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+            kwds = {**attrs, **kwds}  # type: ignore[typeddict-item]
+
+        if auto_rect and maxclass in ("newobj", "message"):
+            patching_rect = self._fit_text_width(
+                patching_rect,
+                cast(str, kwds["text"]),  # type: ignore[typeddict-item]
+                max(numinlets or 1, numoutlets),
+                kwds.get("fontsize"),
+            )
+
         return self.add_box(
             Box(
                 id=id or self.get_id(_maxclass),
-                text=text,
-                maxclass=maxclass or "newobj",
+                maxclass=maxclass,
                 numinlets=numinlets if numinlets is not None else 1,
-                # An object with no maxref entry gets one outlet by default (not
-                # zero): a zero-outlet object cannot act as a connection source,
-                # which is wrong for the hand-typed long-tail objects that land
-                # here. Matches Box.__init__'s default.
-                numoutlets=numoutlets if numoutlets is not None else 1,
-                outlettype=outlettype if outlettype is not None else [""],
+                numoutlets=numoutlets,
+                outlettype=outlettype,
                 patching_rect=patching_rect,
                 **kwds,
             ),
             comment,
             comment_pos,
         )
+
+    @staticmethod
+    def _fit_text_width(
+        rect: Rect, text: str, ports: int, fontsize: Optional[float]
+    ) -> Rect:
+        """``rect`` with the width Max would give a box holding ``text``."""
+        width = box_width_for(text, ports, float(fontsize or 12.0))
+        return Rect(rect[0], rect[1], width, rect[3])
+
+    def _right_of_ports(self, kind: str, rect: Rect) -> Rect:
+        """``rect`` moved right of every existing ``kind`` box, in its row.
+
+        Max numbers ports by x, so a new port placed left of an older one (the
+        grid wraps rows) would take its number.
+        """
+        ports = [
+            b.patching_rect
+            for b in self._boxes
+            if b.maxclass == kind and b.patching_rect is not None
+        ]
+        if not ports:
+            return rect
+        last = max(ports, key=lambda r: r[0])
+        if rect[0] > last[0]:
+            return rect
+        return Rect(last[0] + last[2] + self._layout_mgr.pad, last[1], rect[2], rect[3])
 
     def _textbox_helper(self, maxclass: str, kwds: "TextboxProps") -> "TextboxProps":
         """adds special case support for textbox"""
@@ -641,12 +761,16 @@ class BoxFactoryMixin(AbstractPatcher):
                     hot=0,
                 )
 
+        n_out = kwds.pop("numoutlets", None) or _max_gen_io_index(code, "out")
         return self.add_box(
             Box(
                 id=id or self.get_id(_maxclass),
                 code=code,
                 maxclass=_maxclass,
-                outlettype=[""],
+                # ports come from the code's inN / outN, as for gen codeboxes
+                numinlets=kwds.pop("numinlets", None) or _max_gen_io_index(code, "in"),
+                numoutlets=n_out,
+                outlettype=kwds.pop("outlettype", None) or [""] * n_out,
                 patching_rect=patching_rect or self.get_pos(),
                 **kwds,
             ),
@@ -788,6 +912,10 @@ class BoxFactoryMixin(AbstractPatcher):
     ) -> "Box":
         """Add a max message."""
 
+        if patching_rect is None:
+            patching_rect = self._fit_text_width(
+                self.get_pos(), text or "", 2, kwds.get("fontsize")
+            )
         return self.add_box(
             Box(
                 id=id or self.get_id("message"),
@@ -796,7 +924,7 @@ class BoxFactoryMixin(AbstractPatcher):
                 numinlets=2,
                 numoutlets=1,
                 outlettype=[""],
-                patching_rect=patching_rect or self.get_pos(),
+                patching_rect=patching_rect,
                 **kwds,
             ),
             comment,
@@ -1371,7 +1499,9 @@ class BoxFactoryMixin(AbstractPatcher):
             sub._lines.append(line)
             sub._edge_ids.append((line.src, line.dst))
 
-        # Generated connections are correct by construction; skip validation.
+        # The rewired cords restate connections that already exist, so checking
+        # them would re-report old faults, or under "raise" abort the move with
+        # the patch half rewired.
         saved = (self._validate_connections, sub._validate_connections)
         self._validate_connections = sub._validate_connections = False
         try:

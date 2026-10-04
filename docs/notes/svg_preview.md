@@ -7,9 +7,13 @@ py2max now includes SVG export functionality that enables offline visual validat
 The SVG preview feature converts Max/MSP patch layouts to high-quality, scalable SVG graphics that can be:
 
 - Viewed in any web browser
+
 - Shared with collaborators
+
 - Embedded in documentation
+
 - Version controlled alongside code
+
 - Rendered without binary dependencies
 
 ## Usage
@@ -82,14 +86,19 @@ print(svg_content)
 ### Visual Rendering
 
 - **Boxes**: Rendered with correct positioning, sizing, and type-specific colors
+
   - Regular objects: Light gray fill
+
   - Comments: Yellow fill
+
   - Messages: Medium gray fill
 
 - **Patchlines**: Connection lines between objects with proper inlet/outlet positioning
 
 - **Ports**: Optional inlet (blue) and outlet (orange) visualization
+
   - Automatically detected from Max object metadata
+
   - Positioned based on actual inlet/outlet counts
 
 - **Text**: Object labels with proper escaping for special characters
@@ -97,7 +106,9 @@ print(svg_content)
 ### Customization Options
 
 - `show_ports` (bool): Display inlet/outlet ports (default: True)
+
 - `title` (str|None): Add a title at the top of the SVG
+
 - `output_path` (str|Path): Output file location
 
 ### Layout Support
@@ -105,10 +116,15 @@ print(svg_content)
 SVG export works with all py2max layout managers:
 
 - Horizontal grid
+
 - Vertical grid
+
 - Unified grid with clustering
+
 - Flow-based layouts
+
 - Columnar layouts
+
 - Matrix layouts
 
 ## Examples
@@ -116,10 +132,15 @@ SVG export works with all py2max layout managers:
 See `tests/examples/preview/svg_preview_demo.py` for comprehensive examples including:
 
 - Basic synth patches
+
 - Complex multi-voice systems
+
 - Layout comparisons
+
 - Custom styling options
+
 - Programmatic workflows
+
 - Temporary file usage
 
 ## Technical Details
@@ -127,9 +148,13 @@ See `tests/examples/preview/svg_preview_demo.py` for comprehensive examples incl
 ### SVG Generation
 
 - Pure Python implementation with no binary dependencies
+
 - Supports both Rect objects and list/tuple coordinates
+
 - Handles text overflow gracefully (no truncation)
+
 - Proper XML escaping for special characters
+
 - Scalable vector graphics (resolution independent)
 
 ### Port Detection
@@ -137,13 +162,17 @@ See `tests/examples/preview/svg_preview_demo.py` for comprehensive examples incl
 Inlet/outlet information is automatically obtained from:
 
 1. Box `get_inlet_count()` and `get_outlet_count()` methods (when available)
+
 2. MaxRef metadata (for known Max objects)
+
 3. Fallback to private attributes
 
 ### File Locations
 
 - Default output: `/tmp/<patchname>_preview.svg`
+
 - Custom output: Specified via `-o` flag
+
 - Temporary files: Cleaned up by OS
 
 ## Integration
@@ -172,16 +201,23 @@ export_svg(p, 'docs/images/example.svg', title="Example Patch")
 SVG files are text-based and work well with git:
 
 - Easy to diff
+
 - Reviewable in PR interfaces
+
 - Viewable directly on GitHub/GitLab
 
 ## Limitations
 
 - Text rendering uses monospace font approximation
+
 - Complex subpatchers are rendered flat
+
 - No support for:
+
   - Presentation mode layouts
+
   - UI object states (slider positions, etc.)
+
   - Real-time visual updates
 
 ## Future Enhancements
@@ -189,13 +225,19 @@ SVG files are text-based and work well with git:
 Potential improvements:
 
 - Interactive SVG with hover states
+
 - Subpatcher expansion/collapse
+
 - Export to other formats (PNG, PDF)
+
 - Custom color schemes
+
 - Animated connection flows
 
 ## See Also
 
 - [CLI Documentation](../README.md#command-line-interface)
+
 - [API Reference](../docs/api.md)
+
 - [Layout Managers](../CLAUDE.md#layout-management)

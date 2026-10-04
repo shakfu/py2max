@@ -13,10 +13,9 @@ Exception Hierarchy:
     ├── ConfigurationError
     │   ├── LayoutError (layout manager issues)
     │   └── DatabaseError (database configuration issues)
-    ├── IOError (subclass of built-in IOError)
-    │   ├── PatcherIOError (file I/O errors)
-    │   └── MaxRefError (maxref.xml parsing errors)
-    └── InternalError (unexpected internal errors)
+    └── IOError (subclass of built-in IOError)
+        ├── PatcherIOError (file I/O errors)
+        └── MaxRefError (maxref.xml parsing errors)
 
 Example:
     >>> from py2max.exceptions import InvalidConnectionError
@@ -340,34 +339,6 @@ class MaxRefError(Py2MaxError, IOError):
 
 
 # ----------------------------------------------------------------------------
-# Internal Errors
-
-
-class InternalError(Py2MaxError):
-    """Raised for unexpected internal errors.
-
-    This exception indicates a bug in the library code and should be reported.
-    Users should not typically need to catch this exception.
-
-    Attributes:
-        location: Location in code where error occurred.
-    """
-
-    def __init__(self, message: str, location: Optional[str] = None):
-        """Initialize internal error with location.
-
-        Args:
-            message: Error message.
-            location: Code location (e.g., 'Patcher.add_line').
-        """
-        context = {}
-        if location:
-            context["location"] = location
-        super().__init__(f"Internal error: {message}", context)
-        self.location = location
-
-
-# ----------------------------------------------------------------------------
 # Exports
 
 __all__ = [
@@ -381,5 +352,4 @@ __all__ = [
     "DatabaseError",
     "PatcherIOError",
     "MaxRefError",
-    "InternalError",
 ]

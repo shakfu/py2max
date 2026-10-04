@@ -112,7 +112,7 @@ saw_table = p.add_table('saw_wave', data=saw_data)
 
 # Wavetable oscillator
 phasor = p.add_textbox('phasor~ 440')
-wave_select = p.add_floatbox(0.0, name='wave_morph')
+wave_select = p.add_floatparam('wave_morph', initial=0.0)
 crossfade = p.add_textbox('crossfade~')
 
 # Table lookups
@@ -203,7 +203,7 @@ params = ['frequency', 'amplitude', 'filter_freq', 'resonance']
 param_controls = {}
 
 for param in params:
-    control = p.add_floatbox(0.5, name=param)
+    control = p.add_floatparam(param, initial=0.5)
     param_controls[param] = control
 
     # Connect to state system
@@ -248,7 +248,7 @@ input_obj = p.add_textbox('adc~')
 
 # Delay line with feedback
 delay = p.add_textbox('delay~ 500')
-feedback_gain = p.add_floatbox(0.3, name='feedback')
+feedback_gain = p.add_floatparam('feedback', initial=0.3)
 feedback_mult = p.add_textbox('*~')
 input_mix = p.add_textbox('+~')
 
@@ -290,7 +290,7 @@ matrix = {}
 for src_idx in range(4):
     for dst_idx in range(4):
         # Gain control
-        gain = p.add_floatbox(0.0, name=f'gain_{src_idx}_{dst_idx}')
+        gain = p.add_floatparam(f'gain_{src_idx}_{dst_idx}', initial=0.0)
         mult = p.add_textbox('*~')
 
         # Store for routing
@@ -488,8 +488,8 @@ class CustomPatcher(Patcher):
 
     def add_lowpass_filter(self, frequency=1000, resonance=0.707):
         """Add a lowpass filter with controls."""
-        freq_ctrl = self.add_floatbox(frequency, name=f'freq_{len(self._boxes)}')
-        res_ctrl = self.add_floatbox(resonance, name=f'res_{len(self._boxes)}')
+        freq_ctrl = self.add_floatparam(f'freq_{len(self._boxes)}', initial=frequency)
+        res_ctrl = self.add_floatparam(f'res_{len(self._boxes)}', initial=resonance)
         filter_obj = self.add_textbox('biquad~ lowpass')
 
         # Connect controls
@@ -500,10 +500,10 @@ class CustomPatcher(Patcher):
 
     def add_envelope_generator(self, attack=10, decay=100, sustain=0.3, release=500):
         """Add an ADSR envelope with controls."""
-        a_ctrl = self.add_floatbox(attack, name=f'attack_{len(self._boxes)}')
-        d_ctrl = self.add_floatbox(decay, name=f'decay_{len(self._boxes)}')
-        s_ctrl = self.add_floatbox(sustain, name=f'sustain_{len(self._boxes)}')
-        r_ctrl = self.add_floatbox(release, name=f'release_{len(self._boxes)}')
+        a_ctrl = self.add_floatparam(f'attack_{len(self._boxes)}', initial=attack)
+        d_ctrl = self.add_floatparam(f'decay_{len(self._boxes)}', initial=decay)
+        s_ctrl = self.add_floatparam(f'sustain_{len(self._boxes)}', initial=sustain)
+        r_ctrl = self.add_floatparam(f'release_{len(self._boxes)}', initial=release)
 
         env = self.add_textbox('adsr~')
 
@@ -623,18 +623,16 @@ The named palette and `resolve_color` helper are in `py2max.core.colors`.
 
 ## Catching Attribute Typos
 
-Enable `validate_attrs` to get a warning when an object is given a keyword that is not a known attribute for its Max class.
+py2max warns when an object is given a property that is not a known attribute of its Max class.
 
 ``` python
-import warnings
-
-p = Patcher('checked.maxpat', validate_attrs=True)
-with warnings.catch_warnings(record=True) as caught:
-    warnings.simplefilter('always')
-    p.add_floatparam('master', inital=0.5)   # typo for 'initial'
+p = Patcher('checked.maxpat')
+p.add_floatparam('master', inital=0.5)        # typo for 'initial'
 # -> UserWarning: Unknown attribute 'inital' for Max object 'flonum'
+p.add_textbox('waveform~ @bufername buf')     # typo in text
+# -> UserWarning: Unknown attribute 'bufername' for Max object 'waveform~'
 ```
 
-Validation is off by default and warn-only, so it never changes generated output. Objects with no maxref entry are skipped.
+Known attributes are the object's maxref attributes plus keys Max saves on every box. The check is warn-only, so it never changes generated output. Objects with no maxref entry are skipped. `Patcher(validate_attrs=False)` turns off the check for keywords; `@attr` names in text are still checked, because the type checker cannot see them.
 
 This covers the advanced features of py2max for sophisticated patch creation and management.

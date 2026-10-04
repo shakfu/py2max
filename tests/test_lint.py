@@ -4,7 +4,8 @@ import logging
 
 import pytest
 
-from py2max import Patcher, InvalidPatchError, lint
+from py2max import InvalidConnectionError, InvalidPatchError, Patcher, lint
+from py2max.core.common import Rect
 from py2max.lint import (
     E_BAD_CONNECTION,
     E_DUP_ID,
@@ -13,6 +14,7 @@ from py2max.lint import (
     E_OUTLET_RANGE,
     W_OFFCANVAS,
     W_OVERLAP,
+    W_PORT_ORDER,
     W_UNKNOWN_OBJECT,
 )
 
@@ -178,3 +180,99 @@ def test_strict_clean_save_succeeds(tmp_path):
     p.add_line(p.add_floatbox(), p.add_textbox("cycle~ 440"))
     p.save()
     assert path.exists()
+
+
+# --- bpatcher ----------------------------------------------------------------
+def test_file_bpatcher_uses_declared_port_counts():
+    p = Patcher()
+    bp = p.add_bpatcher("child", numinlets=2, numoutlets=1)
+    p.add_line(p.add_textbox("cycle~ 440"), bp, inlet=1)
+    p.add_line(bp, p.add_textbox("print"))
+    assert not [f for f in p.lint() if f.severity == "error"]
+
+
+def test_file_bpatcher_out_of_declared_range_is_flagged():
+    p = Patcher()
+    bp = p.add_bpatcher("child", numinlets=2, numoutlets=1)
+    p.add_line(p.add_textbox("cycle~ 440"), bp, inlet=2)
+    assert E_INLET_RANGE in _codes(p)
+
+
+def test_file_bpatcher_validates_against_declared_counts():
+    p = Patcher(validate_connections=True)
+    bp = p.add_bpatcher("child", numinlets=2, numoutlets=1)
+    p.add_line(p.add_textbox("cycle~ 440"), bp, inlet=1)
+    with pytest.raises(InvalidConnectionError):
+        p.add_line(p.add_textbox("cycle~ 440"), bp, inlet=2)
+
+
+# --- inlet/outlet order --------------------------------------------------------
+def _ports(p, kind, xs):
+    return [p.add_textbox(kind, patching_rect=Rect(x, 20.0, 30.0, 30.0)) for x in xs]
+
+
+@pytest.mark.parametrize("kind", ["inlet", "outlet"])
+def test_port_order_left_to_right_is_clean(kind):
+    p = Patcher()
+    _ports(p, kind, [20.0, 100.0])
+    assert W_PORT_ORDER not in _codes(p)
+
+
+@pytest.mark.parametrize("kind", ["inlet", "outlet"])
+@pytest.mark.parametrize("xs", [[100.0, 20.0], [50.0, 50.0]])
+def test_port_order_swapped_or_tied_is_flagged(kind, xs):
+    p = Patcher()
+    _ports(p, kind, xs)
+    assert W_PORT_ORDER in _codes(p)
+
+
+def test_port_order_is_checked_in_subpatchers():
+    p = Patcher()
+    sp = p.add_subpatcher("p mysub")
+    _ports(sp._patcher, "inlet", [100.0, 20.0])
+    assert W_PORT_ORDER in _codes(p)
+
+
+@pytest.mark.parametrize("layout", ["grid", "flow", "matrix"])
+def test_layout_preserves_port_numbering(layout):
+    """Ports keep their pre-layout left-to-right order, which is what Max uses."""
+    p = Patcher(layout=layout)
+    ins = [p.add_textbox("inlet") for _ in range(3)]
+    outs = [p.add_textbox("outlet") for _ in range(2)]
+    mix = p.add_textbox("+ 0")
+    # cords that pull the inlets into a different order in a graph layout
+    for i, inlet in enumerate(reversed(ins)):
+        p.add_line(inlet, mix, inlet=min(i, 1))
+    for o in outs:
+        p.add_line(mix, o)
+    # port numbers as a Max user might have dragged them
+    in_order, out_order = [ins[1], ins[0], ins[2]], [outs[1], outs[0]]
+    for box, x in zip(in_order, [100.0, 200.0, 300.0]):
+        box.patching_rect = Rect(x, 20.0, 30.0, 30.0)
+    for box, x in zip(out_order, [100.0, 200.0]):
+        box.patching_rect = Rect(x, 400.0, 30.0, 30.0)
+    p.optimize_layout()
+    for ports in (in_order, out_order):
+        xs = [b.patching_rect[0] for b in ports]
+        assert xs == sorted(xs) and len(set(xs)) == len(xs)
+
+
+@pytest.mark.parametrize("kind", ["inlet", "outlet"])
+def test_added_ports_are_numbered_in_creation_order(kind):
+    # enough boxes that the default grid wraps rows between the ports
+    p = Patcher()
+    ports = []
+    for _ in range(4):
+        ports.append(p.add_textbox(kind))
+        for _ in range(6):
+            p.add_textbox("+ 0")
+    xs = [b.patching_rect[0] for b in ports]
+    assert xs == sorted(xs) and len(set(xs)) == len(xs)
+    assert W_PORT_ORDER not in _codes(p)
+
+
+def test_explicit_port_rect_is_kept():
+    p = Patcher()
+    p.add_textbox("inlet", patching_rect=Rect(300.0, 20.0, 30.0, 30.0))
+    late = p.add_textbox("inlet", patching_rect=Rect(20.0, 20.0, 30.0, 30.0))
+    assert late.patching_rect[0] == 20.0

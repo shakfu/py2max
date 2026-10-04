@@ -36,7 +36,9 @@ def _stack(offset, n=12, w=60.0, h=22.0):
 
 
 @pytest.mark.parametrize(
-    "offset", [(0, 0), (8, 6), (20, 0), (15, 15)], ids=["stacked", "cascade", "row", "grid"]
+    "offset",
+    [(0, 0), (8, 6), (20, 0), (15, 15)],
+    ids=["stacked", "cascade", "row", "grid"],
 )
 def test_prevent_overlaps_converges(offset):
     p = _stack(offset)

@@ -61,6 +61,7 @@ def _transparent_background(svg: str) -> str:
     """Drop the grey patcher-background rect so the SVG is transparent."""
     return _BG_RECT_RE.sub("", svg, count=1)
 
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTDIR = REPO_ROOT / "docs" / "assets" / "imgs"
 
@@ -176,9 +177,7 @@ def _ogdf(factory_name: str) -> LayoutFn:
         import ogdf
 
         graph = ogdf.Graph()
-        attrs = ogdf.GraphAttributes(
-            graph, ogdf.NODE_GRAPHICS | ogdf.EDGE_GRAPHICS
-        )
+        attrs = ogdf.GraphAttributes(graph, ogdf.NODE_GRAPHICS | ogdf.EDGE_GRAPHICS)
         onodes = {}
         for box in patcher._boxes:
             x, y, w, h = box.patching_rect
@@ -297,28 +296,46 @@ def _builtin_placeholder(patcher: Patcher) -> Positions:
 # py2max's own layout managers (no external dependencies)
 REGISTRY += [
     LayoutSpec(
-        "grid-horizontal", "builtin", _builtin_placeholder,
-        "Grid (horizontal)", {"layout": "grid", "flow_direction": "horizontal"},
+        "grid-horizontal",
+        "builtin",
+        _builtin_placeholder,
+        "Grid (horizontal)",
+        {"layout": "grid", "flow_direction": "horizontal"},
     ),
     LayoutSpec(
-        "grid-vertical", "builtin", _builtin_placeholder,
-        "Grid (vertical)", {"layout": "grid", "flow_direction": "vertical"},
+        "grid-vertical",
+        "builtin",
+        _builtin_placeholder,
+        "Grid (vertical)",
+        {"layout": "grid", "flow_direction": "vertical"},
     ),
     LayoutSpec(
-        "flow-horizontal", "builtin", _builtin_placeholder,
-        "Flow (horizontal)", {"layout": "flow", "flow_direction": "horizontal"},
+        "flow-horizontal",
+        "builtin",
+        _builtin_placeholder,
+        "Flow (horizontal)",
+        {"layout": "flow", "flow_direction": "horizontal"},
     ),
     LayoutSpec(
-        "flow-vertical", "builtin", _builtin_placeholder,
-        "Flow (vertical)", {"layout": "flow", "flow_direction": "vertical"},
+        "flow-vertical",
+        "builtin",
+        _builtin_placeholder,
+        "Flow (vertical)",
+        {"layout": "flow", "flow_direction": "vertical"},
     ),
     LayoutSpec(
-        "columnar", "builtin", _builtin_placeholder,
-        "Columnar", {"layout": "columnar"},
+        "columnar",
+        "builtin",
+        _builtin_placeholder,
+        "Columnar",
+        {"layout": "columnar"},
     ),
     LayoutSpec(
-        "matrix", "builtin", _builtin_placeholder,
-        "Matrix", {"layout": "matrix"},
+        "matrix",
+        "builtin",
+        _builtin_placeholder,
+        "Matrix",
+        {"layout": "matrix"},
     ),
 ]
 
@@ -340,8 +357,7 @@ def _normalize(positions: Positions, span: float) -> Positions:
     extent = max(max_x - min_x, max_y - min_y) or 1.0
     scale = span / extent
     return {
-        k: ((x - min_x) * scale, (y - min_y) * scale)
-        for k, (x, y) in positions.items()
+        k: ((x - min_x) * scale, (y - min_y) * scale) for k, (x, y) in positions.items()
     }
 
 
@@ -459,7 +475,9 @@ def main(argv: List[str] | None = None) -> int:
     generated, failures = generate(specs, args.outdir, args.span, args.quiet)
 
     print(f"\n{len(generated)} generated, {len(failures)} skipped/failed")
-    real_failures = [f for f in failures if not f[1].startswith("backend not installed")]
+    real_failures = [
+        f for f in failures if not f[1].startswith("backend not installed")
+    ]
     if real_failures:
         print("failures:")
         for name, reason in real_failures:

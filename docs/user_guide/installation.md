@@ -5,6 +5,7 @@
 py2max requires:
 
 - Python 3.9 or later
+
 - No runtime dependencies (pure Python)
 
 The library is designed to work without any external dependencies, making it easy to integrate into existing projects.
@@ -77,6 +78,7 @@ These are only required for advanced graph-based layout algorithms and are not n
 py2max works with Max/MSP installations to provide enhanced object documentation and validation:
 
 - **macOS**: Automatically detects Max.app installations in /Applications
+
 - **Windows/Linux**: Basic functionality available without Max installation
 
 The MaxRef system will automatically discover your Max installation and provide rich documentation for 1157+ Max objects. If Max is not found, the library falls back to basic functionality.

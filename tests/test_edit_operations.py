@@ -26,9 +26,7 @@ def test_from_file_restores_id_counter():
     existing = [b.id for b in p._boxes]
     new = p.add("cycle~ 999")
     assert new.id not in existing
-    assert p._id_counter == max(
-        int(bid.split("-")[1]) for bid in existing + [new.id]
-    )
+    assert p._id_counter == max(int(bid.split("-")[1]) for bid in existing + [new.id])
 
 
 def test_from_file_restores_node_and_edge_indexes():

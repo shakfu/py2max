@@ -89,7 +89,6 @@
                         24,
                         24
                     ],
-                    "text": "toggle",
                     "outlettype": [
                         "int"
                     ]
@@ -107,10 +106,10 @@
                         76,
                         22
                     ],
-                    "text": "metro 500",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "metro 500"
                 }
             },
             {
@@ -125,10 +124,10 @@
                         76,
                         22
                     ],
-                    "text": "random 24",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "random 24"
                 }
             },
             {
@@ -143,10 +142,10 @@
                         48,
                         22
                     ],
-                    "text": "+ 48",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "+ 48"
                 }
             },
             {
@@ -161,10 +160,10 @@
                         45,
                         22
                     ],
-                    "text": "mtof",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "mtof"
                 }
             },
             {
@@ -179,10 +178,10 @@
                         60,
                         22
                     ],
-                    "text": "cycle~",
                     "outlettype": [
                         "signal"
-                    ]
+                    ],
+                    "text": "cycle~"
                 }
             },
             {
@@ -197,10 +196,10 @@
                         62,
                         22
                     ],
-                    "text": "*~ 0.15",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "*~ 0.15"
                 }
             },
             {
@@ -215,10 +214,7 @@
                         45,
                         45
                     ],
-                    "text": "ezdac~",
-                    "outlettype": [
-                        ""
-                    ]
+                    "outlettype": []
                 }
             },
             {
@@ -314,10 +310,10 @@
                         200,
                         22
                     ],
-                    "text": "v8 js2max.v8.js",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "v8 js2max.v8.js"
                 }
             },
             {
@@ -401,10 +397,10 @@
                         200,
                         22
                     ],
-                    "text": "v8 serialize-example.js",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "v8 serialize-example.js"
                 }
             },
             {
@@ -419,10 +415,8 @@
                         90,
                         22
                     ],
-                    "text": "print js2max",
-                    "outlettype": [
-                        ""
-                    ]
+                    "outlettype": [],
+                    "text": "print js2max"
                 }
             }
         ],

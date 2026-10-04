@@ -20,7 +20,7 @@ positions until then. Build the patch fully, then call ``optimize_layout()``.
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from py2max.core.abstract import AbstractPatcher
 from py2max.core.common import Rect
@@ -50,6 +50,38 @@ _OGDF_FACTORY: Dict[str, str] = {
     "ogdf-planarization": "PlanarizationLayout",
 }
 
+
+def _components(boxes: List[Any], lines: List[Any]) -> List[List[Any]]:
+    """Boxes grouped into connected components, largest first, isolated last."""
+    neighbours: Dict[str, List[str]] = {box.id: [] for box in boxes}
+    for line in lines:
+        if line.src in neighbours and line.dst in neighbours:
+            neighbours[line.src].append(line.dst)
+            neighbours[line.dst].append(line.src)
+    by_id = {box.id: box for box in boxes}
+    seen: Set[str] = set()
+    groups: List[List[Any]] = []
+    for box in boxes:
+        if box.id in seen:
+            continue
+        stack, group = [box.id], []
+        while stack:
+            node = stack.pop()
+            if node in seen:
+                continue
+            seen.add(node)
+            group.append(by_id[node])
+            stack.extend(neighbours[node])
+        groups.append(group)
+    return sorted(groups, key=lambda g: -len(g))  # stable: ties keep box order
+
+
+# graph-layout engines whose y axis points up
+_FLIP_Y = frozenset({"sugiyama"})
+
+# engines that lay out from real box sizes and return box centres
+_SIZE_AWARE = frozenset({"hola", *_OGDF_FACTORY})
+
 # backend key -> pip package name (for the missing-dependency error)
 _PACKAGE = {
     "hola": "hola-graph",
@@ -67,6 +99,9 @@ class GraphLayoutManager(LayoutManager):
             ``"ogdf-sugiyama"``).
         span: target size in px for the longest side of the normalized layout.
             Defaults to a value scaled by object count so boxes do not overlap.
+        seed: random seed for the OGDF engines.
+        runs: OGDF Sugiyama crossing-minimization runs; the best is kept.
+            More than 1 can trade reproducibility for fewer crossings.
     """
 
     #: supported algorithm names (the part after ``graph:``)
@@ -79,6 +114,8 @@ class GraphLayoutManager(LayoutManager):
         parent: AbstractPatcher,
         algorithm: str,
         span: Optional[float] = None,
+        seed: int = 7,
+        runs: int = 1,
         **kwargs: Any,
     ) -> None:
         super().__init__(parent, **kwargs)
@@ -89,6 +126,8 @@ class GraphLayoutManager(LayoutManager):
             )
         self.algorithm = algorithm
         self.span = span
+        self.seed = seed
+        self.runs = runs
 
     # -- LayoutManager hook ------------------------------------------------
     def _full_layout(self) -> None:
@@ -96,7 +135,10 @@ class GraphLayoutManager(LayoutManager):
         if not boxes:
             return
         positions = self._compute_positions(boxes, list(self.parent._lines))
-        positions = self._normalize(positions, len(boxes))
+        if self.algorithm in _SIZE_AWARE:
+            positions = self._translate(positions, boxes)
+        else:
+            positions = self._normalize(positions, len(boxes))
         for box in boxes:
             x, y = positions[box.id]
             w, h = self.box_dims(box)
@@ -106,23 +148,6 @@ class GraphLayoutManager(LayoutManager):
         # they optimise on approximate sizes. Run the dimension-aware safety net
         # the grid/flow managers use so the saved patch is overlap-free.
         self.prevent_overlaps()
-        # Graph layouts normalize to their own span, which routinely exceeds the
-        # default 640x480 window; grow the window so the whole graph is visible
-        # when the patch is opened (instead of spilling off-screen).
-        self._fit_window(boxes)
-
-    def _fit_window(self, boxes: List[Any]) -> None:
-        """Grow the patcher window so every laid-out box is fully visible."""
-        if not boxes:
-            return
-        max_x = max(b.patching_rect[0] + b.patching_rect[2] for b in boxes)
-        max_y = max(b.patching_rect[1] + b.patching_rect[3] for b in boxes)
-        rect = self.parent.rect
-        x, y, w, h = rect[0], rect[1], rect[2], rect[3]
-        new_w = max(w, max_x + self.pad)
-        new_h = max(h, max_y + self.pad)
-        if (new_w, new_h) != (w, h):
-            self.parent.rect = Rect(x, y, new_w, new_h)
 
     # -- helpers -----------------------------------------------------------
     def _box_xywh(self, box: Any) -> Tuple[float, float, float, float]:
@@ -139,25 +164,45 @@ class GraphLayoutManager(LayoutManager):
         return self._run_ogdf(_OGDF_FACTORY[self.algorithm], boxes, lines)
 
     def _run_hola(self, boxes: List[Any], lines: List[Any]) -> Positions:
+        """HOLA per connected component, packed left to right.
+
+        HOLA needs a connected graph: an isolated box raises ``map::at`` and a
+        second component aborts the process from a C++ assertion. So each
+        component is laid out alone, and isolated boxes follow in a row.
+        """
         try:
             from hola_graph._core import Graph, HolaOpts, Node, do_hola
         except ImportError as exc:
             raise self._missing("hola") from exc
-        graph = Graph()
-        nodes = {}
-        for box in boxes:
-            x, y, w, h = self._box_xywh(box)
-            node = Node.allocate(x, y, w, h)
-            nodes[box.id] = node
-            graph.add_node(node)
-        for line in lines:
-            if line.src in nodes and line.dst in nodes:
-                graph.add_edge(nodes[line.src], nodes[line.dst])
-        do_hola(graph, HolaOpts())
+
         out: Positions = {}
-        for box in boxes:
-            centre = nodes[box.id].get_centre()
-            out[box.id] = (centre.x, centre.y)
+        x_offset = 0.0
+        gap = 2.0 * self.pad
+        for component in _components(boxes, lines):
+            ids = {box.id for box in component}
+            graph = Graph()
+            nodes = {}
+            for box in component:
+                x, y, w, h = self._box_xywh(box)
+                nodes[box.id] = Node.allocate(x, y, w, h)
+                graph.add_node(nodes[box.id])
+            edges = [ln for ln in lines if ln.src in ids and ln.dst in ids]
+            for line in edges:
+                graph.add_edge(nodes[line.src], nodes[line.dst])
+            if edges:
+                do_hola(graph, HolaOpts())
+            # shift this component so its left edge sits at x_offset
+            centres = {
+                box.id: (nodes[box.id].get_centre().x, nodes[box.id].get_centre().y)
+                for box in component
+            }
+            left = min(centres[b.id][0] - self.box_dims(b)[0] / 2 for b in component)
+            top = min(centres[b.id][1] - self.box_dims(b)[1] / 2 for b in component)
+            for box in component:
+                cx, cy = centres[box.id]
+                out[box.id] = (cx - left + x_offset, cy - top)
+            right = max(out[b.id][0] + self.box_dims(b)[0] / 2 for b in component)
+            x_offset = right + gap
         return out
 
     def _run_graph_layout(
@@ -185,8 +230,11 @@ class GraphLayoutManager(LayoutManager):
         ]
         engine = cls(nodes=nodes, links=links, **kw)
         engine.run()
+        # graph-layout's Sugiyama puts sources at the bottom even with its
+        # default orientation="top-to-bottom"; Max cords run downward
+        flip = -1.0 if self.algorithm in _FLIP_Y else 1.0
         return {
-            box.id: (engine.nodes[i].x, engine.nodes[i].y)
+            box.id: (engine.nodes[i].x, flip * engine.nodes[i].y)
             for i, box in enumerate(boxes)
         }
 
@@ -211,9 +259,35 @@ class GraphLayoutManager(LayoutManager):
         for line in lines:
             if line.src in onodes and line.dst in onodes:
                 graph.new_edge(onodes[line.src], onodes[line.dst])
-        getattr(ogdf, factory_name)().call(attrs)
+        # OGDF's randomized passes break ties differently in each process
+        # unless its process-wide engine is seeded before every call.
+        ogdf.set_seed(self.seed)
+        layout = getattr(ogdf, factory_name)()
+        if hasattr(layout, "set_runs"):
+            layout.set_runs(self.runs)
+        if hasattr(layout, "set_rand_seed"):
+            layout.set_rand_seed(self.seed)
+        layout.call(attrs)
         return {
             box.id: (attrs.x(onodes[box.id]), attrs.y(onodes[box.id])) for box in boxes
+        }
+
+    def _translate(self, positions: Positions, boxes: List[Any]) -> Positions:
+        """Centres to top-left corners, moved to the margin, scale kept.
+
+        HOLA and OGDF place boxes from their real sizes, so their spacing is
+        already right; rescaling it would make the gaps arbitrary.
+        """
+        corners = {}
+        for box in boxes:
+            w, h = self.box_dims(box)
+            cx, cy = positions[box.id]
+            corners[box.id] = (cx - w / 2, cy - h / 2)
+        min_x = min(x for x, _ in corners.values())
+        min_y = min(y for _, y in corners.values())
+        return {
+            k: (self.pad + x - min_x, self.pad + y - min_y)
+            for k, (x, y) in corners.items()
         }
 
     def _normalize(self, positions: Positions, n: int) -> Positions:

@@ -3,11 +3,13 @@
 import json
 import sqlite3
 import sys
+import zlib
 from contextlib import contextmanager
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Dict, Iterator, List, Optional, Type, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union
 
+from ..exceptions import DatabaseError
 from ..log import get_logger
 from .parser import (
     get_all_jit_objects,
@@ -41,6 +43,10 @@ class MaxRefDB:
 
     The cache is automatically populated on first use.
     """
+
+    #: Schema version, stored in ``PRAGMA user_version``. Bump it and add an
+    #: entry to ``_MIGRATIONS`` for every change to the schema or stored data.
+    SCHEMA_VERSION = 3
 
     #: Columns of `objects` that `search()` will match against. A whitelist
     #: because the field name is interpolated into the SQL, not bound.
@@ -106,6 +112,7 @@ class MaxRefDB:
             self._conn.row_factory = sqlite3.Row
 
         self._init_schema()
+        self._migrate()
 
         # Auto-populate cache on first use
         if auto_populate and self._use_cache and self.count == 0:
@@ -403,6 +410,28 @@ class MaxRefDB:
                 "CREATE INDEX IF NOT EXISTS idx_attributes_object ON attributes(object_id)"
             )
 
+    def _migrate(self) -> None:
+        """Bring the schema from its stored version up to ``SCHEMA_VERSION``.
+
+        A database created before versioning reads as 0 and is treated as 1,
+        the schema ``_init_schema`` creates.
+        """
+        with self._get_cursor() as cursor:
+            version = cursor.execute("PRAGMA user_version").fetchone()[0] or 1
+            if version > self.SCHEMA_VERSION:
+                raise DatabaseError(
+                    f"database schema v{version} is newer than this py2max "
+                    f"supports (v{self.SCHEMA_VERSION}); upgrade py2max or "
+                    "delete the database to rebuild it",
+                    db_path=str(self.db_path),
+                    operation="migrate",
+                )
+            for target in range(version + 1, self.SCHEMA_VERSION + 1):
+                logger.info("migrating %s to schema v%d", self.db_path, target)
+                _MIGRATIONS[target](cursor)
+            # PRAGMA does not take bound parameters; the value is an int
+            cursor.execute(f"PRAGMA user_version = {int(self.SCHEMA_VERSION)}")
+
     def populate(
         self, object_names: Optional[List[str]] = None, category: Optional[str] = None
     ) -> None:
@@ -429,10 +458,11 @@ class MaxRefDB:
                     f"Unknown category: {category}. Use 'max', 'msp', 'jit', 'm4l', or None"
                 )
 
-        for name in object_names:
-            data = get_object_info(name)
-            if data:
-                self.insert_object(name, data)
+        with self._get_cursor() as cursor:  # one transaction for the batch
+            for name in object_names:
+                data = get_object_info(name)
+                if data:
+                    self._insert_object(cursor, name, data)
 
     # -------------------------------------------------------------------------
     # Insert helpers
@@ -470,11 +500,22 @@ class MaxRefDB:
         }
         root_attrs = {k: v for k, v in data.items() if k not in known_keys}
 
+        # An upsert, not INSERT OR REPLACE: REPLACE gave the row a new id, and
+        # with foreign keys off the old id's child rows were left behind.
         cursor.execute(
             """
-            INSERT OR REPLACE INTO objects
-            (name, digest, description, category, module_pathname, autofit, root_attrs)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO objects
+            (name, digest, description, category, module_pathname, autofit,
+             root_attrs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(name) DO UPDATE SET
+                digest = excluded.digest,
+                description = excluded.description,
+                category = excluded.category,
+                module_pathname = excluded.module_pathname,
+                autofit = excluded.autofit,
+                root_attrs = excluded.root_attrs,
+                data = excluded.data
             """,
             (
                 name,
@@ -484,26 +525,27 @@ class MaxRefDB:
                 data.get("module_pathname"),
                 1 if data.get("autofit") == "1" else 0,
                 json.dumps(root_attrs) if root_attrs else None,
+                _pack(data),
             ),
         )
-        return cursor.lastrowid  # type: ignore[return-value]
+        row = cursor.execute(
+            "SELECT id FROM objects WHERE name = ?", (name,)
+        ).fetchone()
+        return int(row[0])
 
     def _delete_related_records(self, cursor: sqlite3.Cursor, object_id: int) -> None:
-        """Delete all related records for an object (for REPLACE operations)."""
-        tables = [
-            "metadata",
-            "inlets",
-            "outlets",
-            "objargs",
-            "methods",
-            "attributes",
-            "examples",
-            "seealso",
-            "misc",
-            "palette",
-            "parameter",
-        ]
-        for table in tables:
+        """Delete all related records for an object before re-inserting it."""
+        cursor.execute(
+            "DELETE FROM method_args WHERE method_id IN "
+            "(SELECT id FROM methods WHERE object_id = ?)",
+            (object_id,),
+        )
+        cursor.execute(
+            "DELETE FROM attribute_enums WHERE attribute_id IN "
+            "(SELECT id FROM attributes WHERE object_id = ?)",
+            (object_id,),
+        )
+        for table in _OBJECT_CHILD_TABLES:
             cursor.execute(f"DELETE FROM {table} WHERE object_id = ?", (object_id,))
 
     def _insert_metadata(
@@ -750,26 +792,30 @@ class MaxRefDB:
             Object ID
         """
         with self._get_cursor() as cursor:
-            object_id = self._insert_main_object(cursor, name, data)
-            self._delete_related_records(cursor, object_id)
+            return self._insert_object(cursor, name, data)
 
-            self._insert_metadata(cursor, object_id, data.get("metadata", {}))
-            self._insert_inlets_outlets(
-                cursor, object_id, data.get("inlets", []), "inlets"
-            )
-            self._insert_inlets_outlets(
-                cursor, object_id, data.get("outlets", []), "outlets"
-            )
-            self._insert_objargs(cursor, object_id, data.get("objargs", []))
-            self._insert_methods(cursor, object_id, data.get("methods", {}))
-            self._insert_attributes(cursor, object_id, data.get("attributes", {}))
-            self._insert_examples(cursor, object_id, data.get("examples", []))
-            self._insert_seealso(cursor, object_id, data.get("seealso", []))
-            self._insert_misc(cursor, object_id, data.get("misc", {}))
-            self._insert_palette(cursor, object_id, data.get("palette", {}))
-            self._insert_parameter(cursor, object_id, data.get("parameter", {}))
+    def _insert_object(
+        self, cursor: sqlite3.Cursor, name: str, data: Dict[str, Any]
+    ) -> int:
+        """Insert one object and its child rows within ``cursor``'s transaction."""
+        object_id = self._insert_main_object(cursor, name, data)
+        self._delete_related_records(cursor, object_id)
 
-            return object_id
+        self._insert_metadata(cursor, object_id, data.get("metadata", {}))
+        self._insert_inlets_outlets(cursor, object_id, data.get("inlets", []), "inlets")
+        self._insert_inlets_outlets(
+            cursor, object_id, data.get("outlets", []), "outlets"
+        )
+        self._insert_objargs(cursor, object_id, data.get("objargs", []))
+        self._insert_methods(cursor, object_id, data.get("methods", {}))
+        self._insert_attributes(cursor, object_id, data.get("attributes", {}))
+        self._insert_examples(cursor, object_id, data.get("examples", []))
+        self._insert_seealso(cursor, object_id, data.get("seealso", []))
+        self._insert_misc(cursor, object_id, data.get("misc", {}))
+        self._insert_palette(cursor, object_id, data.get("palette", {}))
+        self._insert_parameter(cursor, object_id, data.get("parameter", {}))
+
+        return object_id
 
     # -------------------------------------------------------------------------
     # Get helpers
@@ -870,7 +916,8 @@ class MaxRefDB:
             name: Object name
 
         Returns:
-            Object data dictionary or None if not found
+            The dict ``insert_object`` was given (the parser's shape), with
+            ``name`` added if it had none; None if not found.
         """
         with self._get_cursor() as cursor:
             cursor.execute("SELECT * FROM objects WHERE name = ?", (name,))
@@ -878,7 +925,15 @@ class MaxRefDB:
             if not row:
                 return None
 
+            if row["data"] is not None:
+                source = _unpack(row["data"])
+                source.setdefault("name", name)  # as rows always supplied it
+                return source
+
+            # stored before schema v3 and not in maxref: rebuild from the rows,
+            # which keeps their column names and loses some source types
             data = dict(row)
+            del data["data"]
             object_id = data["id"]
 
             # Parse and merge root_attrs
@@ -1001,8 +1056,9 @@ class MaxRefDB:
             input_path: Path to input JSON file
         """
         data = json.loads(input_path.read_text())
-        for name, obj_data in data.items():
-            self.insert_object(name, obj_data)
+        with self._get_cursor() as cursor:  # one transaction for the batch
+            for name, obj_data in data.items():
+                self._insert_object(cursor, name, obj_data)
 
     def summary(self) -> Dict[str, Any]:
         """Get database summary statistics
@@ -1040,6 +1096,71 @@ class MaxRefDB:
         logger.info("initializing py2max cache (one-time setup) at %s", self.db_path)
         self.populate()
         logger.info("cache ready with %d objects", self.count)
+
+
+def _purge_orphans(cursor: sqlite3.Cursor) -> None:
+    """v2: drop child rows left by INSERT OR REPLACE re-inserting an object."""
+    for table in _OBJECT_CHILD_TABLES:
+        cursor.execute(
+            f"DELETE FROM {table} WHERE object_id NOT IN (SELECT id FROM objects)"
+        )
+    cursor.execute(
+        "DELETE FROM method_args WHERE method_id NOT IN (SELECT id FROM methods)"
+    )
+    cursor.execute(
+        "DELETE FROM attribute_enums WHERE attribute_id NOT IN "
+        "(SELECT id FROM attributes)"
+    )
+
+
+_OBJECT_CHILD_TABLES = (
+    "metadata",
+    "inlets",
+    "outlets",
+    "objargs",
+    "methods",
+    "attributes",
+    "examples",
+    "seealso",
+    "misc",
+    "palette",
+    "parameter",
+)
+
+
+def _store_source(cursor: sqlite3.Cursor) -> None:
+    """v3: keep each object's source dict, so get_object returns it exactly.
+
+    Rebuilding it from the normalized rows loses types (``optional="0"`` and
+    a missing ``optional`` both become 0), so ``load(export())`` corrupted data.
+    Existing rows are backfilled from maxref where it knows the object.
+    """
+    columns = {row[1] for row in cursor.execute("PRAGMA table_info(objects)")}
+    if "data" not in columns:
+        cursor.execute("ALTER TABLE objects ADD COLUMN data BLOB")
+    names = [row[0] for row in cursor.execute("SELECT name FROM objects").fetchall()]
+    for name in names:
+        info = get_object_info(name)
+        if info:
+            cursor.execute(
+                "UPDATE objects SET data = ? WHERE name = ?", (_pack(info), name)
+            )
+
+
+def _pack(data: Dict[str, Any]) -> bytes:
+    return zlib.compress(json.dumps(data, separators=(",", ":")).encode(), 6)
+
+
+def _unpack(blob: bytes) -> Dict[str, Any]:
+    result: Dict[str, Any] = json.loads(zlib.decompress(blob))
+    return result
+
+
+#: target schema version -> migration from the version below it
+_MIGRATIONS: Dict[int, Callable[[sqlite3.Cursor], None]] = {
+    2: _purge_orphans,
+    3: _store_source,
+}
 
 
 __all__ = ["MaxRefDB"]

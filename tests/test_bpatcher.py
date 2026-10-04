@@ -11,7 +11,8 @@ def test_bpatcher():
 
     assert len(bp._boxes) == 2
     assert bp.to_dict()["patcher"]["openinpresentation"] == 1
-    assert in1.text == "inlet"
+    assert in1.maxclass == "inlet"
+    assert "text" not in in1.to_dict()["box"]
     scope_box = scope.to_dict()["box"]
     assert scope_box["maxclass"] == "scope~"
     assert scope_box["presentation"] == 1

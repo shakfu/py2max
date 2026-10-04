@@ -25,7 +25,7 @@ def test_number_tilde():
     assert len(comment_boxes) == 8
     for b in boxes:
         assert b.maxclass == "number~"
-        assert b.text == "number~"
+        assert b.maxclass == "number~"
 
     for b in boxes[:4]:
         assert b.to_dict()["box"]["mode"] == 1

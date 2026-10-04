@@ -2,6 +2,96 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`Patcher.optimize_layout_subset(boxes)`** lays out only the given boxes and the cords between them; every other box stays put. The group keeps its top-left corner, and moves down as a whole if it then overlaps a fixed box. It is a separate method because `optimize_layout()` takes no arguments by design.
+
+  ```python
+  p.optimize_layout_subset(logic_boxes)  # arrange logic around a fixed bpatcher view
+  ```
+
+### Removed
+
+- `py2max.exceptions.InternalError`. Nothing raised it, and no public code on GitHub imports it.
+
+### CI
+
+- CI runs on push and pull request to `main`, as well as on demand. The repository is now `ruff format`-clean, which the lint job requires (24 files were not), and the suite passes on Python 3.9, the oldest in the matrix.
+
+### Changed
+
+- **`add_textbox` writes UI objects in their box form.** `add_textbox("flonum")` wrote `maxclass: newobj` with `text: "flonum"`, and UI boxes such as `ezdac~` carried a `text` key Max does not write. A class is now a box class when its maxref palette entry creates it by name; this covers UI objects, `inlet`/`outlet` and `message`. Box classes get no `text`, except `message`/`comment`, whose arguments become their content. UI boxes store state as box attributes, so `@attr value` arguments become attributes and positional arguments are dropped with a warning:
+
+  ```python
+  p.add_textbox("waveform~ @buffername buf")  # same as buffername="buf"
+  ```
+
+  These names come from a string, so mypy cannot check them. An `@attr` unknown to the object therefore warns even without `validate_attrs=True`.
+
+- **`validate_attrs` no longer flags keys Max itself saves.** maxref omits 20 of them (`linecount` on comments, `index` on `inlet`/`outlet`, `bgfillcolor_*`, ...), measured on 476 UI boxes in 60 Max-written patches. They are now known, and a test checks the Max-written fixtures in `tests/data/`. Code that read `box.text` to identify a UI box should read `box.maxclass` or `py2max.utils.object_name(box)`. `find_by_text` falls back to the class name for these boxes.
+
+- **Invalid connections warn by default.** `Patcher(on_invalid=...)` takes `"warn"` (the new default: log and add the cord), `"raise"` or `"ignore"`. `validate_connections=True` still means `"raise"`, and `False` now means `"ignore"`. Before, the check ran only when you opted in. Warning by default matches the save-time linter, and every user now reports a false positive instead of only the few who opted in. Subpatchers inherit the parent's policy and `validate_attrs` setting.
+
+  The first data found two false-positive classes, both fixed below. After the fixes, all 527 cords in 60 Max-written patches pass, and the test suite flags only its deliberately invalid cords.
+
+- **`validate_attrs` is on by default.** An unknown property now warns at `add_*` time. Evidence: 0 false positives on 868 boxes from 60 Max-written patches, 0 on loading those patches, and 0 from py2max's own output across the test suite, which now fails on any such warning. Known keys now also include maxref's `jbox` (base box) attributes and each class's curated defaults. Pass `validate_attrs=False` to opt out.
+
+  The check found 61 doc and example calls of the form `add_floatbox(0.3, name="gain")`. These wrote `0.3` as a comment and a meaningless `name` key; they now read `add_floatparam("gain", initial=0.3)`.
+
+- `graph:ogdf-*` layouts require `ogdf-py>=0.5.1`, the first release with `set_seed`.
+
+### Fixed
+
+- **`add_textbox` declares argument-aware port counts.** Counts came from a table keyed by class name only, so `route phase info` declared 2 outlets while `lint` and connection validation counted 3; a cord to outlet 2 passed validation and pointed at a port the box did not declare. The box now takes counts from the same resolver, and `t`/`trigger` get one outlet per argument. `outlettype` is padded or truncated to match.
+
+- **Numbers into a signal-typed right inlet are no longer errors.** maxref types 53 right inlets as `signal` that also take numbers or bangs, among them `clip~` min/max, `scope~` buffer size and `minmax~` reset. `flonum -> clip~` inlet 1 was flagged. A right inlet is now strict only when its digest describes a plain signal and no method applies to it; 25 remain strict, such as FFT imaginary inputs and oscillator sync.
+
+- **RNBO codeboxes declare ports from their code.** `add_codebox` declared 0 inlets and 1 outlet whatever the code said, and `add_textbox("codebox", code=...)` declared 1/1. Both now count `inN`/`outN`, as gen codeboxes do.
+
+- **The interactive-controller tutorial wired `preset` wrongly.** It connected outlet *i* to controller *i* and each controller back into inlet *i*; `preset` has 1 inlet. Its left outlet now goes to each controller.
+
+- **Re-inserting an object into `MaxRefDB` no longer duplicates its child rows.** `INSERT OR REPLACE` gave the row a new id, and with foreign keys off the old id's methods, attributes and ports stayed behind. Every re-`populate()` or `load()` grew the cache. Objects are now upserted by name.
+
+- **`MaxRefDB.load(export())` no longer corrupts data, and `get_object` returns what was inserted.** `get_object` rebuilt objects from the normalized tables, under column names (`inlet_type`, `can_get`, `attrs`) that `insert_object` does not read. A load nested those columns inside `attrs`, and lost attribute get/set flags, types and port indices. Each object's source dict is now stored compressed (schema v3, about 1.7 MB for all objects) and returned as is, with `name` filled in when absent. The alternative, mapping rows back to the source shape, cannot be exact: the inserts turn `optional="0"` and a missing `optional` into the same 0. Existing caches are backfilled from maxref. Objects maxref does not know, stored before v3, still come back in the old row shape.
+
+- **`MaxRefDB` has a schema version (`PRAGMA user_version`) and migrations.** A database newer than the running py2max raises `DatabaseError` instead of being misread. Migration 2 purges the orphaned rows from existing caches. `populate()` and `load()` now run in one transaction.
+
+- **Max discovery finds user-level and pointed-at installs.** macOS now also searches `~/Applications`. `PY2MAX_MAX_REFPAGES` may name `Max.app` or a Windows `Max 9` folder as well as the `refpages` folder.
+
+- **A `.maxref.xml` whose root is not `<c74object>` is rejected with a warning.** It used to load as an object with no ports or methods. Cycling '74 publishes no schema, so the root element is the check.
+
+- **`inlet`/`outlet` boxes declare 0/1 and 1/0 ports.** maxref lists 1/1 and 2/0.
+
+- **`lint` and connection validation accept cords to a file-referenced `bpatcher`.** With no embedded patcher, its counts fell back to maxref's `(0, 0)`, so every cord was an out-of-range error. They now use the box's declared counts, as codeboxes already did.
+
+- **`graph:ogdf-sugiyama` and `graph:ogdf-fmmm` are reproducible.** OGDF breaks crossing-minimization ties randomly per process, so the same patch laid out differently each run. Every OGDF call is now seeded (`seed`, default 7), and Sugiyama runs once (`runs`, default 1). `graph:ogdf-planarization` still varies between processes when seeded; the cause is inside ogdf-py.
+
+- **New `inlet`/`outlet` boxes are placed right of existing ones.** The grid wraps rows, so a second outlet could land left of the first, and Max would number them in reverse. An explicit `patching_rect` is kept as given.
+
+- **Layouts no longer renumber a patcher's ports.** Max numbers `inlet`/`outlet` boxes by x position, so a layout that moved one inlet left of another rewired every cord to that patcher. After layout, port boxes trade positions to restore their pre-layout left-to-right order. Pre-layout x order is kept over creation order because, in a patch loaded from Max, x order is the numbering the user chose.
+
+- **`lint` warns when `inlet`/`outlet` boxes are not left to right in creation order (`W-PORT-ORDER`).**
+
+- **Vertical `flow` puts every cord downward and patch outputs last.** Levels were shortest distances from a source, so a box fed by a short and a long chain sat on the short chain's level. In a typical synth, `ezdac~` landed beside the filter, with the chain's last cord climbing two levels. Across 8 random patches, 84 of 272 cords ran backward. Levels are now longest paths (0 backward), and `dac~`, `ezdac~`, `outlet` and the like go on the last level. This replaces window-corner anchors, which a layout would undo and which lengthen cords. The Sugiyama engines already layer this way. Horizontal `flow` keeps shortest-path levels: Max draws cords from bottom edge to top edge, and in a left-to-right layout the extra levels doubled the crossings (127 to 250). Levels are also spaced by their boxes' real sizes instead of being squeezed into the window.
+
+- **`flow` layout crosses fewer cords.** Separate components no longer interleave, and barycenter sweeps run in both directions. Candidate orderings are placed for real, including overlap removal and the port-order restore, and the one with fewest crossings is kept. The previous ordering is one of the candidates, so no layout gets worse. On 7 test graphs, crossings fell 28% (vertical) and 26% (horizontal); two independent chains went from 8 crossings to 0. A 300-box patch lays out in about 1 s.
+
+- **`prevent_overlaps` no longer stops with boxes still overlapping.** It counted a box as moved only when its net position changed. A box pushed right by one neighbour and back by another ended where it started, so the pass declared convergence. Every layout left overlaps this way: 88 overlapping pairs over 15 layouts × 8 random patches, now 0. If the pushes still oscillate after 50 sweeps, a final pass moves boxes down only, which always terminates.
+
+- **`graph:hola` works on disconnected patches.** HOLA needs a connected graph: an isolated box raised `IndexError: map::at`, and a second component aborted the Python process from a C++ assertion. Each component is now laid out alone, and the components are packed left to right.
+
+- **`graph:hola` and `graph:ogdf-*` keep their own spacing.** These engines place boxes from their real sizes, but every result was rescaled to a fixed span. Shrinking HOLA's output created overlaps the overlap pass could not clear (14 over 12 patches). Their output is now only moved to the margin; OGDF's pairwise distances are kept exactly.
+
+- **`graph:sugiyama` lays out top to bottom.** graph-layout's Sugiyama put sources at the bottom despite its `top-to-bottom` default, so every cord ran upward. Its y axis is now flipped.
+
+- **Object and message boxes are sized from their text.** Every box was 60-66 px wide, whatever it held. Width is now text width plus padding, using Arial's glyph widths, with at least 15 px per port. On 392 Max-written boxes this matches Max's own sizing with a 2 px median error. An explicit `patching_rect` is kept.
+
+- **Every layout grows the window to show all boxes.** Only graph layouts did. On an 80-box patch, the other layouts left up to 57 boxes outside the 640×480 window, flagged by `lint` as `W-OFFCANVAS`.
+
+- **`codebox`, `gen.codebox~` and `nodes` are no longer placed off-canvas.** Their curated default rects hold absolute coordinates, which `get_pos` read as fractions of the window, so all three landed on the window's bottom-right corner. Only values in (0, 1] are window anchors now, such as `ezdac~`'s bottom-left.
+
+- `to_svg` wraps comment text to the box width, using the same glyph widths, and grows the box to fit.
+
 ## [0.4.1]
 
 Two rect-handling bugs, both of which broke documented entry points on any patch that came off disk rather than out of a script.

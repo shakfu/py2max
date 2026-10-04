@@ -55,8 +55,8 @@ class TestToDictIsSelfSufficient:
         direct = patch.to_dict()["patcher"]
 
         assert len(emitted["boxes"]) == len(direct["boxes"])
-        assert [e["box"]["text"] for e in emitted["boxes"]] == [
-            b["box"]["text"] for b in direct["boxes"]
+        assert [e["box"].get("text") for e in emitted["boxes"]] == [
+            b["box"].get("text") for b in direct["boxes"]
         ]
 
     def test_to_json_still_works_when_called_first(self, patch):

@@ -4,7 +4,8 @@ This module provides helper functions for common Max/MSP operations
 such as pitch-to-frequency conversion and other musical calculations.
 """
 
-from typing import Any, Dict
+import re
+from typing import Any, Dict, List, Tuple
 
 
 def kwds_filter(kwds: Dict[str, Any], **elems: Any) -> Dict[str, Any]:
@@ -21,6 +22,37 @@ def kwds_filter(kwds: Dict[str, Any], **elems: Any) -> Dict[str, Any]:
     or ``""`` are kept. The input ``kwds`` is not mutated.
     """
     return {**kwds, **{k: v for k, v in elems.items() if v is not None}}
+
+
+def _atom(token: str) -> Any:
+    """A Max atom from a text token: int, float, or symbol."""
+    if re.fullmatch(r"[-+]?\d+", token):
+        return int(token)
+    try:
+        return float(token)
+    except ValueError:
+        return token
+
+
+def parse_attr_args(tokens: List[str]) -> Tuple[List[str], Dict[str, Any]]:
+    """Split box-text arguments into leading positionals and ``@attr`` values.
+
+    ``["a", "@size", "3", "@color", "1", "0", "0", "1"]`` gives
+    ``(["a"], {"size": 3, "color": [1, 0, 0, 1]})``. An attribute with one
+    value maps to a scalar, with several to a list, with none to ``[]``.
+    """
+    first = next((i for i, t in enumerate(tokens) if t.startswith("@")), len(tokens))
+    attrs: Dict[str, Any] = {}
+    name = None
+    values: List[Any] = []
+    for token in tokens[first:] + ["@"]:
+        if token.startswith("@"):
+            if name:
+                attrs[name] = values[0] if len(values) == 1 else values
+            name, values = token[1:], []
+        else:
+            values.append(_atom(token))
+    return tokens[:first], attrs
 
 
 def object_name(box: Any) -> str:

@@ -333,9 +333,8 @@ class TestBoxHelpMethod:
         help_text = box.help_text()
         assert isinstance(help_text, str)
 
-        # Test that the help method works on objects created by patcher
-        # The add_textbox method creates a generic "newobj" by default
-        assert "No help available for 'newobj'" in help_text
+        # umenu is a UI box, so its maxclass names the object
+        assert "UMENU" in help_text
 
 
 class TestMaxRefCache:

@@ -1,10 +1,13 @@
 """Tests for SVG export functionality."""
 
+import re
 import tempfile
 from pathlib import Path
 
 
 from py2max import Patcher
+from py2max.core.common import Rect
+from py2max.export.svg import _render_box
 
 
 def test_svg_export_basic():
@@ -112,7 +115,9 @@ def test_svg_export_comments():
         p.to_svg(output_path)
 
         content = output_path.read_text()
-        assert "This is a comment" in content
+        # the default 66 px comment box wraps the text across lines
+        texts = re.findall(r"<text [^>]*>([^<]*)</text>", content)
+        assert " ".join(texts) == "This is a comment"
         # Comments should have yellow fill
         assert "#ffffd0" in content
 
@@ -157,7 +162,7 @@ def test_svg_export_complex_patch():
     osc1 = p.add_textbox("cycle~ 440")
     osc2 = p.add_textbox("saw~ 220")
     filter = p.add_textbox("lores~ 1000")
-    gain = p.add_textbox("gain~ 0.5")
+    gain = p.add_textbox("*~ 0.5")
     dac = p.add_textbox("ezdac~")
 
     p.add_line(metro, osc1)
@@ -178,7 +183,7 @@ def test_svg_export_complex_patch():
         assert "cycle~ 440" in content
         assert "saw~ 220" in content
         assert "lores~ 1000" in content
-        assert "gain~ 0.5" in content
+        assert "*~ 0.5" in content
         assert "ezdac~" in content
         # Should have multiple patchlines
         assert content.count("<line") >= 6
@@ -367,3 +372,22 @@ def test_svg_has_background():
     p = Patcher("bg.maxpat")
     p.add_textbox("cycle~ 440")
     assert "#cfcfcf" in export_svg_string(p)
+
+
+def test_svg_wraps_long_comments():
+    p = Patcher("test.maxpat")
+    text = "This comment is much longer than the narrow box it sits in"
+    p.add_comment(text, patching_rect=Rect(20.0, 20.0, 100.0, 22.0))
+    out = _render_box(p._boxes[0])
+    texts = re.findall(r"<text [^>]*>([^<]*)</text>", out)
+    assert len(texts) > 1
+    assert " ".join(texts) == text  # every word survives, in order
+    assert 'height="22.0"' not in out  # the box grows to hold the lines
+
+
+def test_svg_short_comment_stays_one_line():
+    p = Patcher("test.maxpat")
+    p.add_comment("gain", patching_rect=Rect(20.0, 20.0, 100.0, 22.0))
+    out = _render_box(p._boxes[0])
+    assert re.findall(r"<text [^>]*>([^<]*)</text>", out) == ["gain"]
+    assert 'height="22.0"' in out

@@ -122,10 +122,10 @@
                         200,
                         22
                     ],
-                    "text": "v8 js2max.v8.js",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "v8 js2max.v8.js"
                 }
             },
             {
@@ -191,10 +191,10 @@
                         180,
                         22
                     ],
-                    "text": "v8 save-example.js",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "v8 save-example.js"
                 }
             },
             {
@@ -209,10 +209,8 @@
                         90,
                         22
                     ],
-                    "text": "print js2max",
-                    "outlettype": [
-                        ""
-                    ]
+                    "outlettype": [],
+                    "text": "print js2max"
                 }
             }
         ],

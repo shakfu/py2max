@@ -108,7 +108,7 @@ def test_rnbo_textbox():
 
     assert sp.classnamespace == "rnbo"
     assert codebox.maxclass == "codebox"
-    assert codebox.text == "codebox"
+    assert "text" not in codebox.to_dict()["box"]
     assert codebox.to_dict()["box"]["code"] == CODE_EMITTED
     assert len(sp._boxes) == 5
     assert len(sp._lines) == 4
@@ -122,7 +122,7 @@ def test_rnbo_textbox_tilde():
 
     assert sp.classnamespace == "rnbo"
     assert codebox.maxclass == "codebox~"
-    assert codebox.text == "codebox~"
+    assert "text" not in codebox.to_dict()["box"]
     assert codebox.to_dict()["box"]["code"] == CODE_EMITTED
     assert len(sp._boxes) == 5
     assert len(sp._lines) == 4

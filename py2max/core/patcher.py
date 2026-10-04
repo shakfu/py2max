@@ -20,6 +20,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Iterable,
     Iterator,
     List,
     Optional,
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 
 from py2max import layout as layout_module
 from py2max.log import get_logger
+from py2max.utils import object_name
 
 from .abstract import (
     AbstractBox,
@@ -62,6 +64,52 @@ logger = get_logger(__name__)
 # Primary Classes
 
 
+_ON_INVALID = ("warn", "raise", "ignore")
+
+
+def _top_left(boxes: List["AbstractBox"]) -> Tuple[float, float]:
+    return (
+        min(float(b.patching_rect[0]) for b in boxes),
+        min(float(b.patching_rect[1]) for b in boxes),
+    )
+
+
+def _shift(r: Any, dx: float, dy: float) -> Rect:
+    return Rect(float(r[0]) + dx, float(r[1]) + dy, float(r[2]), float(r[3]))
+
+
+def _within_gap(a: Any, b: Any, gap: float) -> bool:
+    return bool(
+        a[0] < b[0] + b[2] + gap
+        and b[0] < a[0] + a[2] + gap
+        and a[1] < b[1] + b[3] + gap
+        and b[1] < a[1] + a[3] + gap
+    )
+
+
+def _resolve_on_invalid(
+    validate_connections: Optional[bool],
+    on_invalid: Optional[str],
+    parent: Optional["AbstractPatcher"],
+) -> str:
+    """The connection policy from the two spellings, else the parent's, else warn."""
+    implied = {True: "raise", False: "ignore", None: None}[validate_connections]
+    if on_invalid is not None:
+        if on_invalid not in _ON_INVALID:
+            raise ValueError(
+                f"on_invalid must be one of {_ON_INVALID}, not {on_invalid!r}"
+            )
+        if implied is not None and implied != on_invalid:
+            raise ValueError(
+                f"validate_connections={validate_connections} conflicts with "
+                f"on_invalid={on_invalid!r}"
+            )
+        return on_invalid
+    if implied is not None:
+        return implied
+    return cast(str, getattr(parent, "_on_invalid", "warn"))
+
+
 class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     """Core class for creating and managing Max/MSP patches.
 
@@ -85,10 +133,16 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow', 'matrix', 'columnar').
         auto_hints: Whether to automatically generate object hints.
         openinpresentation: Presentation mode setting.
-        validate_connections: Whether to validate patchline connections.
+        validate_connections: Shorthand for ``on_invalid``: ``True`` means
+            ``"raise"``, ``False`` means ``"ignore"``.
+        on_invalid: What an invalid connection does: ``"warn"`` (log it and
+            add the cord), ``"raise"`` (``InvalidConnectionError``), or
+            ``"ignore"`` (no check). Defaults to the parent patcher's policy,
+            else ``"warn"``.
         validate_attrs: Whether to warn (UserWarning) when an object is given a
             keyword that is not a known attribute for its Max class -- catches
-            typos like ``inital=`` for ``initial=``. Off by default.
+            typos like ``inital=`` for ``initial=``. Defaults to the parent
+            patcher's setting, else on.
         flow_direction: Direction for flow-based layouts ('horizontal', 'vertical').
         cluster_connected: Whether to cluster connected objects in grid layout.
         num_dimensions: Number of rows used by the matrix layout (also treated as column count when flow_direction='column').
@@ -120,8 +174,9 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         layout: str = "horizontal",
         auto_hints: bool = False,
         openinpresentation: int = 0,
-        validate_connections: bool = False,
-        validate_attrs: bool = False,
+        validate_connections: Optional[bool] = None,
+        on_invalid: Optional[str] = None,
+        validate_attrs: Optional[bool] = None,
         strict: bool = False,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
@@ -160,7 +215,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._dimension_spacing = dimension_spacing
         self._layout_mgr: AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
-        self._validate_connections = validate_connections
+        self._on_invalid = _resolve_on_invalid(validate_connections, on_invalid, parent)
+        self._validate_connections = self._on_invalid != "ignore"
+        if validate_attrs is None:
+            validate_attrs = getattr(parent, "_validate_attrs", True)
         self._validate_attrs = validate_attrs
         self._strict = strict
         self._param_placement = param_placement
@@ -274,7 +332,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         )
 
     def find_by_text(self, pattern: str, case_sensitive: bool = False) -> List["Box"]:
-        """Find all boxes whose text matches a pattern.
+        """Find all boxes whose text (or, for a UI box, maxclass) matches a pattern.
 
         Args:
             pattern: The text pattern to search for (substring match).
@@ -295,7 +353,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         """
         results = []
         for box in self._boxes:
-            text = getattr(box, "text", "") or ""
+            text = getattr(box, "text", "") or object_name(box)
             if not case_sensitive:
                 if pattern.lower() in text.lower():
                     results.append(box)
@@ -693,6 +751,24 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         relayout is out of scope for py2max (see ``docs/auto-layout.md`` in
         py2max-server).
         """
+        self._arrange()
+
+        # Process pending comments after layout optimization
+        self._process_pending_comments()
+
+    def optimize_layout_subset(self, boxes: Iterable["AbstractBox"]) -> None:
+        """Lay out only ``boxes`` and the cords between them.
+
+        Every other box stays put, so logic can be arranged around fixed UI (a
+        ``bpatcher`` view, a presentation area). The group keeps its top-left
+        corner, and moves down as a whole if it then overlaps a fixed box.
+        Like ``optimize_layout``, this is a batch operation.
+        """
+        self._arrange_subset(list(boxes))
+        self._process_pending_comments()
+
+    def _arrange(self) -> None:
+        """Run the layout manager, then dock params if enabled."""
         if hasattr(self._layout_mgr, "optimize_layout"):
             self._layout_mgr.optimize_layout()
 
@@ -700,15 +776,46 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         if self._param_placement and hasattr(self._layout_mgr, "place_params"):
             self._layout_mgr.place_params()
 
-        # Process pending comments after layout optimization
-        self._process_pending_comments()
+    def _arrange_subset(self, subset: List["AbstractBox"]) -> None:
+        """Lay out ``subset`` alone, then put it back clear of the other boxes."""
+        ids = {b.id for b in subset}
+        if not ids:
+            return
+        fixed = [b for b in self._boxes if b.id not in ids]
+        corner = _top_left(subset)
+        saved = (self._boxes, self._objects, self._lines)
+        self._boxes = [b for b in self._boxes if b.id in ids]
+        self._objects = {k: v for k, v in self._objects.items() if k in ids}
+        self._lines = [ln for ln in self._lines if ln.src in ids and ln.dst in ids]
+        try:
+            self._arrange()
+        finally:
+            self._boxes, self._objects, self._lines = saved
+
+        # back to the original corner, then down until clear of fixed boxes
+        x, y = _top_left(subset)
+        dx, dy = corner[0] - x, corner[1] - y
+        gap = float(self._layout_mgr.pad)
+        while True:
+            moved = [_shift(b.patching_rect, dx, dy) for b in subset]
+            hits = [
+                f.patching_rect
+                for f in fixed
+                if any(_within_gap(r, f.patching_rect, gap) for r in moved)
+            ]
+            if not hits:
+                break
+            dy += max(h[1] + h[3] for h in hits) + gap - min(r[1] for r in moved)
+        for box, rect in zip(subset, moved):
+            box.patching_rect = rect
 
     def lint(self) -> "List[Finding]":
         """Return patch-level lint findings (errors and warnings), errors first.
 
         Checks connection validity, out-of-range ports, orphaned patchlines,
-        duplicate IDs, overlapping objects, off-canvas objects, and unknown
-        object classes. See :mod:`py2max.lint`.
+        duplicate IDs, overlapping objects, off-canvas objects, unknown object
+        classes, and inlet/outlet boxes out of creation order. See
+        :mod:`py2max.lint`.
         """
         from ..lint import lint as _lint
 

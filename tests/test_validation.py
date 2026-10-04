@@ -35,7 +35,9 @@ MATRIX = [
 @pytest.mark.parametrize("src,so,dst,di,expect,note", MATRIX)
 def test_validate_connection_matrix(src, so, dst, di, expect, note):
     valid, msg = validate_connection(src, so, dst, di)
-    assert valid is expect, f"{note}: {src}[{so}]->{dst}[{di}] expected {expect} ({msg})"
+    assert valid is expect, (
+        f"{note}: {src}[{so}]->{dst}[{di}] expected {expect} ({msg})"
+    )
     if not expect:
         assert msg, "an error must carry a message"
 

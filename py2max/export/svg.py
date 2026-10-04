@@ -30,6 +30,8 @@ import html
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
+from ..core.common import text_width
+
 if TYPE_CHECKING:
     from ..core import Patcher
     from ..core.abstract import AbstractBox, AbstractPatchline
@@ -48,6 +50,7 @@ UI_ACCENT = "#3a6ea5"  # UI indicator (dial pointer, slider thumb, ...)
 TEXT_COLOR = "#1a1a1a"
 TEXT_FONT_FAMILY = "Helvetica, Arial, sans-serif"
 TEXT_FONT_SIZE = 12
+TEXT_LINE_HEIGHT = 15
 # Connections: signal cables are drawn thicker and in a distinct color.
 LINE_COLOR = "#5a5a5a"  # message/control cable
 LINE_WIDTH = 1.2
@@ -379,6 +382,35 @@ def _text_svg(
     )
 
 
+def _wrap_lines(text: str, width: float, x_offset: float) -> List[str]:
+    """Split ``text`` into lines that fit ``width`` px, keeping explicit breaks."""
+    room = width - 2 * x_offset
+    lines: List[str] = []
+    for para in text.split("\n"):
+        line = ""
+        for word in para.split():
+            trial = f"{line} {word}" if line else word
+            if line and text_width(trial, TEXT_FONT_SIZE) > room:
+                lines.append(line)
+                line = word
+            else:
+                line = trial
+        lines.append(line)
+    return lines
+
+
+def _multiline_text_svg(
+    x: float, y: float, lines: List[str], color: str, x_offset: float = 5.0
+) -> str:
+    return "\n".join(
+        f'<text x="{x + x_offset}" '
+        f'y="{y + 4 + TEXT_FONT_SIZE + i * TEXT_LINE_HEIGHT}" '
+        f'font-family="{TEXT_FONT_FAMILY}" font-size="{TEXT_FONT_SIZE}" '
+        f'fill="{color}">{_escape_text(line)}</text>'
+        for i, line in enumerate(lines)
+    )
+
+
 def _render_box(box: AbstractBox, show_ports: bool = True) -> str:
     """Render a single box (shape, label, and ports) to SVG."""
     r = _rect_of(box)
@@ -388,10 +420,19 @@ def _render_box(box: AbstractBox, show_ports: bool = True) -> str:
     maxclass = getattr(box, "maxclass", "newobj")
     fill, stroke, text_color = _box_colors(box)
 
+    # Max wraps comment text and grows the box to fit it.
+    lines: List[str] = []
+    if maxclass == "comment":
+        lines = _wrap_lines(_get_box_text(box), w, 5.0)
+        if len(lines) > 1:
+            h = max(h, len(lines) * TEXT_LINE_HEIGHT + 8)
+
     parts = [_render_shape(box, maxclass, x, y, w, h, fill, stroke)]
 
+    if len(lines) > 1:
+        parts.append(_multiline_text_svg(x, y, lines, text_color))
     # Text label -- skipped for icon-only widgets whose glyph is the content.
-    if maxclass not in _ICON_ONLY:
+    elif maxclass not in _ICON_ONLY:
         text = _get_box_text(box)
         if text:
             x_offset = 10.0 if maxclass in ("number", "flonum", "number~") else 5.0

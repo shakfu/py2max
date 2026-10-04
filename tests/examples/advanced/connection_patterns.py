@@ -46,7 +46,7 @@ def create_feedback_delay():
 
     # Delay line with feedback
     delay = p.add_textbox("delay~ 500")
-    feedback_gain = p.add_floatbox(0.3, name="feedback")
+    feedback_gain = p.add_floatparam("feedback", initial=0.3)
     feedback_mult = p.add_textbox("*~")
     input_mix = p.add_textbox("+~")
 
@@ -88,7 +88,7 @@ def create_matrix_mixer():
     for src_idx in range(4):
         for dst_idx in range(4):
             # Gain control
-            gain = p.add_floatbox(0.0, name=f"gain_{src_idx}_{dst_idx}")
+            gain = p.add_floatparam(f"gain_{src_idx}_{dst_idx}", initial=0.0)
             mult = p.add_textbox("*~")
 
             # Store for routing

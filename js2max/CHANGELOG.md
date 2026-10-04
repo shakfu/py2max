@@ -33,6 +33,10 @@ the reference; where the two disagreed, the reference lost.
 
 ## [Unreleased]
 
+### Fixed
+
+- **34 more classes keep their own `maxclass`**, among them every `live.*` UI object, `inlet`, `outlet`, `panel` and `jsui`; `serialize` wrote these as `newobj`. `src/objects.ts` now takes box classes from maxref's palette data (py2max CHANGELOG, `add_textbox`). `inlet` declares 0 inlets, not 1, and `outlet` gains an entry (1 in, 0 out).
+
 ## [0.4.0] - 2026-07-27
 
 Shipped inside py2max 0.4.0, which is where the built bundles now live.

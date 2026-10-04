@@ -47,4 +47,4 @@ def test_save_preserves_nested_structure():
         # Check subpatcher content
         loaded_sub = loaded_sub_box.subpatcher
         assert len(loaded_sub._boxes) == 1
-        assert loaded_sub._boxes[0].text == "gain~"
+        assert loaded_sub._boxes[0].maxclass == "gain~"

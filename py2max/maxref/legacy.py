@@ -123,6 +123,14 @@ MAXCLASS_DEFAULTS: Dict[str, Dict[str, Any]] = {
         "parameter_enable": 0,
         "patching_rect": Rect(x=0.0, y=0.0, w=20.0, h=24.0),
     },
+    # maxref lists 1 inlet for inlet and 2 for outlet; Max writes 0 and 1.
+    "inlet": {
+        "maxclass": "inlet",
+        "numinlets": 0,
+        "numoutlets": 1,
+        "outlettype": [""],
+        "patching_rect": Rect(x=0.0, y=0.0, w=30.0, h=30.0),
+    },
     "kslider": {
         "maxclass": "kslider",
         "numinlets": 2,
@@ -205,6 +213,12 @@ MAXCLASS_DEFAULTS: Dict[str, Dict[str, Any]] = {
         "outlettype": ["signal", "float"],
         "patching_rect": Rect(x=0.0, y=0.0, w=56.0, h=22.0),
         "sig": 0.0,
+    },
+    "outlet": {
+        "maxclass": "outlet",
+        "numinlets": 1,
+        "numoutlets": 0,
+        "patching_rect": Rect(x=0.0, y=0.0, w=30.0, h=30.0),
     },
     "pictctrl": {
         "maxclass": "pictctrl",

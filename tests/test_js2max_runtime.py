@@ -74,7 +74,7 @@ class TestTheRuntimeAgreesWithThisPyMax:
                 continue
             entry = re.compile(
                 rf'"?{re.escape(name)}"?:\s*\['
-                rf'{defaults["numinlets"]},\s*{defaults["numoutlets"]}\b'
+                rf"{defaults['numinlets']},\s*{defaults['numoutlets']}\b"
             )
             assert entry.search(source), f"{name} disagrees with py2max's maxref data"
 

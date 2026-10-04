@@ -287,13 +287,13 @@
                         120,
                         22
                     ],
-                    "text": "dict js2max_patch",
                     "outlettype": [
                         "dictionary",
                         "",
                         "",
                         ""
-                    ]
+                    ],
+                    "text": "dict js2max_patch"
                 }
             },
             {
@@ -326,10 +326,10 @@
                         200,
                         22
                     ],
-                    "text": "v8 js2max.v8.js",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "v8 js2max.v8.js"
                 }
             },
             {
@@ -344,10 +344,8 @@
                         90,
                         22
                     ],
-                    "text": "print js2max",
-                    "outlettype": [
-                        ""
-                    ]
+                    "outlettype": [],
+                    "text": "print js2max"
                 }
             },
             {

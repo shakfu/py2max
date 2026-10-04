@@ -77,7 +77,7 @@ def test_tutorial_simple_synthesis():
     assert master_vol.to_dict()["box"]["saved_attribute_attributes"]["valueof"][
         "parameter_initial"
     ] == [0.5]
-    assert output.text == "ezdac~"
+    assert output.maxclass == "ezdac~"
 
     # verify the wiring: each osc[i] -> gain_mult[i] inlet 1, gain_param[i] -> mult inlet 0
     def has_line(src_id, dst_id, outlet=0, inlet=0):

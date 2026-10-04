@@ -30,7 +30,7 @@ def create_wavetable_synth():
 
     # Wavetable oscillator
     phasor = p.add_textbox("phasor~ 440")
-    wave_select = p.add_floatbox(0.0, name="wave_morph")
+    wave_select = p.add_floatparam("wave_morph", initial=0.0)
     crossfade = p.add_textbox("crossfade~")
 
     # Table lookups
@@ -115,7 +115,7 @@ def create_state_management():
     param_controls = {}
 
     for param in params:
-        control = p.add_floatbox(0.5, name=param)
+        control = p.add_floatparam(param, initial=0.5)
         param_controls[param] = control
 
         # Connect to state system

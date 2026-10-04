@@ -43,7 +43,7 @@ dependencies = []
 # experiment tests are redundant with them.
 graph = [
     "graph-layout>=0.4",   # pure-Python constraint / force-directed layouts (COLA, ...)
-    "ogdf-py>=0.3; python_version >= '3.10'",  # OGDF (C++) bindings; wheels for 3.10+
+    "ogdf-py>=0.5.1; python_version >= '3.10'",  # OGDF (C++) bindings; wheels for 3.10+
     "hola-graph>=0.1",     # HOLA human-like orthogonal layout (adaptagrams)
 ]
 
@@ -98,3 +98,8 @@ module = ["graph_layout.*", "ogdf", "ogdf.*", "hola_graph.*", "numpy", "numpy.*"
 follow_imports = "skip"
 ignore_missing_imports = true
 
+
+[tool.pytest.ini_options]
+# py2max's own output must never trip the attribute check; tests that expect
+# the warning capture it explicitly.
+filterwarnings = ["error:Unknown attribute:UserWarning"]

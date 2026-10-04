@@ -88,7 +88,7 @@ def demonstrate_object_properties():
 
     # Create objects
     osc = p.add_textbox("cycle~ 440")
-    gain = p.add_floatbox(0.5, name="gain_control")
+    gain = p.add_floatparam("gain_control", initial=0.5)
     comment = p.add_comment("Signal processing chain")
 
     # Access object properties

@@ -2,9 +2,10 @@
 
 ``lint(patcher)`` returns a list of :class:`Finding`s -- errors and warnings --
 covering connection validity, out-of-range ports, orphaned patchlines,
-duplicate IDs, overlapping objects, off-canvas objects, and unknown object
-classes. It is the productized form of the ad-hoc checks that repeatedly caught
-real bugs, and the basis for on-by-default checking on ``save()``.
+duplicate IDs, overlapping objects, off-canvas objects, unknown object
+classes, and inlet/outlet boxes out of creation order. It is the productized
+form of the ad-hoc checks that repeatedly caught real bugs, and the basis for
+on-by-default checking on ``save()``.
 
 Only the top-level patcher is linted; nested subpatchers have their own
 coordinate space and are left to a future recursive pass.
@@ -15,6 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple
 
+from .core.factory import DYNAMIC_IO_MAXCLASSES
 from .maxref import get_object_info
 from .maxref import porttypes
 from .utils import object_name
@@ -32,6 +34,7 @@ E_BAD_CONNECTION = "E-BAD-CONNECTION"
 W_OVERLAP = "W-OVERLAP"
 W_OFFCANVAS = "W-OFFCANVAS"
 W_UNKNOWN_OBJECT = "W-UNKNOWN-OBJECT"
+W_PORT_ORDER = "W-PORT-ORDER"
 
 
 @dataclass
@@ -72,7 +75,11 @@ def _port(pair: Any, idx: int) -> int:
 def _effective_counts(box: Any, name: str) -> Tuple[Optional[int], Optional[int]]:
     """(inlet_count, outlet_count) for a box, subpatcher-aware."""
     sub_in, sub_out = porttypes.subpatcher_counts(box)
-    n_in, n_out = porttypes.port_counts(name, getattr(box, "text", None))
+    if getattr(box, "maxclass", None) in DYNAMIC_IO_MAXCLASSES:
+        # ports come from code or a loaded file, so trust the declared counts
+        n_in, n_out = getattr(box, "numinlets", None), getattr(box, "numoutlets", None)
+    else:
+        n_in, n_out = porttypes.port_counts(name, getattr(box, "text", None))
     return (
         sub_in if sub_in is not None else n_in,
         sub_out if sub_out is not None else n_out,
@@ -140,6 +147,22 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
                     obj_id=qid(b.id),
                 )
             )
+
+    # Max numbers inlet/outlet boxes by x, not creation order; a mismatch
+    # silently swaps the ports of the patcher (or abstraction) they belong to.
+    for kind in ("inlet", "outlet"):
+        ports = [b for b in boxes if object_name(b) == kind]
+        for prev, cur in zip(ports, ports[1:]):
+            if float(cur.patching_rect[0]) <= float(prev.patching_rect[0]):
+                findings.append(
+                    Finding(
+                        W_PORT_ORDER,
+                        WARNING,
+                        f"{kind} {cur.id!r} is not right of {prev.id!r}, which was "
+                        f"created before it; Max numbers {kind}s by x position",
+                        obj_id=qid(cur.id),
+                    )
+                )
 
     # overlaps (dimension-aware)
     for i in range(len(boxes)):

@@ -18,9 +18,6 @@ def test_varname():
     # dac was created without a varname; none should be emitted
     assert "varname" not in dac.to_dict()["box"]
 
-    varnames = {
-        b["box"].get("varname")
-        for b in p.to_dict()["patcher"]["boxes"]
-    }
+    varnames = {b["box"].get("varname") for b in p.to_dict()["patcher"]["boxes"]}
     assert "osc" in varnames
     assert "volume" in varnames

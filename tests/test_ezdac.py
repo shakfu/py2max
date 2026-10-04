@@ -10,7 +10,7 @@ def test_ezdac():
     p.save()
 
     assert dac.maxclass == "ezdac~"
-    assert dac.text == "ezdac~"
+    assert "text" not in dac.to_dict()["box"]
 
     assert len(p._lines) == 2
     assert l1.source[0] == osc.id

@@ -111,7 +111,9 @@ def collect() -> Tuple[Set[str], Dict[str, Tuple[int, int, Optional[List[str]]]]
     return own, ports
 
 
-def render(own: Set[str], ports: Dict[str, Tuple[int, int, Optional[List[str]]]]) -> str:
+def render(
+    own: Set[str], ports: Dict[str, Tuple[int, int, Optional[List[str]]]]
+) -> str:
     """Emit the table compactly: one line per class, values positional."""
     lines: List[str] = []
     lines.append("/**")
@@ -120,22 +122,34 @@ def render(own: Set[str], ports: Dict[str, Tuple[int, int, Optional[List[str]]]]
     lines.append(" * GENERATED FILE -- DO NOT EDIT BY HAND.")
     lines.append(" * Regenerate with: python scripts/gen_js2max_objects.py")
     lines.append(" *")
-    lines.append(" * A probe run inside Max established that `getboxattr` returns null for")
-    lines.append(" * `maxclass`, `numinlets` and `numoutlets` -- they are not box attributes.")
+    lines.append(
+        " * A probe run inside Max established that `getboxattr` returns null for"
+    )
+    lines.append(
+        " * `maxclass`, `numinlets` and `numoutlets` -- they are not box attributes."
+    )
     lines.append(" * What *is* available is `Maxobj.maxclass` (the object class) and")
-    lines.append(" * `Maxobj.boxtext`. The object class is the key into these tables, which")
+    lines.append(
+        " * `Maxobj.boxtext`. The object class is the key into these tables, which"
+    )
     lines.append(" * supply the rest.")
     lines.append(" *")
-    lines.append(f" * {len(own)} classes keep their own `maxclass`; {len(ports)} have port counts.")
+    lines.append(
+        f" * {len(own)} classes keep their own `maxclass`; {len(ports)} have port counts."
+    )
     lines.append(" */")
     lines.append("")
-    lines.append("/** Classes whose box keeps its own `maxclass`; everything else is `newobj`. */")
+    lines.append(
+        "/** Classes whose box keeps its own `maxclass`; everything else is `newobj`. */"
+    )
     lines.append("export const OWN_MAXCLASS: ReadonlySet<string> = new Set([")
     for name in sorted(own):
         lines.append(f"  {json.dumps(name)},")
     lines.append("]);")
     lines.append("")
-    lines.append("/** `[numinlets, numoutlets, outlettype?]`, keyed by object class. */")
+    lines.append(
+        "/** `[numinlets, numoutlets, outlettype?]`, keyed by object class. */"
+    )
     lines.append("export type PortEntry =")
     lines.append("  | readonly [number, number]")
     lines.append("  | readonly [number, number, readonly string[]];")
@@ -150,7 +164,9 @@ def render(own: Set[str], ports: Dict[str, Tuple[int, int, Optional[List[str]]]]
         lines.append(f"  {json.dumps(name)}: {value},")
     lines.append("};")
     lines.append("")
-    lines.append("/** The `maxclass` a box of this object class carries in the file. */")
+    lines.append(
+        "/** The `maxclass` a box of this object class carries in the file. */"
+    )
     lines.append("export function boxClassOf(objectClass: string): string {")
     lines.append('  return OWN_MAXCLASS.has(objectClass) ? objectClass : "newobj";')
     lines.append("}")
@@ -159,7 +175,9 @@ def render(own: Set[str], ports: Dict[str, Tuple[int, int, Optional[List[str]]]]
     lines.append(" * The Max version a written file declares, taken from py2max.")
     lines.append(" *")
     lines.append(" * Exported rather than restated so the two packages cannot claim to")
-    lines.append(" * have been written by different versions of Max. It was a literal in")
+    lines.append(
+        " * have been written by different versions of Max. It was a literal in"
+    )
     lines.append(" * `model.ts`, which would have gone quietly stale the first time")
     lines.append(" * py2max bumped `MAX_VER_*` in `core/patcher.py`.")
     lines.append(" */")

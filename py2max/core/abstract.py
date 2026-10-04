@@ -21,6 +21,7 @@ class AbstractLayoutManager(ABC):
 
     # Required attributes
     box_height: float
+    pad: float
 
     @abstractmethod
     def get_rect_from_maxclass(self, maxclass: str) -> Optional[Rect]:
@@ -143,6 +144,7 @@ class AbstractPatcher(ABC):
     _layout_mgr: AbstractLayoutManager
     _auto_hints: bool
     _validate_connections: bool
+    _on_invalid: str
     _validate_attrs: bool
     _maxclass_methods: dict[str, Callable[..., Any]]
     _semantic_ids: bool

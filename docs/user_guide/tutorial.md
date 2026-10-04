@@ -24,7 +24,7 @@ for i, freq in enumerate(freqs):
 # Add gain controls
 gains = []
 for i in range(3):
-    gain = p.add_floatbox(0.3, name=f'gain{i}')
+    gain = p.add_floatparam(f'gain{i}', initial=0.3)
     gains.append(gain)
     gain_mult = p.add_textbox('*~')
 
@@ -40,7 +40,7 @@ for gain_mult in gains:
     p.add_line(mult_obj, mixer)
 
 # Add master volume and output
-master_vol = p.add_floatbox(0.5, name='master')
+master_vol = p.add_floatparam('master', initial=0.5)
 master_mult = p.add_textbox('*~')
 output = p.add_textbox('ezdac~')
 
@@ -69,7 +69,7 @@ input_gain = p.add_textbox('*~ 1.0')
 p.add_line(input_obj, input_gain)
 
 # Add input level control
-input_level = p.add_floatbox(1.0, name='input_level')
+input_level = p.add_floatparam('input_level', initial=1.0)
 p.add_line(input_level, input_gain, outlet=0, inlet=1)
 
 # EQ section
@@ -80,7 +80,7 @@ p.add_line(input_gain, highpass)
 p.add_line(highpass, lowpass)
 
 # Distortion section
-drive = p.add_floatbox(1.0, name='drive')
+drive = p.add_floatparam('drive', initial=1.0)
 drive_mult = p.add_textbox('*~')
 overdrive = p.add_textbox('overdrive~')
 
@@ -89,11 +89,11 @@ p.add_line(drive, drive_mult, outlet=0, inlet=1)
 p.add_line(drive_mult, overdrive)
 
 # Delay section
-delay_time = p.add_floatbox(250.0, name='delay_time')
+delay_time = p.add_floatparam('delay_time', initial=250.0)
 delay = p.add_textbox('delay~')
-delay_feedback = p.add_floatbox(0.3, name='feedback')
+delay_feedback = p.add_floatparam('feedback', initial=0.3)
 feedback_mult = p.add_textbox('*~')
-delay_mix = p.add_floatbox(0.3, name='delay_mix')
+delay_mix = p.add_floatparam('delay_mix', initial=0.3)
 wet_dry = p.add_textbox('crossfade~')
 
 # Delay connections
@@ -110,7 +110,7 @@ p.add_line(delay_mix, wet_dry, outlet=0, inlet=2)  # mix control
 
 # Output section
 output_gain = p.add_textbox('*~')
-output_level = p.add_floatbox(0.7, name='output_level')
+output_level = p.add_floatparam('output_level', initial=0.7)
 output = p.add_textbox('dac~ 1 2')
 
 p.add_line(wet_dry, output_gain)
@@ -139,7 +139,7 @@ midi_in = p.add_textbox('ctlin')
 controllers = []
 for cc_num in range(1, 9):  # CC 1-8
     # CC number selection
-    cc_select = p.add_intbox(cc_num, name=f'CC{cc_num}')
+    cc_select = p.add_intparam(f'CC{cc_num}', initial=cc_num)
 
     # Route specific CC
     route = p.add_textbox(f'route {cc_num}')
@@ -148,7 +148,7 @@ for cc_num in range(1, 9):  # CC 1-8
     scale = p.add_textbox('/ 127.')
 
     # Value display
-    value_display = p.add_floatbox(0.0, name=f'value{cc_num}')
+    value_display = p.add_floatparam(f'value{cc_num}', initial=0.0)
 
     # Connect chain
     p.add_line(midi_in, route)
@@ -163,7 +163,7 @@ for cc_num in range(1, 9):  # CC 1-8
     })
 
 # Add preset management
-preset_slot = p.add_intbox(1, name='preset_slot')
+preset_slot = p.add_intparam('preset_slot', initial=1)
 preset_store = p.add_message('store $1')
 preset_recall = p.add_message('recall $1')
 preset_obj = p.add_textbox('preset')
@@ -173,10 +173,11 @@ p.add_line(preset_slot, preset_recall)
 p.add_line(preset_store, preset_obj)
 p.add_line(preset_recall, preset_obj)
 
-# Connect all value displays to preset system
-for i, ctrl in enumerate(controllers):
-    p.add_line(preset_obj, ctrl['value'], outlet=i, inlet=0)
-    p.add_line(ctrl['value'], preset_obj, outlet=0, inlet=i)
+# preset's left outlet names the objects whose values it stores
+
+for ctrl in controllers:
+
+    p.add_line(preset_obj, ctrl['value'])
 
 # Add comments for clarity
 p.add_comment('MIDI Controller Interface', position='above')
@@ -199,7 +200,7 @@ import random
 p = Patcher('generative-music.maxpat', layout="flow", flow_direction="horizontal")
 
 # Master clock
-master_tempo = p.add_floatbox(120.0, name='tempo')
+master_tempo = p.add_floatparam('tempo', initial=120.0)
 metro = p.add_textbox('metro 500')
 
 p.add_line(master_tempo, metro)
@@ -242,7 +243,7 @@ for i, scale in enumerate(scales):
     p.add_line(env, voice_gain, outlet=0, inlet=1)
 
     # Voice level control
-    voice_level = p.add_floatbox(0.25, name=f'voice{i}_level')
+    voice_level = p.add_floatparam(f'voice{i}_level', initial=0.25)
     voice_mult = p.add_textbox('*~')
 
     p.add_line(voice_gain, voice_mult)
@@ -262,7 +263,7 @@ for pattern in patterns:
 # Global effects
 reverb = p.add_textbox('freeverb~ 0.8 0.5')
 master_gain = p.add_textbox('*~')
-master_level = p.add_floatbox(0.6, name='master_level')
+master_level = p.add_floatparam('master_level', initial=0.6)
 output = p.add_textbox('ezdac~')
 
 p.add_line(main_mixer, reverb)

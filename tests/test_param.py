@@ -47,9 +47,7 @@ def _find_nulls(node, path=""):
             out.extend([here] if value is None else _find_nulls(value, here))
         return out
     if isinstance(node, (list, tuple)):
-        return [
-            p for i, v in enumerate(node) for p in _find_nulls(v, f"{path}[{i}]")
-        ]
+        return [p for i, v in enumerate(node) for p in _find_nulls(v, f"{path}[{i}]")]
     return []
 
 

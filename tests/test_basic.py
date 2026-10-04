@@ -1,4 +1,5 @@
 from py2max import Patcher
+from py2max.utils import object_name
 
 
 def test_basic(tmp_path):
@@ -14,10 +15,12 @@ def test_basic(tmp_path):
     # Structure is as built.
     assert len(p._boxes) == 3
     assert len(p._lines) == 2
-    assert [b.text for b in p._boxes] == ["cycle~ 440", "gain~", "ezdac~"]
+    assert [object_name(b) for b in p._boxes] == ["cycle~", "gain~", "ezdac~"]
+    assert [b.text for b in p._boxes] == ["cycle~ 440", "", ""]
 
     # Saving then loading preserves the structure (round-trip fidelity).
     reloaded = Patcher.from_file(str(path))
     assert len(reloaded._boxes) == 3
     assert len(reloaded._lines) == 2
-    assert [b.text for b in reloaded._boxes] == ["cycle~ 440", "gain~", "ezdac~"]
+    assert [b.text for b in reloaded._boxes] == ["cycle~ 440", "", ""]
+    assert [b.maxclass for b in reloaded._boxes] == ["newobj", "gain~", "ezdac~"]

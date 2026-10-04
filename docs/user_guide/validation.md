@@ -1,14 +1,10 @@
 # Validation and Linting
 
-py2max checks your patch for problems that Max would reject or that indicate a
-mistake -- invalid connections, out-of-range ports, overlapping or off-canvas
-objects, dangling patchlines, and unknown object classes. There are two layers:
+py2max checks your patch for problems that Max would reject or that indicate a mistake -- invalid connections, out-of-range ports, overlapping or off-canvas objects, dangling patchlines, and unknown object classes. There are two layers:
 
-- **Patch linting** runs automatically on `save()` and is available on demand
-  via `Patcher.lint()`. It inspects the whole patch and reports structured
-  findings.
-- **Connection validation** is an opt-in, immediate check at `add_line()` time
-  that raises as soon as you make an invalid connection.
+- **Patch linting** runs automatically on `save()` and is available on demand via `Patcher.lint()`. It inspects the whole patch and reports structured findings.
+
+- **Connection validation** is an opt-in, immediate check at `add_line()` time that raises as soon as you make an invalid connection.
 
 ## Linting a patch
 
@@ -28,8 +24,7 @@ for finding in p.lint():
 ERROR E-BAD-CONNECTION: cannot connect bang outlet 0 of 'metro' to inlet 0 of 'cycle~' [obj-1:0 -> obj-2:0]
 ```
 
-(A `metro` sends a *bang*, which an oscillator's signal inlet cannot accept --
-Max reports "error connecting outlet ... to ... inlet" for exactly this.)
+(A `metro` sends a *bang*, which an oscillator's signal inlet cannot accept -- Max reports "error connecting outlet ... to ... inlet" for exactly this.)
 
 Each result is a `Finding`:
 
@@ -60,16 +55,13 @@ Each result is a `Finding`:
 | `W-OVERLAP` | two objects occupy overlapping rectangles |
 | `W-OFFCANVAS` | an object extends outside the patcher window |
 | `W-UNKNOWN-OBJECT` | the object class is not in the Max reference |
+| `W-PORT-ORDER` | `inlet`/`outlet` boxes are not left to right in creation order; Max numbers them by x |
 
-Linting recurses into subpatchers; a finding inside `p sub` is reported with a
-path-qualified id (e.g. `sub-box-id/obj-1`).
+Linting recurses into subpatchers; a finding inside `p sub` is reported with a path-qualified id (e.g. `sub-box-id/obj-1`).
 
 ## Checking on save
 
-`save()` lints automatically. By default it is **non-fatal**: error-severity
-findings are logged (via the standard `logging` module) and the file is still
-written, so existing workflows are unaffected. Warnings (overlaps, off-canvas,
-unknown objects) are left to an explicit `lint()` call to keep saves quiet.
+`save()` lints automatically. By default it is **non-fatal**: error-severity findings are logged (via the standard `logging` module) and the file is still written, so existing workflows are unaffected. Warnings (overlaps, off-canvas, unknown objects) are left to an explicit `lint()` call to keep saves quiet.
 
 To make errors fatal, create the patcher with `strict=True`:
 
@@ -85,8 +77,7 @@ except InvalidPatchError as e:
     print(e)   # patch has 1 validation error(s); first: ERROR E-BAD-CONNECTION ...
 ```
 
-Building the patch correctly (a float number box sets an oscillator's frequency)
-saves cleanly under `strict=True`:
+Building the patch correctly (a float number box sets an oscillator's frequency) saves cleanly under `strict=True`:
 
 ``` python
 p = Patcher('patch.maxpat', strict=True)
@@ -98,14 +89,20 @@ p.save()                # no error
 
 ## Validating connections as you build
 
-For immediate feedback, enable `validate_connections`. Then `add_line()` raises
-`InvalidConnectionError` the moment you make an invalid connection, instead of
-waiting for `save()`:
+`add_line()` checks each connection as you make it. `on_invalid` sets what a failed check does:
+
+| `on_invalid` | Effect |
+|--------------|--------|
+| `"warn"` (default) | log a warning and add the cord |
+| `"raise"` | raise `InvalidConnectionError`; the cord is not added |
+| `"ignore"` | no check |
+
+`validate_connections=True` is shorthand for `"raise"`, and `False` for `"ignore"`. Subpatchers inherit their parent's policy.
 
 ``` python
 from py2max import Patcher, InvalidConnectionError
 
-p = Patcher('patch.maxpat', validate_connections=True)
+p = Patcher('patch.maxpat', on_invalid='raise')
 metro = p.add_textbox('metro 500')
 osc = p.add_textbox('cycle~ 440')
 
@@ -117,22 +114,13 @@ except InvalidConnectionError as e:
 
 ## How the connection check decides
 
-Compatibility is judged from each object's **message vocabulary** -- the methods
-it documents in Max's own reference, not a guess. A `cycle~` has no `bang`
-method, so a bang into it is rejected; an `adsr~` has an `anything` (wildcard)
-method, so a bang -- a legitimate envelope trigger -- is allowed. Port counts are
-argument-aware (`limi~ 2` has two inlets/outlets, `select 0 1 2` has four
-outlets), and subpatcher ports come from the `inlet`/`outlet` objects inside.
+Compatibility is judged from each object's **message vocabulary** -- the methods it documents in Max's own reference, not a guess. A `cycle~` has no `bang` method, so a bang into it is rejected; an `adsr~` has an `anything` (wildcard) method, so a bang -- a legitimate envelope trigger -- is allowed. Port counts are argument-aware (`limi~ 2` has two inlets/outlets, `select 0 1 2` has four outlets), and subpatcher ports come from the `inlet`/`outlet` objects inside.
 
-The check is deliberately **conservative**: only clearly-wrong connections fail.
-Ambiguous cases, and objects that are not in the Max reference, are allowed --
-so validation never rejects a patch that is actually fine. That means it can
-miss some genuinely-invalid connections, but it will not produce false alarms.
+The check is deliberately **conservative**: only clearly-wrong connections fail. Ambiguous cases, and objects that are not in the Max reference, are allowed -- so validation never rejects a patch that is actually fine. That means it can miss some genuinely-invalid connections, but it will not produce false alarms.
 
 ## From the command line
 
-`py2max validate` lints a saved patch, prints the findings, and exits non-zero
-if there are any errors -- useful in a build or CI step:
+`py2max validate` lints a saved patch, prints the findings, and exits non-zero if there are any errors -- useful in a build or CI step:
 
 ``` bash
 py2max validate patch.maxpat
@@ -146,8 +134,7 @@ py2max validate patch.maxpat
 
 ## Programmatic use
 
-The linter is also importable directly, and the finding codes are exported for
-filtering:
+The linter is also importable directly, and the finding codes are exported for filtering:
 
 ``` python
 from py2max import lint, Finding

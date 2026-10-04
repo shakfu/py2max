@@ -82,9 +82,7 @@ def build(path: Path) -> Patcher:
     clearall = p.add_message("clearall", patching_rect=Rect(208, 108, 66, 22))
 
     # `read`/`write` need a path; edit the placeholder before clicking.
-    read = p.add_message(
-        "read my-patch.maxpat", patching_rect=Rect(24, 140, 168, 22)
-    )
+    read = p.add_message("read my-patch.maxpat", patching_rect=Rect(24, 140, 168, 22))
     # A relative name, which Max resolves next to this patch -- confirmed by
     # running it. The output lands in js2max/max/ and is gitignored.
     write = p.add_message(
@@ -155,8 +153,17 @@ def build(path: Path) -> Patcher:
     )
 
     sources = (
-        demo, count, clear, clearall, read, write, probe, verify, diagnose,
-        save_dict, build_dict,
+        demo,
+        count,
+        clear,
+        clearall,
+        read,
+        write,
+        probe,
+        verify,
+        diagnose,
+        save_dict,
+        build_dict,
     )
     for source in sources:
         p.add_line(source, v8)

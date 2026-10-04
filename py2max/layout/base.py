@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 from py2max.core.abstract import AbstractLayoutManager, AbstractPatcher
 from py2max.core.common import Rect
 from py2max.maxref import MAXCLASS_DEFAULTS
+from py2max.utils import object_name
 
 # Value/UI "param" objects: their role is to set a value on one object's inlet,
 # so they read better docked next to that object than spread through the graph.
@@ -20,6 +21,11 @@ def _is_param(box: object) -> bool:
     """True for a value/UI control that parameterizes another object."""
     mc = getattr(box, "maxclass", "") or ""
     return mc in PARAM_MAXCLASSES or mc.startswith("live.")
+
+
+def _is_anchor(v: float) -> bool:
+    """A default-rect coordinate that is a fraction of the window."""
+    return 0.0 < v <= 1.0
 
 
 class LayoutManager(AbstractLayoutManager):
@@ -59,6 +65,8 @@ class LayoutManager(AbstractLayoutManager):
         self.y_layout_counter = 0
         self.prior_rect = None
         self.mclass_rect = None
+        # port order captured at the start of optimize_layout
+        self._port_order_before: Dict[str, List[Any]] = {}
 
     def get_rect_from_maxclass(self, maxclass: str) -> Optional[Rect]:
         """Retrieve default rectangle for a Max object class.
@@ -138,10 +146,12 @@ class LayoutManager(AbstractLayoutManager):
 
         if maxclass:
             mclass_rect = self.get_rect_from_maxclass(maxclass)
-            if mclass_rect and (mclass_rect.x or mclass_rect.y):
-                if mclass_rect.x:
+            # x/y in (0, 1] anchor the class to the window (ezdac~ bottom-left);
+            # larger values are absolute coordinates from a captured patch
+            if mclass_rect and (_is_anchor(mclass_rect.x) or _is_anchor(mclass_rect.y)):
+                if _is_anchor(mclass_rect.x):
                     x = float(mclass_rect.x * self.parent.width)
-                if mclass_rect.y:
+                if _is_anchor(mclass_rect.y):
                     y = float(mclass_rect.y * self.parent.height)
 
                 _rect = Rect(x, y, mclass_rect.w, mclass_rect.h)
@@ -221,6 +231,9 @@ class LayoutManager(AbstractLayoutManager):
                     rj = objects[j].patching_rect
                     if not overlapping(ri, rj):
                         continue
+                    # any push counts: pushes that cancel out leave the box
+                    # where it started, still overlapping
+                    moved = True
                     pen_x = min(ri.x + ri.w, rj.x + rj.w) - max(ri.x, rj.x) + min_gap
                     pen_y = min(ri.y + ri.h, rj.y + rj.h) - max(ri.y, rj.y) + min_gap
                     if pen_x <= pen_y:
@@ -237,12 +250,35 @@ class LayoutManager(AbstractLayoutManager):
                         ri = Rect(ri.x, ny, ri.w, ri.h)
                 if ri != original:
                     objects[i].patching_rect = ri
-                    moved = True
             iterations_performed = iteration + 1
             if not moved:
                 break
+        else:
+            self._push_down(objects, overlapping, min_gap)
 
         return iterations_performed
+
+    @staticmethod
+    def _push_down(objects: List[Any], overlapping: Any, min_gap: float) -> None:
+        """Clear overlaps the sweeps left, moving boxes down only.
+
+        The sweeps can trade one overlap for another: a box pushed left is
+        clamped at the margin and may land on a neighbour. Here each box, in
+        reading order, drops below any earlier box it still overlaps. Every
+        move increases y, so this always terminates overlap-free.
+        """
+        objects.sort(key=lambda o: (o.patching_rect.y, o.patching_rect.x))
+        for i in range(1, len(objects)):
+            r = objects[i].patching_rect
+            moved = True
+            while moved:
+                moved = False
+                for j in range(i):
+                    rj = objects[j].patching_rect
+                    if overlapping(r, rj):
+                        r = Rect(r.x, rj.y + rj.h + min_gap, r.w, r.h)
+                        moved = True
+            objects[i].patching_rect = r
 
     def place_params(self, direction: Optional[str] = None, gap: float = 8.0) -> None:
         """Dock value/UI 'param' objects next to the single object they drive.
@@ -364,7 +400,52 @@ class LayoutManager(AbstractLayoutManager):
         scope for py2max; it belongs to the editor/server that owns the live
         editing session. See ``docs/auto-layout.md`` in py2max-server.
         """
+        self._port_order_before = before = self._port_order()
         self._full_layout()
+        self._restore_port_order(before)
+        # layouts and the overlap pass can run past the window; grow it so the
+        # whole patch is visible when opened
+        self._fit_window(list(self.parent._boxes))
+
+    def _fit_window(self, boxes: List[Any]) -> None:
+        """Grow the patcher window so every laid-out box is fully visible."""
+        if not boxes:
+            return
+        max_x = max(b.patching_rect[0] + b.patching_rect[2] for b in boxes)
+        max_y = max(b.patching_rect[1] + b.patching_rect[3] for b in boxes)
+        rect = self.parent.rect
+        x, y, w, h = rect[0], rect[1], rect[2], rect[3]
+        new_w = max(w, max_x + self.pad)
+        new_h = max(h, max_y + self.pad)
+        if (new_w, new_h) != (w, h):
+            self.parent.rect = Rect(x, y, new_w, new_h)
+
+    def _port_order(self) -> Dict[str, List[Any]]:
+        """``inlet``/``outlet`` boxes in port-number order: by x, then creation."""
+        order: Dict[str, List[Any]] = {}
+        for kind in ("inlet", "outlet"):
+            ports = [b for b in self.parent._boxes if object_name(b) == kind]
+            order[kind] = sorted(ports, key=lambda b: b.patching_rect[0])
+        return order
+
+    def _restore_port_order(self, order: Dict[str, List[Any]]) -> None:
+        """Give ports back the left-to-right order they had before layout.
+
+        Max numbers a patcher's ports by x position, so a layout that reorders
+        them silently rewires every cord to the patcher. The boxes trade
+        positions among themselves, so no new space is occupied.
+        """
+        for ports in order.values():
+            if len(ports) < 2:
+                continue
+            slots = sorted((b.patching_rect.x, b.patching_rect.y) for b in ports)
+            prev_x = None
+            for box, (x, y) in zip(ports, slots):
+                if prev_x is not None and x <= prev_x:
+                    x = prev_x + 1.0  # equal x leaves the order undefined
+                r = box.patching_rect
+                box.patching_rect = Rect(x, y, r.w, r.h)
+                prev_x = x
 
     def _full_layout(self) -> None:
         """Perform full layout optimization.

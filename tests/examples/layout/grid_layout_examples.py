@@ -60,7 +60,7 @@ def create_clustered_grid():
         chains.append([osc, filter_obj, delay, gain])
 
     # Add some control objects
-    p.add_floatbox(0.5, name="master_volume")
+    p.add_floatparam("master_volume", initial=0.5)
     output = p.add_textbox("ezdac~")
 
     # Connect all chains to output
@@ -83,10 +83,10 @@ def create_mixed_layout():
     control_rect = Rect(50, 50, 200, 300)
     controls = []
     for i in range(5):
-        ctrl = p.add_floatbox(
-            i * 0.1,
-            name=f"control{i}",
-            patching_rect=Rect(control_rect.x, control_rect.y + i * 40, 60, 22),
+        ctrl = p.add_floatparam(
+            f"control{i}",
+            initial=i * 0.1,
+            rect=Rect(control_rect.x, control_rect.y + i * 40, 60, 22),
         )
         controls.append(ctrl)
 
@@ -123,8 +123,8 @@ def create_large_clustered_patch():
         reverb = p.add_textbox("freeverb~")
 
         # Controls
-        eq_freq = p.add_floatbox(1000 + chain_id * 500, name=f"eq_freq_{chain_id}")
-        delay_time = p.add_floatbox(250 + chain_id * 50, name=f"delay_{chain_id}")
+        eq_freq = p.add_floatparam(f"eq_freq_{chain_id}", initial=1000 + chain_id * 500)
+        delay_time = p.add_floatparam(f"delay_{chain_id}", initial=250 + chain_id * 50)
 
         # Connect effect chain
         p.add_line(input_obj, eq)
@@ -142,7 +142,7 @@ def create_large_clustered_patch():
 
     # Master section
     master_mixer = p.add_textbox("+~")
-    master_gain = p.add_floatbox(0.6, name="master_gain")
+    master_gain = p.add_floatparam("master_gain", initial=0.6)
     master_mult = p.add_textbox("*~")
     output = p.add_textbox("ezdac~")
 

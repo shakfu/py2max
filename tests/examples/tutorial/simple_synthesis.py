@@ -30,7 +30,7 @@ def create_chord_synthesizer():
     gains = []
     gain_mults = []
     for i in range(3):
-        gain = p.add_floatbox(0.3, name=f"gain{i}")
+        gain = p.add_floatparam(f"gain{i}", initial=0.3)
         gains.append(gain)
         gain_mult = p.add_textbox("*~")
         gain_mults.append(gain_mult)
@@ -45,7 +45,7 @@ def create_chord_synthesizer():
         p.add_line(gain_mult, mixer)
 
     # Add master volume and output
-    master_vol = p.add_floatbox(0.5, name="master")
+    master_vol = p.add_floatparam("master", initial=0.5)
     master_mult = p.add_textbox("*~")
     output = p.add_textbox("ezdac~")
 

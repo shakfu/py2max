@@ -18,7 +18,7 @@ def create_generative_music():
     p = Patcher("generative-music.maxpat", layout="flow", flow_direction="horizontal")
 
     # Master clock
-    master_tempo = p.add_floatbox(120.0, name="tempo")
+    master_tempo = p.add_floatparam("tempo", initial=120.0)
     metro = p.add_textbox("metro 500")
 
     p.add_line(master_tempo, metro)
@@ -62,7 +62,7 @@ def create_generative_music():
         p.add_line(env, voice_gain, outlet=0, inlet=1)
 
         # Voice level control
-        voice_level = p.add_floatbox(0.25, name=f"voice{i}_level")
+        voice_level = p.add_floatparam(f"voice{i}_level", initial=0.25)
         voice_mult = p.add_textbox("*~")
 
         p.add_line(voice_gain, voice_mult)
@@ -80,7 +80,7 @@ def create_generative_music():
     # Global effects
     reverb = p.add_textbox("freeverb~ 0.8 0.5")
     master_gain = p.add_textbox("*~")
-    master_level = p.add_floatbox(0.6, name="master_level")
+    master_level = p.add_floatparam("master_level", initial=0.6)
     output = p.add_textbox("ezdac~")
 
     p.add_line(main_mixer, reverb)

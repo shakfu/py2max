@@ -4,94 +4,27 @@
 
 ## High
 
-- [ ] **`add_textbox` declares class-default port counts, not argument-aware ones.** `MAXCLASS_DEFAULTS` (`maxref/parser.py:859`) is keyed by class name only, so the box written to the file declares the wrong `numinlets`/`numoutlets`/`outlettype` whenever the ports depend on arguments. `porttypes.port_counts()` already resolves these correctly, and `lint` and `validate_connection` use it, so the box and its cords disagree: `validate_connections=True` accepts `route phase info` outlet 2 while the box declares 2 outlets.
-
-  | text | declared by `add_textbox` | `port_counts()` | Max |
-  |-|-|-|-|
-  | `route phase info` | 2 out | 3 | 3 |
-  | `unpack 0. 0 0 0. 0. 0. 0` | 2 out | 7 | 7 |
-  | `sel 0 1 2 3` | 1 out | 5 | 5 |
-  | `t f f` | 1 out | unknown | 2 |
-
-  Fix: have `add_textbox` (`core/factory.py:418`) take counts from `porttypes.port_counts(name, text)` when it resolves them, and add `t`/`trigger` to `_ARG_RESOLVERS` (one outlet per argument). Whether Max rebuilds the ports from the text on load is unverified; `to_svg` and any consumer reading `numoutlets` see the wrong count either way. Found generating softkut~'s help patch, which now passes explicit counts.
-
-- [ ] **`add_textbox` mishandles UI objects.** `add_textbox("flonum")` writes `maxclass: newobj` with `text: "flonum"` (the defaults entry has no `maxclass`), and UI boxes such as `waveform~` and `ezdac~` get a `text` key. Route known UI classes to their box form (`add_floatbox` already does it right for `flonum`) and omit `text` for non-`newobj` boxes.
-
-- [ ] **`lint` gives a file-referenced `bpatcher` 0 ports.** `_effective_counts` (`lint.py:72`) takes counts from the nested patcher (`porttypes.subpatcher_counts`, `maxref/porttypes.py:194`); a `bpatcher` that loads a file by `name` has none, so it falls back to the maxref entry, `(0, 0)`, and every cord to it is an `E-INLET-RANGE`/`E-OUTLET-RANGE` error. Fall back to the box's declared `numinlets`/`numoutlets`, or read the referenced `.maxpat` when it resolves.
-
-- [ ] **`graph:ogdf-*` layouts are not reproducible.** `_run_ogdf` (`layout/external.py:193`) neither seeds OGDF nor limits its runs. Sugiyama's crossing minimization runs several randomized passes and keeps the best; ties differ between processes, so the same patch builds differently each time (23 of 28 boxes moved between runs). `ogdf.set_seed(n)` plus `SugiyamaLayout().set_runs(1)` gave identical output in 5 separate processes, with the same crossing count (0) on that graph. The COLA and Fruchterman-Reingold adapters already pass `random_seed`. Seed every OGDF call, and expose `runs` (default 1) for callers who want best-of-n.
-
-- [ ] **`lint` should check inlet/outlet order in abstractions.** Max numbers a patcher's `inlet`/`outlet` objects by x position, not creation order, so a layout pass can silently swap a subpatcher's or abstraction's ports and every cord to it. Seen in softkut~: OGDF placed a view's second inlet 2 px left of its first, so `snapshot~` got no signal and the waveform~ cursor froze at 0. Warn when `inlet`/`outlet` boxes are not left to right in creation order (or share an x), and have layout managers keep them in that order.
-
-- [ ] `to_svg` does not wrap comment text, so long comments run past their boxes in previews.
-
 ### Validation follow-ups
 
-- [ ] Turn connection validation on by default, in two stages. "Off vs. raise" is a false binary: raising is the highest-blast-radius option and it is gated on evidence only the opted-in minority can produce today.
+- [ ] **Connection validation stage 2: raise by default.** Stage 1 (`on_invalid="warn"` default) is done. Its first data found two false-positive classes: 53 signal-typed right inlets that take numbers, and codebox port counts. Both are fixed; 527 cords from 60 Max-written patches now pass. Do not flip until warnings from real use show no new class: one class this size appeared in the first hour. Then decide the unknown-object policy and add a CHANGELOG breaking-change entry.
 
-  **Stage 1 (non-breaking): validate by default, warn on failure.** Add an `on_invalid` policy to `Patcher` (`"warn"` default, `"raise"`, `"ignore"`); keep `validate_connections=True` as the sugar for `on_invalid="raise"`. On a failed check `add_patchline` (`core/factory.py:255`) logs the same `InvalidConnectionError` message instead of raising. This matches the save-time linter, which already logs error-severity findings unless `strict=True`, and it collects false-positive data from every user rather than from the few who opt in. No existing script changes behaviour.
-
-  **Stage 2 (breaking): flip the default to `"raise"`** once stage-1 warnings show the method-list accept-sets (`_accepts_from_methods`, `maxref/porttypes.py:234`) are false-positive-free. The gate is that maxref `<methodlist>` data is real but not guaranteed exhaustive -- an object whose XML omits a message it actually accepts would reject a legal connection. Then: survey `tests/`, `tests/examples/`, and round-tripped patches for connections that would newly error; decide unknown-object policy (warn vs. allow); add a CHANGELOG breaking-change entry.
-
-  Notes for either stage:
-  - The load path bypasses validation entirely -- `Patcher.from_dict` (`core/patcher.py:388`) appends `Patchline.from_dict` objects directly and never calls `add_patchline`. Loading a real `.maxpat` will not newly fail; the exposure is edits made after loading, plus save-time lint noise.
-
-  - `core/factory.py:1241` already suppresses validation around the subpatcher rewrite, i.e. internally generated wiring does not always satisfy the checker. Fix or justify that before stage 2.
+  `encapsulate()` keeps validation off while it rewires. Its generated cords pass validation; the reason is that they restate existing cords, so under `"raise"` an old fault would abort the move halfway.
 
 - [ ] Expand the curated `_OUTLET_EMIT` set (`maxref/porttypes.py`) as gaps surface -- outlet *emission* typing is not in the XML's structured data.
 
 ### Typed box properties
 
-- [ ] **Per-maxclass property checking.** `BoxProps` is a flat union across all 1175 objects, so it catches a misspelled or wrongly-typed property but not a real property applied to the wrong object. 547 of the 850 properties are declared by exactly one object (the most widely shared, `bgcolor`, by 76), so the union is far more permissive than any individual object warrants:
-
-  ```python
-  # type-checks cleanly, and writes activedialcolor into the patch,
-  # though only live.dial declares it
-  p.add_textbox("cycle~ 440", activedialcolor=[1.0, 0.0, 0.0, 1.0])
-  ```
-
-  The data already exists: `maxref_saved_attributes()` in `scripts/gen_box_props.py` returns `(annotations, objects_by_attribute)` and the caller discards the second element as `_owners`. Two routes:
-  - *Runtime*, cheap: extend the existing `validate_attrs` check to consult the owners map, so an unknown-for-this-maxclass property warns like an unknown one does. Catches it late but costs a table, not a type system.
-
-  - *Static*, expensive: a TypedDict per maxclass plus overloads on `add_textbox` keyed by the object name. 1175 dicts is likely unworkable as written -- measure mypy's time on a subset before committing.
-
-  Do the runtime route first; it is most of the value for a fraction of the cost, and it establishes whether the owners data is accurate enough to be worth enforcing statically.
+- [ ] **Per-maxclass property checking, static.** `BoxProps` is a flat union across all 1175 objects, so mypy accepts a real property on the wrong object (`activedialcolor` on `cycle~`). The runtime check (`validate_attrs`, now on by default) catches it. A static check needs a TypedDict per maxclass plus overloads on `add_textbox`; 1175 dicts is likely unworkable -- measure mypy's time on a subset before committing.
 
 ### Database Improvements
 
-- [ ] Add schema versioning for SQLite (enables migrations)
-
-- [ ] Implement FTS5 for search (replace naive `LIKE '%query%'`)
+- [ ] **FTS5 search: only for ranking, not speed.** `LIKE` search over 1175 objects takes 0.3-0.6 ms, so FTS5 buys no speed. Its gain would be relevance order (bm25) instead of alphabetical; a `trigram` tokenizer keeps substring semantics. Decide whether ranked results are wanted.
 
 ## Medium
 
 ### Layout Managers
 
-- [ ] **Lay out a subset of boxes.** `optimize_layout()` moves every box. A patch whose UI must stay put (a `bpatcher` view, a presentation area) needs its logic laid out around fixed boxes. softkut~ works around this by copying the subgraph into a scratch patcher, laying it out, and copying positions back. Add `optimize_layout(boxes=...)` or a per-box `pinned` flag.
-
-- [ ] **External engines discard their own spacing.** `_normalize` (`layout/external.py:219`) rescales every engine's result to a fixed span (`max(300, 2.2 * box_width * sqrt(n))`). OGDF and HOLA already compute coordinates from the real box sizes; rescaling makes gaps arbitrary. For size-aware engines, translate to the margin and keep the scale.
-
-- [ ] **`graph:sugiyama` lays out bottom to top.** With graph-layout's `SugiyamaLayout`, sources (`inlet`, `loadbang`) land at the bottom and cords run upward, against Max's top-down convention. Flip y, or set the engine's direction.
-
-- [ ] **`flow` crossing reduction is weak.** On a 28-box message graph with two independent components, `FlowLayoutManager` (`_minimize_crossings`, `layout/flow.py:110`) interleaved the components and left many crossings that OGDF's Sugiyama removed entirely. Lay out connected components separately, and consider a barycenter pass per level.
-
-- [ ] **`graph:hola` left two boxes overlapping** on the same graph, after its `prevent_overlaps()` pass. Cause not investigated; possibly the 50-iteration cap.
-
-- [ ] Implement auto-scale to fit patcher bounds with margin
-
-- [ ] Calculate object sizes from text length and port counts
-
-- [ ] Anchor objects by type (e.g., `ezdac~` bottom-left, `scope~` bottom-right)
-
-### MaxRef
-
-- [ ] Handle non-standard Max installation paths
-
-- [ ] Add XML schema validation for `.maxref.xml`
-
-- [ ] Cache default Rect in `get_legacy_defaults`
-
-- [ ] Batch database inserts in single transaction
+- [ ] **`graph:ogdf-planarization` is not reproducible even when seeded.** On a 30-box graph, 8 processes with `ogdf.set_seed(7)` gave 2 distinct layouts (5/3). Sugiyama and FMMM are stable under the same seed. Likely `SubgraphPlanarizer`'s multithreaded permutation runs; fix in ogdf-py (expose a thread count) rather than here.
 
 ## Low
 
@@ -122,10 +55,6 @@
 ### Documentation
 
 - [ ] Publish API docs (ReadTheDocs)
-
-### CI/CD
-
-- [ ] Enable CI on push/PR (currently workflow_dispatch only)
 
 ### Strategic (P3)
 
@@ -161,4 +90,4 @@
 
 - [ ] `maxref/db.py`: whitelist the f-string-interpolated table/column names in `_insert_inlets_outlets`, `_delete_related_records` and `_get_simple_list`. Not exploitable (the identifiers are internal constants) and largely superseded by the planned FTS5 migration. The `LIKE` half of this item is done: `search()` escapes `%`/`_`/`\` and validates its `fields` against a `SEARCHABLE_FIELDS` whitelist.
 
-- [ ] `exceptions.py`: trim ~40% -- several exception classes (`InvalidPatchError`, `InternalError`, `DatabaseError.operation`) have no raisers. Check for external imports before removing.
+- [ ] `exceptions.py`: `InvalidObjectError`, `LayoutError` and `MaxRefError` are never raised, but are exported and imported elsewhere in the package; removing them breaks public imports. Either raise them where they fit (an unknown maxclass, a failed layout, an unreadable `.maxref.xml`) or deprecate them.

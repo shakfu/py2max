@@ -63,9 +63,7 @@ def compare(source: Path, written: Path) -> int:
         lost = sorted(k for k in box if k not in match and k not in IGNORED)
         added = sorted(k for k in match if k not in box and k not in IGNORED)
         changed = sorted(
-            k
-            for k in box
-            if k in match and k not in IGNORED and box[k] != match[k]
+            k for k in box if k in match and k not in IGNORED and box[k] != match[k]
         )
         if not (lost or added or changed):
             print(f"ok       {label}")

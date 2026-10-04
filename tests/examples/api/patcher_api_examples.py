@@ -44,8 +44,8 @@ def demonstrate_object_creation():
     # UI objects
     p.add_message("bang")
     p.add_comment("This is a comment")
-    p.add_floatbox(440.0, name="frequency")
-    p.add_intbox(127, name="velocity")
+    p.add_floatparam("frequency", initial=440.0)
+    p.add_intparam("velocity", initial=127)
 
     # Container objects
     p.add_table("wavetable", data=[0.5, 0.3, -0.2, 0.8])

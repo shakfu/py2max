@@ -23,7 +23,7 @@ def create_fx_chain():
     p.add_line(input_obj, input_gain)
 
     # Add input level control
-    input_level = p.add_floatbox(1.0, name="input_level")
+    input_level = p.add_floatparam("input_level", initial=1.0)
     p.add_line(input_level, input_gain, outlet=0, inlet=1)
 
     # EQ section
@@ -34,7 +34,7 @@ def create_fx_chain():
     p.add_line(highpass, lowpass)
 
     # Distortion section
-    drive = p.add_floatbox(1.0, name="drive")
+    drive = p.add_floatparam("drive", initial=1.0)
     drive_mult = p.add_textbox("*~")
     overdrive = p.add_textbox("overdrive~")
 
@@ -43,11 +43,11 @@ def create_fx_chain():
     p.add_line(drive_mult, overdrive)
 
     # Delay section
-    delay_time = p.add_floatbox(250.0, name="delay_time")
+    delay_time = p.add_floatparam("delay_time", initial=250.0)
     delay = p.add_textbox("delay~")
-    delay_feedback = p.add_floatbox(0.3, name="feedback")
+    delay_feedback = p.add_floatparam("feedback", initial=0.3)
     feedback_mult = p.add_textbox("*~")
-    delay_mix = p.add_floatbox(0.3, name="delay_mix")
+    delay_mix = p.add_floatparam("delay_mix", initial=0.3)
     wet_dry = p.add_textbox("crossfade~")
 
     # Delay connections
@@ -64,7 +64,7 @@ def create_fx_chain():
 
     # Output section
     output_gain = p.add_textbox("*~")
-    output_level = p.add_floatbox(0.7, name="output_level")
+    output_level = p.add_floatparam("output_level", initial=0.7)
     output = p.add_textbox("dac~ 1 2")
 
     p.add_line(wet_dry, output_gain)

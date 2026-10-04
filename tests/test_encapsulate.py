@@ -6,7 +6,8 @@ from py2max import Patcher
 
 
 def _texts(patcher):
-    return sorted(getattr(b, "text", "") for b in patcher._boxes)
+    """Box text, or the maxclass for UI boxes, which carry no text."""
+    return sorted(b.text or b.maxclass for b in patcher._boxes)
 
 
 def test_encapsulate_signal_chain():
@@ -35,7 +36,11 @@ def test_encapsulate_signal_chain():
 
     # Parent wires now run through the subpatcher box.
     parent_edges = {
-        (p._objects[ln.src].text, p._objects[ln.dst].text) for ln in p._lines
+        (
+            p._objects[ln.src].text or p._objects[ln.src].maxclass,
+            p._objects[ln.dst].text or p._objects[ln.dst].maxclass,
+        )
+        for ln in p._lines
     }
     assert parent_edges == {("metro 500", "p dsp"), ("p dsp", "ezdac~")}
 
@@ -77,7 +82,7 @@ def test_encapsulate_dedups_ports_by_source():
     assert sub_box.numoutlets == 2
     # inlet feeds both internal boxes.
     sub = sub_box.subpatcher
-    inlet = next(b for b in sub._boxes if getattr(b, "text", "") == "inlet")
+    inlet = next(b for b in sub._boxes if b.maxclass == "inlet")
     fanout = [ln for ln in sub._lines if ln.src == inlet.id]
     assert len(fanout) == 2
 

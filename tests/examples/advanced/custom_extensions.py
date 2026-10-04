@@ -17,8 +17,8 @@ class CustomPatcher(Patcher):
 
     def add_lowpass_filter(self, frequency=1000, resonance=0.707):
         """Add a lowpass filter with controls."""
-        freq_ctrl = self.add_floatbox(frequency, name=f"freq_{len(self._boxes)}")
-        res_ctrl = self.add_floatbox(resonance, name=f"res_{len(self._boxes)}")
+        freq_ctrl = self.add_floatparam(f"freq_{len(self._boxes)}", initial=frequency)
+        res_ctrl = self.add_floatparam(f"res_{len(self._boxes)}", initial=resonance)
         filter_obj = self.add_textbox("biquad~ lowpass")
 
         # Connect controls
@@ -29,10 +29,10 @@ class CustomPatcher(Patcher):
 
     def add_envelope_generator(self, attack=10, decay=100, sustain=0.3, release=500):
         """Add an ADSR envelope with controls."""
-        a_ctrl = self.add_floatbox(attack, name=f"attack_{len(self._boxes)}")
-        d_ctrl = self.add_floatbox(decay, name=f"decay_{len(self._boxes)}")
-        s_ctrl = self.add_floatbox(sustain, name=f"sustain_{len(self._boxes)}")
-        r_ctrl = self.add_floatbox(release, name=f"release_{len(self._boxes)}")
+        a_ctrl = self.add_floatparam(f"attack_{len(self._boxes)}", initial=attack)
+        d_ctrl = self.add_floatparam(f"decay_{len(self._boxes)}", initial=decay)
+        s_ctrl = self.add_floatparam(f"sustain_{len(self._boxes)}", initial=sustain)
+        r_ctrl = self.add_floatparam(f"release_{len(self._boxes)}", initial=release)
 
         env = self.add_textbox("adsr~")
 
@@ -52,7 +52,7 @@ class CustomPatcher(Patcher):
         # Create oscillators
         for i, freq in enumerate(frequencies):
             osc = self.add_textbox(f"cycle~ {freq}")
-            gain = self.add_floatbox(amplitude, name=f"osc{i}_gain")
+            gain = self.add_floatparam(f"osc{i}_gain", initial=amplitude)
             mult = self.add_textbox("*~")
 
             self.add_line(osc, mult)
@@ -73,9 +73,13 @@ class CustomPatcher(Patcher):
     def add_delay_line(self, delay_time=250, feedback=0.3, wet_mix=0.3):
         """Add a delay line with feedback and wet/dry mix."""
         # Controls
-        time_ctrl = self.add_floatbox(delay_time, name=f"delay_time_{len(self._boxes)}")
-        feedback_ctrl = self.add_floatbox(feedback, name=f"feedback_{len(self._boxes)}")
-        mix_ctrl = self.add_floatbox(wet_mix, name=f"wet_mix_{len(self._boxes)}")
+        time_ctrl = self.add_floatparam(
+            f"delay_time_{len(self._boxes)}", initial=delay_time
+        )
+        feedback_ctrl = self.add_floatparam(
+            f"feedback_{len(self._boxes)}", initial=feedback
+        )
+        mix_ctrl = self.add_floatparam(f"wet_mix_{len(self._boxes)}", initial=wet_mix)
 
         # Processing objects
         delay = self.add_textbox("delay~")
@@ -168,7 +172,7 @@ def create_modular_system():
     p.add_line(voice_mixer, delay_fx["output"], outlet=0, inlet=0)
 
     # Master output
-    master_gain = p.add_floatbox(0.6, name="master_volume")
+    master_gain = p.add_floatparam("master_volume", initial=0.6)
     master_mult = p.add_textbox("*~")
     output = p.add_textbox("ezdac~")
 

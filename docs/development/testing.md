@@ -9,8 +9,11 @@ py2max has comprehensive test coverage (~97%) ensuring reliability and correctne
 py2max uses **pytest** as the primary testing framework with additional tools:
 
 - **pytest**: Test runner and framework
+
 - **pytest-cov**: Coverage measurement
+
 - **mypy**: Static type checking
+
 - **ruff**: Code quality and linting
 
 ### Test Statistics
@@ -18,9 +21,13 @@ py2max uses **pytest** as the primary testing framework with additional tools:
 Current test metrics:
 
 - **167 tests passing**, 13 skipped
+
 - **97% code coverage**
+
 - **60 test files** covering all modules
+
 - **Zero mypy errors**
+
 - **Zero ruff violations**
 
 ## Running Tests
@@ -61,17 +68,11 @@ The HTML coverage report is generated in <span class="title-ref">build/coverage-
 
 ### Test Output Artifacts
 
-Tests that write `.maxpat` files use a relative `outputs/` path. A shared
-fixture (`tests/conftest.py`) redirects those writes into the git-ignored
-`build/` tree so they never touch the working directory:
+Tests that write `.maxpat` files use a relative `outputs/` path. A shared fixture (`tests/conftest.py`) redirects those writes into the git-ignored `build/` tree so they never touch the working directory:
 
-- `make test` (default) — each test gets its own directory under
-  <span class="title-ref">build/test-output/&lt;test-name&gt;/</span>, so no two
-  tests collide on a shared filename. The tree is wiped at the start of each run
-  and directories that produced no files are dropped.
-- `make test-outputs` — writes every artifact flat into
-  <span class="title-ref">build/test-outputs/</span> for quick inspection
-  (later writers overwrite earlier same-named files).
+- `make test` (default) — each test gets its own directory under <span class="title-ref">build/test-output/&lt;test-name&gt;/</span>, so no two tests collide on a shared filename. The tree is wiped at the start of each run and directories that produced no files are dropped.
+
+- `make test-outputs` — writes every artifact flat into <span class="title-ref">build/test-outputs/</span> for quick inspection (later writers overwrite earlier same-named files).
 
 Both locations live under `build/`, so `make clean` removes them.
 
@@ -92,9 +93,13 @@ uv run pytest tests/test_basic.py -v
 Coverage includes:
 
 - **Patcher creation and manipulation**
+
 - **Box object creation and properties**
+
 - **Patchline connections and validation**
+
 - **File I/O operations**
+
 - **Error handling**
 
 ### Layout Manager Tests
@@ -115,9 +120,13 @@ uv run pytest tests/test_layout_flow.py -v
 Coverage includes:
 
 - **Grid layout with clustering**
+
 - **Flow layout with signal analysis**
+
 - **Legacy horizontal/vertical layouts**
+
 - **Layout optimization algorithms**
+
 - **Positioning calculations**
 
 ### MaxRef Integration Tests
@@ -134,9 +143,13 @@ uv run pytest tests/test_maxref.py -v
 Coverage includes:
 
 - **Object discovery from .maxref.xml files**
+
 - **Help text generation**
+
 - **Connection validation**
+
 - **Inlet/outlet counting**
+
 - **Legacy compatibility**
 
 ### Connection Validation Tests
@@ -153,9 +166,13 @@ uv run pytest tests/test_connection_validation.py -v
 Coverage includes:
 
 - **Valid connection acceptance**
+
 - **Invalid connection rejection**
+
 - **Error message generation**
+
 - **Object introspection methods**
+
 - **Validation configuration**
 
 ### Abstract Base Class Tests
@@ -172,8 +189,11 @@ uv run pytest tests/test_abstract_coverage.py -v
 Coverage includes:
 
 - **Abstract method enforcement**
+
 - **Interface compliance**
+
 - **Type checking integration**
+
 - **Circular dependency prevention**
 
 ### Object-Specific Tests
@@ -192,8 +212,11 @@ uv run pytest tests/test_message.py -v
 Coverage includes:
 
 - **Specialized object creation methods**
+
 - **Object-specific parameters**
+
 - **Data container functionality**
+
 - **UI element behavior**
 
 ## Test Data and Fixtures
@@ -273,7 +296,9 @@ uv run pytest tests/test_layout_coverage.py -v
 These tests verify that:
 
 - **Layout algorithms scale** with object count
+
 - **Clustering performance** is acceptable for large patches
+
 - **Memory usage** remains reasonable
 
 ### Optional Dependency Tests
@@ -334,11 +359,17 @@ class TestNewFeature:
 When writing tests:
 
 1. **Test public APIs** - Focus on user-facing functionality
+
 2. **Include edge cases** - Test boundary conditions
+
 3. **Test error conditions** - Verify proper error handling
+
 4. **Use descriptive names** - Test names should explain what they test
+
 5. **Keep tests independent** - Each test should work in isolation
+
 6. **Mock external dependencies** - Don't rely on Max installation
+
 7. **Validate outputs** - Check generated .maxpat files are correct
 
 ### Example Test Implementation
@@ -402,17 +433,25 @@ def test_layout_clustering():
 The project uses CI to run tests automatically:
 
 - **On every push** to main branch
+
 - **On every pull request**
+
 - **Multiple Python versions** (when configured)
+
 - **Multiple operating systems** (when configured)
 
 CI Pipeline includes:
 
 1. **Install dependencies**
+
 2. **Run full test suite**
+
 3. **Check code coverage**
+
 4. **Run type checking (mypy)**
+
 5. **Run linting (ruff)**
+
 6. **Build documentation**
 
 ### Local CI Simulation
@@ -435,15 +474,21 @@ uv run mkdocs build --strict
 ### Keeping Tests Current
 
 - **Update tests** when changing functionality
+
 - **Add tests** for bug fixes to prevent regression
+
 - **Remove obsolete tests** when features are removed
+
 - **Refactor tests** to maintain clarity
 
 ### Test Performance
 
 - **Keep test suite fast** - aim for \<5 seconds total runtime
+
 - **Skip expensive tests** in development (mark with <span class="title-ref">@pytest.mark.slow</span>)
+
 - **Use mocking** for external dependencies
+
 - **Parallelize tests** when possible
 
 ### Coverage Goals
@@ -451,8 +496,11 @@ uv run mkdocs build --strict
 Maintain high coverage while focusing on:
 
 - **Critical paths** - Core functionality must be 100% covered
+
 - **Error conditions** - All error paths should be tested
+
 - **Public APIs** - All user-facing code must have tests
+
 - **Edge cases** - Boundary conditions and unusual inputs
 
 The test suite is a critical part of py2max's reliability and should be maintained with the same care as the production code.

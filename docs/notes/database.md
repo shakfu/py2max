@@ -30,24 +30,35 @@ file_db = create_database(Path("maxref.db"), populate=True)
 ### Core Tables
 
 - **objects** - Main object information (name, digest, description, category)
+
 - **metadata** - Key-value metadata (tags, authors, etc.)
+
 - **inlets** - Inlet specifications (type, digest, description)
+
 - **outlets** - Outlet specifications (type, digest, description)
 
 ### Documentation Tables
 
 - **methods** - Method definitions
+
 - **method_args** - Method arguments
+
 - **attributes** - Object attributes
+
 - **attribute_enums** - Enum values for attributes
+
 - **objargs** - Object initialization arguments
+
 - **examples** - Example patches
+
 - **seealso** - Related objects
+
 - **misc** - Miscellaneous entries
 
 ### Configuration Tables
 
 - **palette** - Palette information
+
 - **parameter** - Parameter settings
 
 ## API Reference

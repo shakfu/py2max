@@ -27,7 +27,9 @@ def _repo_has_build_backend() -> bool:
 
 
 @pytest.mark.skipif(shutil.which("uv") is None, reason="requires the uv build tool")
-@pytest.mark.skipif(not _repo_has_build_backend(), reason="not run from a source checkout")
+@pytest.mark.skipif(
+    not _repo_has_build_backend(), reason="not run from a source checkout"
+)
 def test_built_wheel_contains_maxref_bundle(tmp_path):
     """Build the wheel and assert the compressed bundle is really inside it."""
     result = subprocess.run(

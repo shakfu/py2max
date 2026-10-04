@@ -29,6 +29,7 @@ offset  size  endian  value                           meaning
 Notes:
 
 - The `ptch` chunk size at offset 16 is **little-endian**; every other size in the file is **big-endian**.
+
 - The 4 bytes at offset 8 are the device-type tag, *not* padding (this differed from the original issue #9 notes).
 
 ### Trailer
@@ -105,31 +106,40 @@ Comparing `outputs/mydevice.amxd` and `outputs/mydevice2.amxd`:
 | `mdat` payload                 | modification time in Max epoch             |
 | JSON content                   | the patcher JSON (incl. `project.creationdate`/`modificationdate` which match `mdat`) |
 
-Everything else in the header and trailer is constant for our purposes:
-`ampf`, version `4`, `ptch`, `mx@c`, the BE constants `16` / `0` at offsets 24/28, `of32 = 16`, `vers = 0`, `flag = 17`, `type = "JSON"`, and all FOURCC tags.
+Everything else in the header and trailer is constant for our purposes: `ampf`, version `4`, `ptch`, `mx@c`, the BE constants `16` / `0` at offsets 24/28, `of32 = 16`, `vers = 0`, `flag = 17`, `type = "JSON"`, and all FOURCC tags.
 
 ## Public API (`py2max.m4l`)
 
 Binary format:
 
 - `pack_amxd(json, *, device_type, patcher_filename, mtime)` -> `bytes`
+
 - `unpack_amxd(data)` -> `(json_bytes, device_type)`
+
 - `read_amxd(path)` -> `(patcher_dict, device_type)`
+
 - `write_amxd(path, dict, *, device_type, patcher_filename, mtime)`
+
 - `ensure_amxd_project_block(patcher_dict, device_type, mtime)`
+
 - `unix_to_max_time(unix_seconds=None)` -> `int`
+
 - `DEVICE_TYPES`, `MAX_EPOCH_OFFSET`
 
 Patcher integration:
 
 - `Patcher(path, device_type="audio_effect", ...)`
+
 - `Patcher.save()` and `Patcher.from_file()` auto-detect the `.amxd` extension; `.maxpat` paths are unchanged.
 
 Presentation-mode helpers (also in `py2max.m4l`):
 
 - `Patcher.enable_presentation(devicewidth=...)`, `Patcher.enforce_integer_coords()`
+
 - `Box.add_to_presentation([x, y, w, h], *, strict=False)`
+
 - `is_presentation_ui(box)`, `is_m4l_infrastructure(box)`
+
 - `M4L_PRESENTATION_UI_CLASSES`, `M4L_INFRASTRUCTURE_CLASSES`, `NonIntegerCoordinateWarning`
 
 ## Verification

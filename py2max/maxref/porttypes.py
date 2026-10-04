@@ -134,6 +134,8 @@ _ARG_RESOLVERS = {
     "route": _select_counts,  # N match outlets + 1 passthrough
     "unpack": _unpack_counts,
     "pack": _pack_counts,
+    "trigger": _unpack_counts,  # one outlet per argument
+    "t": _unpack_counts,
 }
 
 
@@ -181,14 +183,20 @@ def port_counts(
     info = get_object_info(maxclass)
     n_in = len(info["inlets"]) if info and "inlets" in info else None
     n_out = len(info["outlets"]) if info and "outlets" in info else None
+    r_in, r_out = arg_port_counts(maxclass, text)
+    return (
+        r_in if r_in is not None else n_in,
+        r_out if r_out is not None else n_out,
+    )
+
+
+def arg_port_counts(maxclass: str, text: Optional[str] = None) -> _Counts:
+    """``(inlet_count, outlet_count)`` implied by ``text``'s arguments alone.
+
+    ``None`` for a dimension that does not depend on arguments.
+    """
     resolver = _ARG_RESOLVERS.get(maxclass)
-    if resolver is not None:
-        r_in, r_out = resolver(_args(text))
-        if r_in is not None:
-            n_in = r_in
-        if r_out is not None:
-            n_out = r_out
-    return n_in, n_out
+    return resolver(_args(text)) if resolver is not None else (None, None)
 
 
 def subpatcher_counts(box: object) -> _Counts:
@@ -249,6 +257,22 @@ def _accepts_from_methods(maxclass: str) -> Optional[FrozenSet[str]]:
     return frozenset(kinds) if kinds else None
 
 
+# A right inlet is strict only when its digest describes a signal and nothing
+# else: "(signal) Trigger", not "(signal/float) Duty Cycle" or "Reset Input".
+_PLAIN_SIGNAL_DIGEST = re.compile(r"\s*\(signal\)[^,;]*", re.IGNORECASE)
+_CONTROL_WORD = re.compile(r"\b(int|float|number|bang|list|reset|message)s?\b", re.I)
+
+_OTHER_INLET = re.compile(
+    r"\b(right|middle|other|either|each|any|all|second|third)\b[^.]*\binlets?\b"
+)
+
+
+def _left_inlet_only(spec: object) -> bool:
+    """True if a maxref method's description confines it to the left inlet."""
+    text = str(spec.get("description", "") if isinstance(spec, dict) else "").lower()
+    return "left inlet" in text and not _OTHER_INLET.search(text)
+
+
 def inlet_acceptance(maxclass: str, index: int) -> Tuple[FrozenSet[str], bool]:
     """``(accept-set, authoritative)`` for ``maxclass``'s inlet ``index``.
 
@@ -276,6 +300,23 @@ def inlet_acceptance(maxclass: str, index: int) -> Tuple[FrozenSet[str], bool]:
             # signal capability even if the method list omits it
             return frozenset(from_methods | type_set), True
     if type_set == frozenset({SIGNAL}):
+        # maxref types many right inlets "signal" that also take numbers
+        # (clip~ min/max, scope~ buffer size); its methods give that away
+        methods = {
+            name
+            for name, spec in (info.get("methods", {}) if info else {}).items()
+            if not _left_inlet_only(spec)
+        }
+        if "anything" in methods:
+            return frozenset({ANY}), False
+        control = {
+            _METHOD_TO_KIND[m] for m in methods & {"bang", "int", "float", "list"}
+        }
+        if control:
+            return frozenset({SIGNAL} | control), False
+        digest = inlets[index].get("digest", "") if 0 <= index < len(inlets) else ""
+        if not _PLAIN_SIGNAL_DIGEST.fullmatch(digest) or _CONTROL_WORD.search(digest):
+            return frozenset({ANY}), False  # digest says more than "signal"
         return type_set, True  # signal-only inlets are strict
     return type_set, False
 

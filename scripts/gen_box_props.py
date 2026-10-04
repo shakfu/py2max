@@ -292,7 +292,9 @@ def build() -> str:
     textbox_entries = {k: v for k, v in entries.items() if k not in textbox_excluded}
 
     counts = {
-        source: sum(1 for k, s in provenance.items() if s == source and k in box_entries)
+        source: sum(
+            1 for k, s in provenance.items() if s == source and k in box_entries
+        )
         for source in ("curated", "maxref", "library", "fixture")
     }
 
@@ -345,7 +347,9 @@ def build() -> str:
     lines.append("")
     lines.append("")
     lines.append("class BoxProps(TypedDict, total=False):")
-    lines.append('    """Properties accepted by ``Box.__init__`` beyond its structural args."""')
+    lines.append(
+        '    """Properties accepted by ``Box.__init__`` beyond its structural args."""'
+    )
     lines.append("")
     for name in sorted(box_entries):
         lines.append(f"    {name}: {box_entries[name]}")
@@ -367,7 +371,10 @@ def build() -> str:
 
 
 def postprocess(path: Path) -> None:
-    for cmd in (["ruff", "format", str(path)], ["ruff", "check", "--fix", "--quiet", str(path)]):
+    for cmd in (
+        ["ruff", "format", str(path)],
+        ["ruff", "check", "--fix", "--quiet", str(path)],
+    ):
         subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
     ast.parse(path.read_text())
 
@@ -375,7 +382,9 @@ def postprocess(path: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-o", "--output", type=Path, default=DEFAULT_OUT)
-    parser.add_argument("--check", action="store_true", help="fail if the file is stale")
+    parser.add_argument(
+        "--check", action="store_true", help="fail if the file is stale"
+    )
     args = parser.parse_args()
 
     source = build()
@@ -387,7 +396,9 @@ def main() -> int:
             tmp.write_text(source)
             postprocess(tmp)
             fresh = tmp.read_text()
-        current: Optional[str] = args.output.read_text() if args.output.exists() else None
+        current: Optional[str] = (
+            args.output.read_text() if args.output.exists() else None
+        )
         if fresh != current:
             print(f"{args.output} is stale; run: python scripts/gen_box_props.py")
             return 1
@@ -400,7 +411,7 @@ def main() -> int:
         [
             line
             for line in args.output.read_text().splitlines()
-            if line.startswith("    ") and ": " in line and not line.startswith("    \"")
+            if line.startswith("    ") and ": " in line and not line.startswith('    "')
         ]
     )
     print(f"wrote {args.output} ({count} properties)")

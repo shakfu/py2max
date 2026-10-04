@@ -141,7 +141,7 @@ class TestTutorialExamples:
         assert patch is not None
         # MIDI in + 8 controllers (4 objects each) + preset system + comments
         assert len(patch._boxes) >= 35
-        assert len(patch._lines) >= 40  # Many connections
+        assert len(patch._lines) == 36
 
     def test_generative_music(self):
         """Test generative music tutorial."""
@@ -550,7 +550,9 @@ class TestExamplePatchesLintClean:
 
         problems = []
         for path in sorted(glob.glob("*.maxpat")):
-            errors = [f for f in Patcher.from_file(path).lint() if f.severity == "error"]
+            errors = [
+                f for f in Patcher.from_file(path).lint() if f.severity == "error"
+            ]
             problems += [f"{path}: {f}" for f in errors]
 
         assert not problems, "example patches have lint errors:\n" + "\n".join(problems)

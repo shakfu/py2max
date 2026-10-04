@@ -49,6 +49,13 @@ def escape_bare_ampersands(text: str) -> str:
     return _BARE_AMP_RE.sub("&amp;", text)
 
 
+# refpages location inside a macOS Max.app and a Windows Max install folder
+_REFPAGES_SUBPATHS = (
+    Path("Contents/Resources/C74/docs/refpages"),
+    Path("resources/docs/refpages"),
+)
+
+
 class MaxRefCache:
     """Cache for parsed MaxRef data"""
 
@@ -97,9 +104,11 @@ class MaxRefCache:
         override = os.environ.get("PY2MAX_MAX_REFPAGES")
         if override:
             path = Path(override).expanduser()
-            if path.is_dir():
-                logger.debug("Using PY2MAX_MAX_REFPAGES override: %s", path)
-                return path
+            # accept the refpages folder itself, or a Max.app / Max install dir
+            for candidate in (*(path / sub for sub in _REFPAGES_SUBPATHS), path):
+                if candidate.is_dir():
+                    logger.debug("Using PY2MAX_MAX_REFPAGES override: %s", candidate)
+                    return candidate
             logger.warning(
                 "PY2MAX_MAX_REFPAGES points at a missing directory: %s", path
             )
@@ -107,13 +116,16 @@ class MaxRefCache:
         system = platform.system()
         if system == "Darwin":
             logger.debug("Searching for Max installation on macOS")
-            for p in Path("/Applications").glob("**/Max.app"):
-                if "Ableton" not in str(p):
-                    refpages_path = p / "Contents/Resources/C74/docs/refpages"
-                    if refpages_path.exists():
-                        logger.debug(f"Found Max refpages at: {refpages_path}")
-                        return refpages_path
-            logger.warning("Max installation not found in /Applications")
+            for apps in (Path("/Applications"), Path.home() / "Applications"):
+                for p in apps.glob("**/Max.app"):
+                    if "Ableton" not in str(p):
+                        refpages_path = p / _REFPAGES_SUBPATHS[0]
+                        if refpages_path.exists():
+                            logger.debug(f"Found Max refpages at: {refpages_path}")
+                            return refpages_path
+            logger.warning(
+                "Max installation not found in /Applications or ~/Applications"
+            )
         elif system == "Windows":
             logger.debug("Searching for Max installation on Windows")
             bases = []
@@ -126,7 +138,7 @@ class MaxRefCache:
                     continue
                 # e.g. C:\Program Files\Cycling '74\Max 8\resources\docs\refpages
                 for max_dir in sorted(base.glob("Max*"), reverse=True):
-                    refpages_path = max_dir / "resources" / "docs" / "refpages"
+                    refpages_path = max_dir / _REFPAGES_SUBPATHS[1]
                     if refpages_path.exists():
                         logger.debug(f"Found Max refpages at: {refpages_path}")
                         return refpages_path
@@ -232,6 +244,16 @@ class MaxRefCache:
                 logger.debug(f"Parsing MaxRef XML for '{name}' from {filename}")
                 cleaned = self._clean_text(filename.read_text())
                 root = ElementTree.fromstring(cleaned)
+                if root.tag != "c74object":
+                    # no published schema; the root element is what all
+                    # refpages share, and anything else is not one
+                    log_warning_once(
+                        logger,
+                        f"xml_root_{name}",
+                        f"{filename} is not a Max reference page "
+                        f"(root <{root.tag}>, expected <c74object>)",
+                    )
+                    return None
                 data = self._parse_maxref(root)
                 self._cache[name] = data
                 logger.debug(f"Successfully parsed and cached data for '{name}'")
@@ -632,6 +654,9 @@ def get_all_m4l_objects() -> List[str]:
 
 
 # Legacy compatibility - generate defaults from .maxref.xml when available
+_DEFAULT_RECT = Rect(x=0.0, y=0.0, w=60.0, h=22.0)  # immutable, so shared
+
+
 def get_legacy_defaults(name: str) -> Dict[str, Any]:
     """Get legacy-compatible defaults for a Max object
 
@@ -642,13 +667,12 @@ def get_legacy_defaults(name: str) -> Dict[str, Any]:
     if not data:
         return {}
 
-    # Only set maxclass to the object name for objects that had explicit
-    # maxclass entries in the legacy database. All other objects should
-    # use "newobj" as maxclass (handled by fallback in core.py)
+    # A box class (UI objects, inlet, message, ...) is one whose palette entry
+    # creates the object by its own name; everything else is a "newobj".
     from .legacy import MAXCLASS_DEFAULTS as LEGACY_DEFAULTS
 
     defaults: Dict[str, Any] = {}
-    if name in LEGACY_DEFAULTS:
+    if name in LEGACY_DEFAULTS or data.get("palette", {}).get("action") == name:
         defaults["maxclass"] = name
 
     # Extract inlet/outlet counts and types
@@ -669,9 +693,7 @@ def get_legacy_defaults(name: str) -> Dict[str, Any]:
         if outlet_types:
             defaults["outlettype"] = outlet_types
 
-    # Set a default patching rect - this could be improved by analyzing
-    # the palette info or other attributes in the future
-    defaults["patching_rect"] = Rect(x=0.0, y=0.0, w=60.0, h=22.0)
+    defaults["patching_rect"] = _DEFAULT_RECT
 
     return defaults
 
