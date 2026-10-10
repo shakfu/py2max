@@ -10,6 +10,8 @@
 
 - The `uv_build` requirement is relaxed to `>=0.11,<0.13`.
 
+- `make test` also runs `gen_v8_harness.py --check`, so a stale demo patch fails locally. It needs no bun, unlike `make js2max-check`.
+
 ## [0.5.0]
 
 More validation on by default: (a) connection validation (inlet index and message type) should prevent the wrong connects and (b) attribute validation stop usage of properties unknown to the object's Max class. Layouts also changed: code boxes are sized to their content, auto-placed boxes no longer overlap, and grid `optimize_layout()` follows signal order.

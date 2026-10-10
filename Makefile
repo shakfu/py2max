@@ -16,6 +16,7 @@ build: ## Build wheel
 
 test: ## Run tests
 	@uv run pytest
+	@uv run python scripts/gen_v8_harness.py --check
 
 test-verbose: ## Run tests with verbose output
 	@uv run pytest -v
