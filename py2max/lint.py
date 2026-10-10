@@ -16,7 +16,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple
 
-from .core.factory import DYNAMIC_IO_MAXCLASSES
 from .maxref import get_object_info
 from .maxref import porttypes
 from .utils import object_name
@@ -72,20 +71,6 @@ def _port(pair: Any, idx: int) -> int:
     return int(pair[idx]) if len(pair) > idx else 0
 
 
-def _effective_counts(box: Any, name: str) -> Tuple[Optional[int], Optional[int]]:
-    """(inlet_count, outlet_count) for a box, subpatcher-aware."""
-    sub_in, sub_out = porttypes.subpatcher_counts(box)
-    if getattr(box, "maxclass", None) in DYNAMIC_IO_MAXCLASSES:
-        # ports come from code or a loaded file, so trust the declared counts
-        n_in, n_out = getattr(box, "numinlets", None), getattr(box, "numoutlets", None)
-    else:
-        n_in, n_out = porttypes.port_counts(name, getattr(box, "text", None))
-    return (
-        sub_in if sub_in is not None else n_in,
-        sub_out if sub_out is not None else n_out,
-    )
-
-
 def lint(patcher: Any) -> List[Finding]:
     """Return all lint findings for ``patcher`` and its subpatchers, errors first."""
     findings: List[Finding] = []
@@ -106,6 +91,8 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
 
     boxes = list(patcher._boxes)
     by_id: dict[str, Any] = {}
+    # maxref describes Max objects; rnbo~ and gen~ patchers use other ones
+    max_objects = getattr(patcher, "classnamespace", "box") == "box"
 
     # duplicate IDs
     for b in boxes:
@@ -119,7 +106,7 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
             by_id[b.id] = b
 
     # unknown object classes
-    for b in boxes:
+    for b in boxes if max_objects else []:
         name = object_name(b)
         if name and get_object_info(name) is None:
             findings.append(
@@ -193,10 +180,12 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
                 )
             )
             continue
+        if not max_objects:
+            continue
 
         src_name, dst_name = object_name(sb), object_name(db)
-        _, n_out = _effective_counts(sb, src_name)
-        n_in, _ = _effective_counts(db, dst_name)
+        _, n_out = porttypes.box_port_counts(sb, src_name)
+        n_in, _ = porttypes.box_port_counts(db, dst_name)
         if n_out is not None and outlet >= n_out:
             findings.append(
                 Finding(

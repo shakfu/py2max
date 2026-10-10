@@ -313,6 +313,33 @@ class TestMaxRefDB:
         results = db.search("filter")
         assert "audio_filter" in results
 
+    def test_search_ranks_by_field(self):
+        """Exact name, name prefix, name, digest, description; then alphabetical."""
+        db = MaxRefDB(":memory:", auto_populate=False)
+        rows = {
+            "a_desc": ("x", "about filter use"),
+            "b_digest": ("filter thing", "x"),
+            "c_filter": ("x", "x"),
+            "filter": ("x", "x"),
+            "filter_b": ("x", "x"),
+            "filter_a": ("x", "x"),
+        }
+        for name, (digest, description) in rows.items():
+            db.insert_object(name, {"digest": digest, "description": description})
+        assert db.search("filter") == [
+            "filter",
+            "filter_a",
+            "filter_b",
+            "c_filter",
+            "b_digest",
+            "a_desc",
+        ]
+        # the given field order sets the rank
+        assert db.search("filter", fields=["description", "digest"]) == [
+            "a_desc",
+            "b_digest",
+        ]
+
     def test_get_objects_by_category(self):
         """Test getting objects by category"""
         db = MaxRefDB(":memory:", auto_populate=False)

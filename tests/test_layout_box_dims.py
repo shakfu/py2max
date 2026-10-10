@@ -24,8 +24,8 @@ def test_ui_object_dims_survive_optimize(tmp_path, layout):
     scope = p.add_textbox("scope~")  # maxref default ~130x130
     dial = p.add_textbox("dial")  # square UI object
     osc = p.add_textbox("cycle~ 440")
+    p.add_line(dial, osc)  # dial sets the frequency; it takes no signal
     p.add_line(osc, scope)
-    p.add_line(osc, dial)
 
     before = {scope.id: _dims(scope), dial.id: _dims(dial)}
     assert before[scope.id] != (66.0, 22.0), "fixture should use non-default size"

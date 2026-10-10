@@ -6,7 +6,7 @@ Advanced Usage: Data Containers
 Examples demonstrating tables, collections, and dictionaries.
 
 This example is used in:
-- docs/source/user_guide/advanced_usage.rst
+- docs/user_guide/advanced_usage.md
 """
 
 import math
@@ -99,28 +99,29 @@ def create_state_management():
     """Create patch state management using dictionaries."""
     p = Patcher("patch-state.maxpat")
 
-    # Create state management system
+    params = ["frequency", "amplitude", "filter_freq", "resonance"]
     patch_dict = p.add_dict("patch_state")
 
-    # State controls
-    save_state = p.add_message("store current_state")
-    load_state = p.add_message("recall current_state")
+    # Save and load the dictionary as JSON
+    p.add_line(p.add_message("export patch_state.json"), patch_dict)
+    p.add_line(p.add_message("import patch_state.json"), patch_dict)
 
-    # Connect to dictionary
-    p.add_line(save_state, patch_dict)
-    p.add_line(load_state, patch_dict)
+    # Recall: `get key` answers "key value" from outlet 1; route splits by key
+    recall = p.add_message(", ".join(f"get {param}" for param in params))
+    p.add_line(recall, patch_dict)
+    router = p.add_textbox("route " + " ".join(params))
+    p.add_line(patch_dict, router, outlet=1)
 
-    # Parameters to save
-    params = ["frequency", "amplitude", "filter_freq", "resonance"]
-    param_controls = {}
-
-    for param in params:
+    for i, param in enumerate(params):
         control = p.add_floatparam(param, initial=0.5)
-        param_controls[param] = control
-
-        # Connect to state system
-        p.add_line(patch_dict, control)
-        p.add_line(control, patch_dict)
+        # Store: "set key value" writes the control's value into the dict
+        store = p.add_textbox(f"prepend set {param}")
+        p.add_line(control, store)
+        p.add_line(store, patch_dict)
+        # "set" updates the control without sending the value back
+        update = p.add_textbox("prepend set")
+        p.add_line(router, update, outlet=i)
+        p.add_line(update, control)
 
     p.save()
     return p

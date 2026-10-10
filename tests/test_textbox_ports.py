@@ -10,9 +10,9 @@ from py2max.maxref import porttypes
 @pytest.mark.parametrize(
     "text,n_in,n_out",
     [
-        ("route phase info", 2, 3),
+        ("route phase info", 3, 3),
         ("unpack 0. 0 0 0. 0. 0. 0", 1, 7),
-        ("sel 0 1 2 3", 1, 5),
+        ("sel 0 1 2 3", 5, 5),
         ("t f f", 1, 2),
         ("trigger b i l", 1, 3),
         ("pack 0 0 0", 3, 1),

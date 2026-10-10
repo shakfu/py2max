@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.4.1, generated from a2d8e36 (working tree modified)
+py2max 0.5.0, generated from 43f0c07 (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
@@ -35,6 +35,7 @@ import base64
 import contextlib
 import datetime
 import gzip
+import heapq
 import html
 import inspect
 import json
@@ -3052,6 +3053,7 @@ class AbstractPatcher(ABC):
     _reset_on_render: bool
     _flow_direction: str
     _cluster_connected: bool
+    _signal_order: bool
     _layout_mgr: AbstractLayoutManager
     _auto_hints: bool
     _validate_connections: bool
@@ -3064,6 +3066,8 @@ class AbstractPatcher(ABC):
     _needs_js2max_runtime: bool
     classnamespace: str
     _pending_comments: list[tuple[str, str, Optional[str]]]
+    _auto_xy: Optional[tuple[float, float]]
+    _auto_slots: dict[str, tuple[float, float]]
     # Rendered (dict) forms, populated by render() and read by serialization.
     boxes: list[dict[str, Any]]
     lines: list[dict[str, Any]]
@@ -3085,6 +3089,15 @@ class AbstractPatcher(ABC):
 
     def _process_pending_comments(self) -> None:
         """Position deferred associated comments (implemented by Patcher)."""
+        raise NotImplementedError
+
+    def _clear_of_boxes(
+        self,
+        rect: Rect,
+        maxclass: Optional[str],
+        others: Optional[list[Any]] = None,
+    ) -> Rect:
+        """Move ``rect`` past overlapping boxes (implemented by BoxFactory)."""
         raise NotImplementedError
 
 
@@ -3592,6 +3605,242 @@ OUTPUT_OBJECTS = set(
         "touchout",
     ]
 )
+
+
+# --------------------------------------------------------------------------
+# py2max/maxref/aliases.py
+# --------------------------------------------------------------------------
+
+
+ALIASES: Dict[str, str] = {
+    "!-": "rminus",
+    "!-~": "rminus~",
+    "!/": "rdiv",
+    "!/~": "rdiv~",
+    "!=": "notequals",
+    "!=~": "notequals~",
+    "%": "modulo",
+    "%~": "modulo~",
+    "&": "bitand",
+    "&&": "logand",
+    "*": "times",
+    "*~": "times~",
+    "+": "plus",
+    "+=~": "plusequals~",
+    "+~": "plus~",
+    "-": "minus",
+    "-~": "minus~",
+    "/": "div",
+    "/~": "div~",
+    "<": "lessthan",
+    "<<": "shiftleft",
+    "<=": "lessthaneq",
+    "<=~": "lessthaneq~",
+    "<~": "lessthan~",
+    "==": "equals",
+    "==~": "equals~",
+    ">": "greaterthan",
+    ">=": "greaterthaneq",
+    ">=~": "greaterthaneq~",
+    ">>": "shiftright",
+    ">~": "greaterthan~",
+    "GSwitch": "gswitch",
+    "GSwitch2": "gswitch2",
+    "array.at": "array.index",
+    "array.shuffle": "array.scramble",
+    "array.sub": "array.subarray",
+    "audiounit~": "vst~",
+    "b": "bangbang",
+    "del": "delay",
+    "dsp_delay": "delay",
+    "f": "float",
+    "ggate": "gswitch2",
+    "hslider": "slider",
+    "i": "int",
+    "jit.!": "jit.op",
+    "jit.!%": "jit.op",
+    "jit.!-": "jit.op",
+    "jit.!/": "jit.op",
+    "jit.!=": "jit.op",
+    "jit.!=p": "jit.op",
+    "jit.!pass": "jit.op",
+    "jit.%": "jit.op",
+    "jit.&": "jit.op",
+    "jit.&&": "jit.op",
+    "jit.*": "jit.op",
+    "jit.+": "jit.op",
+    "jit.+m": "jit.op",
+    "jit.-": "jit.op",
+    "jit.-m": "jit.op",
+    "jit./": "jit.op",
+    "jit.<": "jit.op",
+    "jit.<<": "jit.op",
+    "jit.<=": "jit.op",
+    "jit.<=p": "jit.op",
+    "jit.<p": "jit.op",
+    "jit.==": "jit.op",
+    "jit.==p": "jit.op",
+    "jit.>": "jit.op",
+    "jit.>=": "jit.op",
+    "jit.>=p": "jit.op",
+    "jit.>>": "jit.op",
+    "jit.>p": "jit.op",
+    "jit.^": "jit.op",
+    "jit.abs": "jit.op",
+    "jit.absdiff": "jit.op",
+    "jit.acos": "jit.op",
+    "jit.acosh": "jit.op",
+    "jit.add": "jit.op",
+    "jit.addmod": "jit.op",
+    "jit.and": "jit.op",
+    "jit.asin": "jit.op",
+    "jit.asinh": "jit.op",
+    "jit.atan": "jit.op",
+    "jit.atan2": "jit.op",
+    "jit.atanh": "jit.op",
+    "jit.avg": "jit.op",
+    "jit.bitand": "jit.op",
+    "jit.bitnot": "jit.op",
+    "jit.bitor": "jit.op",
+    "jit.bitxor": "jit.op",
+    "jit.ceil": "jit.op",
+    "jit.cos": "jit.op",
+    "jit.cosh": "jit.op",
+    "jit.div": "jit.op",
+    "jit.eq": "jit.op",
+    "jit.eqp": "jit.op",
+    "jit.exp": "jit.op",
+    "jit.exp2": "jit.op",
+    "jit.flipdiv": "jit.op",
+    "jit.flipmod": "jit.op",
+    "jit.flippass": "jit.op",
+    "jit.flipsub": "jit.op",
+    "jit.floor": "jit.op",
+    "jit.fold": "jit.op",
+    "jit.gl.layer": "jit.gl.videoplane",
+    "jit.gl.text2d": "jit.gl.text",
+    "jit.gl.text3d": "jit.gl.text",
+    "jit.gt": "jit.op",
+    "jit.gte": "jit.op",
+    "jit.gtep": "jit.op",
+    "jit.gtp": "jit.op",
+    "jit.hypot": "jit.op",
+    "jit.ln": "jit.op",
+    "jit.log": "jit.op",
+    "jit.log10": "jit.op",
+    "jit.log2": "jit.op",
+    "jit.lshift": "jit.op",
+    "jit.lt": "jit.op",
+    "jit.lte": "jit.op",
+    "jit.ltep": "jit.op",
+    "jit.ltp": "jit.op",
+    "jit.max": "jit.op",
+    "jit.min": "jit.op",
+    "jit.mod": "jit.op",
+    "jit.mult": "jit.op",
+    "jit.neq": "jit.op",
+    "jit.neqp": "jit.op",
+    "jit.not": "jit.op",
+    "jit.or": "jit.op",
+    "jit.pass": "jit.op",
+    "jit.pow": "jit.op",
+    "jit.round": "jit.op",
+    "jit.rshift": "jit.op",
+    "jit.sin": "jit.op",
+    "jit.sinh": "jit.op",
+    "jit.sqrt": "jit.op",
+    "jit.sub": "jit.op",
+    "jit.submod": "jit.op",
+    "jit.tan": "jit.op",
+    "jit.tanh": "jit.op",
+    "jit.trunc": "jit.op",
+    "jit.wrap": "jit.op",
+    "jit.|": "jit.op",
+    "jit.||": "jit.op",
+    "jit.~": "jit.op",
+    "list.change": "zl.change",
+    "list.compare": "zl.compare",
+    "list.delace": "zl.delace",
+    "list.ecils": "zl.ecils",
+    "list.filter": "zl.filter",
+    "list.group": "zl.group",
+    "list.indexmap": "zl.indexmap",
+    "list.iter": "zl.iter",
+    "list.join": "zl.join",
+    "list.lace": "zl.lace",
+    "list.len": "zl.len",
+    "list.lookup": "zl.lookup",
+    "list.median": "zl.median",
+    "list.mth": "zl.mth",
+    "list.nth": "zl.nth",
+    "list.queue": "zl.queue",
+    "list.reg": "zl.reg",
+    "list.rev": "zl.rev",
+    "list.rot": "zl.rot",
+    "list.scramble": "zl.scramble",
+    "list.sect": "zl.sect",
+    "list.slice": "zl.slice",
+    "list.sort": "zl.sort",
+    "list.stack": "zl.stack",
+    "list.stream": "zl.stream",
+    "list.sub": "zl.sub",
+    "list.sum": "zl.sum",
+    "list.swap": "zl.swap",
+    "list.thin": "zl.thin",
+    "list.union": "zl.union",
+    "list.unique": "zl.unique",
+    "mc.!-~": "mc.rminus~",
+    "mc.!/~": "mc.rdiv~",
+    "mc.!=~": "mc.notequals~",
+    "mc.%~": "mc.modulo~",
+    "mc.*~": "mc.times~",
+    "mc.+=~": "mc.plusequals~",
+    "mc.+~": "mc.plus~",
+    "mc.-~": "mc.minus~",
+    "mc./~": "mc.div~",
+    "mc.<=~": "mc.lessthaneq~",
+    "mc.<~": "mc.lessthan~",
+    "mc.==~": "mc.equals~",
+    "mc.>=~": "mc.greaterthaneq~",
+    "mc.>~": "mc.greaterthan~",
+    "mc.audiounit~": "vst~",
+    "mc.capture~": "capture~",
+    "mc.input": "mc.target",
+    "mc.jit.catch~": "jit.catch~",
+    "mc.jit.release~": "jit.release~",
+    "mc.levelmeter~": "levelmeter~",
+    "mc.meter~": "meter~",
+    "mc.multigain~": "gain~",
+    "mc.plugin~": "plugin~",
+    "mc.plugout~": "plugout~",
+    "mc.plugphasor~": "plugphasor~",
+    "mc.r~": "mc.receive~",
+    "mc.scope~": "scope~",
+    "mc.spectroscope~": "spectroscope~",
+    "mc.s~": "mc.send~",
+    "mcp.sfplay~": "sfplay~",
+    "multiSlider": "multislider",
+    "omsinfo": "midiinfo",
+    "p": "patcher",
+    "r": "receive",
+    "r~": "receive~",
+    "s": "send",
+    "sel": "select",
+    "string.at": "string.index",
+    "string.chars": "string.iter",
+    "string.fromchars": "string.fromsymlist",
+    "string.passcmp": "string.withpass",
+    "string.sub": "string.substring",
+    "s~": "send~",
+    "t": "trigger",
+    "ubumenu": "umenu",
+    "uslider": "slider",
+    "v": "value",
+    "xbendin2": "xbendin",
+    "xbendout2": "xbendout",
+    "|": "bitor",
+    "||": "logor",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -4223,7 +4472,8 @@ def get_object_info(name: str) -> Optional[Dict[str, Any]]:
     Shaped like the package's parser output for the keys the included code
     reads. Prose keys (digest/description/examples/seealso) are absent.
     """
-    entry = _maxref_table().get(name)
+    table = _maxref_table()
+    entry = table.get(name) or table.get(ALIASES.get(name, ""))
     if entry is None:
         return None
     return {
@@ -4252,7 +4502,7 @@ def get_object_help(name: str) -> str:
 
 
 # --------------------------------------------------------------------------
-# py2max/maxref/parser.py (partial: MAXCLASS_DEFAULTS, MaxClassDefaults, _DEFAULT_RECT, get_inlet_count, get_inlet_types, get_legacy_defaults, get_outlet_count, get_outlet_types, validate_connection)
+# py2max/maxref/parser.py (partial: MAXCLASS_DEFAULTS, MaxClassDefaults, _DEFAULT_RECT, get_inlet_count, get_inlet_types, get_legacy_defaults, get_outlet_count, get_outlet_types, message_error, validate_connection)
 # --------------------------------------------------------------------------
 
 
@@ -4363,22 +4613,32 @@ def validate_connection(
             f"cannot connect to inlet {dst_inlet}",
         )
 
-    # Message-type compatibility.
+    error = message_error(src_maxclass, src_outlet, dst_maxclass, dst_inlet)
+    return (not error, error)
+
+
+def message_error(
+    src_maxclass: str, src_outlet: int, dst_maxclass: str, dst_inlet: int
+) -> str:
+    """Why the outlet's message kind cannot enter the inlet, or ``""``.
+
+    The message-type half of :func:`validate_connection`, without its range
+    check, for callers that know a box's port counts better than maxref.
+    """
+
     emit = porttypes.outlet_emits(src_maxclass, src_outlet)
     accepts, authoritative = porttypes.inlet_acceptance(dst_maxclass, dst_inlet)
     if emit == porttypes.BANG and porttypes.inlet_rejects_bang(dst_maxclass, dst_inlet):
         return (
-            False,
             f"Cannot connect a bang from '{src_maxclass}' to the signal inlet "
-            f"{dst_inlet} of '{dst_maxclass}'",
+            f"{dst_inlet} of '{dst_maxclass}'"
         )
     if porttypes.message_compatible(emit, accepts, authoritative) is False:
         return (
-            False,
             f"Cannot connect {emit} outlet of '{src_maxclass}' to inlet "
-            f"{dst_inlet} of '{dst_maxclass}' (accepts {sorted(accepts)})",
+            f"{dst_inlet} of '{dst_maxclass}' (accepts {sorted(accepts)})"
         )
-    return True, ""
+    return ""
 
 
 def get_inlet_count(maxclass: str) -> Optional[int]:
@@ -4516,13 +4776,38 @@ _PLACEHOLDERS = {"", "inlet_type", "outlet_type"}
 # Keyed by maxclass -> {outlet_index: kind}. Kept small and high-confidence.
 _OUTLET_EMIT = {
     "metro": {0: BANG},
-    "tempo": {0: BANG},
+    "qmetro": {0: BANG},
+    "tempo": {0: INT},  # beat count, not a bang
+    "delay": {0: BANG},
+    "del": {0: BANG},
     "loadbang": {0: BANG},
+    "closebang": {0: BANG},
+    "freebang": {0: BANG},
     "button": {0: BANG},  # the bng UI object
     "bangbang": {0: BANG, 1: BANG},
+    "uzi": {0: BANG, 1: BANG, 2: INT},
+    "line": {1: BANG},  # outlet 0 may ramp a list
     "flonum": {0: FLOAT},
     "number": {0: INT},
     "toggle": {0: INT},
+    "random": {0: INT},
+    "drunk": {0: INT},
+    "urn": {0: INT, 1: BANG},
+    "counter": {0: INT},
+    "kslider": {0: INT, 1: INT},
+    "mtof": {0: FLOAT},
+    "timer": {0: FLOAT},
+    "pong": {0: FLOAT},  # maxref types it "signal"; its digest says (float)
+}
+
+# maxref outlet types that name one control message kind exactly.
+_TYPED_EMIT = {
+    "bang": BANG,
+    "int": INT,
+    "long": INT,
+    "float": FLOAT,
+    "double": FLOAT,
+    "int/float": FLOAT,  # int and float coerce
 }
 
 # Inlets maxref mis-types as control that are really signal-only. Keyed by
@@ -4551,8 +4836,13 @@ _SIGNAL_INLET_REJECTS_BANG = {
 
 
 def _args(text: Optional[str]) -> List[str]:
-    """Tokens after the object name in a box's ``text``."""
-    return text.split()[1:] if text else []
+    """Positional arguments in a box's ``text``: no name, no ``@attr`` tail.
+
+    A double-quoted argument is one token, as in Max.
+    """
+
+    tokens = re.findall(r'"[^"]*"|\S+', text or "")[1:]
+    return parse_attr_args(tokens)[0]
 
 
 def _first_int(args: List[str]) -> Optional[int]:
@@ -4587,8 +4877,52 @@ def _switch_counts(a: List[str]) -> _Counts:
     return (n + 1, None) if n and n > 0 else (None, None)
 
 
-def _select_counts(a: List[str]) -> _Counts:
-    return (None, len(a) + 1) if a else (None, None)  # match outlets + 1 reject
+def _scale_value_in(a: List[str]) -> _Counts:
+    n = _first_int(a)
+    return (n, None) if n and n > 0 else (None, None)
+
+
+def _match_counts(a: List[str]) -> _Counts:
+    # select/route N: a right inlet per match to reset it; N match outlets + 1
+    return (len(a) + 1, len(a) + 1) if a else (None, None)
+
+
+def _unjoin_counts(a: List[str]) -> _Counts:
+    n = _first_int(a)  # unjoin N: N outlets (at least 2) + 1 overflow
+    return (None, max(n, 2) + 1) if n and n > 0 else (None, None)
+
+
+def _matrix_counts(info_outlets: int) -> Callable[[List[str]], _Counts]:
+    """``matrix~ A B``: A inlets, B outlets + info outlets (1; 2 for mc.)."""
+
+    def counts(a: List[str]) -> _Counts:
+        ints = [int(t) for t in a[:2] if re.fullmatch(r"\d+", t)]
+        if not ints:
+            return (None, None)
+        return (ints[0], ints[1] + info_outlets if len(ints) > 1 else None)
+
+    return counts
+
+
+def _channel_args_in(a: List[str]) -> _Counts:
+    return (len(a), None) if a else (None, None)  # dac~ 1 2 3 4
+
+
+def _channel_args_out(a: List[str]) -> _Counts:
+    return (None, len(a)) if a else (None, None)  # adc~ 1 2 3 4
+
+
+def _expr_counts(a: List[str]) -> _Counts:
+    # expr/vexpr/if: an inlet per highest $i/$f/$s/$x index; if: outN outlets
+    s = " ".join(a)
+    ins = [int(n) for n in re.findall(r"\$[ifsx](\d+)", s)]
+    outs = [int(n) for n in re.findall(r"\bout(\d+)\b", s)]
+    return (max(ins) if ins else None, max(outs) if outs else None)
+
+
+def _sprintf_counts(a: List[str]) -> _Counts:
+    n = len(re.findall(r"%[-+ #0-9.]*[a-zA-Z]", " ".join(a).replace("%%", "")))
+    return (n, None) if n > 1 else (None, None)
 
 
 def _unpack_counts(a: List[str]) -> _Counts:
@@ -4601,19 +4935,74 @@ def _pack_counts(a: List[str]) -> _Counts:
 
 _ARG_RESOLVERS = {
     "limi~": _scale_value_both,
-    "matrix~": _scale_value_both,
-    "mc.pack~": _scale_value_out,
+    "matrix~": _matrix_counts(1),
+    "mc.matrix~": _matrix_counts(2),
+    "mc.pack~": _scale_value_in,
+    "mc.unpack~": _scale_value_out,
+    "mc.combine~": _scale_value_in,
     "gate": _scale_value_out,
     "selector~": _selector_counts,
+    "mc.selector~": _selector_counts,
     "switch": _switch_counts,
-    "select": _select_counts,
-    "sel": _select_counts,
-    "route": _select_counts,  # N match outlets + 1 passthrough
+    "select": _match_counts,
+    "route": _match_counts,
+    "routepass": _match_counts,
     "unpack": _unpack_counts,
     "pack": _pack_counts,
+    "pak": _pack_counts,
+    "combine": _pack_counts,
+    "join": _scale_value_in,
+    "unjoin": _unjoin_counts,
+    "funnel": _scale_value_in,
+    "spray": _scale_value_out,
+    "bangbang": _scale_value_out,
+    "jit.gl.multiple": _scale_value_in,
+    "dac~": _channel_args_in,
+    "adc~": _channel_args_out,
+    "expr": _expr_counts,
+    "vexpr": _expr_counts,
+    "if": _expr_counts,
+    "sprintf": _sprintf_counts,
     "trigger": _unpack_counts,  # one outlet per argument
-    "t": _unpack_counts,
 }
+
+# Objects whose maxref entry omits a port list. Counts are those Max writes.
+_PORT_COUNTS: dict[str, _Counts] = {
+    "midiformat": (7, 2),
+    "adstatus": (2, 2),
+    "funnel": (2, 1),
+    "if": (1, 1),
+    "dict.view": (1, None),
+    "udpsend": (1, 0),
+    "onecopy": (1, 0),
+}
+
+# Objects whose port counts follow their content or attributes (a script, a
+# loaded patcher, ``@chans``), which neither maxref nor the text gives. Their
+# counts are unknown, so range checks skip them. ``mc.*`` objects are included
+# by prefix: 13 of the 17 seen in Max-written patches outnumber maxref.
+_VARIABLE_IO = frozenset(
+    {
+        "js",
+        "jsui",
+        "gen",
+        "gen~",
+        "jit.gen",
+        "jit.pix",
+        "jit.gl.pix",
+        "poly~",
+        "pvar",
+        "pipe",
+        "sfplay~",
+        "groove~",
+        "record~",
+        "wave~",
+        "jit.glue",
+        "jit.scissors",
+        "sxformat",
+        "dict.pack",
+    }
+)
 
 
 def _accepts_from_type(type_str: str) -> FrozenSet[str]:
@@ -4644,7 +5033,7 @@ def _emit_from_type(type_str: str) -> str:
     t = (type_str or "").strip().lower()
     if "signal" in t:
         return SIGNAL
-    return ANY  # control outlet -- unknown unless curated
+    return _TYPED_EMIT.get(t, ANY)  # other control outlets: unknown unless curated
 
 
 # --- public API ------------------------------------------------------------
@@ -4657,9 +5046,15 @@ def port_counts(
     (``limi~ 2`` -> 2 in / 2 out), otherwise the maxref default. ``None`` for a
     dimension means "unknown" (skip range checks).
     """
-    info = get_object_info(maxclass)
-    n_in = len(info["inlets"]) if info and "inlets" in info else None
-    n_out = len(info["outlets"]) if info and "outlets" in info else None
+    if maxclass in _PORT_COUNTS:
+        n_in, n_out = _PORT_COUNTS[maxclass]
+    elif maxclass in _VARIABLE_IO or maxclass.startswith("mc."):
+        n_in = n_out = None
+    else:
+        info = get_object_info(maxclass)
+        # an empty inlet list means maxref omits it: 0-inlet objects are rare
+        n_in = (len(info["inlets"]) or None) if info and "inlets" in info else None
+        n_out = len(info["outlets"]) if info and "outlets" in info else None
     r_in, r_out = arg_port_counts(maxclass, text)
     return (
         r_in if r_in is not None else n_in,
@@ -4672,7 +5067,9 @@ def arg_port_counts(maxclass: str, text: Optional[str] = None) -> _Counts:
 
     ``None`` for a dimension that does not depend on arguments.
     """
-    resolver = _ARG_RESOLVERS.get(maxclass)
+    resolver = _ARG_RESOLVERS.get(maxclass) or _ARG_RESOLVERS.get(
+        ALIASES.get(maxclass, "")
+    )
     return resolver(_args(text)) if resolver is not None else (None, None)
 
 
@@ -4684,13 +5081,41 @@ def subpatcher_counts(box: object) -> _Counts:
     box with no nested patcher.
     """
     child = getattr(box, "_patcher", None)
-    if child is None:
-        return (None, None)
+    if child is None or getattr(child, "classnamespace", "box") != "box":
+        return (None, None)  # rnbo~ and gen~ ports come from in/out objects
 
     boxes = getattr(child, "_boxes", [])
     n_in = sum(1 for b in boxes if object_name(b) == "inlet")
     n_out = sum(1 for b in boxes if object_name(b) == "outlet")
     return (n_in, n_out)
+
+
+# Objects whose ports come from their code or the patch they load, so the box's
+# declared numinlets/numoutlets are the only source of counts.
+DYNAMIC_IO_MAXCLASSES = frozenset({"gen.codebox~", "codebox", "codebox~", "bpatcher"})
+
+
+def _widen(ref: Optional[int], declared: object) -> Optional[int]:
+    if ref is None or not isinstance(declared, int):
+        return ref
+    return max(ref, declared)
+
+
+def box_port_counts(box: object, name: str) -> _Counts:
+    """``(inlet_count, outlet_count)`` for a box, for range checks.
+
+    Order: a subpatcher's content, then a dynamic box's declared counts, then
+    :func:`port_counts`. Declared counts widen the last but never narrow it: a
+    box loaded from a file carries the counts Max wrote, which are exact.
+    """
+    sub = subpatcher_counts(box)
+    if sub != (None, None):
+        return sub
+    n_in, n_out = getattr(box, "numinlets", None), getattr(box, "numoutlets", None)
+    if getattr(box, "maxclass", None) in DYNAMIC_IO_MAXCLASSES:
+        return (n_in, n_out)
+    ref_in, ref_out = port_counts(name, getattr(box, "text", None))
+    return (_widen(ref_in, n_in), _widen(ref_out, n_out))
 
 
 def outlet_emits(maxclass: str, index: int) -> str:
@@ -4773,8 +5198,9 @@ def inlet_acceptance(maxclass: str, index: int) -> Tuple[FrozenSet[str], bool]:
             if ANY in from_methods:
                 return frozenset({ANY}), True
             # union with the type-derived set so a signal/float inlet keeps its
-            # signal capability even if the method list omits it
-            return frozenset(from_methods | type_set), True
+            # signal capability even if the method list omits it; a placeholder
+            # type (INLET_TYPE -> ANY) adds nothing
+            return frozenset(from_methods | (type_set - {ANY})), True
     if type_set == frozenset({SIGNAL}):
         # maxref types many right inlets "signal" that also take numbers
         # (clip~ min/max, scope~ buffer size); its methods give that away
@@ -5336,6 +5762,8 @@ class SerializationMixin(AbstractPatcher):
                     )
                 )
             else:
+                # In place, not temp file + os.replace: Max 9.2 stops reloading
+                # an open patch once its file is replaced.
                 with open(resolved_path, "w", encoding="utf8") as f:
                     json.dump(self.to_dict(), f, indent=4)
 
@@ -5429,13 +5857,6 @@ def _first_param_name(method: Callable[..., Any]) -> Optional[str]:
     return _FIRST_PARAM_CACHE[func]
 
 
-# Max objects whose inlet/outlet counts are determined by their code (or, for
-# bpatcher, the patch it loads) rather than by a fixed maxref entry. Connection
-# validation for these consults the box's own declared numinlets/numoutlets
-# instead of the static maxref data.
-DYNAMIC_IO_MAXCLASSES = frozenset({"gen.codebox~", "codebox", "codebox~", "bpatcher"})
-
-
 def _max_gen_io_index(code: str, kind: str) -> int:
     """Highest ``in<N>`` / ``out<N>`` index referenced in gen ``code``.
 
@@ -5445,6 +5866,23 @@ def _max_gen_io_index(code: str, kind: str) -> int:
     """
     indices = [int(m) for m in re.findall(rf"\b{kind}(\d+)\b", code)]
     return max([1, *indices])
+
+
+def _codebox_size(code: str, fontsize: float = 12.0) -> tuple[float, float]:
+    """(width, height) that shows all of ``code`` in a codebox.
+
+    Metrics were measured from Max 9 at 12pt ``<Monospaced>``: 7.2pt per char,
+    14pt per line, a line-number gutter, a title row and a bottom margin. The
+    editor shows a horizontal scrollbar over the last line unless it has
+    ~36pt beyond the longest line.
+    """
+    k = fontsize / 12.0
+    lines = code.splitlines() or [""]
+    cols = max(len(line) for line in lines)
+    gutter = 22.0 + 7.2 * len(str(len(lines)))
+    w = k * (gutter + 7.2 * cols + 36.0)
+    h = k * (23.0 + 14.0 * len(lines) + 16.0)
+    return max(w, 100.0), h
 
 
 # Box attributes valid on (nearly) every Max object, independent of an object's
@@ -5592,12 +6030,64 @@ class BoxFactoryMixin(AbstractPatcher):
         assert box.id, f"object {box} must have an id"
         if self._validate_attrs:
             self._validate_box_attrs(box)
+        auto_xy, self._auto_xy = getattr(self, "_auto_xy", None), None
+        rect = box.patching_rect
+        if auto_xy and rect is not None and tuple(rect[:2]) == auto_xy:
+            self._auto_slots[box.id] = auto_xy
+            box.patching_rect = self._clear_of_boxes(Rect(*rect), box.maxclass)
         self._node_ids.append(box.id)
         self._objects[box.id] = box
         self._boxes.append(box)
         if comment:
             self.add_associated_comment(box, comment, comment_pos)
         return box
+
+    def _clear_of_boxes(
+        self,
+        rect: Rect,
+        maxclass: Optional[str],
+        others: Optional[List[Any]] = None,
+    ) -> Rect:
+        """``rect`` moved past any existing box it overlaps.
+
+        The grid layouts step by a fixed cell size, so a box larger than a cell
+        (codebox, scope~) lands on its neighbours. Only overlapping placements
+        move, which keeps every non-overlapping layout byte-identical.
+        """
+        pad = self._layout_mgr.pad
+        gap = 0.5 * pad
+        vertical = getattr(self._layout_mgr, "flow_direction", "") == "vertical"
+        # wrapping would renumber ports, which Max orders by x
+        wrap = maxclass not in ("inlet", "outlet")
+        x, y, w, h = rect
+        for _ in range(len(self._boxes) + 1):
+            hits = [
+                r
+                for r in (
+                    others
+                    if others is not None
+                    else [b.patching_rect for b in self._boxes]
+                )
+                if r is not None
+                and len(r) >= 4
+                and x < r[0] + r[2]
+                and r[0] < x + w
+                and y < r[1] + r[3]
+                and r[1] < y + h
+            ]
+            if not hits:
+                break
+            if vertical:
+                y = max(r[1] + r[3] for r in hits) + gap
+                if wrap and y + h > self.height:
+                    y = pad
+                    x = max(r[0] + r[2] for r in hits) + gap
+            else:
+                x = max(r[0] + r[2] for r in hits) + gap
+                if wrap and x + w > self.width:
+                    x = pad
+                    y = max(r[1] + r[3] for r in hits) + gap
+        return Rect(x, y, w, h)
 
     def add_associated_comment(
         self, box: "Box", comment: str, comment_pos: Optional[str] = None
@@ -5683,42 +6173,27 @@ class BoxFactoryMixin(AbstractPatcher):
         if not dst_obj:
             return f"Destination object not found: {dst_id}"
 
+        if getattr(self, "classnamespace", "box") != "box":
+            return ""  # maxref describes Max objects; rnbo~ and gen~ use others
+
         src_name = self._get_object_name(src_obj)
         dst_name = self._get_object_name(dst_obj)
-        src_dynamic = src_obj.maxclass in DYNAMIC_IO_MAXCLASSES
-        dst_dynamic = dst_obj.maxclass in DYNAMIC_IO_MAXCLASSES
-
-        if src_dynamic or dst_dynamic:
-            # Codeboxes and bpatchers derive their inlet/outlet counts from
-            # their content, so bound-check indices against the box's own
-            # declared counts rather than the fixed maxref entry. Type
-            # checking is skipped: the content's port types are unknown here.
-            src_outlets = (
-                src_obj.numoutlets if src_dynamic else maxref.get_outlet_count(src_name)
+        src_outlets = porttypes.box_port_counts(src_obj, src_name)[1]
+        dst_inlets = porttypes.box_port_counts(dst_obj, dst_name)[0]
+        if src_outlets is not None and src_outlet >= src_outlets:
+            error_msg = (
+                f"Object '{src_name}' only has {src_outlets} outlet(s), "
+                f"cannot connect from outlet {src_outlet}"
             )
-            dst_inlets = (
-                dst_obj.numinlets if dst_dynamic else maxref.get_inlet_count(dst_name)
+        elif dst_inlets is not None and dst_inlet >= dst_inlets:
+            error_msg = (
+                f"Object '{dst_name}' only has {dst_inlets} inlet(s), "
+                f"cannot connect to inlet {dst_inlet}"
             )
-            error_msg = ""
-            if src_outlets is not None and src_outlet >= src_outlets:
-                error_msg = (
-                    f"Object '{src_name}' only has {src_outlets} outlet(s), "
-                    f"cannot connect from outlet {src_outlet}"
-                )
-            elif dst_inlets is not None and dst_inlet >= dst_inlets:
-                error_msg = (
-                    f"Object '{dst_name}' only has {dst_inlets} inlet(s), "
-                    f"cannot connect to inlet {dst_inlet}"
-                )
+        elif {src_obj.maxclass, dst_obj.maxclass} & porttypes.DYNAMIC_IO_MAXCLASSES:
+            error_msg = ""  # a codebox's port types come from its code
         else:
-            _, error_msg = maxref.validate_connection(
-                src_name,
-                src_outlet,
-                dst_name,
-                dst_inlet,
-                src_text=getattr(src_obj, "text", None),
-                dst_text=getattr(dst_obj, "text", None),
-            )
+            error_msg = maxref.message_error(src_name, src_outlet, dst_name, dst_inlet)
         if not error_msg:
             return ""
         return (
@@ -5874,6 +6349,12 @@ class BoxFactoryMixin(AbstractPatcher):
             if numoutlets is None and "numoutlets" in defaults:
                 numoutlets = defaults["numoutlets"]
 
+        if self.classnamespace == "box":
+            # maxref names Max objects only; rnbo~ and gen~ have their own
+            ref_in, ref_out = porttypes.port_counts(_maxclass, text)
+            numinlets = ref_in if numinlets is None else numinlets
+            numoutlets = ref_out if numoutlets is None else numoutlets
+
         kwds = self._textbox_helper(_maxclass, kwds)
 
         auto_rect = patching_rect is None
@@ -5924,6 +6405,10 @@ class BoxFactoryMixin(AbstractPatcher):
                         stacklevel=2,
                     )
             kwds = {**attrs, **kwds}  # type: ignore[typeddict-item]
+
+        if auto_rect and _maxclass in ("codebox", "codebox~") and isinstance(code, str):
+            w, h = _codebox_size(code, kwds.get("fontsize") or 12.0)
+            patching_rect = Rect(patching_rect[0], patching_rect[1], w, h)
 
         if auto_rect and maxclass in ("newobj", "message"):
             patching_rect = self._fit_text_width(
@@ -6114,6 +6599,9 @@ class BoxFactoryMixin(AbstractPatcher):
                 )
 
         n_out = kwds.pop("numoutlets", None) or _max_gen_io_index(code, "out")
+        if patching_rect is None:
+            w, h = _codebox_size(code, kwds.get("fontsize", 12.0))
+            patching_rect = self.get_pos()._replace(w=w, h=h)
         return self.add_box(
             Box(
                 id=id or self.get_id(_maxclass),
@@ -6179,6 +6667,9 @@ class BoxFactoryMixin(AbstractPatcher):
 
         kwds.setdefault("fontname", "<Monospaced>")
         kwds.setdefault("fontsize", 12.0)
+        if patching_rect is None:
+            w, h = _codebox_size(code, kwds["fontsize"])
+            patching_rect = self.get_pos()._replace(w=w, h=h)
 
         return self.add_box(
             Box(
@@ -7379,6 +7870,72 @@ class PatchGraph:
                     components.append(component)
         return components
 
+    def signal_order(self) -> List[str]:
+        """Nodes in signal order (sources first), ties broken by node order.
+
+        If node order is already a signal order it is returned unchanged. A
+        feedback loop is placed as a unit, its nodes in node order.
+        """
+        index = {n: i for i, n in enumerate(self.nodes)}
+        out = {
+            n: [d for d in succ if d in index] for n, succ in self.out_lists().items()
+        }
+        rev: Dict[str, List[str]] = {n: [] for n in self.nodes}
+        for s, d in self.edges:
+            rev[d].append(s)
+
+        # Kosaraju: finish order on the graph, then components on its reverse
+        finished: List[str] = []
+        seen: Set[str] = set()
+        for root in self.nodes:
+            if root in seen:
+                continue
+            seen.add(root)
+            stack = [(root, iter(out.get(root, [])))]
+            while stack:
+                node, it = stack[-1]
+                nxt = next((d for d in it if d not in seen), None)
+                if nxt is None:
+                    stack.pop()
+                    finished.append(node)
+                else:
+                    seen.add(nxt)
+                    stack.append((nxt, iter(out.get(nxt, []))))
+        comp: Dict[str, int] = {}
+        members: List[List[str]] = []
+        for root in reversed(finished):
+            if root in comp:
+                continue
+            comp[root] = len(members)
+            group, todo = [root], [root]
+            while todo:
+                for s in rev[todo.pop()]:
+                    if s not in comp:
+                        comp[s] = comp[root]
+                        group.append(s)
+                        todo.append(s)
+            members.append(sorted(group, key=index.__getitem__))
+
+        # Kahn on the components, lowest node index first
+        indegree = [0] * len(members)
+        succs: List[Set[int]] = [set() for _ in members]
+        for s, d in self.edges:
+            a, b = comp[s], comp[d]
+            if a != b and b not in succs[a]:
+                succs[a].add(b)
+                indegree[b] += 1
+        ready = [(index[m[0]], c) for c, m in enumerate(members) if not indegree[c]]
+        heapq.heapify(ready)
+        result: List[str] = []
+        while ready:
+            _, c = heapq.heappop(ready)
+            result.extend(members[c])
+            for b in succs[c]:
+                indegree[b] -= 1
+                if not indegree[b]:
+                    heapq.heappush(ready, (index[members[b][0]], b))
+        return result
+
     def topological_order(self) -> List[str]:
         """Post-order DFS from source nodes, giving a signal-flow ordering.
 
@@ -7888,12 +8445,14 @@ class GridLayoutManager(LayoutManager):
         comment_pad: Optional[int] = None,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
+        signal_order: bool = True,
     ):
         super().__init__(parent, pad, box_width, box_height, comment_pad)
         self.flow_direction = flow_direction  # "horizontal" or "vertical"
         self.cluster_connected = (
             cluster_connected  # Whether to cluster connected objects
         )
+        self.signal_order = signal_order  # optimize_layout() sorts by signal
 
     def get_relative_pos(self, rect: Rect) -> Rect:
         """Returns a relative position for the object based on flow direction."""
@@ -7945,6 +8504,8 @@ class GridLayoutManager(LayoutManager):
     def _full_layout(self) -> None:
         """Perform full layout optimization."""
         if not self.cluster_connected or len(self.parent._objects) < 2:
+            if self.signal_order:
+                self._reorder_by_signal()
             # Even without clustering, prevent overlaps
             self.prevent_overlaps()
             return
@@ -7960,6 +8521,45 @@ class GridLayoutManager(LayoutManager):
 
         # Prevent any remaining overlaps after clustering
         self.prevent_overlaps()
+
+    def _signal_rank(self) -> Dict[str, int]:
+        """Each box id's position in signal order (ties by creation order)."""
+        ids = [b.id for b in self.parent._boxes if b.id]
+        order = PatchGraph(self.parent._lines, nodes=ids).signal_order()
+        return {box_id: i for i, box_id in enumerate(order)}
+
+    def _reorder_by_signal(self) -> None:
+        """Give the grid slots, in creation order, to boxes in signal order.
+
+        Only boxes the layout placed take part; explicit and window-anchored
+        rects stay. A patch built in signal order keeps every position.
+        """
+        parent = self.parent
+        slots: Dict[str, Any] = getattr(parent, "_auto_slots", {})
+        movable = [
+            (b.id, b)
+            for b in parent._boxes
+            if b.id is not None and b.id in slots and not self._is_anchored(b.maxclass)
+        ]
+        if len(movable) < 2:
+            return
+        rank = self._signal_rank()
+        ordered = sorted(movable, key=lambda m: rank[m[0]])
+        if ordered == movable:
+            return
+
+        moving = {box_id for box_id, _ in movable}
+        placed = [b.patching_rect for b in parent._boxes if b.id not in moving]
+        for (_, box), (src_id, _) in zip(ordered, movable):
+            x, y = slots[src_id]
+            w, h = self.box_dims(box)
+            rect = parent._clear_of_boxes(Rect(x, y, w, h), box.maxclass, placed)
+            box.patching_rect = rect
+            placed.append(rect)
+
+    def _is_anchored(self, maxclass: str) -> bool:
+        rect = self.get_rect_from_maxclass(maxclass)
+        return bool(rect and (_is_anchor(rect.x) or _is_anchor(rect.y)))
 
     def _apply_clustered_layout(self, clusters: List[Set[str]]) -> None:
         """Apply cluster-based positioning to all objects."""
@@ -8002,8 +8602,11 @@ class GridLayoutManager(LayoutManager):
         object_spacing = pad * 0.5
 
         # Position each cluster in its designated area
+        rank = self._signal_rank() if self.signal_order else {}
         for cluster_idx, cluster_objects in enumerate(clusters):
-            cluster_objects_list = sorted(list(cluster_objects))  # Consistent ordering
+            cluster_objects_list = sorted(
+                cluster_objects, key=lambda i: (rank.get(i, 0), i)
+            )
 
             # Calculate cluster's base position
             cluster_col = cluster_idx % cluster_cols
@@ -8071,8 +8674,11 @@ class GridLayoutManager(LayoutManager):
         object_spacing = pad * 0.5
 
         # Position each cluster in its designated area
+        rank = self._signal_rank() if self.signal_order else {}
         for cluster_idx, cluster_objects in enumerate(clusters):
-            cluster_objects_list = sorted(list(cluster_objects))  # Consistent ordering
+            cluster_objects_list = sorted(
+                cluster_objects, key=lambda i: (rank.get(i, 0), i)
+            )
 
             # Calculate cluster's base position (fill vertically first)
             cluster_row = cluster_idx % cluster_rows
@@ -8159,9 +8765,16 @@ class HorizontalLayoutManager(GridLayoutManager):
         box_width: Optional[int] = None,
         box_height: Optional[int] = None,
         comment_pad: Optional[int] = None,
+        signal_order: bool = True,
     ):
         super().__init__(
-            parent, pad, box_width, box_height, comment_pad, flow_direction="horizontal"
+            parent,
+            pad,
+            box_width,
+            box_height,
+            comment_pad,
+            flow_direction="horizontal",
+            signal_order=signal_order,
         )
 
 
@@ -8175,9 +8788,16 @@ class VerticalLayoutManager(GridLayoutManager):
         box_width: Optional[int] = None,
         box_height: Optional[int] = None,
         comment_pad: Optional[int] = None,
+        signal_order: bool = True,
     ):
         super().__init__(
-            parent, pad, box_width, box_height, comment_pad, flow_direction="vertical"
+            parent,
+            pad,
+            box_width,
+            box_height,
+            comment_pad,
+            flow_direction="vertical",
+            signal_order=signal_order,
         )
 
 
@@ -9464,6 +10084,8 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             patcher's setting, else on.
         flow_direction: Direction for flow-based layouts ('horizontal', 'vertical').
         cluster_connected: Whether to cluster connected objects in grid layout.
+        signal_order: Whether grid ``optimize_layout()`` reorders boxes into
+            signal order. ``False`` keeps creation order.
         num_dimensions: Number of rows used by the matrix layout (also treated as column count when flow_direction='column').
         dimension_spacing: Spacing between rows/columns for matrix layout variants.
         semantic_ids: Whether to generate semantic IDs based on object names (e.g., 'cycle_1')
@@ -9499,6 +10121,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         strict: bool = False,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
+        signal_order: bool = True,
         # Matrix layout configuration parameters
         num_dimensions: int = 4,
         dimension_spacing: float = 100.0,
@@ -9515,6 +10138,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._node_ids: list[str] = []  # ids by order of creation
         self._objects: dict[str, AbstractBox] = {}  # dict of objects by id
         self._boxes: list[AbstractBox] = []  # store child objects (boxes, etc.)
+        # (x, y) last issued by get_pos; add_box moves such a box off overlaps
+        self._auto_xy: Optional[tuple[float, float]] = None
+        # box id -> slot get_pos issued it, for grid reordering
+        self._auto_slots: Dict[str, tuple[float, float]] = {}
         self._lines: list[AbstractPatchline] = []  # store patchline objects
         self._edge_ids: list[
             tuple[str, str]
@@ -9530,6 +10157,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._needs_js2max_runtime = False
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
+        self._signal_order = signal_order
         self._num_dimensions = num_dimensions
         self._dimension_spacing = dimension_spacing
         self._layout_mgr: AbstractLayoutManager = self.set_layout_mgr(layout)
@@ -10005,9 +10633,13 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     def set_layout_mgr(self, name: str) -> layout_module.LayoutManager:
         """takes a name and returns an instance of a layout manager"""
         if name == "horizontal":
-            return layout_module.HorizontalLayoutManager(self)
+            return layout_module.HorizontalLayoutManager(
+                self, signal_order=self._signal_order
+            )
         elif name == "vertical":
-            return layout_module.VerticalLayoutManager(self)
+            return layout_module.VerticalLayoutManager(
+                self, signal_order=self._signal_order
+            )
         elif name == "flow":
             return layout_module.FlowLayoutManager(
                 self, flow_direction=self._flow_direction
@@ -10017,6 +10649,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
                 self,
                 flow_direction=self._flow_direction,
                 cluster_connected=self._cluster_connected,
+                signal_order=self._signal_order,
             )
         elif name == "matrix":
             return layout_module.MatrixLayoutManager(
@@ -10045,8 +10678,11 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
         if maxclass:
-            return self._layout_mgr.get_pos(maxclass)
-        return self._layout_mgr.get_pos()
+            rect = self._layout_mgr.get_pos(maxclass)
+        else:
+            rect = self._layout_mgr.get_pos()
+        self._auto_xy = (rect.x, rect.y)
+        return rect
 
     def optimize_layout(self) -> None:
         """Arrange the whole patch based on the active layout manager.
@@ -10190,20 +10826,6 @@ def _port(pair: Any, idx: int) -> int:
     return int(pair[idx]) if len(pair) > idx else 0
 
 
-def _effective_counts(box: Any, name: str) -> Tuple[Optional[int], Optional[int]]:
-    """(inlet_count, outlet_count) for a box, subpatcher-aware."""
-    sub_in, sub_out = porttypes.subpatcher_counts(box)
-    if getattr(box, "maxclass", None) in DYNAMIC_IO_MAXCLASSES:
-        # ports come from code or a loaded file, so trust the declared counts
-        n_in, n_out = getattr(box, "numinlets", None), getattr(box, "numoutlets", None)
-    else:
-        n_in, n_out = porttypes.port_counts(name, getattr(box, "text", None))
-    return (
-        sub_in if sub_in is not None else n_in,
-        sub_out if sub_out is not None else n_out,
-    )
-
-
 def lint(patcher: Any) -> List[Finding]:
     """Return all lint findings for ``patcher`` and its subpatchers, errors first."""
     findings: List[Finding] = []
@@ -10224,6 +10846,8 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
 
     boxes = list(patcher._boxes)
     by_id: dict[str, Any] = {}
+    # maxref describes Max objects; rnbo~ and gen~ patchers use other ones
+    max_objects = getattr(patcher, "classnamespace", "box") == "box"
 
     # duplicate IDs
     for b in boxes:
@@ -10237,7 +10861,7 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
             by_id[b.id] = b
 
     # unknown object classes
-    for b in boxes:
+    for b in boxes if max_objects else []:
         name = object_name(b)
         if name and get_object_info(name) is None:
             findings.append(
@@ -10311,10 +10935,12 @@ def _lint_level(patcher: Any, findings: List[Finding], path: str) -> None:
                 )
             )
             continue
+        if not max_objects:
+            continue
 
         src_name, dst_name = object_name(sb), object_name(db)
-        _, n_out = _effective_counts(sb, src_name)
-        n_in, _ = _effective_counts(db, dst_name)
+        _, n_out = porttypes.box_port_counts(sb, src_name)
+        n_in, _ = porttypes.box_port_counts(db, dst_name)
         if n_out is not None and outlet >= n_out:
             findings.append(
                 Finding(

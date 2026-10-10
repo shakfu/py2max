@@ -1,6 +1,7 @@
 import pytest
 
 from py2max import InvalidConnectionError, Patcher
+from py2max.core.common import Rect
 
 
 def test_gen():
@@ -46,6 +47,23 @@ def test_gen_codebox():
     # newlines are normalized to CRLF as Max expects
     assert "\r\n" in d["code"]
     p.save()
+
+
+def test_gen_codebox_sized_to_code():
+    # the default rect fits the code instead of a 66x22 textbox
+    p = Patcher("outputs/test_gen_codebox_sized.maxpat")
+    short = p.add_gen_codebox("out1 = in1;")
+    long = p.add_gen_codebox("out1 = in1 * 0.5 + in2 * 0.25;\n" * 10)
+    _, _, w1, h1 = short.patching_rect
+    _, _, w2, h2 = long.patching_rect
+    assert w1 >= 100 and h1 > 22
+    assert w2 > w1 and h2 > h1
+    # an explicit rect is kept as given
+    box = p.add_gen_codebox("out1 = in1;", patching_rect=Rect(10, 10, 300, 200))
+    assert tuple(box.patching_rect) == (10, 10, 300, 200)
+    # codebox~ (inside gen~) is sized the same way
+    g = Patcher("outputs/test_codebox_sized.maxpat")
+    assert g.add_codebox_tilde("out1 = in1;").patching_rect[2] >= 100
 
 
 def test_gen_codebox_multi_io():
@@ -94,3 +112,38 @@ def test_gen_codebox_connection_validation():
         p.add_line(box, dac, outlet=5)
     with pytest.raises(InvalidConnectionError):
         p.add_line(src, box, inlet=9)
+
+
+def test_auto_placed_boxes_do_not_overlap():
+    def overlap(a, b):
+        ax, ay, aw, ah = a
+        bx, by, bw, bh = b
+        return ax < bx + bw and bx < ax + aw and ay < by + bh and by < ay + ah
+
+    for direction in ("horizontal", "vertical"):
+        p = Patcher("outputs/test_no_overlap.maxpat", flow_direction=direction)
+        p.add_gen_codebox("out1 = in1 * 0.5 + in2 * 0.25;\n" * 8)
+        for _ in range(6):
+            p.add("cycle~ 440")
+        p.add("scope~")
+        p.add("ezdac~")
+        rects = [tuple(b.patching_rect) for b in p._boxes]
+        for i, a in enumerate(rects):
+            for b in rects[i + 1 :]:
+                assert not overlap(a, b), (direction, a, b)
+
+
+def test_explicit_rect_may_overlap():
+    # only layout-issued positions move; a caller's rect is kept as given
+    p = Patcher("outputs/test_explicit_overlap.maxpat")
+    a = p.add("cycle~", patching_rect=Rect(10, 10, 100, 100))
+    b = p.add("cycle~", patching_rect=Rect(20, 20, 100, 100))
+    assert tuple(a.patching_rect)[:2] == (10, 10)
+    assert tuple(b.patching_rect)[:2] == (20, 20)
+
+
+def test_textbox_codebox_sized_to_code():
+    p = Patcher("outputs/test_textbox_codebox.maxpat", classnamespace="rnbo")
+    via_add = p.add("codebox~", code="out1 = in1;")
+    via_method = p.add_codebox_tilde("out1 = in1;")
+    assert via_add.patching_rect[2:] == via_method.patching_rect[2:]

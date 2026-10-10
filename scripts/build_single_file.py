@@ -37,6 +37,7 @@ import base64
 import gzip
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -44,6 +45,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
+# Generated output must not depend on whether, or which, Max is installed.
+os.environ["PY2MAX_MAX_REFPAGES"] = "bundle"
 DEFAULT_OUT = ROOT / "scripts" / "py2max.py"
 
 # Emitted in this order. `None` means "the whole module"; a list means "only
@@ -62,6 +65,7 @@ MODULES: List[Spec] = [
     # maxref layer: curated data and port logic verbatim, data source shimmed.
     ("py2max/maxref/legacy.py", None),
     ("py2max/maxref/category.py", None),
+    ("py2max/maxref/aliases.py", None),
     "SHIM",  # type: ignore[list-item]
     (
         "py2max/maxref/parser.py",
@@ -69,6 +73,7 @@ MODULES: List[Spec] = [
             "_DEFAULT_RECT",
             "get_legacy_defaults",
             "validate_connection",
+            "message_error",
             "get_inlet_count",
             "get_outlet_count",
             "get_inlet_types",
@@ -258,7 +263,8 @@ def get_object_info(name: str) -> Optional[Dict[str, Any]]:
     Shaped like the package's parser output for the keys the included code
     reads. Prose keys (digest/description/examples/seealso) are absent.
     """
-    entry = _maxref_table().get(name)
+    table = _maxref_table()
+    entry = table.get(name) or table.get(ALIASES.get(name, ""))
     if entry is None:
         return None
     return {{

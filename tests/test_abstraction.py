@@ -3,10 +3,10 @@ from py2max import Patcher
 
 def test_abstraction():
     # create abstraction
-    c = Patcher("outputs/half.maxpat")
+    c = Patcher("outputs/half.maxpat", layout="grid", flow_direction="vertical")
     in1 = c.add_textbox("inlet")
-    out1 = c.add_textbox("outlet")
     mul = c.add_textbox("*~ 0.5")
+    out1 = c.add_textbox("outlet")
     c.add_line(in1, mul)
     c.add_line(mul, out1)
     c.save()

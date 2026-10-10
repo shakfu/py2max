@@ -7,7 +7,7 @@ import zlib
 from contextlib import contextmanager
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union
 
 from ..exceptions import DatabaseError
 from ..log import get_logger
@@ -969,7 +969,8 @@ class MaxRefDB:
             fields: List of fields to search in. Default: ['name', 'digest', 'description']
 
         Returns:
-            List of matching object names
+            Matching object names: exact name first, then name prefix, then by
+            the first of ``fields`` that matches; alphabetical within each.
 
         Raises:
             ValueError: if no recognized field is given.
@@ -984,14 +985,24 @@ class MaxRefDB:
                 f" expected any of {sorted(self.SEARCHABLE_FIELDS)}"
             )
 
-        with self._get_cursor() as cursor:
-            where_clause = " OR ".join(
-                f"{field} LIKE ? ESCAPE '\\'" for field in searchable
-            )
-            sql = f"SELECT name FROM objects WHERE {where_clause} ORDER BY name"
+        escaped = _escape_like(query)
+        contains = f"%{escaped}%"
+        like = "LIKE ? ESCAPE '\\'"
+        # rank: exact name, name prefix, then the first field that matches
+        tiers: List[Tuple[str, str]] = []
+        if "name" in searchable:
+            tiers += [(f"name {like}", escaped), (f"name {like}", f"{escaped}%")]
+        tiers += [(f"{field} {like}", contains) for field in searchable]
+        rank = " ".join(f"WHEN {cond} THEN {i}" for i, (cond, _) in enumerate(tiers))
+        where_clause = " OR ".join(f"{field} {like}" for field in searchable)
+        sql = (
+            f"SELECT name FROM objects WHERE {where_clause}"
+            f" ORDER BY CASE {rank} END, name"
+        )
+        params = [contains] * len(searchable) + [arg for _, arg in tiers]
 
-            pattern = f"%{_escape_like(query)}%"
-            cursor.execute(sql, tuple(pattern for _ in searchable))
+        with self._get_cursor() as cursor:
+            cursor.execute(sql, params)
             return [row["name"] for row in cursor.fetchall()]
 
     def by_category(self, category: str) -> List[str]:

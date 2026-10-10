@@ -110,6 +110,8 @@ class SerializationMixin(AbstractPatcher):
                     )
                 )
             else:
+                # In place, not temp file + os.replace: Max 9.2 stops reloading
+                # an open patch once its file is replaced.
                 with open(resolved_path, "w", encoding="utf8") as f:
                     json.dump(self.to_dict(), f, indent=4)
 

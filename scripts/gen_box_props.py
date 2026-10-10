@@ -48,12 +48,15 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
+# Generated output must not depend on whether, or which, Max is installed.
+os.environ["PY2MAX_MAX_REFPAGES"] = "bundle"
 DEFAULT_OUT = ROOT / "py2max" / "core" / "props.py"
 
 # Functions accepting ``Unpack[BoxProps]``: only ``Box.__init__``, which declares

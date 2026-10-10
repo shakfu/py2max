@@ -145,6 +145,8 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             patcher's setting, else on.
         flow_direction: Direction for flow-based layouts ('horizontal', 'vertical').
         cluster_connected: Whether to cluster connected objects in grid layout.
+        signal_order: Whether grid ``optimize_layout()`` reorders boxes into
+            signal order. ``False`` keeps creation order.
         num_dimensions: Number of rows used by the matrix layout (also treated as column count when flow_direction='column').
         dimension_spacing: Spacing between rows/columns for matrix layout variants.
         semantic_ids: Whether to generate semantic IDs based on object names (e.g., 'cycle_1')
@@ -180,6 +182,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         strict: bool = False,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
+        signal_order: bool = True,
         # Matrix layout configuration parameters
         num_dimensions: int = 4,
         dimension_spacing: float = 100.0,
@@ -196,6 +199,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._node_ids: list[str] = []  # ids by order of creation
         self._objects: dict[str, AbstractBox] = {}  # dict of objects by id
         self._boxes: list[AbstractBox] = []  # store child objects (boxes, etc.)
+        # (x, y) last issued by get_pos; add_box moves such a box off overlaps
+        self._auto_xy: Optional[tuple[float, float]] = None
+        # box id -> slot get_pos issued it, for grid reordering
+        self._auto_slots: Dict[str, tuple[float, float]] = {}
         self._lines: list[AbstractPatchline] = []  # store patchline objects
         self._edge_ids: list[
             tuple[str, str]
@@ -211,6 +218,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._needs_js2max_runtime = False
         self._flow_direction = flow_direction
         self._cluster_connected = cluster_connected
+        self._signal_order = signal_order
         self._num_dimensions = num_dimensions
         self._dimension_spacing = dimension_spacing
         self._layout_mgr: AbstractLayoutManager = self.set_layout_mgr(layout)
@@ -692,9 +700,13 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     def set_layout_mgr(self, name: str) -> layout_module.LayoutManager:
         """takes a name and returns an instance of a layout manager"""
         if name == "horizontal":
-            return layout_module.HorizontalLayoutManager(self)
+            return layout_module.HorizontalLayoutManager(
+                self, signal_order=self._signal_order
+            )
         elif name == "vertical":
-            return layout_module.VerticalLayoutManager(self)
+            return layout_module.VerticalLayoutManager(
+                self, signal_order=self._signal_order
+            )
         elif name == "flow":
             return layout_module.FlowLayoutManager(
                 self, flow_direction=self._flow_direction
@@ -704,6 +716,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
                 self,
                 flow_direction=self._flow_direction,
                 cluster_connected=self._cluster_connected,
+                signal_order=self._signal_order,
             )
         elif name == "matrix":
             return layout_module.MatrixLayoutManager(
@@ -732,8 +745,11 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     def get_pos(self, maxclass: Optional[str] = None) -> Rect:
         """get box rect (position) via maxclass or layout_manager"""
         if maxclass:
-            return self._layout_mgr.get_pos(maxclass)
-        return self._layout_mgr.get_pos()
+            rect = self._layout_mgr.get_pos(maxclass)
+        else:
+            rect = self._layout_mgr.get_pos()
+        self._auto_xy = (rect.x, rect.y)
+        return rect
 
     def optimize_layout(self) -> None:
         """Arrange the whole patch based on the active layout manager.

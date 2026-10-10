@@ -30,7 +30,7 @@ Thank you for your interest in contributing to py2max! This document provides gu
 3. **Set up development environment**:
 
    ```bash
-   uv sync
+   make install  # without make: uv sync --extra graph
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 

@@ -29,11 +29,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
+# Generated output must not depend on whether, or which, Max is installed.
+os.environ["PY2MAX_MAX_REFPAGES"] = "bundle"
 sys.path.insert(0, str(ROOT))
 
 from py2max import Patcher, maxref  # noqa: E402

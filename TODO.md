@@ -6,19 +6,15 @@
 
 ### Validation follow-ups
 
-- [ ] **Connection validation stage 2: raise by default.** Stage 1 (`on_invalid="warn"` default) is done. Its first data found two false-positive classes: 53 signal-typed right inlets that take numbers, and codebox port counts. Both are fixed; 527 cords from 60 Max-written patches now pass. Do not flip until warnings from real use show no new class: one class this size appeared in the first hour. Then decide the unknown-object policy and add a CHANGELOG breaking-change entry.
+- [ ] **Connection validation stage 2: raise by default.** Stage 1 (`on_invalid="warn"` default) is done. A scan of 942 Max-written patches (`scripts/scan_cords.py ~/Documents/"Max 9"/Packages`, 27,323 cords) found three more false-positive classes, all port-range: arg/attr/content-dependent counts, maxref entries with no inlet list, and cords inside `rnbo~`/`gen~`. All are fixed. 0 cords are now flagged, from loaded counts or from box text alone (21,526 cords in `box` namespace). Remaining before the flip: decide the unknown-object policy, and add a CHANGELOG breaking-change entry. The corpus is package and help patches, not user patches; decide whether that meets the "real use" gate.
 
   `encapsulate()` keeps validation off while it rewires. Its generated cords pass validation; the reason is that they restate existing cords, so under `"raise"` an old fault would abort the move halfway.
 
-- [ ] Expand the curated `_OUTLET_EMIT` set (`maxref/porttypes.py`) as gaps surface -- outlet *emission* typing is not in the XML's structured data.
-
-### Typed box properties
-
-- [ ] **Per-maxclass property checking, static.** `BoxProps` is a flat union across all 1175 objects, so mypy accepts a real property on the wrong object (`activedialcolor` on `cycle~`). The runtime check (`validate_attrs`, now on by default) catches it. A static check needs a TypedDict per maxclass plus overloads on `add_textbox`; 1175 dicts is likely unworkable -- measure mypy's time on a subset before committing.
+- [ ] Expand the curated `_OUTLET_EMIT` set (`maxref/porttypes.py`) as gaps surface. Outlets maxref types exactly (`bang`/`int`/`float`) are now used, and 14 objects were added; 0 new flags on the corpus.
 
 ### Database Improvements
 
-- [ ] **FTS5 search: only for ranking, not speed.** `LIKE` search over 1175 objects takes 0.3-0.6 ms, so FTS5 buys no speed. Its gain would be relevance order (bm25) instead of alphabetical; a `trigram` tokenizer keeps substring semantics. Decide whether ranked results are wanted.
+- [ ] **FTS5 search: revisit only for multi-word queries.** `LIKE` takes 0.3-0.6 ms over 1175 objects, and `search()` now ranks by field. bm25 would add term-frequency weighting and multi-word relevance, at the cost of a virtual table, a migration and SQLite 3.34+ for `trigram`.
 
 ## Medium
 
@@ -45,6 +41,8 @@
 - [ ] Add MIDI inlet/outlets in `add_rnbo`
 
 - [ ] Restructure `.add` method
+
+- [ ] Typed `add_<ui>` methods (`add_dial(**Unpack[DialProps])`) for static per-class property checks. Overloads on `add_textbox` were measured and rejected: they key on `Literal` text, so a `str` variable either fails or skips the check.
 
 ### Max Objects
 
@@ -88,6 +86,6 @@
 
 ### Code-quality polish (low value)
 
-- [ ] `maxref/db.py`: whitelist the f-string-interpolated table/column names in `_insert_inlets_outlets`, `_delete_related_records` and `_get_simple_list`. Not exploitable (the identifiers are internal constants) and largely superseded by the planned FTS5 migration. The `LIKE` half of this item is done: `search()` escapes `%`/`_`/`\` and validates its `fields` against a `SEARCHABLE_FIELDS` whitelist.
+- [ ] `maxref/db.py`: whitelist the f-string-interpolated table/column names in `_insert_inlets_outlets`, `_delete_related_records` and `_get_simple_list`. Not exploitable (the identifiers are internal constants). The `LIKE` half of this item is done: `search()` escapes `%`/`_`/`\` and validates its `fields` against a `SEARCHABLE_FIELDS` whitelist.
 
 - [ ] `exceptions.py`: `InvalidObjectError`, `LayoutError` and `MaxRefError` are never raised, but are exported and imported elsewhere in the package; removing them breaks public imports. Either raise them where they fit (an unknown maxclass, a failed layout, an unreadable `.maxref.xml`) or deprecate them.

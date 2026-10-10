@@ -58,8 +58,8 @@ single-file: ## Regenerate the single-file edition (scripts/py2max.py)
 	@uv run python scripts/build_single_file.py
 	@uv run pytest tests/test_single_file.py -q
 
-install: ## Install package in development mode
-	@uv sync
+install: ## Install package in development mode, with the optional graph-layout backends
+	@uv sync --extra graph
 
 dev: install ## Set up development environment
 	@echo "Development environment ready!"

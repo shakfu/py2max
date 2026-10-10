@@ -7,7 +7,6 @@ and don't break as the library evolves.
 """
 
 import pytest
-import tempfile
 import os
 import sys
 from pathlib import Path
@@ -19,16 +18,6 @@ sys.path.insert(0, str(examples_dir))
 
 class TestQuickstartExamples:
     """Test quickstart examples."""
-
-    def setup_method(self):
-        """Set up temporary directory for each test."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        """Clean up after each test."""
-        os.chdir(self.old_cwd)
 
     def test_basic_patch(self):
         """Test basic patch creation example."""
@@ -82,14 +71,6 @@ class TestLayoutExampleScripts:
     These smoke tests ensure the scripts run end-to-end.
     """
 
-    def setup_method(self):
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        os.chdir(self.old_cwd)
-
     def test_columnar_layout_example_runs(self):
         from layout.columnar_layout_examples import (
             create_multi_voice_patch,
@@ -103,16 +84,6 @@ class TestLayoutExampleScripts:
 
 class TestTutorialExamples:
     """Test tutorial examples."""
-
-    def setup_method(self):
-        """Set up temporary directory for each test."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        """Clean up after each test."""
-        os.chdir(self.old_cwd)
 
     def test_simple_synthesis(self):
         """Test simple synthesis tutorial."""
@@ -156,16 +127,6 @@ class TestTutorialExamples:
 
 class TestLayoutExamples:
     """Test layout examples."""
-
-    def setup_method(self):
-        """Set up temporary directory for each test."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        """Clean up after each test."""
-        os.chdir(self.old_cwd)
 
     def test_grid_layout_examples(self):
         """Test grid layout examples."""
@@ -236,16 +197,6 @@ class TestLayoutExamples:
 
 class TestAdvancedExamples:
     """Test advanced examples."""
-
-    def setup_method(self):
-        """Set up temporary directory for each test."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        """Clean up after each test."""
-        os.chdir(self.old_cwd)
 
     def test_subpatchers(self):
         """Test subpatcher examples."""
@@ -374,16 +325,6 @@ class TestAdvancedExamples:
 class TestAPIExamples:
     """Test API examples."""
 
-    def setup_method(self):
-        """Set up temporary directory for each test."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        """Clean up after each test."""
-        os.chdir(self.old_cwd)
-
     def test_patcher_api_examples(self):
         """Test patcher API examples."""
         from api.patcher_api_examples import (
@@ -455,16 +396,6 @@ class TestAPIExamples:
 class TestExampleExecution:
     """Test that examples can be executed as scripts."""
 
-    def setup_method(self):
-        """Set up temporary directory for each test."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        """Clean up after each test."""
-        os.chdir(self.old_cwd)
-
     def test_example_scripts_run(self):
         """Test that example scripts can be executed without errors."""
         import subprocess
@@ -484,7 +415,7 @@ class TestExampleExecution:
                     [sys.executable, str(example_path)],
                     capture_output=True,
                     text=True,
-                    cwd=self.temp_dir,
+                    cwd=os.getcwd(),
                 )
 
                 # Check that it ran without errors
@@ -503,14 +434,6 @@ class TestExamplePatchesLintClean:
     real generated patches, which is exactly what would have caught the invalid
     control->signal connections that once shipped in these examples.
     """
-
-    def setup_method(self):
-        self.temp_dir = tempfile.mkdtemp()
-        self.old_cwd = os.getcwd()
-        os.chdir(self.temp_dir)
-
-    def teardown_method(self):
-        os.chdir(self.old_cwd)
 
     def test_layout_example_patches_have_no_lint_errors(self):
         import glob

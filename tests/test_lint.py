@@ -276,3 +276,36 @@ def test_explicit_port_rect_is_kept():
     p.add_textbox("inlet", patching_rect=Rect(300.0, 20.0, 30.0, 30.0))
     late = p.add_textbox("inlet", patching_rect=Rect(20.0, 20.0, 30.0, 30.0))
     assert late.patching_rect[0] == 20.0
+
+
+# --- port counts from Max and other namespaces -------------------------------
+def test_loaded_box_counts_widen_maxref(tmp_path):
+    """A loaded box carries the counts Max wrote; maxref undercounts many."""
+    src = Patcher()
+    js = src.add_textbox("cycle~ 440", numinlets=3)  # as if Max wrote 3
+    src.add_line(src.add_textbox("sig~ 1"), js, inlet=2)
+    path = tmp_path / "loaded.maxpat"
+    src.save_as(path)
+    p = Patcher.from_file(path)
+    assert E_INLET_RANGE not in _codes(p)
+    assert p._connection_error(p._lines[0].source[0], 0, js.id, 2) == ""
+
+
+def test_generated_zero_outlet_object_declares_none():
+    p = Patcher(validate_connections=True)
+    dac = p.add_textbox("dac~")
+    assert dac.numoutlets == 0
+    with pytest.raises(InvalidConnectionError):
+        p.add_line(dac, p.add_textbox("print"))
+
+
+def test_rnbo_patcher_is_not_checked_against_max_objects():
+    p = Patcher(validate_connections=True)
+    rnbo = p.add_rnbo("rnbo~", numinlets=1, numoutlets=3)
+    sub = rnbo.subpatcher
+    # RNBO's unjoin 6 has 7 outlets; Max's maxref unjoin has fewer
+    sub.add_line(sub.add_textbox("unjoin 6"), sub.add_textbox("print"), outlet=6)
+    p.add_line(rnbo, p.add_textbox("print"), outlet=2)  # in/out objects, not inlets
+    assert not [f for f in p.lint() if f.severity == "error"]
+    inner = [f for f in p.lint() if (f.obj_id or "").startswith(f"{rnbo.id}/")]
+    assert not inner

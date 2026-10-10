@@ -264,11 +264,12 @@ def test_object_defaults_match(single: Any) -> None:
         assert maxref.MAXCLASS_DEFAULTS.get(name) == single.MAXCLASS_DEFAULTS.get(name)
 
 
-def test_known_object_coverage(single: Any) -> None:
-    """The embedded table must cover the same objects as the package."""
-    from py2max import maxref
+def test_known_object_coverage(single: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The embedded table must cover the same objects as the package's bundle."""
+    from py2max.maxref.parser import MaxRefCache
 
-    assert set(single.get_available_objects()) == set(maxref.get_available_objects())
+    monkeypatch.setenv("PY2MAX_MAX_REFPAGES", "bundle")  # the table's source
+    assert set(single.get_available_objects()) == set(MaxRefCache().refdict)
 
 
 def test_validation_raises_identically(single: Any) -> None:

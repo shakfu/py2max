@@ -17,8 +17,9 @@ positive.
 from __future__ import annotations
 
 import re
-from typing import FrozenSet, List, Optional, Tuple
+from typing import Callable, FrozenSet, List, Optional, Tuple
 
+from .aliases import ALIASES
 from .parser import get_object_info
 
 _Counts = Tuple[Optional[int], Optional[int]]
@@ -39,13 +40,38 @@ _PLACEHOLDERS = {"", "inlet_type", "outlet_type"}
 # Keyed by maxclass -> {outlet_index: kind}. Kept small and high-confidence.
 _OUTLET_EMIT = {
     "metro": {0: BANG},
-    "tempo": {0: BANG},
+    "qmetro": {0: BANG},
+    "tempo": {0: INT},  # beat count, not a bang
+    "delay": {0: BANG},
+    "del": {0: BANG},
     "loadbang": {0: BANG},
+    "closebang": {0: BANG},
+    "freebang": {0: BANG},
     "button": {0: BANG},  # the bng UI object
     "bangbang": {0: BANG, 1: BANG},
+    "uzi": {0: BANG, 1: BANG, 2: INT},
+    "line": {1: BANG},  # outlet 0 may ramp a list
     "flonum": {0: FLOAT},
     "number": {0: INT},
     "toggle": {0: INT},
+    "random": {0: INT},
+    "drunk": {0: INT},
+    "urn": {0: INT, 1: BANG},
+    "counter": {0: INT},
+    "kslider": {0: INT, 1: INT},
+    "mtof": {0: FLOAT},
+    "timer": {0: FLOAT},
+    "pong": {0: FLOAT},  # maxref types it "signal"; its digest says (float)
+}
+
+# maxref outlet types that name one control message kind exactly.
+_TYPED_EMIT = {
+    "bang": BANG,
+    "int": INT,
+    "long": INT,
+    "float": FLOAT,
+    "double": FLOAT,
+    "int/float": FLOAT,  # int and float coerce
 }
 
 # Inlets maxref mis-types as control that are really signal-only. Keyed by
@@ -74,8 +100,14 @@ _SIGNAL_INLET_REJECTS_BANG = {
 
 
 def _args(text: Optional[str]) -> List[str]:
-    """Tokens after the object name in a box's ``text``."""
-    return text.split()[1:] if text else []
+    """Positional arguments in a box's ``text``: no name, no ``@attr`` tail.
+
+    A double-quoted argument is one token, as in Max.
+    """
+    from ..utils import parse_attr_args
+
+    tokens = re.findall(r'"[^"]*"|\S+', text or "")[1:]
+    return parse_attr_args(tokens)[0]
 
 
 def _first_int(args: List[str]) -> Optional[int]:
@@ -110,8 +142,52 @@ def _switch_counts(a: List[str]) -> _Counts:
     return (n + 1, None) if n and n > 0 else (None, None)
 
 
-def _select_counts(a: List[str]) -> _Counts:
-    return (None, len(a) + 1) if a else (None, None)  # match outlets + 1 reject
+def _scale_value_in(a: List[str]) -> _Counts:
+    n = _first_int(a)
+    return (n, None) if n and n > 0 else (None, None)
+
+
+def _match_counts(a: List[str]) -> _Counts:
+    # select/route N: a right inlet per match to reset it; N match outlets + 1
+    return (len(a) + 1, len(a) + 1) if a else (None, None)
+
+
+def _unjoin_counts(a: List[str]) -> _Counts:
+    n = _first_int(a)  # unjoin N: N outlets (at least 2) + 1 overflow
+    return (None, max(n, 2) + 1) if n and n > 0 else (None, None)
+
+
+def _matrix_counts(info_outlets: int) -> Callable[[List[str]], _Counts]:
+    """``matrix~ A B``: A inlets, B outlets + info outlets (1; 2 for mc.)."""
+
+    def counts(a: List[str]) -> _Counts:
+        ints = [int(t) for t in a[:2] if re.fullmatch(r"\d+", t)]
+        if not ints:
+            return (None, None)
+        return (ints[0], ints[1] + info_outlets if len(ints) > 1 else None)
+
+    return counts
+
+
+def _channel_args_in(a: List[str]) -> _Counts:
+    return (len(a), None) if a else (None, None)  # dac~ 1 2 3 4
+
+
+def _channel_args_out(a: List[str]) -> _Counts:
+    return (None, len(a)) if a else (None, None)  # adc~ 1 2 3 4
+
+
+def _expr_counts(a: List[str]) -> _Counts:
+    # expr/vexpr/if: an inlet per highest $i/$f/$s/$x index; if: outN outlets
+    s = " ".join(a)
+    ins = [int(n) for n in re.findall(r"\$[ifsx](\d+)", s)]
+    outs = [int(n) for n in re.findall(r"\bout(\d+)\b", s)]
+    return (max(ins) if ins else None, max(outs) if outs else None)
+
+
+def _sprintf_counts(a: List[str]) -> _Counts:
+    n = len(re.findall(r"%[-+ #0-9.]*[a-zA-Z]", " ".join(a).replace("%%", "")))
+    return (n, None) if n > 1 else (None, None)
 
 
 def _unpack_counts(a: List[str]) -> _Counts:
@@ -124,19 +200,74 @@ def _pack_counts(a: List[str]) -> _Counts:
 
 _ARG_RESOLVERS = {
     "limi~": _scale_value_both,
-    "matrix~": _scale_value_both,
-    "mc.pack~": _scale_value_out,
+    "matrix~": _matrix_counts(1),
+    "mc.matrix~": _matrix_counts(2),
+    "mc.pack~": _scale_value_in,
+    "mc.unpack~": _scale_value_out,
+    "mc.combine~": _scale_value_in,
     "gate": _scale_value_out,
     "selector~": _selector_counts,
+    "mc.selector~": _selector_counts,
     "switch": _switch_counts,
-    "select": _select_counts,
-    "sel": _select_counts,
-    "route": _select_counts,  # N match outlets + 1 passthrough
+    "select": _match_counts,
+    "route": _match_counts,
+    "routepass": _match_counts,
     "unpack": _unpack_counts,
     "pack": _pack_counts,
+    "pak": _pack_counts,
+    "combine": _pack_counts,
+    "join": _scale_value_in,
+    "unjoin": _unjoin_counts,
+    "funnel": _scale_value_in,
+    "spray": _scale_value_out,
+    "bangbang": _scale_value_out,
+    "jit.gl.multiple": _scale_value_in,
+    "dac~": _channel_args_in,
+    "adc~": _channel_args_out,
+    "expr": _expr_counts,
+    "vexpr": _expr_counts,
+    "if": _expr_counts,
+    "sprintf": _sprintf_counts,
     "trigger": _unpack_counts,  # one outlet per argument
-    "t": _unpack_counts,
 }
+
+# Objects whose maxref entry omits a port list. Counts are those Max writes.
+_PORT_COUNTS: dict[str, _Counts] = {
+    "midiformat": (7, 2),
+    "adstatus": (2, 2),
+    "funnel": (2, 1),
+    "if": (1, 1),
+    "dict.view": (1, None),
+    "udpsend": (1, 0),
+    "onecopy": (1, 0),
+}
+
+# Objects whose port counts follow their content or attributes (a script, a
+# loaded patcher, ``@chans``), which neither maxref nor the text gives. Their
+# counts are unknown, so range checks skip them. ``mc.*`` objects are included
+# by prefix: 13 of the 17 seen in Max-written patches outnumber maxref.
+_VARIABLE_IO = frozenset(
+    {
+        "js",
+        "jsui",
+        "gen",
+        "gen~",
+        "jit.gen",
+        "jit.pix",
+        "jit.gl.pix",
+        "poly~",
+        "pvar",
+        "pipe",
+        "sfplay~",
+        "groove~",
+        "record~",
+        "wave~",
+        "jit.glue",
+        "jit.scissors",
+        "sxformat",
+        "dict.pack",
+    }
+)
 
 
 def _accepts_from_type(type_str: str) -> FrozenSet[str]:
@@ -167,7 +298,7 @@ def _emit_from_type(type_str: str) -> str:
     t = (type_str or "").strip().lower()
     if "signal" in t:
         return SIGNAL
-    return ANY  # control outlet -- unknown unless curated
+    return _TYPED_EMIT.get(t, ANY)  # other control outlets: unknown unless curated
 
 
 # --- public API ------------------------------------------------------------
@@ -180,9 +311,15 @@ def port_counts(
     (``limi~ 2`` -> 2 in / 2 out), otherwise the maxref default. ``None`` for a
     dimension means "unknown" (skip range checks).
     """
-    info = get_object_info(maxclass)
-    n_in = len(info["inlets"]) if info and "inlets" in info else None
-    n_out = len(info["outlets"]) if info and "outlets" in info else None
+    if maxclass in _PORT_COUNTS:
+        n_in, n_out = _PORT_COUNTS[maxclass]
+    elif maxclass in _VARIABLE_IO or maxclass.startswith("mc."):
+        n_in = n_out = None
+    else:
+        info = get_object_info(maxclass)
+        # an empty inlet list means maxref omits it: 0-inlet objects are rare
+        n_in = (len(info["inlets"]) or None) if info and "inlets" in info else None
+        n_out = len(info["outlets"]) if info and "outlets" in info else None
     r_in, r_out = arg_port_counts(maxclass, text)
     return (
         r_in if r_in is not None else n_in,
@@ -195,7 +332,9 @@ def arg_port_counts(maxclass: str, text: Optional[str] = None) -> _Counts:
 
     ``None`` for a dimension that does not depend on arguments.
     """
-    resolver = _ARG_RESOLVERS.get(maxclass)
+    resolver = _ARG_RESOLVERS.get(maxclass) or _ARG_RESOLVERS.get(
+        ALIASES.get(maxclass, "")
+    )
     return resolver(_args(text)) if resolver is not None else (None, None)
 
 
@@ -207,14 +346,42 @@ def subpatcher_counts(box: object) -> _Counts:
     box with no nested patcher.
     """
     child = getattr(box, "_patcher", None)
-    if child is None:
-        return (None, None)
+    if child is None or getattr(child, "classnamespace", "box") != "box":
+        return (None, None)  # rnbo~ and gen~ ports come from in/out objects
     from ..utils import object_name
 
     boxes = getattr(child, "_boxes", [])
     n_in = sum(1 for b in boxes if object_name(b) == "inlet")
     n_out = sum(1 for b in boxes if object_name(b) == "outlet")
     return (n_in, n_out)
+
+
+# Objects whose ports come from their code or the patch they load, so the box's
+# declared numinlets/numoutlets are the only source of counts.
+DYNAMIC_IO_MAXCLASSES = frozenset({"gen.codebox~", "codebox", "codebox~", "bpatcher"})
+
+
+def _widen(ref: Optional[int], declared: object) -> Optional[int]:
+    if ref is None or not isinstance(declared, int):
+        return ref
+    return max(ref, declared)
+
+
+def box_port_counts(box: object, name: str) -> _Counts:
+    """``(inlet_count, outlet_count)`` for a box, for range checks.
+
+    Order: a subpatcher's content, then a dynamic box's declared counts, then
+    :func:`port_counts`. Declared counts widen the last but never narrow it: a
+    box loaded from a file carries the counts Max wrote, which are exact.
+    """
+    sub = subpatcher_counts(box)
+    if sub != (None, None):
+        return sub
+    n_in, n_out = getattr(box, "numinlets", None), getattr(box, "numoutlets", None)
+    if getattr(box, "maxclass", None) in DYNAMIC_IO_MAXCLASSES:
+        return (n_in, n_out)
+    ref_in, ref_out = port_counts(name, getattr(box, "text", None))
+    return (_widen(ref_in, n_in), _widen(ref_out, n_out))
 
 
 def outlet_emits(maxclass: str, index: int) -> str:
@@ -297,8 +464,9 @@ def inlet_acceptance(maxclass: str, index: int) -> Tuple[FrozenSet[str], bool]:
             if ANY in from_methods:
                 return frozenset({ANY}), True
             # union with the type-derived set so a signal/float inlet keeps its
-            # signal capability even if the method list omits it
-            return frozenset(from_methods | type_set), True
+            # signal capability even if the method list omits it; a placeholder
+            # type (INLET_TYPE -> ANY) adds nothing
+            return frozenset(from_methods | (type_set - {ANY})), True
     if type_set == frozenset({SIGNAL}):
         # maxref types many right inlets "signal" that also take numbers
         # (clip~ min/max, scope~ buffer size); its methods give that away

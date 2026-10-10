@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from ..core.common import Rect
 from ..log import get_logger, log_exception, log_warning_once
+from .aliases import ALIASES
 
 # Module logger
 logger = get_logger(__name__)
@@ -99,9 +100,12 @@ class MaxRefCache:
         2. Platform-specific auto-discovery of an installed Max (macOS, Windows).
 
         Returns ``None`` if nothing is found, in which case the caller falls
-        back to the shipped offline bundle.
+        back to the shipped offline bundle. ``PY2MAX_MAX_REFPAGES=bundle``
+        selects the bundle even when Max is installed.
         """
         override = os.environ.get("PY2MAX_MAX_REFPAGES")
+        if override == "bundle":
+            return None
         if override:
             path = Path(override).expanduser()
             # accept the refpages folder itself, or a Max.app / Max install dir
@@ -220,8 +224,14 @@ class MaxRefCache:
 
         # Accessing refdict lazily loads the name -> source map.
         if name not in self.refdict:
-            logger.debug(f"Object '{name}' not found in MaxRef database")
-            return None
+            # ``*~`` is filed as ``times~``, ``t`` as ``trigger``
+            name = ALIASES.get(name, name)
+            if name not in self.refdict:
+                logger.debug(f"Object '{name}' not found in MaxRef database")
+                return None
+            cached = self._cache.get(name)
+            if cached is not None:
+                return cached
 
         with self._lock:
             # Re-check now that we hold the lock (another thread may have won).
@@ -747,22 +757,33 @@ def validate_connection(
             f"cannot connect to inlet {dst_inlet}",
         )
 
-    # Message-type compatibility.
+    error = message_error(src_maxclass, src_outlet, dst_maxclass, dst_inlet)
+    return (not error, error)
+
+
+def message_error(
+    src_maxclass: str, src_outlet: int, dst_maxclass: str, dst_inlet: int
+) -> str:
+    """Why the outlet's message kind cannot enter the inlet, or ``""``.
+
+    The message-type half of :func:`validate_connection`, without its range
+    check, for callers that know a box's port counts better than maxref.
+    """
+    from . import porttypes
+
     emit = porttypes.outlet_emits(src_maxclass, src_outlet)
     accepts, authoritative = porttypes.inlet_acceptance(dst_maxclass, dst_inlet)
     if emit == porttypes.BANG and porttypes.inlet_rejects_bang(dst_maxclass, dst_inlet):
         return (
-            False,
             f"Cannot connect a bang from '{src_maxclass}' to the signal inlet "
-            f"{dst_inlet} of '{dst_maxclass}'",
+            f"{dst_inlet} of '{dst_maxclass}'"
         )
     if porttypes.message_compatible(emit, accepts, authoritative) is False:
         return (
-            False,
             f"Cannot connect {emit} outlet of '{src_maxclass}' to inlet "
-            f"{dst_inlet} of '{dst_maxclass}' (accepts {sorted(accepts)})",
+            f"{dst_inlet} of '{dst_maxclass}' (accepts {sorted(accepts)})"
         )
-    return True, ""
+    return ""
 
 
 def get_inlet_count(maxclass: str) -> Optional[int]:

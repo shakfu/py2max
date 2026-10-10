@@ -33,6 +33,7 @@ from .parser import (
     get_objects_by_category,
     get_outlet_count,
     get_outlet_types,
+    message_error,
     replace_tags,
     validate_connection,
 )
@@ -61,6 +62,7 @@ __all__ = [
     "get_all_m4l_objects",
     "get_legacy_defaults",
     "validate_connection",
+    "message_error",
     "get_inlet_count",
     "get_outlet_count",
     "get_inlet_types",

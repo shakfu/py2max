@@ -1,8 +1,20 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.0]
+
+More validation on by default: (a) connection validation (inlet index and message type) should prevent the wrong connects and (b) attribute validation stop usage of properties unknown to the object's Max class. Layouts also changed: code boxes are sized to their content, auto-placed boxes no longer overlap, and grid `optimize_layout()` follows signal order.
+
+Upgrading from 0.4.x:
+
+- Invalid connections are logged as warnings, and unknown box properties raise `UserWarning`. Pass `on_invalid="ignore"` or `validate_attrs=False` to opt out.
+
+- Grid `optimize_layout()` can move boxes created out of signal order. `Patcher(signal_order=False)` keeps the 0.4 order.
+
+- `py2max.exceptions.InternalError` is removed.
 
 ### Added
+
+- `scripts/scan_cords.py DIR` validates every cord in a folder of Max-written patches and reports what py2max flags. Max wrote every cord, so each flag is a false positive. It checks both the port counts Max wrote and the counts from box text alone.
 
 - **`Patcher.optimize_layout_subset(boxes)`** lays out only the given boxes and the cords between them; every other box stays put. The group keeps its top-left corner, and moves down as a whole if it then overlaps a fixed box. It is a separate method because `optimize_layout()` takes no arguments by design.
 
@@ -18,7 +30,19 @@
 
 - CI runs on push and pull request to `main`, as well as on demand. The repository is now `ruff format`-clean, which the lint job requires (24 files were not), and the suite passes on Python 3.9, the oldest in the matrix.
 
+### Tests
+
+- **Layout tests save A/B patches for `signal_order`.** Every `tests/test_layout*` test runs as `[signal_on]` and `[signal_off]`, saves each patcher it creates under `build/test-output`, and `build/test-output/signal_order_ab.md` lists the pairs that differ. `test_layout_grid_order.py` runs once, since it asserts the signal-order behaviour itself, and so does flat mode (`make test-outputs`), where both variants would write the same file names.
+
+- `test_examples.py` writes its patches to `build/test-output`. Each test changed into a fresh `tempfile.mkdtemp()` directory, which bypassed the per-test output directory and was never removed.
+
 ### Changed
+
+- **Grid `optimize_layout()` places boxes in signal order.** Grid placement followed creation order only, so creating `inlet`, `outlet`, `*~` put the outlet above the `*~` that feeds it, and `optimize_layout()` did not change that. It now gives the grid slots, in creation order, to boxes sorted by their connections, ties broken by creation order. A patch already built in signal order keeps every position. Explicit and window-anchored rects do not move, a feedback loop is placed as a unit, and the existing port-order restore keeps inlet and outlet numbering. With `cluster_connected=True`, boxes within a cluster follow signal order instead of string-sorted IDs, which put `obj-10` before `obj-2`. `Patcher(signal_order=False)` restores creation order, for comparing layouts.
+
+- **Max 9.2 reloads an open patch when py2max saves over it.** The README caveat that Max never refreshes from file now applies only before 9.2. The reload resets object state and discards unsaved edits made in Max without a prompt; DSP and window state are kept. Max stops reloading once the file is replaced rather than rewritten, so `save_as` must keep writing in place, not via a temp file and `os.replace`.
+
+- **`MaxRefDB.search()` ranks results.** An exact name match comes first, then a name prefix, then results grouped by the first of `fields` that matches. Each group is alphabetical. Before, all results were alphabetical, so `search("filter")` put `change` and `console` before `filtergraph~`. A field-priority `ORDER BY` was chosen over FTS5 bm25: it needs no schema change, and `LIKE` is already fast enough.
 
 - **`add_textbox` writes UI objects in their box form.** `add_textbox("flonum")` wrote `maxclass: newobj` with `text: "flonum"`, and UI boxes such as `ezdac~` carried a `text` key Max does not write. A class is now a box class when its maxref palette entry creates it by name; this covers UI objects, `inlet`/`outlet` and `message`. Box classes get no `text`, except `message`/`comment`, whose arguments become their content. UI boxes store state as box attributes, so `@attr value` arguments become attributes and positional arguments are dropped with a warning:
 
@@ -41,6 +65,26 @@
 - `graph:ogdf-*` layouts require `ogdf-py>=0.5.1`, the first release with `set_seed`.
 
 ### Fixed
+
+- **The `dict` state example sends messages `dict` understands.** It corded each `flonum` into `dict`'s left inlet, which has no number method, fed `dict`'s dictionary outlet back into every control, and used `store`/`recall`, which are not `dict` messages. It now stores with `prepend set <key>`, recalls with `get <key>` through `route`, and saves with `export`/`import`, as `dict.maxhelp` does. Fixed in `tests/examples/advanced/data_containers.py` and the user guide.
+
+- **A signal into a control object's left inlet is now an error.** maxref types most control inlets with the placeholder `INLET_TYPE`, which maps to "accepts anything". That was merged into the method-list vocabulary, so `cycle~ -> dial` passed validation although Max refuses the cord. The placeholder now adds nothing, and 269 objects' left inlets are checked against their method lists. Across 21,526 cords in 942 Max-written patches this adds no false positives, after correcting `pong`, which maxref types as a signal outlet but which emits floats.
+
+- **Codeboxes are sized to their code.** `add_gen_codebox` and `add_codebox` used the 66x22 textbox default, so Max showed only the title row. `add("codebox~", code=...)` used a fixed 200x200. All three now size the box from the line count and longest line. Max 9 shows a horizontal scrollbar over the last line unless the box has about 36pt beyond the longest line, so that margin is included. An explicit `patching_rect` is kept.
+
+- **Auto-placed boxes no longer overlap.** The grid layouts step by a fixed 144x72pt cell, so a box larger than a cell (a codebox, `scope~`, an anchored `ezdac~`) landed on its neighbours. A box placed by the layout that overlaps an existing box now moves past it, wrapping at the patcher edge. Moving only overlapping boxes was chosen over a size-aware grid, which would have shifted every existing grid patch. Inlets and outlets never wrap, since Max numbers them by x. Explicit rects are not moved.
+
+- **maxref finds objects by the name typed into a box.** maxref keys objects by refpage file name, so `*~` (filed as `times~`), the other 48 operators, and abbreviations such as `t`, `sel`, `p`, `r` and `s` returned `None`. They got no `help()`, no port or message checks, and an unknown-object warning. In the 942-patch corpus that was 784 of 3,712 distinct object texts. `py2max/maxref/aliases.py` maps 227 typed names to their refpage. It is generated by `scripts/gen_maxref_aliases.py` from Max's `*-objectmappings.txt` and from the names the bundle records. Port-count resolvers apply to aliases too, so `b 3` has 3 outlets.
+
+- **`matrix~ A B` declares B+1 outlets.** It declared A outlets, so a cord from the info outlet of `matrix~ 2 2` was rejected.
+
+- **Generated files no longer depend on the local Max install.** `PY2MAX_MAX_REFPAGES=bundle` selects the shipped bundle even when Max is installed. `gen_box_props.py`, `build_single_file.py` and `gen_js2max_objects.py` set it. Before, on a machine with Max 9 (1,178 objects against the bundle's 1,175), all three staleness checks failed on a clean checkout.
+
+- **Connection validation no longer flags 682 valid cords in 942 Max-written patches.** All were port-range errors, in three classes. (1) maxref gives one port count per class, but 49 of the 387 classes seen take their counts from arguments, attributes or content: `route 0 1 2 3` has 5 inlets, `join 3` has 3, `js` follows its script. 19 classes gained argument resolvers. Content- and attribute-dependent classes (`js`, `gen~`, `poly~`, all `mc.*`) now have unknown counts and are not range-checked. Text-only counts now match Max's on every `newobj` box in the corpus. (2) maxref omits the inlet list of 37 objects (`midiformat`, `funnel`, `if`, ...). An empty inlet list now means unknown, and 7 have curated counts. (3) Cords inside `rnbo~` and `gen~` patchers were checked against Max objects of the same name. Those patchers are now skipped, and their parent box's ports come from its declared counts.
+
+  A loaded box's declared counts widen the maxref bound but never narrow it, since Max wrote them. `add_textbox` now falls back to maxref counts before the default of 1, so `dac~` declares 0 outlets, not 1. The `mc.pack~` and `mc.matrix~` resolvers were wrong. `select`/`route` gain an inlet per match.
+
+- **`tempo -> cycle~` is no longer an error.** `tempo` was curated as emitting a bang, but it emits its beat count. Outlets maxref types exactly as `bang`, `int` or `float` now use that type, and 14 more objects are curated. Together they type 1,036 more cords in the corpus, with no new flags.
 
 - **`add_textbox` declares argument-aware port counts.** Counts came from a table keyed by class name only, so `route phase info` declared 2 outlets while `lint` and connection validation counted 3; a cord to outlet 2 passed validation and pointed at a port the box did not declare. The box now takes counts from the same resolver, and `t`/`trigger` get one outlet per argument. `outlettype` is padded or truncated to match.
 

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from py2max import Patcher
 from py2max.log import LOGGER_NAME
 
 # Persistent, git-ignored location for artifacts written by tests via relative
@@ -119,3 +120,104 @@ def _isolate_cwd(request, monkeypatch, _reset_test_output_root):
         outputs_link.unlink()
     if not any(p.is_file() for p in work_dir.rglob("*")):
         shutil.rmtree(work_dir, ignore_errors=True)
+
+
+# -- signal_order A/B -------------------------------------------------------
+#
+# Every tests/test_layout* test runs twice, as [signal_on] and [signal_off], and
+# every top-level Patcher it creates is saved into its per-test directory, so
+# the two layouts sit side by side for inspection in Max. At session end,
+# ``signal_order_ab.md`` in the output root lists the pairs that differ.
+# test_layout_grid_order asserts signal-order behaviour itself, so it runs once.
+# Flat mode runs once too: both variants would write the same file names.
+
+_AB_EXCLUDED = {"test_layout_grid_order"}
+_AB_IDS = {True: "signal_on", False: "signal_off"}
+
+
+def pytest_generate_tests(metafunc):
+    module = metafunc.module.__name__.rpartition(".")[2]
+    if _FLAT_OUTPUT or not module.startswith("test_layout") or module in _AB_EXCLUDED:
+        return
+    metafunc.parametrize(
+        "_ab_signal_order",
+        list(_AB_IDS),
+        ids=list(_AB_IDS.values()),
+        indirect=True,
+    )
+
+
+@pytest.fixture(autouse=True)
+def _ab_signal_order(request, monkeypatch, _isolate_cwd):
+    """Default ``Patcher(signal_order=...)`` to the variant; save patches at teardown.
+
+    Autouse so it is in every test's fixture closure; a test that
+    ``pytest_generate_tests`` did not parametrize has no ``param`` and is untouched.
+    """
+    if not hasattr(request, "param"):
+        yield None
+        return
+    created = []
+    init = Patcher.__init__
+
+    def patched_init(self, *args, **kwargs):
+        kwargs.setdefault("signal_order", request.param)
+        init(self, *args, **kwargs)
+        created.append(self)
+
+    monkeypatch.setattr(Patcher, "__init__", patched_init)
+    yield request.param
+
+    names: set = set()
+    for i, p in enumerate(c for c in created if c._parent is None):
+        name = Path(str(p._path)).name if p._path else f"patcher-{i}.maxpat"
+        if name in names:
+            name = f"{i}-{name}"
+        names.add(name)
+        try:
+            p.save_as(Path.cwd() / name)
+        except Exception:  # a test may leave a patcher deliberately unsavable
+            pass
+            pass
+
+
+def pytest_sessionfinish(session, exitstatus):
+    if _FLAT_OUTPUT or not TEST_OUTPUT_ROOT.exists():
+        return
+    differ, same = [], 0
+    for on in sorted(TEST_OUTPUT_ROOT.glob("*signal_on*")):
+        off = on.with_name(on.name.replace("signal_on", "signal_off"))
+        files = sorted(
+            {f.relative_to(on) for f in on.rglob("*") if f.is_file()}
+            | (
+                {f.relative_to(off) for f in off.rglob("*") if f.is_file()}
+                if off.exists()
+                else set()
+            )
+        )
+        changed = [
+            f
+            for f in files
+            if not (on / f).exists()
+            or not (off / f).exists()
+            or (on / f).read_bytes() != (off / f).read_bytes()
+        ]
+        if changed:
+            differ.append((on.name.replace("signal_on", "*"), changed))
+        else:
+            same += 1
+    if not differ and not same:
+        return
+    lines = [
+        "# signal_order A/B",
+        "",
+        f"{len(differ)} test(s) differ between signal_order=True and False; "
+        f"{same} produce identical patches.",
+        "",
+        "signal_order only affects grid-family layouts. A difference in another "
+        "layout (e.g. kamada-kawai) means that layout is not deterministic.",
+        "",
+    ]
+    for base, changed in differ:
+        lines.append(f"- `{base}`: " + ", ".join(f"`{f}`" for f in changed))
+    (TEST_OUTPUT_ROOT / "signal_order_ab.md").write_text("\n".join(lines) + "\n")

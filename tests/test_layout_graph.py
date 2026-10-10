@@ -75,3 +75,34 @@ def test_topological_order_disconnected_appended():
     # successor 'b' is emitted before its predecessor 'a'
     assert order.index("b") < order.index("a")
     assert "z" in order
+
+
+def test_signal_order_sources_first_ties_by_node_order():
+    # created inlet, outlet, mul; wired inlet -> mul -> outlet
+    g = PatchGraph(
+        [_line("in", "mul"), _line("mul", "out")], nodes=["in", "out", "mul"]
+    )
+    assert g.signal_order() == ["in", "mul", "out"]
+
+
+def test_signal_order_keeps_node_order_when_already_ordered():
+    g = PatchGraph([_line("a", "c"), _line("b", "c")], nodes=["a", "b", "c", "d"])
+    assert g.signal_order() == ["a", "b", "c", "d"]
+
+
+def test_signal_order_places_cycle_after_its_feeders():
+    # feedback loop b -> c -> b, fed by a; parallel wires counted once each way
+    g = PatchGraph(
+        [
+            _line("a", "b"),
+            _line("b", "c"),
+            _line("c", "b"),
+            _line("c", "d"),
+            _line("c", "d"),
+        ],
+        nodes=["d", "c", "b", "a"],
+    )
+    order = g.signal_order()
+    assert sorted(order) == ["a", "b", "c", "d"]
+    assert order.index("a") < order.index("b")
+    assert order.index("c") < order.index("d")

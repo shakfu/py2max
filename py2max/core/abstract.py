@@ -141,6 +141,7 @@ class AbstractPatcher(ABC):
     _reset_on_render: bool
     _flow_direction: str
     _cluster_connected: bool
+    _signal_order: bool
     _layout_mgr: AbstractLayoutManager
     _auto_hints: bool
     _validate_connections: bool
@@ -153,6 +154,8 @@ class AbstractPatcher(ABC):
     _needs_js2max_runtime: bool
     classnamespace: str
     _pending_comments: list[tuple[str, str, Optional[str]]]
+    _auto_xy: Optional[tuple[float, float]]
+    _auto_slots: dict[str, tuple[float, float]]
     # Rendered (dict) forms, populated by render() and read by serialization.
     boxes: list[dict[str, Any]]
     lines: list[dict[str, Any]]
@@ -174,4 +177,13 @@ class AbstractPatcher(ABC):
 
     def _process_pending_comments(self) -> None:
         """Position deferred associated comments (implemented by Patcher)."""
+        raise NotImplementedError
+
+    def _clear_of_boxes(
+        self,
+        rect: Rect,
+        maxclass: Optional[str],
+        others: Optional[list[Any]] = None,
+    ) -> Rect:
+        """Move ``rect`` past overlapping boxes (implemented by BoxFactory)."""
         raise NotImplementedError

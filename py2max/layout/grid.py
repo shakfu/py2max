@@ -3,12 +3,12 @@
 This module provides GridLayoutManager and legacy aliases for grid-based layouts.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 from py2max.core.abstract import AbstractPatcher
 from py2max.core.common import Rect
 
-from .base import LayoutManager
+from .base import LayoutManager, _is_anchor
 from .graph import PatchGraph
 
 
@@ -29,12 +29,14 @@ class GridLayoutManager(LayoutManager):
         comment_pad: Optional[int] = None,
         flow_direction: str = "horizontal",
         cluster_connected: bool = False,
+        signal_order: bool = True,
     ):
         super().__init__(parent, pad, box_width, box_height, comment_pad)
         self.flow_direction = flow_direction  # "horizontal" or "vertical"
         self.cluster_connected = (
             cluster_connected  # Whether to cluster connected objects
         )
+        self.signal_order = signal_order  # optimize_layout() sorts by signal
 
     def get_relative_pos(self, rect: Rect) -> Rect:
         """Returns a relative position for the object based on flow direction."""
@@ -86,6 +88,8 @@ class GridLayoutManager(LayoutManager):
     def _full_layout(self) -> None:
         """Perform full layout optimization."""
         if not self.cluster_connected or len(self.parent._objects) < 2:
+            if self.signal_order:
+                self._reorder_by_signal()
             # Even without clustering, prevent overlaps
             self.prevent_overlaps()
             return
@@ -101,6 +105,45 @@ class GridLayoutManager(LayoutManager):
 
         # Prevent any remaining overlaps after clustering
         self.prevent_overlaps()
+
+    def _signal_rank(self) -> Dict[str, int]:
+        """Each box id's position in signal order (ties by creation order)."""
+        ids = [b.id for b in self.parent._boxes if b.id]
+        order = PatchGraph(self.parent._lines, nodes=ids).signal_order()
+        return {box_id: i for i, box_id in enumerate(order)}
+
+    def _reorder_by_signal(self) -> None:
+        """Give the grid slots, in creation order, to boxes in signal order.
+
+        Only boxes the layout placed take part; explicit and window-anchored
+        rects stay. A patch built in signal order keeps every position.
+        """
+        parent = self.parent
+        slots: Dict[str, Any] = getattr(parent, "_auto_slots", {})
+        movable = [
+            (b.id, b)
+            for b in parent._boxes
+            if b.id is not None and b.id in slots and not self._is_anchored(b.maxclass)
+        ]
+        if len(movable) < 2:
+            return
+        rank = self._signal_rank()
+        ordered = sorted(movable, key=lambda m: rank[m[0]])
+        if ordered == movable:
+            return
+
+        moving = {box_id for box_id, _ in movable}
+        placed = [b.patching_rect for b in parent._boxes if b.id not in moving]
+        for (_, box), (src_id, _) in zip(ordered, movable):
+            x, y = slots[src_id]
+            w, h = self.box_dims(box)
+            rect = parent._clear_of_boxes(Rect(x, y, w, h), box.maxclass, placed)
+            box.patching_rect = rect
+            placed.append(rect)
+
+    def _is_anchored(self, maxclass: str) -> bool:
+        rect = self.get_rect_from_maxclass(maxclass)
+        return bool(rect and (_is_anchor(rect.x) or _is_anchor(rect.y)))
 
     def _apply_clustered_layout(self, clusters: List[Set[str]]) -> None:
         """Apply cluster-based positioning to all objects."""
@@ -143,8 +186,11 @@ class GridLayoutManager(LayoutManager):
         object_spacing = pad * 0.5
 
         # Position each cluster in its designated area
+        rank = self._signal_rank() if self.signal_order else {}
         for cluster_idx, cluster_objects in enumerate(clusters):
-            cluster_objects_list = sorted(list(cluster_objects))  # Consistent ordering
+            cluster_objects_list = sorted(
+                cluster_objects, key=lambda i: (rank.get(i, 0), i)
+            )
 
             # Calculate cluster's base position
             cluster_col = cluster_idx % cluster_cols
@@ -212,8 +258,11 @@ class GridLayoutManager(LayoutManager):
         object_spacing = pad * 0.5
 
         # Position each cluster in its designated area
+        rank = self._signal_rank() if self.signal_order else {}
         for cluster_idx, cluster_objects in enumerate(clusters):
-            cluster_objects_list = sorted(list(cluster_objects))  # Consistent ordering
+            cluster_objects_list = sorted(
+                cluster_objects, key=lambda i: (rank.get(i, 0), i)
+            )
 
             # Calculate cluster's base position (fill vertically first)
             cluster_row = cluster_idx % cluster_rows
@@ -300,9 +349,16 @@ class HorizontalLayoutManager(GridLayoutManager):
         box_width: Optional[int] = None,
         box_height: Optional[int] = None,
         comment_pad: Optional[int] = None,
+        signal_order: bool = True,
     ):
         super().__init__(
-            parent, pad, box_width, box_height, comment_pad, flow_direction="horizontal"
+            parent,
+            pad,
+            box_width,
+            box_height,
+            comment_pad,
+            flow_direction="horizontal",
+            signal_order=signal_order,
         )
 
 
@@ -316,7 +372,14 @@ class VerticalLayoutManager(GridLayoutManager):
         box_width: Optional[int] = None,
         box_height: Optional[int] = None,
         comment_pad: Optional[int] = None,
+        signal_order: bool = True,
     ):
         super().__init__(
-            parent, pad, box_width, box_height, comment_pad, flow_direction="vertical"
+            parent,
+            pad,
+            box_width,
+            box_height,
+            comment_pad,
+            flow_direction="vertical",
+            signal_order=signal_order,
         )

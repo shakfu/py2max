@@ -23,7 +23,7 @@ For development:
 ```bash
 git clone https://github.com/shakfu/py2max.git
 cd py2max
-uv sync
+make install
 source .venv/bin/activate
 ```
 
@@ -279,7 +279,7 @@ p.save()
 
 ### Gen Codebox
 
-`add_gen_codebox()` adds a standalone `gen.codebox~` object -- a complete gen patch in a single box that sits directly in a regular Max patcher (unlike the inner `codebox~` from `add_codebox()`, which belongs inside a `gen~`/`rnbo~` subpatcher). Inlet/outlet counts are derived automatically from the highest `inN`/`outN` references in the code:
+`add_gen_codebox()` adds a standalone `gen.codebox~` object -- a complete gen patch in a single box that sits directly in a regular Max patcher (unlike the inner `codebox~` from `add_codebox()`, which belongs inside a `gen~`/`rnbo~` subpatcher). Inlet/outlet counts are derived automatically from the highest `inN`/`outN` references in the code, and the box is sized to fit the code:
 
 ```python
 p = Patcher('fbdelay.maxpat')
@@ -417,7 +417,7 @@ All classes are extendable via `**kwargs`, allowing any Max object configuration
 
 ## Caveats
 
-- Max doesn't refresh from file when open - close and reopen to see changes, or build straight into the open patch with [js2max](#building-patches-inside-max-js2max), or use `py2max-server serve` (from the separate `py2max-server` package) for live editing
+- Max 9.2.0 and later reload an open patch, and its abstractions, when the file changes on disk, so `p.save()` shows up in the open window. DSP and window state are kept. Object state (`coll` contents, number box values) is reset. **Unsaved edits made in Max are discarded without a prompt**, so save in Max, or read the patch back with `Patcher.from_file()`, before saving over it from Python. Max follows in-place writes only: a tool that saves by replacing the file (write a temp file, then rename) stops the reloads until the patch is reopened. Earlier versions do not reload: close and reopen to see changes, or build straight into the open patch with [js2max](#building-patches-inside-max-js2max), or use `py2max-server serve` (from the separate `py2max-server` package) for live editing
 
 - For tilde variants, use the `_tilde` suffix: `p.add_gen()` vs `p.add_gen_tilde()`
 
@@ -450,7 +450,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ```bash
 git clone https://github.com/shakfu/py2max.git
 cd py2max
-uv sync
+make install
 source .venv/bin/activate
 make test  # Verify setup
 ```

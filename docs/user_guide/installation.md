@@ -35,7 +35,7 @@ For development, use uv (recommended):
 ``` bash
 git clone https://github.com/shakfu/py2max.git
 cd py2max
-uv sync
+make install
 source .venv/bin/activate
 ```
 

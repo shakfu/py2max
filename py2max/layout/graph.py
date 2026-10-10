@@ -19,6 +19,7 @@ inline loops had:
   order), so downstream tie-breaks are unchanged.
 """
 
+import heapq
 from typing import Dict, Iterable, List, Optional, Set
 
 from py2max.core.abstract import AbstractPatchline
@@ -136,6 +137,72 @@ class PatchGraph:
                 if component:
                     components.append(component)
         return components
+
+    def signal_order(self) -> List[str]:
+        """Nodes in signal order (sources first), ties broken by node order.
+
+        If node order is already a signal order it is returned unchanged. A
+        feedback loop is placed as a unit, its nodes in node order.
+        """
+        index = {n: i for i, n in enumerate(self.nodes)}
+        out = {
+            n: [d for d in succ if d in index] for n, succ in self.out_lists().items()
+        }
+        rev: Dict[str, List[str]] = {n: [] for n in self.nodes}
+        for s, d in self.edges:
+            rev[d].append(s)
+
+        # Kosaraju: finish order on the graph, then components on its reverse
+        finished: List[str] = []
+        seen: Set[str] = set()
+        for root in self.nodes:
+            if root in seen:
+                continue
+            seen.add(root)
+            stack = [(root, iter(out.get(root, [])))]
+            while stack:
+                node, it = stack[-1]
+                nxt = next((d for d in it if d not in seen), None)
+                if nxt is None:
+                    stack.pop()
+                    finished.append(node)
+                else:
+                    seen.add(nxt)
+                    stack.append((nxt, iter(out.get(nxt, []))))
+        comp: Dict[str, int] = {}
+        members: List[List[str]] = []
+        for root in reversed(finished):
+            if root in comp:
+                continue
+            comp[root] = len(members)
+            group, todo = [root], [root]
+            while todo:
+                for s in rev[todo.pop()]:
+                    if s not in comp:
+                        comp[s] = comp[root]
+                        group.append(s)
+                        todo.append(s)
+            members.append(sorted(group, key=index.__getitem__))
+
+        # Kahn on the components, lowest node index first
+        indegree = [0] * len(members)
+        succs: List[Set[int]] = [set() for _ in members]
+        for s, d in self.edges:
+            a, b = comp[s], comp[d]
+            if a != b and b not in succs[a]:
+                succs[a].add(b)
+                indegree[b] += 1
+        ready = [(index[m[0]], c) for c, m in enumerate(members) if not indegree[c]]
+        heapq.heapify(ready)
+        result: List[str] = []
+        while ready:
+            _, c = heapq.heappop(ready)
+            result.extend(members[c])
+            for b in succs[c]:
+                indegree[b] -= 1
+                if not indegree[b]:
+                    heapq.heappush(ready, (index[members[b][0]], b))
+        return result
 
     def topological_order(self) -> List[str]:
         """Post-order DFS from source nodes, giving a signal-flow ordering.

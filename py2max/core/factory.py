@@ -75,13 +75,6 @@ def _first_param_name(method: Callable[..., Any]) -> Optional[str]:
     return _FIRST_PARAM_CACHE[func]
 
 
-# Max objects whose inlet/outlet counts are determined by their code (or, for
-# bpatcher, the patch it loads) rather than by a fixed maxref entry. Connection
-# validation for these consults the box's own declared numinlets/numoutlets
-# instead of the static maxref data.
-DYNAMIC_IO_MAXCLASSES = frozenset({"gen.codebox~", "codebox", "codebox~", "bpatcher"})
-
-
 def _max_gen_io_index(code: str, kind: str) -> int:
     """Highest ``in<N>`` / ``out<N>`` index referenced in gen ``code``.
 
@@ -91,6 +84,23 @@ def _max_gen_io_index(code: str, kind: str) -> int:
     """
     indices = [int(m) for m in re.findall(rf"\b{kind}(\d+)\b", code)]
     return max([1, *indices])
+
+
+def _codebox_size(code: str, fontsize: float = 12.0) -> tuple[float, float]:
+    """(width, height) that shows all of ``code`` in a codebox.
+
+    Metrics were measured from Max 9 at 12pt ``<Monospaced>``: 7.2pt per char,
+    14pt per line, a line-number gutter, a title row and a bottom margin. The
+    editor shows a horizontal scrollbar over the last line unless it has
+    ~36pt beyond the longest line.
+    """
+    k = fontsize / 12.0
+    lines = code.splitlines() or [""]
+    cols = max(len(line) for line in lines)
+    gutter = 22.0 + 7.2 * len(str(len(lines)))
+    w = k * (gutter + 7.2 * cols + 36.0)
+    h = k * (23.0 + 14.0 * len(lines) + 16.0)
+    return max(w, 100.0), h
 
 
 # Box attributes valid on (nearly) every Max object, independent of an object's
@@ -240,12 +250,64 @@ class BoxFactoryMixin(AbstractPatcher):
         assert box.id, f"object {box} must have an id"
         if self._validate_attrs:
             self._validate_box_attrs(box)
+        auto_xy, self._auto_xy = getattr(self, "_auto_xy", None), None
+        rect = box.patching_rect
+        if auto_xy and rect is not None and tuple(rect[:2]) == auto_xy:
+            self._auto_slots[box.id] = auto_xy
+            box.patching_rect = self._clear_of_boxes(Rect(*rect), box.maxclass)
         self._node_ids.append(box.id)
         self._objects[box.id] = box
         self._boxes.append(box)
         if comment:
             self.add_associated_comment(box, comment, comment_pos)
         return box
+
+    def _clear_of_boxes(
+        self,
+        rect: Rect,
+        maxclass: Optional[str],
+        others: Optional[List[Any]] = None,
+    ) -> Rect:
+        """``rect`` moved past any existing box it overlaps.
+
+        The grid layouts step by a fixed cell size, so a box larger than a cell
+        (codebox, scope~) lands on its neighbours. Only overlapping placements
+        move, which keeps every non-overlapping layout byte-identical.
+        """
+        pad = self._layout_mgr.pad
+        gap = 0.5 * pad
+        vertical = getattr(self._layout_mgr, "flow_direction", "") == "vertical"
+        # wrapping would renumber ports, which Max orders by x
+        wrap = maxclass not in ("inlet", "outlet")
+        x, y, w, h = rect
+        for _ in range(len(self._boxes) + 1):
+            hits = [
+                r
+                for r in (
+                    others
+                    if others is not None
+                    else [b.patching_rect for b in self._boxes]
+                )
+                if r is not None
+                and len(r) >= 4
+                and x < r[0] + r[2]
+                and r[0] < x + w
+                and y < r[1] + r[3]
+                and r[1] < y + h
+            ]
+            if not hits:
+                break
+            if vertical:
+                y = max(r[1] + r[3] for r in hits) + gap
+                if wrap and y + h > self.height:
+                    y = pad
+                    x = max(r[0] + r[2] for r in hits) + gap
+            else:
+                x = max(r[0] + r[2] for r in hits) + gap
+                if wrap and x + w > self.width:
+                    x = pad
+                    y = max(r[1] + r[3] for r in hits) + gap
+        return Rect(x, y, w, h)
 
     def add_associated_comment(
         self, box: "Box", comment: str, comment_pos: Optional[str] = None
@@ -331,42 +393,27 @@ class BoxFactoryMixin(AbstractPatcher):
         if not dst_obj:
             return f"Destination object not found: {dst_id}"
 
+        if getattr(self, "classnamespace", "box") != "box":
+            return ""  # maxref describes Max objects; rnbo~ and gen~ use others
+
         src_name = self._get_object_name(src_obj)
         dst_name = self._get_object_name(dst_obj)
-        src_dynamic = src_obj.maxclass in DYNAMIC_IO_MAXCLASSES
-        dst_dynamic = dst_obj.maxclass in DYNAMIC_IO_MAXCLASSES
-
-        if src_dynamic or dst_dynamic:
-            # Codeboxes and bpatchers derive their inlet/outlet counts from
-            # their content, so bound-check indices against the box's own
-            # declared counts rather than the fixed maxref entry. Type
-            # checking is skipped: the content's port types are unknown here.
-            src_outlets = (
-                src_obj.numoutlets if src_dynamic else maxref.get_outlet_count(src_name)
+        src_outlets = porttypes.box_port_counts(src_obj, src_name)[1]
+        dst_inlets = porttypes.box_port_counts(dst_obj, dst_name)[0]
+        if src_outlets is not None and src_outlet >= src_outlets:
+            error_msg = (
+                f"Object '{src_name}' only has {src_outlets} outlet(s), "
+                f"cannot connect from outlet {src_outlet}"
             )
-            dst_inlets = (
-                dst_obj.numinlets if dst_dynamic else maxref.get_inlet_count(dst_name)
+        elif dst_inlets is not None and dst_inlet >= dst_inlets:
+            error_msg = (
+                f"Object '{dst_name}' only has {dst_inlets} inlet(s), "
+                f"cannot connect to inlet {dst_inlet}"
             )
-            error_msg = ""
-            if src_outlets is not None and src_outlet >= src_outlets:
-                error_msg = (
-                    f"Object '{src_name}' only has {src_outlets} outlet(s), "
-                    f"cannot connect from outlet {src_outlet}"
-                )
-            elif dst_inlets is not None and dst_inlet >= dst_inlets:
-                error_msg = (
-                    f"Object '{dst_name}' only has {dst_inlets} inlet(s), "
-                    f"cannot connect to inlet {dst_inlet}"
-                )
+        elif {src_obj.maxclass, dst_obj.maxclass} & porttypes.DYNAMIC_IO_MAXCLASSES:
+            error_msg = ""  # a codebox's port types come from its code
         else:
-            _, error_msg = maxref.validate_connection(
-                src_name,
-                src_outlet,
-                dst_name,
-                dst_inlet,
-                src_text=getattr(src_obj, "text", None),
-                dst_text=getattr(dst_obj, "text", None),
-            )
+            error_msg = maxref.message_error(src_name, src_outlet, dst_name, dst_inlet)
         if not error_msg:
             return ""
         return (
@@ -522,6 +569,12 @@ class BoxFactoryMixin(AbstractPatcher):
             if numoutlets is None and "numoutlets" in defaults:
                 numoutlets = defaults["numoutlets"]
 
+        if self.classnamespace == "box":
+            # maxref names Max objects only; rnbo~ and gen~ have their own
+            ref_in, ref_out = porttypes.port_counts(_maxclass, text)
+            numinlets = ref_in if numinlets is None else numinlets
+            numoutlets = ref_out if numoutlets is None else numoutlets
+
         kwds = self._textbox_helper(_maxclass, kwds)
 
         auto_rect = patching_rect is None
@@ -572,6 +625,10 @@ class BoxFactoryMixin(AbstractPatcher):
                         stacklevel=2,
                     )
             kwds = {**attrs, **kwds}  # type: ignore[typeddict-item]
+
+        if auto_rect and _maxclass in ("codebox", "codebox~") and isinstance(code, str):
+            w, h = _codebox_size(code, kwds.get("fontsize") or 12.0)
+            patching_rect = Rect(patching_rect[0], patching_rect[1], w, h)
 
         if auto_rect and maxclass in ("newobj", "message"):
             patching_rect = self._fit_text_width(
@@ -762,6 +819,9 @@ class BoxFactoryMixin(AbstractPatcher):
                 )
 
         n_out = kwds.pop("numoutlets", None) or _max_gen_io_index(code, "out")
+        if patching_rect is None:
+            w, h = _codebox_size(code, kwds.get("fontsize", 12.0))
+            patching_rect = self.get_pos()._replace(w=w, h=h)
         return self.add_box(
             Box(
                 id=id or self.get_id(_maxclass),
@@ -827,6 +887,9 @@ class BoxFactoryMixin(AbstractPatcher):
 
         kwds.setdefault("fontname", "<Monospaced>")
         kwds.setdefault("fontsize", 12.0)
+        if patching_rect is None:
+            w, h = _codebox_size(code, kwds["fontsize"])
+            patching_rect = self.get_pos()._replace(w=w, h=h)
 
         return self.add_box(
             Box(
