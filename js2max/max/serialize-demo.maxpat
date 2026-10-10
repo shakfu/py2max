@@ -134,7 +134,7 @@
                 "box": {
                     "id": "obj-6",
                     "maxclass": "newobj",
-                    "numinlets": 1,
+                    "numinlets": 2,
                     "numoutlets": 1,
                     "patching_rect": [
                         380,
@@ -188,7 +188,7 @@
                 "box": {
                     "id": "obj-9",
                     "maxclass": "newobj",
-                    "numinlets": 1,
+                    "numinlets": 2,
                     "numoutlets": 1,
                     "patching_rect": [
                         380,
@@ -197,7 +197,7 @@
                         22
                     ],
                     "outlettype": [
-                        ""
+                        "Signal"
                     ],
                     "text": "*~ 0.15"
                 }
