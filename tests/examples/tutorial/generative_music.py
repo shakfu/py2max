@@ -10,7 +10,6 @@ This example is used in:
 """
 
 from py2max import Patcher
-from py2max.utils import pitch2freq
 
 
 def create_generative_music():
@@ -25,11 +24,12 @@ def create_generative_music():
 
     # Create 4 pattern generators
     patterns = []
+    # MIDI note numbers (C4 = 60); a table holds ints
     scales = [
-        ["C4", "D4", "E4", "G4", "A4"],  # Pentatonic
-        ["C4", "D4", "F4", "G4", "A4", "C5"],  # Minor pentatonic
-        ["C4", "E4", "F4", "G4", "B4"],  # Mysterious
-        ["C4", "Db4", "F4", "Gb4", "Ab4"],  # Diminished
+        [60, 62, 64, 67, 69],  # Pentatonic: C D E G A
+        [60, 62, 65, 67, 69, 72],  # Minor pentatonic: C D F G A C
+        [60, 64, 65, 67, 71],  # Mysterious: C E F G B
+        [60, 61, 65, 66, 68],  # Diminished: C Db F Gb Ab
     ]
 
     for i, scale in enumerate(scales):
@@ -44,19 +44,19 @@ def create_generative_music():
         note_selector = p.add_textbox(f"random {len(scale)}")
         p.add_line(pattern_metro, note_selector)
 
-        # Convert to frequencies
-        freq_data = [pitch2freq(note) for note in scale]
-        p.add_table(f"freqs{i}", data=freq_data)
-        table_lookup = p.add_textbox(f"table freqs{i}")
+        # Look up the note, then convert it to a frequency
+        table_lookup = p.add_table(f"notes{i}", array=scale)
+        to_freq = p.add_textbox("mtof")
 
         p.add_line(note_selector, table_lookup)
+        p.add_line(table_lookup, to_freq)
 
         # Synthesizer voice
         osc = p.add_textbox("cycle~")
         env = p.add_textbox("adsr~ 10 100 0.3 500")
         voice_gain = p.add_textbox("*~")
 
-        p.add_line(table_lookup, osc)
+        p.add_line(to_freq, osc)
         p.add_line(pattern_metro, env)  # Trigger envelope
         p.add_line(osc, voice_gain)
         p.add_line(env, voice_gain, outlet=0, inlet=1)
@@ -78,7 +78,7 @@ def create_generative_music():
         p.add_line(pattern["voice"], main_mixer)
 
     # Global effects
-    reverb = p.add_textbox("freeverb~ 0.8 0.5")
+    reverb = p.add_textbox("comb~ 100 37 1. 0. 0.7")  # feedback comb, a reverb stand-in
     master_gain = p.add_textbox("*~")
     master_level = p.add_floatparam("master_level", initial=0.6)
     output = p.add_textbox("ezdac~")
@@ -88,9 +88,11 @@ def create_generative_music():
     p.add_line(master_level, master_gain, outlet=0, inlet=1)
     p.add_line(master_gain, output)
 
-    # Add global controls
-    start_stop = p.add_message("start", "stop")
-    p.add_line(start_stop, metro)
+    # Add global controls: non-zero starts the metro, 0 stops it
+    start = p.add_message("1")
+    stop = p.add_message("0")
+    p.add_line(start, metro)
+    p.add_line(stop, metro)
 
     p.optimize_layout()
     p.save()

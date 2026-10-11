@@ -22,6 +22,14 @@ class DummyCache:
         return self._data.get(name)
 
 
+def test_cli_new_defaults_to_topdown(tmp_path: Path):
+    target = tmp_path / "stereo.maxpat"
+    assert run_cli(["new", str(target), "--template", "stereo"]) == 0
+    p = Patcher.from_file(target)
+    # topdown lays out on save: cycle~, gain~ and ezdac~ share one column
+    assert len({b.patching_rect.x for b in p._boxes}) == 1
+
+
 def test_cli_new_creates_patch(tmp_path: Path):
     target = tmp_path / "demo.maxpat"
     exit_code = run_cli(

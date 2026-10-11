@@ -19,10 +19,10 @@ def create_horizontal_flow():
 
     # Create a signal processing chain
     input_obj = p.add_textbox("adc~")
-    eq = p.add_textbox("eq~")
-    compressor = p.add_textbox("compressor~")
-    delay = p.add_textbox("delay~ 250")
-    reverb = p.add_textbox("freeverb~")
+    eq = p.add_textbox("svf~ 1000 0.5")  # low-pass from outlet 0
+    compressor = p.add_textbox("omx.comp~")
+    delay = p.add_textbox("delay~ 44100 11025")  # samples
+    reverb = p.add_textbox("comb~ 100 37 1. 0. 0.7")  # feedback comb
     output = p.add_textbox("dac~")
 
     # Connect in signal flow order
@@ -82,13 +82,19 @@ def create_complex_flow():
     mixer2 = p.add_textbox("+~")
     main_filter = p.add_textbox("svf~")
 
-    # Multiple effects
-    chorus = p.add_textbox("chorus~")
-    delay = p.add_textbox("delay~ 375")
-    reverb = p.add_textbox("freeverb~")
+    # Multiple effects: chorus is a short delay swept by a slow LFO
+    chorus_in = p.add_textbox("tapin~ 50")
+    chorus_out = p.add_textbox("tapout~ 20")
+    lfo = p.add_textbox("cycle~ 0.5")
+    depth = p.add_textbox("*~ 5")
+    center = p.add_textbox("+~ 20")
+    delay = p.add_textbox("delay~ 44100 16538")  # samples
+    reverb = p.add_textbox("comb~ 100 37 1. 0. 0.7")  # feedback comb
 
-    # Final mixing
-    wet_dry = p.add_textbox("crossfade~")
+    # Final mixing: equal parts dry and wet
+    dry = p.add_textbox("*~ 0.5")
+    wet = p.add_textbox("*~ 0.5")
+    wet_dry = p.add_textbox("+~")
     output = p.add_textbox("ezdac~")
 
     # Complex connection pattern
@@ -99,14 +105,21 @@ def create_complex_flow():
     p.add_line(mixer1, main_filter)
     p.add_line(mixer2, main_filter)
 
-    p.add_line(main_filter, chorus)
-    p.add_line(chorus, delay)
+    p.add_line(main_filter, chorus_in)
+    p.add_line(chorus_in, chorus_out)
+    p.add_line(lfo, depth)
+    p.add_line(depth, center)
+    p.add_line(center, chorus_out)  # delay time in ms
+    p.add_line(chorus_out, delay)
     p.add_line(delay, reverb)
 
     # Wet/dry mixing
-    p.add_line(main_filter, wet_dry, outlet=0, inlet=0)  # dry
-    p.add_line(reverb, wet_dry, outlet=0, inlet=1)  # wet
+    p.add_line(main_filter, dry)
+    p.add_line(reverb, wet)
+    p.add_line(dry, wet_dry)
+    p.add_line(wet, wet_dry, outlet=0, inlet=1)
     p.add_line(wet_dry, output)
+    p.add_line(wet_dry, output, outlet=0, inlet=1)
 
     p.optimize_layout()
     p.save()
@@ -120,14 +133,15 @@ def create_parallel_processing():
     # Single input
     input_obj = p.add_textbox("adc~")
 
-    # Parallel processing paths
-    path1_filter = p.add_textbox("biquad~ 500 2.0 bandpass")
+    # Parallel processing paths; svf~ outlets are low-pass, high-pass,
+    # band-pass, notch
+    path1_filter = p.add_textbox("svf~ 500 0.8")
     path1_gain = p.add_textbox("*~ 1.2")
 
-    path2_filter = p.add_textbox("biquad~ 2000 0.5 lowpass")
+    path2_filter = p.add_textbox("svf~ 2000 0.5")
     path2_gain = p.add_textbox("*~ 0.8")
 
-    path3_filter = p.add_textbox("biquad~ 8000 0.3 highpass")
+    path3_filter = p.add_textbox("svf~ 8000 0.3")
     path3_gain = p.add_textbox("*~ 1.5")
 
     # Connect parallel paths
@@ -135,9 +149,9 @@ def create_parallel_processing():
     p.add_line(input_obj, path2_filter)
     p.add_line(input_obj, path3_filter)
 
-    p.add_line(path1_filter, path1_gain)
-    p.add_line(path2_filter, path2_gain)
-    p.add_line(path3_filter, path3_gain)
+    p.add_line(path1_filter, path1_gain, outlet=2)  # band-pass
+    p.add_line(path2_filter, path2_gain)  # low-pass
+    p.add_line(path3_filter, path3_gain, outlet=1)  # high-pass
 
     # Mix parallel outputs
     final_mixer = p.add_textbox("+~")
@@ -160,12 +174,14 @@ def create_feedback_flow():
     # Main signal path
     input_obj = p.add_textbox("adc~")
     main_gain = p.add_textbox("*~ 1.0")
-    main_filter = p.add_textbox("biquad~ 1000 0.707")
+    main_filter = p.add_textbox("svf~ 1000 0.5")
 
-    # Feedback path
-    delay = p.add_textbox("delay~ 500")
+    # Feedback path: tapin~/tapout~, since a signal loop through delay~ is
+    # not allowed
+    tapin = p.add_textbox("tapin~ 1000")
+    tapout = p.add_textbox("tapout~ 500")
     feedback_gain = p.add_textbox("*~ 0.3")
-    feedback_filter = p.add_textbox("biquad~ 2000 1.0 highpass")
+    feedback_filter = p.add_textbox("svf~ 2000 0.5")
 
     # Mix point
     input_mixer = p.add_textbox("+~")
@@ -178,10 +194,11 @@ def create_feedback_flow():
     p.add_line(main_filter, output)
 
     # Feedback path
-    p.add_line(main_filter, delay)
-    p.add_line(delay, feedback_gain)
+    p.add_line(main_filter, tapin)
+    p.add_line(tapin, tapout)
+    p.add_line(tapout, feedback_gain)
     p.add_line(feedback_gain, feedback_filter)
-    p.add_line(feedback_filter, input_mixer, outlet=0, inlet=1)  # feedback
+    p.add_line(feedback_filter, input_mixer, outlet=1, inlet=1)  # high-pass back
 
     p.optimize_layout()
     p.save()

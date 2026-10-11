@@ -52,8 +52,8 @@ def create_complex_patch():
     vca = p.add_textbox("*~")
 
     # Effects
-    delay = p.add_textbox("delay~ 500")
-    reverb = p.add_textbox("freeverb~")
+    delay = p.add_textbox("delay~ 44100 22050")  # samples
+    reverb = p.add_textbox("comb~ 100 37 1. 0. 0.7")  # feedback comb, a reverb stand-in
 
     # Master gain
     master = p.add_textbox("gain~ 0.7")

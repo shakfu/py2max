@@ -121,8 +121,8 @@ p = Patcher('patch.maxpat', layout="flow", flow_direction="vertical")
 # Create a signal processing chain
 input_obj = p.add_textbox('adc~')
 eq = p.add_textbox('filtergraph~')
-delay = p.add_textbox('delay~ 500')
-reverb = p.add_textbox('freeverb~')
+delay = p.add_textbox('delay~ 44100 22050')  # samples
+reverb = p.add_textbox('comb~ 100 37 1. 0. 0.7')  # feedback comb, a reverb stand-in
 output = p.add_textbox('dac~')
 
 # Connect in signal flow order
@@ -186,7 +186,7 @@ You can load and modify existing .maxpat files:
 p = Patcher.from_file('existing-patch.maxpat')
 
 # Add new objects
-new_obj = p.add_textbox('delay~ 1000')
+new_obj = p.add_textbox('delay~ 88200 44100')  # samples
 
 # Save with a new name
 p._path = 'modified-patch.maxpat'

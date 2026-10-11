@@ -129,3 +129,32 @@ def test_enforce_integer_coords_noop_when_already_integral(tmp_path):
     p = Patcher(tmp_path / "m4l_noop.maxpat")
     p.add_textbox("cycle~ 440", patching_rect=Rect(1.0, 2.0, 62.0, 22.0))
     assert enforce_integer_coords(p) == 0
+
+
+@pytest.mark.parametrize("layout", OPTIMIZING_LAYOUTS)
+def test_list_rect_given_at_add_is_a_rect(layout):
+    # patching_rect=[...] in add() was stored as a list, so optimize_layout()
+    # on a patch of two or more boxes died in prevent_overlaps (rect.y)
+    p = Patcher("outputs/list_rect.maxpat", layout=layout)
+    osc = p.add("cycle~ 440", patching_rect=[10, 10, 60, 22])
+    gain = p.add("gain~")
+    p.link(osc, gain)
+    assert isinstance(osc.patching_rect, Rect)
+    p.optimize_layout()
+    if layout == "grid":  # grid never moves an explicit rect; the others re-place all
+        assert tuple(osc.patching_rect) == (10, 10, 60, 22)
+    saved = json.loads(p.to_json())["patcher"]["boxes"][0]["box"]["patching_rect"]
+    assert saved == list(osc.patching_rect)
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        lambda p: p.add_message("start", "stop"),  # 2nd positional is the rect
+        lambda p: p.add_comment("note", p.add_textbox("gain~")),
+        lambda p: p.add_textbox("gain~", patching_rect=[0, 0, "w", 22]),
+    ],
+)
+def test_malformed_patching_rect_raises(build):
+    with pytest.raises(TypeError, match="patching_rect"):
+        build(Patcher())

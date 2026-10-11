@@ -71,10 +71,13 @@ def test_patch_state_is_restored():
     "layout", ["horizontal", "vertical", "grid", "flow", "matrix", "columnar"]
 )
 def test_window_grows_to_show_every_box(layout):
-    p = Patcher(layout=layout, on_invalid="ignore")
-    boxes = [p.add_textbox(t) for t in ["metro 100", "scope~", "gain~", "+ 1"] * 20]
-    for a, b in zip(boxes, boxes[1:]):
-        p.add_line(a, b)
+    p = Patcher(layout=layout, validate_connections=True)
+    # 80 boxes in chains ending at scope~, which has no outlet
+    texts = ["metro 100", "counter", "sig~", "gain~", "scope~"]
+    for _ in range(16):
+        chain = [p.add_textbox(t) for t in texts]
+        for a, b in zip(chain, chain[1:]):
+            p.add_line(a, b)
     p.optimize_layout()
     assert not [f for f in p.lint() if f.code == "W-OFFCANVAS"]
 

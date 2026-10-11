@@ -26,41 +26,51 @@ def create_fx_chain():
     input_level = p.add_floatparam("input_level", initial=1.0)
     p.add_line(input_level, input_gain, outlet=0, inlet=1)
 
-    # EQ section
-    highpass = p.add_textbox("biquad~ 100. 0.707 highpass")
-    lowpass = p.add_textbox("biquad~ 8000. 0.707 lowpass")
+    # EQ section: svf~ outlets are low-pass, high-pass, band-pass, notch
+    highpass = p.add_textbox("svf~ 100 0.5")
+    lowpass = p.add_textbox("svf~ 8000 0.5")
 
     p.add_line(input_gain, highpass)
-    p.add_line(highpass, lowpass)
+    p.add_line(highpass, lowpass, outlet=1)  # high-pass output
 
     # Distortion section
     drive = p.add_floatparam("drive", initial=1.0)
     drive_mult = p.add_textbox("*~")
     overdrive = p.add_textbox("overdrive~")
 
-    p.add_line(lowpass, drive_mult)
+    p.add_line(lowpass, drive_mult)  # low-pass output
     p.add_line(drive, drive_mult, outlet=0, inlet=1)
     p.add_line(drive_mult, overdrive)
 
-    # Delay section
+    # Delay section: tapin~/tapout~, since a signal loop through delay~ is
+    # not allowed
     delay_time = p.add_floatparam("delay_time", initial=250.0)
-    delay = p.add_textbox("delay~")
+    tapin = p.add_textbox("tapin~ 1000")
+    tapout = p.add_textbox("tapout~ 250")
     delay_feedback = p.add_floatparam("feedback", initial=0.3)
     feedback_mult = p.add_textbox("*~")
-    delay_mix = p.add_floatparam("delay_mix", initial=0.3)
-    wet_dry = p.add_textbox("crossfade~")
 
-    # Delay connections
-    p.add_line(delay_time, delay)
-    p.add_line(overdrive, delay)
-    p.add_line(delay, feedback_mult)
+    p.add_line(overdrive, tapin)
+    p.add_line(tapin, tapout)
+    p.add_line(delay_time, tapout)  # delay time in ms
+    p.add_line(tapout, feedback_mult)
     p.add_line(delay_feedback, feedback_mult, outlet=0, inlet=1)
-    p.add_line(feedback_mult, delay, outlet=0, inlet=1)  # feedback loop
+    p.add_line(feedback_mult, tapin)  # feedback loop
 
-    # Wet/dry mix
-    p.add_line(overdrive, wet_dry, outlet=0, inlet=0)  # dry signal
-    p.add_line(delay, wet_dry, outlet=0, inlet=1)  # wet signal
-    p.add_line(delay_mix, wet_dry, outlet=0, inlet=2)  # mix control
+    # Wet/dry mix: wet * mix + dry * (1 - mix)
+    delay_mix = p.add_floatparam("delay_mix", initial=0.3)
+    dry_level = p.add_textbox("!- 1.")
+    wet_gain = p.add_textbox("*~")
+    dry_gain = p.add_textbox("*~")
+    wet_dry = p.add_textbox("+~")
+
+    p.add_line(tapout, wet_gain)
+    p.add_line(delay_mix, wet_gain, outlet=0, inlet=1)
+    p.add_line(delay_mix, dry_level)
+    p.add_line(overdrive, dry_gain)
+    p.add_line(dry_level, dry_gain, outlet=0, inlet=1)
+    p.add_line(wet_gain, wet_dry)
+    p.add_line(dry_gain, wet_dry, outlet=0, inlet=1)
 
     # Output section
     output_gain = p.add_textbox("*~")
@@ -70,6 +80,7 @@ def create_fx_chain():
     p.add_line(wet_dry, output_gain)
     p.add_line(output_level, output_gain, outlet=0, inlet=1)
     p.add_line(output_gain, output)
+    p.add_line(output_gain, output, outlet=0, inlet=1)
 
     # Optimize layout for signal flow
     p.optimize_layout()

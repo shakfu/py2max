@@ -11,22 +11,22 @@ def _texts(patcher):
 
 
 def test_encapsulate_signal_chain():
-    """metro -> [cycle~ -> gain~] -> dac: the middle pair is wrapped."""
-    p = Patcher("outputs/enc_chain.maxpat")
-    metro = p.add_textbox("metro 500")
+    """sig~ -> [cycle~ -> gain~] -> dac: the middle pair is wrapped."""
+    p = Patcher("outputs/enc_chain.maxpat", validate_connections=True)
+    freq = p.add_textbox("sig~ 440")
     osc = p.add_textbox("cycle~ 440")
     gain = p.add_textbox("gain~")
     dac = p.add_textbox("ezdac~")
-    p.add_line(metro, osc)
+    p.add_line(freq, osc)
     p.add_line(osc, gain)
     p.add_line(gain, dac)
 
     sub_box = p.encapsulate([osc, gain], text="p dsp")
     sub = sub_box.subpatcher
 
-    # Parent keeps metro + dac + the new subpatcher; osc/gain moved out.
-    assert _texts(p) == ["ezdac~", "metro 500", "p dsp"]
-    assert len(p._lines) == 2  # metro -> sub, sub -> dac
+    # Parent keeps sig~ + dac + the new subpatcher; osc/gain moved out.
+    assert _texts(p) == ["ezdac~", "p dsp", "sig~ 440"]
+    assert len(p._lines) == 2  # sig~ -> sub, sub -> dac
     assert sub_box.numinlets == 1
     assert sub_box.numoutlets == 1
 
@@ -42,12 +42,12 @@ def test_encapsulate_signal_chain():
         )
         for ln in p._lines
     }
-    assert parent_edges == {("metro 500", "p dsp"), ("p dsp", "ezdac~")}
+    assert parent_edges == {("sig~ 440", "p dsp"), ("p dsp", "ezdac~")}
 
 
 def test_encapsulate_round_trips_through_file():
-    p = Patcher("outputs/enc_rt.maxpat")
-    a = p.add_textbox("metro 500")
+    p = Patcher("outputs/enc_rt.maxpat", validate_connections=True)
+    a = p.add_textbox("sig~ 440")
     b = p.add_textbox("cycle~ 440")
     c = p.add_textbox("ezdac~")
     p.add_line(a, b)
@@ -65,8 +65,8 @@ def test_encapsulate_round_trips_through_file():
 
 def test_encapsulate_dedups_ports_by_source():
     """One external source feeding two selected boxes shares a single inlet."""
-    p = Patcher("outputs/enc_dedup.maxpat")
-    src = p.add_textbox("metro 500")
+    p = Patcher("outputs/enc_dedup.maxpat", validate_connections=True)
+    src = p.add_textbox("sig~ 440")
     b1 = p.add_textbox("cycle~ 440")
     b2 = p.add_textbox("cycle~ 220")
     out = p.add_textbox("ezdac~")
@@ -88,7 +88,7 @@ def test_encapsulate_dedups_ports_by_source():
 
 
 def test_encapsulate_isolated_boxes_have_no_ports():
-    p = Patcher("outputs/enc_iso.maxpat")
+    p = Patcher("outputs/enc_iso.maxpat", validate_connections=True)
     a = p.add_textbox("cycle~ 440")
     b = p.add_textbox("gain~")
     p.add_line(a, b)  # wholly internal
@@ -105,7 +105,7 @@ def test_encapsulate_isolated_boxes_have_no_ports():
 
 
 def test_encapsulate_empty_selection_raises():
-    p = Patcher("outputs/enc_empty.maxpat")
+    p = Patcher("outputs/enc_empty.maxpat", validate_connections=True)
     p.add_textbox("cycle~ 440")
     with pytest.raises(ValueError):
         p.encapsulate([])

@@ -174,8 +174,9 @@ def demonstrate_object_types():
     # Signal objects (MSP)
     signal_objects = [
         ("cycle~", p.add_textbox("cycle~ 440")),
-        ("biquad~", p.add_textbox("biquad~ 1000 0.707")),
-        ("delay~", p.add_textbox("delay~ 500")),
+        # biquad~ takes 5 coefficients; these pass the signal through
+        ("biquad~", p.add_textbox("biquad~ 1. 0. 0. 0. 0.")),
+        ("delay~", p.add_textbox("delay~ 44100 22050")),  # samples
         ("*~", p.add_textbox("*~")),
         ("dac~", p.add_textbox("dac~")),
     ]

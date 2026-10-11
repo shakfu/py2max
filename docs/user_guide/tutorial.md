@@ -72,41 +72,51 @@ p.add_line(input_obj, input_gain)
 input_level = p.add_floatparam('input_level', initial=1.0)
 p.add_line(input_level, input_gain, outlet=0, inlet=1)
 
-# EQ section
-highpass = p.add_textbox('biquad~ 100. 0.707 highpass')
-lowpass = p.add_textbox('biquad~ 8000. 0.707 lowpass')
+# EQ section: svf~ outlets are low-pass, high-pass, band-pass, notch
+highpass = p.add_textbox('svf~ 100 0.5')
+lowpass = p.add_textbox('svf~ 8000 0.5')
 
 p.add_line(input_gain, highpass)
-p.add_line(highpass, lowpass)
+p.add_line(highpass, lowpass, outlet=1)  # high-pass output
 
 # Distortion section
 drive = p.add_floatparam('drive', initial=1.0)
 drive_mult = p.add_textbox('*~')
 overdrive = p.add_textbox('overdrive~')
 
-p.add_line(lowpass, drive_mult)
+p.add_line(lowpass, drive_mult)  # low-pass output
 p.add_line(drive, drive_mult, outlet=0, inlet=1)
 p.add_line(drive_mult, overdrive)
 
-# Delay section
+# Delay section: tapin~/tapout~, since a signal loop through delay~ is
+# not allowed
 delay_time = p.add_floatparam('delay_time', initial=250.0)
-delay = p.add_textbox('delay~')
+tapin = p.add_textbox('tapin~ 1000')
+tapout = p.add_textbox('tapout~ 250')
 delay_feedback = p.add_floatparam('feedback', initial=0.3)
 feedback_mult = p.add_textbox('*~')
-delay_mix = p.add_floatparam('delay_mix', initial=0.3)
-wet_dry = p.add_textbox('crossfade~')
 
-# Delay connections
-p.add_line(delay_time, delay)
-p.add_line(overdrive, delay)
-p.add_line(delay, feedback_mult)
+p.add_line(overdrive, tapin)
+p.add_line(tapin, tapout)
+p.add_line(delay_time, tapout)  # delay time in ms
+p.add_line(tapout, feedback_mult)
 p.add_line(delay_feedback, feedback_mult, outlet=0, inlet=1)
-p.add_line(feedback_mult, delay, outlet=0, inlet=1)  # feedback loop
+p.add_line(feedback_mult, tapin)  # feedback loop
 
-# Wet/dry mix
-p.add_line(overdrive, wet_dry, outlet=0, inlet=0)  # dry signal
-p.add_line(delay, wet_dry, outlet=0, inlet=1)      # wet signal
-p.add_line(delay_mix, wet_dry, outlet=0, inlet=2)  # mix control
+# Wet/dry mix: wet * mix + dry * (1 - mix)
+delay_mix = p.add_floatparam('delay_mix', initial=0.3)
+dry_level = p.add_textbox('!- 1.')
+wet_gain = p.add_textbox('*~')
+dry_gain = p.add_textbox('*~')
+wet_dry = p.add_textbox('+~')
+
+p.add_line(tapout, wet_gain)
+p.add_line(delay_mix, wet_gain, outlet=0, inlet=1)
+p.add_line(delay_mix, dry_level)
+p.add_line(overdrive, dry_gain)
+p.add_line(dry_level, dry_gain, outlet=0, inlet=1)
+p.add_line(wet_gain, wet_dry)
+p.add_line(dry_gain, wet_dry, outlet=0, inlet=1)
 
 # Output section
 output_gain = p.add_textbox('*~')
@@ -116,6 +126,7 @@ output = p.add_textbox('dac~ 1 2')
 p.add_line(wet_dry, output_gain)
 p.add_line(output_level, output_gain, outlet=0, inlet=1)
 p.add_line(output_gain, output)
+p.add_line(output_gain, output, outlet=0, inlet=1)
 
 # Optimize layout for signal flow
 p.optimize_layout()
@@ -194,8 +205,6 @@ Create a generative music system with multiple patterns:
 
 ``` python
 from py2max import Patcher
-from py2max.utils import pitch2freq
-import random
 
 p = Patcher('generative-music.maxpat', layout="flow", flow_direction="horizontal")
 
@@ -207,11 +216,12 @@ p.add_line(master_tempo, metro)
 
 # Create 4 pattern generators
 patterns = []
+# MIDI note numbers (C4 = 60); a table holds ints
 scales = [
-    ["C4", "D4", "E4", "G4", "A4"],      # Pentatonic
-    ["C4", "D4", "F4", "G4", "A4", "C5"], # Minor pentatonic
-    ["C4", "E4", "F4", "G4", "B4"],       # Mysterious
-    ["C4", "Db4", "F4", "Gb4", "Ab4"]     # Diminished
+    [60, 62, 64, 67, 69],      # Pentatonic: C D E G A
+    [60, 62, 65, 67, 69, 72],  # Minor pentatonic: C D F G A C
+    [60, 64, 65, 67, 71],      # Mysterious: C E F G B
+    [60, 61, 65, 66, 68],      # Diminished: C Db F Gb Ab
 ]
 
 for i, scale in enumerate(scales):
@@ -226,18 +236,19 @@ for i, scale in enumerate(scales):
     note_selector = p.add_textbox(f'random {len(scale)}')
     p.add_line(pattern_metro, note_selector)
 
-    # Convert to frequencies
-    freq_table = p.add_table(f'freqs{i}', data=[pitch2freq(note) for note in scale])
-    table_lookup = p.add_textbox(f'table freqs{i}')
+    # Look up the note, then convert it to a frequency
+    table_lookup = p.add_table(f'notes{i}', array=scale)
+    to_freq = p.add_textbox('mtof')
 
     p.add_line(note_selector, table_lookup)
+    p.add_line(table_lookup, to_freq)
 
     # Synthesizer voice
     osc = p.add_textbox('cycle~')
     env = p.add_textbox('adsr~ 10 100 0.3 500')
     voice_gain = p.add_textbox('*~')
 
-    p.add_line(table_lookup, osc)
+    p.add_line(to_freq, osc)
     p.add_line(pattern_metro, env)  # Trigger envelope
     p.add_line(osc, voice_gain)
     p.add_line(env, voice_gain, outlet=0, inlet=1)
@@ -261,7 +272,7 @@ for pattern in patterns:
     p.add_line(pattern['voice'], main_mixer)
 
 # Global effects
-reverb = p.add_textbox('freeverb~ 0.8 0.5')
+reverb = p.add_textbox('comb~ 100 37 1. 0. 0.7')  # feedback comb, a reverb stand-in
 master_gain = p.add_textbox('*~')
 master_level = p.add_floatparam('master_level', initial=0.6)
 output = p.add_textbox('ezdac~')
@@ -271,9 +282,11 @@ p.add_line(reverb, master_gain)
 p.add_line(master_level, master_gain, outlet=0, inlet=1)
 p.add_line(master_gain, output)
 
-# Add global controls
-start_stop = p.add_message('start', 'stop')
-p.add_line(start_stop, metro)
+# Add global controls: non-zero starts the metro, 0 stops it
+start = p.add_message('1')
+stop = p.add_message('0')
+p.add_line(start, metro)
+p.add_line(stop, metro)
 
 p.optimize_layout()
 p.save()
@@ -287,24 +300,24 @@ p.save()
 # Create main patch
 main = Patcher('main-patch.maxpat')
 
-# Create subpatcher
-sub = main.add_subpatcher('voice-processor')
+# Create subpatcher; Max needs the "p" prefix
+voice = main.add_subpatcher('p voice-processor')
+sub = voice.subpatcher
 
-# Add objects to subpatcher
-sub_in = sub.add_textbox('inlet~')
-sub_filter = sub.add_textbox('biquad~')
-sub_out = sub.add_textbox('outlet~')
+# Add objects to subpatcher; inlet/outlet carry signals too
+sub_in = sub.add_textbox('inlet')
+sub_filter = sub.add_textbox('lores~ 1000 0.5')
+sub_out = sub.add_textbox('outlet')
 
 sub.add_line(sub_in, sub_filter)
 sub.add_line(sub_filter, sub_out)
 
-# Use subpatcher in main patch
+# Use the subpatcher box in the main patch
 osc = main.add_textbox('cycle~ 440')
-sub_instance = main.add_textbox('p voice-processor')
 output = main.add_textbox('dac~')
 
-main.add_line(osc, sub_instance)
-main.add_line(sub_instance, output)
+main.add_line(osc, voice)
+main.add_line(voice, output)
 ```
 
 ### Working with Data
@@ -313,17 +326,17 @@ main.add_line(sub_instance, output)
 # Create patch with data containers
 p = Patcher('data-patch.maxpat')
 
-# Table for wavetable synthesis
-wavetable_data = [math.sin(2 * math.pi * i / 512) for i in range(512)]
-wavetable = p.add_table('wavetable', data=wavetable_data)
+# Table of ints: MIDI notes of a C major arpeggio
+# (audio wavetables belong in a buffer~; see the Advanced Usage guide)
+table = p.add_table('arpeggio', array=[60, 64, 67, 72])
 
-# Collection for sequences
-sequence_data = [
-    "0, 60 127 500",
-    "1, 64 100 300",
-    "2, 67 110 400"
-]
-coll = p.add_coll('sequence', data=sequence_data)
+# Collection for sequences: index -> note, velocity, duration
+sequence_data = {
+    0: [60, 127, 500],
+    1: [64, 100, 300],
+    2: [67, 110, 400],
+}
+coll = p.add_coll('sequence', dictionary=sequence_data)
 
 # Dictionary for complex data
 dict_obj = p.add_dict('patch-data')

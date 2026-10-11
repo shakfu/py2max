@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.5.1, generated from 74e30c5 (working tree modified)
+py2max 0.6.0, generated from b3fd577 (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
@@ -40,6 +40,7 @@ import html
 import inspect
 import json
 import logging
+import numbers
 import os
 import re
 import struct
@@ -5908,7 +5909,6 @@ UNIVERSAL_BOX_ATTRS = frozenset(
         "presentation_rect",
         "presentation",
         "code",
-        "data",
         "table_data",
         "editor_rect",
         "embed",
@@ -5969,8 +5969,9 @@ SAVED_BOX_ATTRS: Dict[str, FrozenSet[str]] = {
     "pattr": frozenset({"restore"}),
     "table~": frozenset({"showeditor"}),
     "table": frozenset({"showeditor"}),
-    # written by add_coll / add_bpatcher / add_beap
+    # written by add_coll / add_dict / add_bpatcher / add_beap
     "coll": frozenset({"coll_data"}),
+    "dict": frozenset({"data"}),
     "bpatcher": frozenset({"viewvisibility", "extract"}),
 }
 
@@ -6036,6 +6037,15 @@ class BoxFactoryMixin(AbstractPatcher):
         assert box.id, f"object {box} must have an id"
         if self._validate_attrs:
             self._validate_box_attrs(box)
+        # a list (patching_rect=[...]) breaks layouts, which read rect.x
+        box.patching_rect = as_rect(box.patching_rect)
+        if not isinstance(box.patching_rect, Rect) or not all(
+            isinstance(v, numbers.Real) for v in box.patching_rect
+        ):
+            # e.g. add_message("start", "stop"): "stop" lands in patching_rect
+            raise TypeError(
+                f"patching_rect must be a Rect or 4 numbers, got {box.patching_rect!r}"
+            )
         auto_xy, self._auto_xy = getattr(self, "_auto_xy", None), None
         rect = box.patching_rect
         if auto_xy and rect is not None and tuple(rect[:2]) == auto_xy:
@@ -7571,6 +7581,8 @@ class BoxFactoryMixin(AbstractPatcher):
         **kwds: Any,
     ) -> "Box":
         """Add a table object with option to pre-populate from a py list."""
+        if "data" in kwds:  # would be saved as an ignored key, leaving it empty
+            raise TypeError("add_table() takes its values as array=, not data=")
 
         extra = {
             "embed": embed,
@@ -8883,7 +8895,7 @@ class VerticalLayoutManager(GridLayoutManager):
 class TopDownLayoutManager(VerticalLayoutManager):
     """Vertical grid that also aligns ports on ``optimize_layout()``.
 
-    Selected via ``Patcher(..., layout="topdown")``.
+    The default layout; also ``Patcher(..., layout="topdown")``.
     """
 
     align_ports = True
@@ -10157,8 +10169,9 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         parent: Parent patcher for hierarchical organization.
         classnamespace: Namespace for object classes (e.g., 'rnbo').
         reset_on_render: Whether to reset layout on render.
-        layout: Layout manager type ('horizontal', 'vertical', 'topdown', 'grid', 'flow', 'matrix', 'columnar').
-            'topdown' is 'vertical' that also aligns ports on ``optimize_layout()``.
+        layout: Layout manager type ('topdown' (default), 'horizontal', 'vertical',
+            'grid', 'flow', 'matrix', 'columnar'). 'topdown' is 'vertical' that
+            also aligns ports on ``optimize_layout()``.
         auto_hints: Whether to automatically generate object hints.
         auto_layout: Whether ``save()``/``save_as()`` runs ``optimize_layout()``
             first, when boxes or cords changed since the last layout. Defaults
@@ -10204,7 +10217,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         parent: Optional["AbstractPatcher"] = None,
         classnamespace: Optional[str] = None,
         reset_on_render: bool = True,
-        layout: str = "horizontal",
+        layout: str = "topdown",
         auto_hints: bool = False,
         auto_layout: Optional[bool] = None,
         openinpresentation: int = 0,
@@ -10460,10 +10473,11 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     ) -> "Patcher":
         """create a patcher instance from a dict"""
 
+        # a hand-placed patch must not be rearranged on save
         if save_to:
-            patcher = cls(save_to)
+            patcher = cls(save_to, auto_layout=False)
         else:
-            patcher = cls()
+            patcher = cls(auto_layout=False)
         # __init__ seeds every Max patcher attribute with a default (bglocked,
         # gridsize, autosave, dependency_cache, ...). Real Max subpatchers omit
         # a few of these -- notably ``autosave`` and ``dependency_cache``, which

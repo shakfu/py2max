@@ -42,11 +42,21 @@ def test_save_lays_out(tmp_path):
 
 
 def test_off_by_default(tmp_path):
-    path = tmp_path / "manual.maxpat"
-    p = Patcher(path, layout="topdown", **STRICT)
+    path = tmp_path / "default.maxpat"
+    p = Patcher(path, **STRICT)
     _chain(p)
     p.save()
     assert len(set(_saved_xs(path))) == 2  # ezdac~ stays at its anchor
+
+
+def test_default_is_topdown_and_optimize_aligns(tmp_path):
+    path = tmp_path / "optimized.maxpat"
+    p = Patcher(path, **STRICT)
+    assert type(p._layout_mgr).__name__ == "TopDownLayoutManager"
+    _chain(p)
+    p.optimize_layout()
+    p.save()
+    assert _saved_xs(path) == [48.0, 48.0, 48.0]
 
 
 def test_unchanged_patch_is_not_laid_out_again(tmp_path, monkeypatch):
@@ -102,6 +112,16 @@ def test_loaded_patch_is_not_laid_out(tmp_path, monkeypatch):
     _chain(p)
     p.save()
     q = Patcher.from_file(path)
+    assert q._auto_layout is False
     calls = _spy(monkeypatch)
     q.save()
     assert calls == []
+
+
+def test_loaded_subpatcher_is_not_laid_out(tmp_path):
+    path = tmp_path / "nested.maxpat"
+    p = Patcher(path, **STRICT)
+    _chain(p.add_subpatcher("p voice").subpatcher)
+    p.save()
+    sub = Patcher.from_file(path)._boxes[0].subpatcher
+    assert sub._auto_layout is False

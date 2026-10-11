@@ -99,9 +99,13 @@ class TestCoreCoverage:
         # Mock the layout manager to have a different box_height
         p._layout_mgr.box_height = 22.0
 
-        # Add comment - should use layout manager's box_height as fallback
-        comment = p.add_comment("test comment", box)
-        assert comment is not None
+        # An associated comment on a class with no curated defaults takes the
+        # layout manager's box_height
+        p.add_associated_comment(box, "test comment")
+        p._process_pending_comments()
+        comment = next(b for b in p._boxes if b.maxclass == "comment")
+        assert comment.text == "test comment"
+        assert comment.patching_rect.h == 22.0
 
     def test_box_oid_property_with_id(self):
         """Test Box.oid property when id exists."""
@@ -149,10 +153,10 @@ class TestCoreCoverage:
     def test_box_get_object_name_newobj_with_text(self):
         """Test Box._get_object_name for newobj with text."""
         box = Box("newobj", patching_rect=Rect(0, 0, 100, 100))
-        box._kwds = {"text": "osc~ 440"}
+        box._kwds = {"text": "cycle~ 440"}
 
         name = box._get_object_name()
-        assert name == "osc~"
+        assert name == "cycle~"
 
     def test_box_get_object_name_newobj_with_empty_text(self):
         """Test Box._get_object_name for newobj with empty text."""
@@ -172,7 +176,7 @@ class TestCoreCoverage:
 
     def test_box_get_object_name_regular_maxclass(self):
         """Test Box._get_object_name for regular maxclass."""
-        box = Box("osc~", patching_rect=Rect(0, 0, 100, 100))
+        box = Box("cycle~", patching_rect=Rect(0, 0, 100, 100))
 
         name = box._get_object_name()
-        assert name == "osc~"
+        assert name == "cycle~"

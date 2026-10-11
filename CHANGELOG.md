@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [0.6.0]
+
+The default layout is now `"topdown"`: a vertical grid whose `optimize_layout()` sorts boxes into signal order and aligns ports.
+
+Upgrading from 0.5.x:
+
+- A patch that names no layout is placed top to bottom instead of left to right. `Patcher(layout="horizontal")` restores the 0.5 placement. Named layouts are unchanged. `py2max new --layout` defaults to `topdown` too, and `new --template stereo` now lays out its patch.
 
 ### Added
 
@@ -8,11 +14,46 @@
 
 - `layout="topdown"`: the `"vertical"` grid with `align_ports` on by default, so `optimize_layout()` aligns without the flag. `optimize_layout(align_ports=False)` still turns it off. Also a `py2max new --layout` choice.
 
-- `Patcher(auto_layout=True)`: `save()`/`save_as()` runs `optimize_layout()` first, but only if boxes or cords changed since the last layout. A blanket re-run would discard an explicit `optimize_layout(...)` call's options, and flow recomputes every position. Moves made by hand after a layout are kept. Subpatchers inherit the setting; `to_dict()`/`to_json()` never lay out.
+- `Patcher(auto_layout=True)`: `save()`/`save_as()` runs `optimize_layout()` first, but only if boxes or cords changed since the last layout. A blanket re-run would discard an explicit `optimize_layout(...)` call's options, and flow recomputes every position. Moves made by hand after a layout are kept. Off by default, so `save()` never moves boxes unless asked. Subpatchers inherit the setting; patches loaded from a file have it off; `to_dict()`/`to_json()` never lay out.
 
   ```python
   p = Patcher("patch.maxpat", layout="topdown", auto_layout=True)
   ```
+
+### Fixed
+
+- Every `add_*` method raises `TypeError` when `patching_rect` is not 4 numbers. A misplaced positional argument used to be saved as the box's rect: `add_message("start", "stop")` stored the string `"stop"`, and `add_comment("note", box)` stored the box.
+
+- `add_table(data=[...])` saved an empty table. The values go in `array=`, and `data` was on the attribute whitelist for every object, so the stray key passed without a warning. `add_table` now raises `TypeError` for `data=`. `data` is now a known attribute only for `dict`, so `add_coll(data=...)` (it takes `dictionary=`) warns as an unknown attribute. The examples and docs used both forms, so their tables and colls were empty.
+
+- `optimize_layout()` raised `AttributeError: 'list' object has no attribute 'y'` on a patch of two or more boxes when one was added with `patching_rect=[x, y, w, h]`. The list was stored as given, and the overlap pass reads `rect.y`. Loaded patches were already converted; `add_box` now converts too.
+
+### Examples and docs
+
+- The examples (`tests/examples/`) and the user guide used objects that do not exist in Max: `crossfade~`, `freeverb~`, `reverb~`, `chorus~`, `compressor~`, `eq~`, `inlet~`, `outlet~`. These are now real objects (`svf~`, `lores~`, `comb~`, `omx.comp~`, `selector~`, `tapin~`/`tapout~`, `inlet`/`outlet`).
+  - `biquad~` was given a frequency, Q or filter type, though it takes 5 coefficients.
+  - `delay~` was given a time in ms, though its arguments are in samples.
+  - Delay feedback now goes through `tapin~`/`tapout~`, since MSP rejects a signal loop through `delay~`.
+
+- Several example patches could not make sound:
+  - The custom and modular synths never triggered their `adsr~`. `CustomPatcher.add_gate` now adds a `[1(` (note-on) and a `[0(` (note-off) to each one.
+  - The generative tutorial sent `start` to `metro`, which has no such message. Its stop message was never created: `add_message("start", "stop")` passed `"stop"` as the rect. Both are now `[1(` and `[0(`.
+  - The custom synth wired the wrong boxes into its oscillator mixer. It also sent the envelope into a filter inlet that does not exist; the envelope now scales a `*~`.
+  - The wavetable example read `wave~` from `table` objects. `wave~` reads a `buffer~`, so the example now writes WAV files that `buffer~` loads.
+  - The sequencer's `coll`s were empty, and its `select` was never connected.
+
+- Subpatcher examples now wire the `add_subpatcher` box itself, with the `p` prefix Max needs. Before, they wired a second, empty `p` box.
+
+- The matrix mixer is now an abstraction, `matrix-mixer.maxpat`: 4 signal inlets, a 5th inlet for `src dst gain` messages, and 4 outlets. A host patch uses it by file name.
+
+- `svg_preview_demo.py` imported `export_svg` from `py2max`; it now imports from `py2max.export`.
+
+### Tests
+
+- Test patches are built with `validate_connections=True` and use only cords Max accepts. Tests about invalid input are the exception.
+  - `metro` no longer feeds `cycle~` or `scope~`, nothing is wired out of `scope~`, and `gain~` no longer feeds `+`.
+  - The random-graph layout tests sample cords until the requested number are valid.
+  - The Pure Data `osc~` is now `cycle~`.
 
 ### Removed
 

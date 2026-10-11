@@ -13,6 +13,7 @@ core class.
 from __future__ import annotations
 
 import inspect
+import numbers
 import re
 import warnings
 from typing import (
@@ -37,7 +38,7 @@ from ..log import get_logger
 from ..utils import kwds_filter, parse_attr_args
 from .abstract import AbstractBox, AbstractPatcher, AbstractPatchline
 from .box import Box
-from .common import Rect, box_width_for
+from .common import Rect, as_rect, box_width_for
 from .patchline import Patchline
 from .props import TextboxProps
 
@@ -120,7 +121,6 @@ UNIVERSAL_BOX_ATTRS = frozenset(
         "presentation_rect",
         "presentation",
         "code",
-        "data",
         "table_data",
         "editor_rect",
         "embed",
@@ -181,8 +181,9 @@ SAVED_BOX_ATTRS: Dict[str, FrozenSet[str]] = {
     "pattr": frozenset({"restore"}),
     "table~": frozenset({"showeditor"}),
     "table": frozenset({"showeditor"}),
-    # written by add_coll / add_bpatcher / add_beap
+    # written by add_coll / add_dict / add_bpatcher / add_beap
     "coll": frozenset({"coll_data"}),
+    "dict": frozenset({"data"}),
     "bpatcher": frozenset({"viewvisibility", "extract"}),
 }
 
@@ -250,6 +251,15 @@ class BoxFactoryMixin(AbstractPatcher):
         assert box.id, f"object {box} must have an id"
         if self._validate_attrs:
             self._validate_box_attrs(box)
+        # a list (patching_rect=[...]) breaks layouts, which read rect.x
+        box.patching_rect = as_rect(box.patching_rect)
+        if not isinstance(box.patching_rect, Rect) or not all(
+            isinstance(v, numbers.Real) for v in box.patching_rect
+        ):
+            # e.g. add_message("start", "stop"): "stop" lands in patching_rect
+            raise TypeError(
+                f"patching_rect must be a Rect or 4 numbers, got {box.patching_rect!r}"
+            )
         auto_xy, self._auto_xy = getattr(self, "_auto_xy", None), None
         rect = box.patching_rect
         if auto_xy and rect is not None and tuple(rect[:2]) == auto_xy:
@@ -1790,6 +1800,8 @@ class BoxFactoryMixin(AbstractPatcher):
         **kwds: Any,
     ) -> "Box":
         """Add a table object with option to pre-populate from a py list."""
+        if "data" in kwds:  # would be saved as an ignored key, leaving it empty
+            raise TypeError("add_table() takes its values as array=, not data=")
 
         extra = {
             "embed": embed,

@@ -56,12 +56,13 @@ Keep a single test module that exercises the deprecated keywords on purpose and 
 
 Exit: zero deprecation warnings in `make test`; one module tests the deprecated path.
 
-## Step 3: `topdown` becomes the default
+## Step 3: `topdown` becomes the default (done, ahead of step 1)
 
 - `Patcher()` with no `layout` builds `topdown`. Named layouts are unchanged.
 - `py2max new --layout` defaults to `topdown`.
 - Subpatchers (`Patcher(parent=self)`) default to `topdown` too.
 - CHANGELOG upgrade note: placement changes for every patch that names no layout. `layout="horizontal"` restores the old behaviour.
+- `auto_layout` stays off by default for every layout, so `save()` never moves boxes unless asked.
 
 Evidence on risk: an earlier trial set the default to `"vertical"`, and the full suite passed unchanged. Few tests assert default positions. The risk is to user scripts, so the release note carries it.
 
@@ -75,7 +76,6 @@ At least one release after step 2. Remove the six keywords, the `Patcher` fields
 
 ## Open decisions
 
-1. **Order of steps 2 and 3.** `topdown` can ship as the default before the deprecation, since the two are independent. Doing step 2 first means every in-repo call site is explicit when the default flips.
-2. **Should subpatchers inherit the parent's layout name** rather than take the default? This makes `Patcher(layout="flow")` lay out its subpatchers as flow too.
-3. **`configure(**options)` on managers**, so that `optimize_layout(**options)` passes any layout-time option through. Deferred. It needs a rule that rejects options read as boxes are added (`flow_direction`, `pad`), and unknown options must raise.
-4. **Version numbers.** The library is pre-1.0, so a minor bump may break. Suggested: step 1 with the unreleased `align_ports`/`topdown`/`auto_layout` work as 0.6.0, then 0.7.0, 0.8.0 and 0.9.0.
+1. **Should subpatchers inherit the parent's layout name** rather than take the default? This makes `Patcher(layout="flow")` lay out its subpatchers as flow too.
+2. **`configure(**options)` on managers**, so that `optimize_layout(**options)` passes any layout-time option through. Deferred. It needs a rule that rejects options read as boxes are added (`flow_direction`, `pad`), and unknown options must raise.
+3. **Version numbers.** The library is pre-1.0, so a minor bump may break. 0.6.0 shipped `align_ports`, `topdown` and step 3. Suggested: steps 1, 2 and 4 as 0.7.0, 0.8.0 and 0.9.0.

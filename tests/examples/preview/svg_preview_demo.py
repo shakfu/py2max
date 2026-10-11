@@ -12,7 +12,8 @@ Features demonstrated:
 
 from pathlib import Path
 import tempfile
-from py2max import Patcher, export_svg
+from py2max import Patcher
+from py2max.export import export_svg
 
 
 def demo_basic_preview():
@@ -61,7 +62,7 @@ def demo_complex_preview():
     # Mix and output
     mix = p.add_textbox("+~")
     gain = p.add_textbox("gain~ 0.5")
-    reverb = p.add_textbox("reverb~")
+    reverb = p.add_textbox("comb~ 100 37 1. 0. 0.7")  # feedback comb, a reverb stand-in
     dac = p.add_textbox("ezdac~")
 
     # Connections

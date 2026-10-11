@@ -14,15 +14,16 @@ from py2max import Patcher
 # Create main patch
 main = Patcher('main.maxpat')
 
-# Create subpatcher
-sub = main.add_subpatcher('voice')
+# Create subpatcher; Max needs the "p" prefix
+voice = main.add_subpatcher('p voice')
+sub = voice.subpatcher
 
-# Add objects to subpatcher
-inlet = sub.add_textbox('inlet~')
-filter_obj = sub.add_textbox('biquad~ 1000 0.707')
+# Add objects to subpatcher; inlet/outlet carry signals too
+inlet = sub.add_textbox('inlet')
+filter_obj = sub.add_textbox('lores~ 1000 0.5')
 env = sub.add_textbox('adsr~ 10 100 0.3 500')
 vca = sub.add_textbox('*~')
-outlet = sub.add_textbox('outlet~')
+outlet = sub.add_textbox('outlet')
 
 # Connect subpatcher internals
 sub.add_line(inlet, filter_obj)
@@ -30,13 +31,12 @@ sub.add_line(filter_obj, vca)
 sub.add_line(env, vca, outlet=0, inlet=1)
 sub.add_line(vca, outlet)
 
-# Use subpatcher in main patch
+# Use the subpatcher box in the main patch
 osc = main.add_textbox('cycle~ 440')
-voice_instance = main.add_textbox('p voice')
 output = main.add_textbox('dac~')
 
-main.add_line(osc, voice_instance)
-main.add_line(voice_instance, output)
+main.add_line(osc, voice)
+main.add_line(voice, output)
 
 main.save()
 ```
@@ -44,31 +44,35 @@ main.save()
 ### Nested Subpatchers
 
 ``` python
+from py2max.core.common import Rect
+
 # Create deeply nested structure
 main = Patcher('complex.maxpat')
 
 # Level 1 subpatcher
-synth = main.add_subpatcher('synthesizer')
+synth_box = main.add_subpatcher('p synthesizer')
+synth = synth_box.subpatcher
 
 # Level 2 subpatcher inside synth
-oscillator_bank = synth.add_subpatcher('oscillator-bank')
+bank_box = synth.add_subpatcher('p oscillator-bank')
+oscillator_bank = bank_box.subpatcher
 
-# Add objects to nested subpatcher
+# Add objects to nested subpatcher. Max numbers outlets by x, so each
+# outlet sits right of the previous one.
 for i in range(4):
     osc = oscillator_bank.add_textbox(f'cycle~ {220 * (i + 1)}')
-    out = oscillator_bank.add_textbox(f'outlet~ {i}')
+    out = oscillator_bank.add_textbox('outlet', patching_rect=Rect(48 + 100 * i, 300, 30, 30))
     oscillator_bank.add_line(osc, out)
 
-# Use nested subpatchers
-bank_instance = synth.add_textbox('p oscillator-bank')
+# Mix the bank's outlets; signals into one inlet sum
 mixer = synth.add_textbox('+~')
-synth_out = synth.add_textbox('outlet~')
-
-# Connect multiple outlets
+synth_out = synth.add_textbox('outlet')
 for i in range(4):
-    synth.add_line(bank_instance, mixer, outlet=i, inlet=0)
-
+    synth.add_line(bank_box, mixer, outlet=i, inlet=0)
 synth.add_line(mixer, synth_out)
+
+output = main.add_textbox('dac~')
+main.add_line(synth_box, output)
 ```
 
 ### Encapsulating a Selection
@@ -77,54 +81,89 @@ synth.add_line(mixer, synth_out)
 
 ``` python
 p = Patcher('voice.maxpat')
-metro = p.add_textbox('metro 500')
-osc = p.add_textbox('cycle~ 440')
+freq = p.add_textbox('sig~ 440')
+osc = p.add_textbox('cycle~')
 gain = p.add_textbox('gain~')
 dac = p.add_textbox('ezdac~')
-p.add_line(metro, osc)
+p.add_line(freq, osc)
 p.add_line(osc, gain)
 p.add_line(gain, dac)
 
 # Wrap the middle pair; the boundary wires become an inlet and an outlet.
 sub_box = p.encapsulate([osc, gain], text='p dsp')
-# Parent is now: metro -> p dsp -> dac
+# Parent is now: sig~ -> p dsp -> ezdac~
 ```
 
 Connections wholly inside the selection move into the subpatcher; connections wholly outside it are untouched. Ports are de-duplicated by source.
 
 ## Data Containers and Persistence
 
-### Working with Tables
+### Buffers and Tables
+
+A `buffer~` holds audio, so a wavetable computed in Python goes into a WAV file beside the patch; `buffer~ <name> <file>` loads it when the patch opens. A `table` holds ints, here the semitone steps of a scale.
 
 ``` python
 import math
+import struct
+import wave
+from pathlib import Path
 
-p = Patcher('wavetable-synth.maxpat')
 
-# Create wavetable data
-wavetable_size = 512
-sine_data = [math.sin(2 * math.pi * i / wavetable_size) for i in range(wavetable_size)]
-saw_data = [2 * (i / wavetable_size) - 1 for i in range(wavetable_size)]
+def write_wavetable(path, samples, rate=44100):
+    """Write ``samples`` (floats in -1..1) as a mono 16-bit WAV file."""
+    with wave.open(str(path), 'wb') as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(rate)
+        f.writeframes(b''.join(struct.pack('<h', round(x * 32767)) for x in samples))
 
-# Create tables
-sine_table = p.add_table('sine_wave', data=sine_data)
-saw_table = p.add_table('saw_wave', data=saw_data)
 
-# Wavetable oscillator
+path = Path('wavetable-synth.maxpat')
+p = Patcher(path)
+
+# Wavetables: a buffer~ holds audio, so write each one as a WAV file
+# beside the patch; buffer~ loads it when the patch opens.
+size = 512
+sine = [math.sin(2 * math.pi * i / size) for i in range(size)]
+saw = [2 * (i / size) - 1 for i in range(size)]
+for name, samples in (('sine_wave', sine), ('saw_wave', saw)):
+    write_wavetable(path.with_name(f'{name}.wav'), samples)
+    p.add_textbox(f'buffer~ {name} {name}.wav')
+
+# A table holds ints: semitone offsets of a major scale, read by index
+scale = p.add_table('scale', array=[0, 2, 4, 5, 7, 9, 11, 12])
+
+# Step through the scale
+metro = p.add_textbox('metro 250')
+step = p.add_textbox('counter 0 7')
+root = p.add_textbox('+ 60')
+mtof = p.add_textbox('mtof')
+p.add_line(metro, step)
+p.add_line(step, scale)
+p.add_line(scale, root)
+p.add_line(root, mtof)
+
+# Wavetable oscillator: phasor~ ramps 0-1 through each wave~ table
 phasor = p.add_textbox('phasor~ 440')
-wave_select = p.add_floatparam('wave_morph', initial=0.0)
-crossfade = p.add_textbox('crossfade~')
-
-# Table lookups
 sine_lookup = p.add_textbox('wave~ sine_wave')
 saw_lookup = p.add_textbox('wave~ saw_wave')
-
-# Connect wavetable synthesis
+p.add_line(mtof, phasor)
 p.add_line(phasor, sine_lookup)
 p.add_line(phasor, saw_lookup)
-p.add_line(sine_lookup, crossfade, outlet=0, inlet=0)
-p.add_line(saw_lookup, crossfade, outlet=0, inlet=1)
-p.add_line(wave_select, crossfade, outlet=0, inlet=2)
+
+# selector~ 2: an int picks input 1 or 2 (0 is off)
+wave_select = p.add_intparam('wave_select', initial=1)
+selector = p.add_textbox('selector~ 2 1')
+p.add_line(wave_select, selector)
+p.add_line(sine_lookup, selector, outlet=0, inlet=1)
+p.add_line(saw_lookup, selector, outlet=0, inlet=2)
+
+# Output
+level = p.add_textbox('*~ 0.2')
+dac = p.add_textbox('ezdac~')
+p.add_line(selector, level)
+p.add_line(level, dac)
+p.add_line(level, dac, inlet=1)
 
 p.save()
 ```
@@ -134,40 +173,34 @@ p.save()
 ``` python
 p = Patcher('sequencer.maxpat')
 
-# Create sequence data
-melody_sequence = [
-    "0, 60 100 250",   # note, velocity, duration
-    "1, 64 90 250",
-    "2, 67 110 500",
-    "3, 60 80 250",
-    "4, 69 100 750"
-]
+# Create sequence data: index -> value
+melody_sequence = {
+    0: [60, 100, 250],  # note, velocity, duration
+    1: [64, 90, 250],
+    2: [67, 110, 500],
+    3: [60, 80, 250],
+    4: [69, 100, 750],
+}
 
-rhythm_sequence = [
-    "0, kick",
-    "1, snare",
-    "2, kick",
-    "3, hihat",
-    "4, kick"
-]
+rhythm_sequence = {0: 'kick', 1: 'snare', 2: 'kick', 3: 'hihat', 4: 'kick'}
 
-# Create collections
-melody_coll = p.add_coll('melody', data=melody_sequence)
-rhythm_coll = p.add_coll('rhythm', data=rhythm_sequence)
+# Create collections; an int in the left inlet outputs that index's value
+melody_lookup = p.add_coll('melody', dictionary=melody_sequence)
+rhythm_lookup = p.add_coll('rhythm', dictionary=rhythm_sequence)
 
 # Sequence player
 metro = p.add_textbox('metro 500')
 counter = p.add_textbox('counter 0 4')
 
 # Melody player
-melody_lookup = p.add_textbox('coll melody')
 note_unpack = p.add_textbox('unpack i i i')
 mtof = p.add_textbox('mtof')
 osc = p.add_textbox('cycle~')
+level = p.add_textbox('*~ 0.2')
+dac = p.add_textbox('ezdac~')
 
 # Rhythm player
-rhythm_lookup = p.add_textbox('coll rhythm')
-drum_select = p.add_textbox('select kick snare hihat')
+drums = p.add_textbox('select kick snare hihat')
 
 # Connect sequencer
 p.add_line(metro, counter)
@@ -178,6 +211,12 @@ p.add_line(counter, rhythm_lookup)
 p.add_line(melody_lookup, note_unpack)
 p.add_line(note_unpack, mtof, outlet=0, inlet=0)
 p.add_line(mtof, osc)
+p.add_line(osc, level)
+p.add_line(level, dac)
+p.add_line(level, dac, inlet=1)
+
+# Rhythm chain: one outlet per drum name
+p.add_line(rhythm_lookup, drums)
 
 p.save()
 ```
@@ -224,7 +263,7 @@ source = p.add_textbox('cycle~ 440')
 # Connect one source to multiple destinations
 destinations = []
 for i in range(6):
-    dest = p.add_textbox(f'biquad~ {200 + i * 300} 0.707')
+    dest = p.add_textbox(f'svf~ {200 + i * 300} 0.5')
     destinations.append(dest)
 
     # Fan out from source
@@ -233,7 +272,7 @@ for i in range(6):
 # Collect all processed signals
 collector = p.add_textbox('+~')
 for dest in destinations:
-    p.add_line(dest, collector)
+    p.add_line(dest, collector, outlet=2)  # svf~ band-pass
 
 p.optimize_layout()
 p.save()
@@ -247,73 +286,121 @@ p = Patcher('feedback-delay.maxpat')
 # Input
 input_obj = p.add_textbox('adc~')
 
-# Delay line with feedback
-delay = p.add_textbox('delay~ 500')
+# Delay line with feedback: tapin~/tapout~, since a signal loop
+# through delay~ is not allowed
+tapin = p.add_textbox('tapin~ 1000')
+tapout = p.add_textbox('tapout~ 500')  # ms
 feedback_gain = p.add_floatparam('feedback', initial=0.3)
 feedback_mult = p.add_textbox('*~')
 input_mix = p.add_textbox('+~')
 
 # Create feedback loop
 p.add_line(input_obj, input_mix)
-p.add_line(input_mix, delay)
-p.add_line(delay, feedback_mult)
+p.add_line(input_mix, tapin)
+p.add_line(tapin, tapout)
+p.add_line(tapout, feedback_mult)
 p.add_line(feedback_gain, feedback_mult, outlet=0, inlet=1)
 p.add_line(feedback_mult, input_mix, outlet=0, inlet=1)  # Feedback
 
 # Output
 output = p.add_textbox('dac~')
-p.add_line(delay, output)
+p.add_line(tapout, output)
 
 p.save()
 ```
 
 ### Matrix Routing
 
+A matrix mixer as an abstraction: a patcher file used as an object by its file name. Its `inlet` and `outlet` objects become the object's ports, numbered left to right by x.
+
 ``` python
-p = Patcher('matrix-mixer.maxpat', layout="grid")
+from py2max import Patcher
+from py2max.core.common import Rect
 
-# Create 4x4 matrix mixer
-sources = []
-destinations = []
 
-# Create sources
-for i in range(4):
-    source = p.add_textbox(f'cycle~ {220 * (i + 1)}')
-    sources.append(source)
+def create_matrix_mixer(n=4):
+    """Create an n x n matrix mixer abstraction, ``matrix-mixer.maxpat``.
 
-# Create destinations
-for i in range(4):
-    dest = p.add_textbox(f'dac~ {i + 1}')
-    destinations.append(dest)
+    Inlets 1-n take signals, inlet n+1 takes ``src dst gain`` messages
+    (0-based indices); outlets 1-n carry the mixes. Gains start as the
+    identity, so each input passes to the matching output.
+    """
+    p = Patcher("matrix-mixer.maxpat")
+    col = 120  # x spacing; Max numbers inlets and outlets by x
 
-# Create matrix of gain controls
-matrix = {}
-for src_idx in range(4):
-    for dst_idx in range(4):
-        # Gain control
-        gain = p.add_floatparam(f'gain_{src_idx}_{dst_idx}', initial=0.0)
-        mult = p.add_textbox('*~')
+    def rect(x, y, w=60.0):
+        return Rect(x, y, w, 22.0)
 
-        # Store for routing
-        matrix[(src_idx, dst_idx)] = {'gain': gain, 'mult': mult}
+    # Signal inlets and the control inlet, left to right
+    inlets = [
+        p.add_textbox("inlet", patching_rect=rect(40 + col * i, 20, 30))
+        for i in range(n)
+    ]
+    control = p.add_textbox("inlet", patching_rect=rect(40 + col * n, 20, 30))
 
-        # Connect source to multiplier
-        p.add_line(sources[src_idx], mult)
-        p.add_line(gain, mult, outlet=0, inlet=1)
+    # "src dst gain": route by src, then by dst, leaving the gain
+    indices = " ".join(str(i) for i in range(n))
+    by_src = p.add_textbox(
+        f"route {indices}", patching_rect=rect(40 + col * n, 60, 100)
+    )
+    p.add_line(control, by_src)
 
-# Create summing for each destination
-for dst_idx in range(4):
-    summer = p.add_textbox('+~')
+    # Gain matrix: one *~ per (src, dst), in a column per source
+    mults = {}
+    for src in range(n):
+        by_dst = p.add_textbox(
+            f"route {indices}", patching_rect=rect(40 + col * n, 100 + 30 * src, 100)
+        )
+        p.add_line(by_src, by_dst, outlet=src)
+        for dst in range(n):
+            gain = 1.0 if src == dst else 0.0
+            mult = p.add_textbox(
+                f"*~ {gain}", patching_rect=rect(40 + col * src, 100 + 40 * dst)
+            )
+            p.add_line(inlets[src], mult)
+            p.add_line(by_dst, mult, outlet=dst, inlet=1)
+            mults[src, dst] = mult
 
-    # Sum all sources for this destination
-    for src_idx in range(4):
-        p.add_line(matrix[(src_idx, dst_idx)]['mult'], summer)
+    # Sum each destination's column of gains into its outlet
+    for dst in range(n):
+        summer = p.add_textbox("+~", patching_rect=rect(40 + col * dst, 120 + 40 * n))
+        outlet = p.add_textbox(
+            "outlet", patching_rect=rect(40 + col * dst, 160 + 40 * n, 30)
+        )
+        for src in range(n):
+            p.add_line(mults[src, dst], summer)
+        p.add_line(summer, outlet)
 
-    # Connect to destination
-    p.add_line(summer, destinations[dst_idx])
+    p.save()
+    return p
 
-p.optimize_layout()
-p.save()
+
+def create_matrix_mixer_host(n=4):
+    """Use the ``matrix-mixer`` abstraction; save it beside this patch."""
+    create_matrix_mixer(n)
+    p = Patcher("matrix-mixer-host.maxpat")
+
+    # An abstraction is an object named after its file. py2max cannot read
+    # its port counts, so state them.
+    mixer = p.add_textbox("matrix-mixer", numinlets=n + 1, numoutlets=n)
+    channels = " ".join(str(i + 1) for i in range(n))
+    dac = p.add_textbox(f"dac~ {channels}")
+
+    for i in range(n):
+        osc = p.add_textbox(f"cycle~ {220 * (i + 1)}")
+        p.add_line(osc, mixer, inlet=i)
+        p.add_line(mixer, dac, outlet=i, inlet=i)
+
+    # Send source 0 to destination 1 at half gain
+    msg = p.add_message("0 1 0.5")
+    p.add_line(msg, mixer, inlet=n)
+
+    p.optimize_layout()
+    p.save()
+    return p
+
+
+create_matrix_mixer_host()
 ```
 
 ## Error Handling and Robustness
@@ -491,7 +578,8 @@ class CustomPatcher(Patcher):
         """Add a lowpass filter with controls."""
         freq_ctrl = self.add_floatparam(f'freq_{len(self._boxes)}', initial=frequency)
         res_ctrl = self.add_floatparam(f'res_{len(self._boxes)}', initial=resonance)
-        filter_obj = self.add_textbox('biquad~ lowpass')
+        # lores~ inlets: signal, cutoff frequency, resonance (0-1)
+        filter_obj = self.add_textbox(f'lores~ {frequency} {resonance}')
 
         # Connect controls
         self.add_line(freq_ctrl, filter_obj, outlet=0, inlet=1)
@@ -516,6 +604,21 @@ class CustomPatcher(Patcher):
 
         return env, (a_ctrl, d_ctrl, s_ctrl, r_ctrl)
 
+    def add_gate(self, envelope):
+        """Add [1( and [0( to gate ``envelope``: note-on and note-off."""
+        note_on = self.add_message('1')
+        note_off = self.add_message('0')
+        self.add_line(note_on, envelope)
+        self.add_line(note_off, envelope)
+        return note_on, note_off
+
+    def add_vca(self, signal, envelope):
+        """Scale ``signal`` by ``envelope``; returns the ``*~``."""
+        vca = self.add_textbox('*~')
+        self.add_line(signal, vca)
+        self.add_line(envelope, vca, outlet=0, inlet=1)
+        return vca
+
 # Use custom patcher
 p = CustomPatcher('custom-synth.maxpat')
 
@@ -524,7 +627,10 @@ filter_obj, freq_ctrl, res_ctrl = p.add_lowpass_filter(2000, 0.5)
 env, env_ctrls = p.add_envelope_generator(5, 50, 0.7, 200)
 
 p.add_line(osc, filter_obj)
-p.add_line(env, filter_obj, outlet=0, inlet=3)  # Envelope to filter
+vca = p.add_vca(filter_obj, env)  # envelope scales the filtered signal
+
+# Gate the envelope: non-zero starts the attack, 0 the release
+p.add_gate(env)
 
 p.save()
 ```

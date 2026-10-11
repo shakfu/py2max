@@ -3,46 +3,77 @@
 Advanced Usage: Data Containers
 ================================
 
-Examples demonstrating tables, collections, and dictionaries.
+Examples demonstrating buffers, tables, collections, and dictionaries.
 
 This example is used in:
 - docs/user_guide/advanced_usage.md
 """
 
 import math
+import struct
+import wave
+from pathlib import Path
+
 from py2max import Patcher
 
 
+def write_wavetable(path, samples, rate=44100):
+    """Write ``samples`` (floats in -1..1) as a mono 16-bit WAV file."""
+    with wave.open(str(path), "wb") as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(rate)
+        f.writeframes(b"".join(struct.pack("<h", round(x * 32767)) for x in samples))
+
+
 def create_wavetable_synth():
-    """Create a wavetable synthesizer with tables."""
-    p = Patcher("wavetable-synth.maxpat")
+    """Create a wavetable synthesizer that plays a scale."""
+    path = Path("wavetable-synth.maxpat")
+    p = Patcher(path)
 
-    # Create wavetable data
-    wavetable_size = 512
-    sine_data = [
-        math.sin(2 * math.pi * i / wavetable_size) for i in range(wavetable_size)
-    ]
-    saw_data = [2 * (i / wavetable_size) - 1 for i in range(wavetable_size)]
+    # Wavetables: a buffer~ holds audio, so write each one as a WAV file
+    # beside the patch; buffer~ loads it when the patch opens.
+    size = 512
+    sine = [math.sin(2 * math.pi * i / size) for i in range(size)]
+    saw = [2 * (i / size) - 1 for i in range(size)]
+    for name, samples in (("sine_wave", sine), ("saw_wave", saw)):
+        write_wavetable(path.with_name(f"{name}.wav"), samples)
+        p.add_textbox(f"buffer~ {name} {name}.wav")
 
-    # Create tables
-    p.add_table("sine_wave", data=sine_data)
-    p.add_table("saw_wave", data=saw_data)
+    # A table holds ints: semitone offsets of a major scale, read by index
+    scale = p.add_table("scale", array=[0, 2, 4, 5, 7, 9, 11, 12])
 
-    # Wavetable oscillator
+    # Step through the scale
+    metro = p.add_textbox("metro 250")
+    step = p.add_textbox("counter 0 7")
+    root = p.add_textbox("+ 60")
+    mtof = p.add_textbox("mtof")
+    p.add_line(metro, step)
+    p.add_line(step, scale)
+    p.add_line(scale, root)
+    p.add_line(root, mtof)
+
+    # Wavetable oscillator: phasor~ ramps 0-1 through each wave~ table
     phasor = p.add_textbox("phasor~ 440")
-    wave_select = p.add_floatparam("wave_morph", initial=0.0)
-    crossfade = p.add_textbox("crossfade~")
-
-    # Table lookups
     sine_lookup = p.add_textbox("wave~ sine_wave")
     saw_lookup = p.add_textbox("wave~ saw_wave")
-
-    # Connect wavetable synthesis
+    p.add_line(mtof, phasor)
     p.add_line(phasor, sine_lookup)
     p.add_line(phasor, saw_lookup)
-    p.add_line(sine_lookup, crossfade, outlet=0, inlet=0)
-    p.add_line(saw_lookup, crossfade, outlet=0, inlet=1)
-    p.add_line(wave_select, crossfade, outlet=0, inlet=2)
+
+    # selector~ 2: an int picks input 1 or 2 (0 is off)
+    wave_select = p.add_intparam("wave_select", initial=1)
+    selector = p.add_textbox("selector~ 2 1")
+    p.add_line(wave_select, selector)
+    p.add_line(sine_lookup, selector, outlet=0, inlet=1)
+    p.add_line(saw_lookup, selector, outlet=0, inlet=2)
+
+    # Output
+    level = p.add_textbox("*~ 0.2")
+    dac = p.add_textbox("ezdac~")
+    p.add_line(selector, level)
+    p.add_line(level, dac)
+    p.add_line(level, dac, inlet=1)
 
     p.save()
     return p
@@ -52,34 +83,34 @@ def create_sequencer():
     """Create a sequencer using collections."""
     p = Patcher("sequencer.maxpat")
 
-    # Create sequence data
-    melody_sequence = [
-        "0, 60 100 250",  # note, velocity, duration
-        "1, 64 90 250",
-        "2, 67 110 500",
-        "3, 60 80 250",
-        "4, 69 100 750",
-    ]
+    # Create sequence data: index -> value
+    melody_sequence = {
+        0: [60, 100, 250],  # note, velocity, duration
+        1: [64, 90, 250],
+        2: [67, 110, 500],
+        3: [60, 80, 250],
+        4: [69, 100, 750],
+    }
 
-    rhythm_sequence = ["0, kick", "1, snare", "2, kick", "3, hihat", "4, kick"]
+    rhythm_sequence = {0: "kick", 1: "snare", 2: "kick", 3: "hihat", 4: "kick"}
 
-    # Create collections
-    p.add_coll("melody", data=melody_sequence)
-    p.add_coll("rhythm", data=rhythm_sequence)
+    # Create collections; an int in the left inlet outputs that index's value
+    melody_lookup = p.add_coll("melody", dictionary=melody_sequence)
+    rhythm_lookup = p.add_coll("rhythm", dictionary=rhythm_sequence)
 
     # Sequence player
     metro = p.add_textbox("metro 500")
     counter = p.add_textbox("counter 0 4")
 
     # Melody player
-    melody_lookup = p.add_textbox("coll melody")
     note_unpack = p.add_textbox("unpack i i i")
     mtof = p.add_textbox("mtof")
     osc = p.add_textbox("cycle~")
+    level = p.add_textbox("*~ 0.2")
+    dac = p.add_textbox("ezdac~")
 
     # Rhythm player
-    rhythm_lookup = p.add_textbox("coll rhythm")
-    p.add_textbox("select kick snare hihat")
+    drums = p.add_textbox("select kick snare hihat")
 
     # Connect sequencer
     p.add_line(metro, counter)
@@ -90,6 +121,12 @@ def create_sequencer():
     p.add_line(melody_lookup, note_unpack)
     p.add_line(note_unpack, mtof, outlet=0, inlet=0)
     p.add_line(mtof, osc)
+    p.add_line(osc, level)
+    p.add_line(level, dac)
+    p.add_line(level, dac, inlet=1)
+
+    # Rhythm chain: one outlet per drum name
+    p.add_line(rhythm_lookup, drums)
 
     p.save()
     return p

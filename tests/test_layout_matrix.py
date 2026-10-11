@@ -868,7 +868,7 @@ if __name__ == "__main__":
 
 def _chains(objects, wires, layout="matrix"):
     """Build a patch and return its detected signal chains."""
-    p = Patcher(layout=layout)
+    p = Patcher(layout=layout, validate_connections=True)
     boxes = [p.add_textbox(text) for text in objects]
     for src, dst in wires:
         p.add_line(boxes[src], boxes[dst])
@@ -912,7 +912,7 @@ def test_chain_tracing_terminates_on_cycles():
     assert sorted(len(c) for c in pure) == [3]
 
     # a cycle fed from outside
-    fed = _chains(["metro 500", "cycle~ 440", "gain~"], [(0, 1), (1, 2), (2, 1)])
+    fed = _chains(["sig~ 440", "cycle~ 440", "gain~"], [(0, 1), (1, 2), (2, 1)])
     assert sorted(len(c) for c in fed) == [3]
 
     # an object wired to itself

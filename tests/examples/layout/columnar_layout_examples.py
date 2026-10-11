@@ -35,7 +35,9 @@ def create_typical_synth_patch():
     lowpass = p.add_textbox(
         "lores~ 1000", comment="Low Pass Filter", comment_pos="above"
     )
-    delay_fx = p.add_textbox("delay~ 500", comment="Delay Effect", comment_pos="above")
+    delay_fx = p.add_textbox(
+        "delay~ 44100 22050", comment="Delay Effect", comment_pos="above"
+    )
     master_gain = p.add_textbox("*~ 0.7", comment="Master Volume", comment_pos="above")
 
     # Add output objects (Column 4: Outputs)

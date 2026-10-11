@@ -19,7 +19,8 @@ class CustomPatcher(Patcher):
         """Add a lowpass filter with controls."""
         freq_ctrl = self.add_floatparam(f"freq_{len(self._boxes)}", initial=frequency)
         res_ctrl = self.add_floatparam(f"res_{len(self._boxes)}", initial=resonance)
-        filter_obj = self.add_textbox("biquad~ lowpass")
+        # lores~ inlets: signal, cutoff frequency, resonance (0-1)
+        filter_obj = self.add_textbox(f"lores~ {frequency} {resonance}")
 
         # Connect controls
         self.add_line(freq_ctrl, filter_obj, outlet=0, inlet=1)
@@ -48,6 +49,7 @@ class CustomPatcher(Patcher):
         """Add a bank of oscillators with mixer."""
         oscillators = []
         gains = []
+        mults = []
 
         # Create oscillators
         for i, freq in enumerate(frequencies):
@@ -60,18 +62,35 @@ class CustomPatcher(Patcher):
 
             oscillators.append(osc)
             gains.append(gain)
+            mults.append(mult)
 
-        # Create mixer
+        # Create mixer: signals into one inlet sum
         mixer = self.add_textbox("+~")
-        for i, gain in enumerate(gains):
-            # Connect the *~ objects to mixer
-            mult_obj = self._boxes[-len(gains) + i]  # Get corresponding *~ object
-            self.add_line(mult_obj, mixer)
+        for mult in mults:
+            self.add_line(mult, mixer)
 
         return oscillators, gains, mixer
 
+    def add_gate(self, envelope):
+        """Add [1( and [0( to gate ``envelope``: note-on and note-off."""
+        note_on = self.add_message("1")
+        note_off = self.add_message("0")
+        self.add_line(note_on, envelope)
+        self.add_line(note_off, envelope)
+        return note_on, note_off
+
+    def add_vca(self, signal, envelope):
+        """Scale ``signal`` by ``envelope``; returns the ``*~``."""
+        vca = self.add_textbox("*~")
+        self.add_line(signal, vca)
+        self.add_line(envelope, vca, outlet=0, inlet=1)
+        return vca
+
     def add_delay_line(self, delay_time=250, feedback=0.3, wet_mix=0.3):
-        """Add a delay line with feedback and wet/dry mix."""
+        """Add a delay line with feedback and wet/dry mix.
+
+        Send the dry signal into ``input``; ``output`` carries the mix.
+        """
         # Controls
         time_ctrl = self.add_floatparam(
             f"delay_time_{len(self._boxes)}", initial=delay_time
@@ -81,21 +100,34 @@ class CustomPatcher(Patcher):
         )
         mix_ctrl = self.add_floatparam(f"wet_mix_{len(self._boxes)}", initial=wet_mix)
 
-        # Processing objects
-        delay = self.add_textbox("delay~")
-        feedback_mult = self.add_textbox("*~")
+        # Processing objects: tapin~/tapout~, since a signal loop through
+        # delay~ is not allowed
         input_sum = self.add_textbox("+~")
-        wet_dry = self.add_textbox("crossfade~")
+        tapin = self.add_textbox("tapin~ 2000")
+        tapout = self.add_textbox(f"tapout~ {delay_time}")
+        feedback_mult = self.add_textbox("*~")
+        # wet * mix + dry * (1 - mix)
+        dry_level = self.add_textbox("!- 1.")
+        wet_gain = self.add_textbox("*~")
+        dry_gain = self.add_textbox("*~")
+        wet_dry = self.add_textbox("+~")
 
         # Connect controls
-        self.add_line(time_ctrl, delay)
+        self.add_line(time_ctrl, tapout)  # delay time in ms
         self.add_line(feedback_ctrl, feedback_mult, outlet=0, inlet=1)
-        self.add_line(mix_ctrl, wet_dry, outlet=0, inlet=2)
+        self.add_line(mix_ctrl, wet_gain, outlet=0, inlet=1)
+        self.add_line(mix_ctrl, dry_level)
+        self.add_line(dry_level, dry_gain, outlet=0, inlet=1)
 
-        # Connect signal flow (setup for external input/output)
-        self.add_line(input_sum, delay)
-        self.add_line(delay, feedback_mult)
+        # Connect signal flow
+        self.add_line(input_sum, tapin)
+        self.add_line(tapin, tapout)
+        self.add_line(tapout, feedback_mult)
         self.add_line(feedback_mult, input_sum, outlet=0, inlet=1)  # feedback
+        self.add_line(tapout, wet_gain)
+        self.add_line(input_sum, dry_gain)
+        self.add_line(wet_gain, wet_dry)
+        self.add_line(dry_gain, wet_dry, outlet=0, inlet=1)
 
         return {
             "input": input_sum,
@@ -117,23 +149,21 @@ def create_custom_synthesizer():
     filter_obj, freq_ctrl, res_ctrl = p.add_lowpass_filter(2000, 0.5)
     p.add_line(osc_mixer, filter_obj)
 
-    # Add envelope
+    # Add envelope, scaling the filtered signal
     env, env_ctrls = p.add_envelope_generator(5, 50, 0.7, 200)
-    p.add_line(env, filter_obj, outlet=0, inlet=3)  # Envelope to filter
+    vca = p.add_vca(filter_obj, env)
+
+    # Gate the envelope: non-zero starts the attack, 0 the release
+    p.add_gate(env)
 
     # Add delay
     delay_system = p.add_delay_line(375, 0.4, 0.25)
-
-    # Connect to delay
-    p.add_line(filter_obj, delay_system["input"])
-    p.add_line(filter_obj, delay_system["output"], outlet=0, inlet=0)  # dry signal
-    p.add_line(
-        delay_system["input"], delay_system["output"], outlet=0, inlet=1
-    )  # wet signal
+    p.add_line(vca, delay_system["input"])
 
     # Output
     output = p.add_textbox("ezdac~")
     p.add_line(delay_system["output"], output)
+    p.add_line(delay_system["output"], output, outlet=0, inlet=1)
 
     p.optimize_layout()
     p.save()
@@ -151,7 +181,8 @@ def create_modular_system():
     voice1_env, v1_env_ctrls = p.add_envelope_generator(8, 80, 0.6, 300)
 
     p.add_line(voice1_mix, voice1_filter)
-    p.add_line(voice1_env, voice1_filter, outlet=0, inlet=3)
+    voice1_vca = p.add_vca(voice1_filter, voice1_env)
+    p.add_gate(voice1_env)
 
     # Voice 2
     voice2_oscs, voice2_gains, voice2_mix = p.add_oscillator_bank([165, 330], 0.3)
@@ -159,17 +190,17 @@ def create_modular_system():
     voice2_env, v2_env_ctrls = p.add_envelope_generator(12, 60, 0.5, 400)
 
     p.add_line(voice2_mix, voice2_filter)
-    p.add_line(voice2_env, voice2_filter, outlet=0, inlet=3)
+    voice2_vca = p.add_vca(voice2_filter, voice2_env)
+    p.add_gate(voice2_env)
 
     # Mix voices
     voice_mixer = p.add_textbox("+~")
-    p.add_line(voice1_filter, voice_mixer)
-    p.add_line(voice2_filter, voice_mixer)
+    p.add_line(voice1_vca, voice_mixer)
+    p.add_line(voice2_vca, voice_mixer)
 
     # Global effects
     delay_fx = p.add_delay_line(500, 0.35, 0.4)
     p.add_line(voice_mixer, delay_fx["input"])
-    p.add_line(voice_mixer, delay_fx["output"], outlet=0, inlet=0)
 
     # Master output
     master_gain = p.add_floatparam("master_volume", initial=0.6)
@@ -179,6 +210,7 @@ def create_modular_system():
     p.add_line(delay_fx["output"], master_mult)
     p.add_line(master_gain, master_mult, outlet=0, inlet=1)
     p.add_line(master_mult, output)
+    p.add_line(master_mult, output, outlet=0, inlet=1)
 
     p.optimize_layout()
     p.save()

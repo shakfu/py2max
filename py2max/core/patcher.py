@@ -130,8 +130,9 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         parent: Parent patcher for hierarchical organization.
         classnamespace: Namespace for object classes (e.g., 'rnbo').
         reset_on_render: Whether to reset layout on render.
-        layout: Layout manager type ('horizontal', 'vertical', 'topdown', 'grid', 'flow', 'matrix', 'columnar').
-            'topdown' is 'vertical' that also aligns ports on ``optimize_layout()``.
+        layout: Layout manager type ('topdown' (default), 'horizontal', 'vertical',
+            'grid', 'flow', 'matrix', 'columnar'). 'topdown' is 'vertical' that
+            also aligns ports on ``optimize_layout()``.
         auto_hints: Whether to automatically generate object hints.
         auto_layout: Whether ``save()``/``save_as()`` runs ``optimize_layout()``
             first, when boxes or cords changed since the last layout. Defaults
@@ -177,7 +178,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         parent: Optional["AbstractPatcher"] = None,
         classnamespace: Optional[str] = None,
         reset_on_render: bool = True,
-        layout: str = "horizontal",
+        layout: str = "topdown",
         auto_hints: bool = False,
         auto_layout: Optional[bool] = None,
         openinpresentation: int = 0,
@@ -434,10 +435,11 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
     ) -> "Patcher":
         """create a patcher instance from a dict"""
 
+        # a hand-placed patch must not be rearranged on save
         if save_to:
-            patcher = cls(save_to)
+            patcher = cls(save_to, auto_layout=False)
         else:
-            patcher = cls()
+            patcher = cls(auto_layout=False)
         # __init__ seeds every Max patcher attribute with a default (bglocked,
         # gridsize, autosave, dependency_cache, ...). Real Max subpatchers omit
         # a few of these -- notably ``autosave`` and ``dependency_cache``, which

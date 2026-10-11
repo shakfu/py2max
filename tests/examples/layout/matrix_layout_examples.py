@@ -67,7 +67,9 @@ def create_parallel_voices_matrix():
     # Master section - Column 3
     master_vol = p.add_floatbox(comment="Master Volume", comment_pos="above")
     mixer = p.add_textbox("gain~ 0.33", comment="Voice Mixer", comment_pos="above")
-    reverb = p.add_textbox("freeverb~", comment="Master Reverb", comment_pos="above")
+    reverb = p.add_textbox(
+        "comb~ 100 37 1. 0. 0.7", comment="Master Reverb", comment_pos="above"
+    )
     master_gain = p.add_textbox("*~", comment="Master Gain", comment_pos="above")
     dac = p.add_textbox("ezdac~", comment="Audio Output", comment_pos="above")
     scope = p.add_textbox("scope~", comment="Waveform Monitor", comment_pos="above")
@@ -134,7 +136,7 @@ def create_effects_chain_matrix():
 
     # Input controls - Row 0
     input_gain = p.add_floatbox(comment="Input Level", comment_pos="above")
-    delay_time = p.add_floatbox(comment="Delay Time", comment_pos="above")
+    delay_time = p.add_floatbox(comment="Delay (samples)", comment_pos="above")
     reverb_size = p.add_floatbox(comment="Reverb Size", comment_pos="above")
     master_mix = p.add_floatbox(comment="Master Mix", comment_pos="above")
 
@@ -148,8 +150,12 @@ def create_effects_chain_matrix():
 
     # Effects processing - Row 2
     input_amplifier = p.add_textbox("*~", comment="Input Amp", comment_pos="above")
-    delay_fx = p.add_textbox("delay~ 1000", comment="Delay Effect", comment_pos="above")
-    reverb_fx = p.add_textbox("freeverb~", comment="Reverb Effect", comment_pos="above")
+    delay_fx = p.add_textbox(
+        "delay~ 88200 44100", comment="Delay Effect", comment_pos="above"
+    )
+    reverb_fx = p.add_textbox(
+        "comb~ 100 37 1. 0. 0.7", comment="Reverb Effect", comment_pos="above"
+    )
     final_mix = p.add_textbox("*~", comment="Final Mix", comment_pos="above")
 
     # Outputs - Row 3
@@ -170,7 +176,7 @@ def create_effects_chain_matrix():
     # Connect Chain 2: Test Osc -> Input Selector -> Reverb -> Final Mix
     p.add_line(test_osc, input_sel, inlet=1)
     p.add_line(input_sel, reverb_fx, outlet=0)
-    p.add_line(reverb_size, reverb_fx, inlet=1)
+    p.add_line(reverb_size, reverb_fx, inlet=1)  # comb~ delay in ms
     p.add_line(reverb_fx, final_mix, inlet=0)
 
     # Connect Chain 3: Noise -> Input Selector
@@ -218,7 +224,7 @@ def demonstrate_signal_chain_analysis():
     # Processing
     mixer = p.add_textbox("gain~ 0.33")
     filter = p.add_textbox("lores~ 1000")
-    delay = p.add_textbox("delay~ 500")
+    delay = p.add_textbox("delay~ 44100 22050")  # samples
     gain = p.add_textbox("*~")
 
     # Outputs

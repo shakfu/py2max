@@ -382,7 +382,7 @@ class VerticalLayoutManager(GridLayoutManager):
 class TopDownLayoutManager(VerticalLayoutManager):
     """Vertical grid that also aligns ports on ``optimize_layout()``.
 
-    Selected via ``Patcher(..., layout="topdown")``.
+    The default layout; also ``Patcher(..., layout="topdown")``.
     """
 
     align_ports = True

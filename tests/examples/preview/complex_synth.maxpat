@@ -13,7 +13,7 @@
             85.0,
             104.0,
             640.0,
-            480.0
+            751.0
         ],
         "bglocked": 0,
         "openinpresentation": 0,
@@ -53,15 +53,15 @@
                     "numinlets": 2,
                     "numoutlets": 1,
                     "patching_rect": [
-                        263.0,
-                        96.0,
-                        66.0,
+                        287.7,
+                        120.0,
+                        64.6,
                         22.0
                     ],
-                    "text": "metro 250",
                     "outlettype": [
                         ""
-                    ]
+                    ],
+                    "text": "metro 250"
                 }
             },
             {
@@ -71,12 +71,11 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "patching_rect": [
-                        263.0,
+                        308.0,
                         48.0,
-                        66.0,
-                        22.0
+                        24.0,
+                        24.0
                     ],
-                    "text": "button",
                     "outlettype": [
                         "bang"
                     ]
@@ -89,15 +88,15 @@
                     "numinlets": 2,
                     "numoutlets": 1,
                     "patching_rect": [
-                        320.0,
-                        144.0,
-                        66.0,
+                        230.7,
+                        190.0,
+                        68.3,
                         22.0
                     ],
-                    "text": "cycle~ 440",
                     "outlettype": [
                         "signal"
-                    ]
+                    ],
+                    "text": "cycle~ 440"
                 }
             },
             {
@@ -107,15 +106,15 @@
                     "numinlets": 3,
                     "numoutlets": 1,
                     "patching_rect": [
-                        320.0,
-                        192.0,
-                        66.0,
+                        225.7,
+                        260.0,
+                        73.6,
                         22.0
                     ],
-                    "text": "lores~ 1000",
                     "outlettype": [
                         "signal"
-                    ]
+                    ],
+                    "text": "lores~ 1000"
                 }
             },
             {
@@ -125,15 +124,15 @@
                     "numinlets": 2,
                     "numoutlets": 1,
                     "patching_rect": [
-                        206.0,
-                        144.0,
-                        66.0,
+                        347.0,
+                        190.0,
+                        62.3,
                         22.0
                     ],
-                    "text": "saw~ 220",
                     "outlettype": [
                         "signal"
-                    ]
+                    ],
+                    "text": "saw~ 220"
                 }
             },
             {
@@ -143,33 +142,33 @@
                     "numinlets": 3,
                     "numoutlets": 1,
                     "patching_rect": [
-                        206.0,
-                        192.0,
-                        66.0,
+                        347.29999999999995,
+                        260.0,
+                        67.0,
                         22.0
                     ],
-                    "text": "lores~ 500",
                     "outlettype": [
                         "signal"
-                    ]
+                    ],
+                    "text": "lores~ 500"
                 }
             },
             {
                 "box": {
                     "id": "obj-7",
                     "maxclass": "newobj",
-                    "numinlets": 1,
+                    "numinlets": 2,
                     "numoutlets": 1,
                     "patching_rect": [
-                        263.0,
-                        240.0,
-                        66.0,
+                        305.0,
+                        330.0,
+                        30.0,
                         22.0
                     ],
-                    "text": "+~",
                     "outlettype": [
-                        ""
-                    ]
+                        "signal"
+                    ],
+                    "text": "+~"
                 }
             },
             {
@@ -179,12 +178,11 @@
                     "numinlets": 1,
                     "numoutlets": 2,
                     "patching_rect": [
-                        263.0,
-                        288.0,
-                        66.0,
-                        22.0
+                        309.0,
+                        400.0,
+                        22.0,
+                        140.0
                     ],
-                    "text": "gain~ 0.5",
                     "outlettype": [
                         "signal",
                         ""
@@ -195,18 +193,18 @@
                 "box": {
                     "id": "obj-9",
                     "maxclass": "newobj",
-                    "numinlets": 1,
+                    "numinlets": 5,
                     "numoutlets": 1,
                     "patching_rect": [
-                        263.0,
-                        336.0,
-                        66.0,
+                        253.15,
+                        588.0,
+                        133.7,
                         22.0
                     ],
-                    "text": "reverb~",
                     "outlettype": [
-                        ""
-                    ]
+                        "signal"
+                    ],
+                    "text": "comb~ 100 37 1. 0. 0.7"
                 }
             },
             {
@@ -214,17 +212,14 @@
                     "id": "obj-10",
                     "maxclass": "ezdac~",
                     "numinlets": 2,
-                    "numoutlets": 1,
+                    "numoutlets": 0,
                     "patching_rect": [
-                        263.0,
-                        384.0,
-                        66.0,
-                        22.0
+                        297.5,
+                        658.0,
+                        45.0,
+                        45.0
                     ],
-                    "text": "ezdac~",
-                    "outlettype": [
-                        ""
-                    ]
+                    "outlettype": []
                 }
             }
         ],

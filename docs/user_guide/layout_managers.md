@@ -68,7 +68,7 @@ for chain_num in range(3):
     # Create a signal processing chain
     osc = p.add_textbox(f'cycle~ {220 * (chain_num + 1)}')
     filter_obj = p.add_textbox('biquad~')
-    delay = p.add_textbox('delay~ 500')
+    delay = p.add_textbox('delay~ 44100 22050')  # samples
     gain = p.add_textbox('*~ 0.3')
 
     # Connect the chain
@@ -133,10 +133,10 @@ p = Patcher('flow-horizontal.maxpat', layout="flow", flow_direction="horizontal"
 
 # Create a signal processing chain
 input_obj = p.add_textbox('adc~')
-eq = p.add_textbox('eq~')
-compressor = p.add_textbox('compressor~')
-delay = p.add_textbox('delay~ 250')
-reverb = p.add_textbox('freeverb~')
+eq = p.add_textbox('svf~ 1000 0.5')  # low-pass from outlet 0
+compressor = p.add_textbox('omx.comp~')
+delay = p.add_textbox('delay~ 44100 11025')  # samples
+reverb = p.add_textbox('comb~ 100 37 1. 0. 0.7')  # feedback comb, a reverb stand-in
 output = p.add_textbox('dac~')
 
 # Connect in signal flow order
@@ -206,13 +206,19 @@ mixer1 = p.add_textbox('+~')
 mixer2 = p.add_textbox('+~')
 main_filter = p.add_textbox('svf~')
 
-# Multiple effects
-chorus = p.add_textbox('chorus~')
-delay = p.add_textbox('delay~ 375')
-reverb = p.add_textbox('freeverb~')
+# Multiple effects: chorus is a short delay swept by a slow LFO
+chorus_in = p.add_textbox('tapin~ 50')
+chorus_out = p.add_textbox('tapout~ 20')
+lfo = p.add_textbox('cycle~ 0.5')
+depth = p.add_textbox('*~ 5')
+center = p.add_textbox('+~ 20')
+delay = p.add_textbox('delay~ 44100 16538')  # samples
+reverb = p.add_textbox('comb~ 100 37 1. 0. 0.7')  # feedback comb, a reverb stand-in
 
-# Final mixing
-wet_dry = p.add_textbox('crossfade~')
+# Final mixing: equal parts dry and wet
+dry = p.add_textbox('*~ 0.5')
+wet = p.add_textbox('*~ 0.5')
+wet_dry = p.add_textbox('+~')
 output = p.add_textbox('ezdac~')
 
 # Complex connection pattern
@@ -223,14 +229,21 @@ p.add_line(source3, mixer2)
 p.add_line(mixer1, main_filter)
 p.add_line(mixer2, main_filter)
 
-p.add_line(main_filter, chorus)
-p.add_line(chorus, delay)
+p.add_line(main_filter, chorus_in)
+p.add_line(chorus_in, chorus_out)
+p.add_line(lfo, depth)
+p.add_line(depth, center)
+p.add_line(center, chorus_out)  # delay time in ms
+p.add_line(chorus_out, delay)
 p.add_line(delay, reverb)
 
 # Wet/dry mixing
-p.add_line(main_filter, wet_dry, outlet=0, inlet=0)  # dry
-p.add_line(reverb, wet_dry, outlet=0, inlet=1)       # wet
+p.add_line(main_filter, dry)
+p.add_line(reverb, wet)
+p.add_line(dry, wet_dry)
+p.add_line(wet, wet_dry, outlet=0, inlet=1)
 p.add_line(wet_dry, output)
+p.add_line(wet_dry, output, outlet=0, inlet=1)
 
 p.optimize_layout()
 p.save()
@@ -370,12 +383,12 @@ for i in range(5):
 # Let remaining objects use automatic layout
 processors = []
 for i in range(8):
-    proc = p.add_textbox(f'biquad~ {100 + i * 200} 0.707')
+    proc = p.add_textbox(f'lores~ {100 + i * 200} 0.5')
     processors.append(proc)
 
 # Connect controls to processors
 for i, (ctrl, proc) in enumerate(zip(controls, processors)):
-    p.add_line(ctrl, proc)
+    p.add_line(ctrl, proc, inlet=2)  # lores~ resonance (0-1)
 
 # Only auto-positioned objects affected by optimization
 p.optimize_layout()
@@ -442,20 +455,25 @@ This approach ensures the best performance and most coherent layout results.
 
 ## Port Alignment and Auto Layout
 
-`optimize_layout(align_ports=True)` shifts boxes sideways so each cord from a box above drops straight. It works with every layout. `layout="topdown"` is the vertical grid with this on by default.
+`optimize_layout(align_ports=True)` shifts boxes sideways so each cord from a box above drops straight. It works with every layout.
 
-`Patcher(auto_layout=True)` runs `optimize_layout()` on `save()` when boxes or cords changed since the last layout:
+The default layout, `"topdown"`, is the vertical grid with `align_ports` on, so `optimize_layout()` aligns without the flag:
 
 ``` python
-p = Patcher('synth.maxpat', layout="topdown", auto_layout=True)
+p = Patcher('synth.maxpat')
 osc = p.add('cycle~ 440')
 gain = p.add('gain~')
 dac = p.add('ezdac~')
 p.link(osc, gain)
 p.link(gain, dac)
 p.link(gain, dac, inlet=1)
-p.save()  # laid out top to bottom, cords straight
+p.optimize_layout()  # signal order, cords straight
+p.save()
 ```
+
+`optimize_layout(align_ports=False)` turns alignment off; `layout="vertical"` is the same grid without it.
+
+`Patcher(auto_layout=True)` runs `optimize_layout()` on `save()` when boxes or cords changed since the last layout, so the explicit call can be dropped. It is off by default, and patches loaded from a file have it off.
 
 ## Param Docking
 

@@ -137,3 +137,24 @@ def test_max_written_fixtures_have_no_unknown_attrs():
     assert boxes
     unknown = [(mc, k) for mc, box in boxes for k in unknown_attrs(mc, box)]
     assert unknown == []
+
+
+def test_add_table_rejects_data_keyword():
+    # its values go in array=; data= was saved as an ignored key, so the
+    # table came out empty
+    with pytest.raises(TypeError, match="array="):
+        Patcher().add_table("t", data=[1, 2, 3])
+    with pytest.raises(TypeError, match="array="):
+        Patcher().add_table_tilde("t", data=[1, 2, 3])
+
+
+def test_add_table_array_is_saved():
+    box = Patcher().add_table("t", array=[1, 2, 3])
+    assert box.to_dict()["box"]["table_data"] == [1, 2, 3]
+
+
+def test_data_is_only_known_for_dict():
+    # add_coll takes dictionary=; data= is flagged, not silently dropped
+    msgs = _warnings_for(lambda: Patcher().add_coll("c", data=["0, 60"]))
+    assert msgs == ["Unknown attribute 'data' for Max object 'coll' (possible typo?)"]
+    assert _warnings_for(lambda: Patcher().add_dict("d", {"a": 1})) == []

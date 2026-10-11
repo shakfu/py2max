@@ -10,7 +10,7 @@ import math
 
 import pytest
 
-from py2max import Patcher
+from py2max import InvalidConnectionError, Patcher
 from py2max.layout import GraphLayoutManager
 
 
@@ -179,13 +179,20 @@ def _overlaps(p):
 def _random_patch(layout, seed, n=28, m=36):
     import random
 
-    p = Patcher(layout=layout, on_invalid="ignore")
+    p = Patcher(layout=layout, validate_connections=True)
     rng = random.Random(seed)
     texts = ["metro 100", "scope~", "t b b", "route a b c", "gain~", "+ 1", "live.dial"]
     boxes = [p.add_textbox(rng.choice(texts)) for _ in range(n)]
-    for _ in range(m):
+    # keep only cords Max accepts (scope~ has no outlet; a bang cannot
+    # enter gain~), sampling until m are placed
+    linked = 0
+    while linked < m:
         i, j = sorted(rng.sample(range(n), 2))
-        p.add_line(boxes[i], boxes[j])
+        try:
+            p.add_line(boxes[i], boxes[j])
+        except InvalidConnectionError:
+            continue
+        linked += 1
     return p
 
 

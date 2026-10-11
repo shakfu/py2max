@@ -49,7 +49,7 @@ def create_clustered_grid():
         # Create a signal processing chain
         osc = p.add_textbox(f"cycle~ {220 * (chain_num + 1)}")
         filter_obj = p.add_textbox("biquad~")
-        delay = p.add_textbox("delay~ 500")
+        delay = p.add_textbox("delay~ 44100 22050")  # samples
         gain = p.add_textbox("*~ 0.3")
 
         # Connect the chain
@@ -93,12 +93,12 @@ def create_mixed_layout():
     # Let remaining objects use automatic layout
     processors = []
     for i in range(8):
-        proc = p.add_textbox(f"biquad~ {100 + i * 200} 0.707")
+        proc = p.add_textbox(f"lores~ {100 + i * 200} 0.5")
         processors.append(proc)
 
     # Connect controls to processors
     for i, (ctrl, proc) in enumerate(zip(controls, processors)):
-        p.add_line(ctrl, proc)
+        p.add_line(ctrl, proc, inlet=2)  # lores~ resonance (0-1)
 
     # Only auto-positioned objects affected by optimization
     p.optimize_layout()
@@ -117,10 +117,13 @@ def create_large_clustered_patch():
         input_obj = p.add_textbox(f"cycle~ {110 * (chain_id + 1)}")
 
         # Effect chain
-        eq = p.add_textbox("biquad~ 1000 0.707")
+        eq = p.add_textbox("lores~ 1000 0.5")
         distortion = p.add_textbox("tanh~")
-        delay = p.add_textbox("delay~ 250")
-        reverb = p.add_textbox("freeverb~")
+        tapin = p.add_textbox("tapin~ 1000")
+        tapout = p.add_textbox("tapout~ 250")  # ms
+        reverb = p.add_textbox(
+            "comb~ 100 37 1. 0. 0.7"
+        )  # feedback comb, a reverb stand-in
 
         # Controls
         eq_freq = p.add_floatparam(f"eq_freq_{chain_id}", initial=1000 + chain_id * 500)
@@ -129,12 +132,13 @@ def create_large_clustered_patch():
         # Connect effect chain
         p.add_line(input_obj, eq)
         p.add_line(eq, distortion)
-        p.add_line(distortion, delay)
-        p.add_line(delay, reverb)
+        p.add_line(distortion, tapin)
+        p.add_line(tapin, tapout)
+        p.add_line(tapout, reverb)
 
         # Connect controls
-        p.add_line(eq_freq, eq, outlet=0, inlet=1)
-        p.add_line(delay_time, delay)
+        p.add_line(eq_freq, eq, outlet=0, inlet=1)  # lores~ cutoff
+        p.add_line(delay_time, tapout)  # ms
 
         effect_chains.append(
             {"input": input_obj, "output": reverb, "controls": [eq_freq, delay_time]}

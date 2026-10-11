@@ -169,6 +169,7 @@ def cmd_new(args: argparse.Namespace) -> int:
         patcher.link(osc, gain)
         patcher.link(gain, dac)
         patcher.link(gain, dac, inlet=1)
+        patcher.optimize_layout()
     elif args.template == "blank":
         pass
     else:
@@ -764,7 +765,7 @@ def build_parser() -> argparse.ArgumentParser:
     new_parser = subparsers.add_parser("new", help="Create a new patcher file")
     new_parser.add_argument("path", help="Destination .maxpat path")
     new_parser.add_argument("--title", help="Optional patcher title")
-    new_parser.add_argument("--layout", choices=LAYOUT_CHOICES, default="horizontal")
+    new_parser.add_argument("--layout", choices=LAYOUT_CHOICES, default="topdown")
     new_parser.add_argument(
         "--flow-direction", choices=FLOW_CHOICES, default="horizontal"
     )

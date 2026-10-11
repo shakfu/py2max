@@ -42,8 +42,8 @@ def flow_layout_example():
     # Create a signal processing chain
     input_obj = p.add_textbox("adc~")
     eq = p.add_textbox("filtergraph~")
-    delay = p.add_textbox("delay~ 500")
-    reverb = p.add_textbox("freeverb~")
+    delay = p.add_textbox("delay~ 44100 22050")  # samples
+    reverb = p.add_textbox("comb~ 100 37 1. 0. 0.7")  # feedback comb, a reverb stand-in
     output = p.add_textbox("dac~")
 
     # Connect in signal flow order

@@ -157,16 +157,16 @@ def test_svg_export_patchlines():
 
 def test_svg_export_complex_patch():
     """Test SVG export with complex patch layout."""
-    p = Patcher("test.maxpat", layout="grid")
-    metro = p.add_textbox("metro 500")
+    p = Patcher("test.maxpat", layout="grid", validate_connections=True)
+    freq = p.add_textbox("mtof")
     osc1 = p.add_textbox("cycle~ 440")
     osc2 = p.add_textbox("saw~ 220")
     filter = p.add_textbox("lores~ 1000")
     gain = p.add_textbox("*~ 0.5")
     dac = p.add_textbox("ezdac~")
 
-    p.add_line(metro, osc1)
-    p.add_line(metro, osc2)
+    p.add_line(freq, osc1)
+    p.add_line(freq, osc2)
     p.add_line(osc1, filter)
     p.add_line(osc2, gain)
     p.add_line(filter, gain)
@@ -179,7 +179,7 @@ def test_svg_export_complex_patch():
         assert output_path.exists()
         content = output_path.read_text()
         assert "Complex Synth Patch" in content
-        assert "metro 500" in content
+        assert "mtof" in content
         assert "cycle~ 440" in content
         assert "saw~ 220" in content
         assert "lores~ 1000" in content
@@ -339,12 +339,12 @@ def test_svg_signal_vs_message_ports_and_cables():
     """Signal ports/cables render in distinct colors from message ones."""
     from py2max.export.svg import export_svg_string
 
-    p = Patcher("sig.maxpat")
+    p = Patcher("sig.maxpat", validate_connections=True)
     osc = p.add_textbox("cycle~ 440")  # signal outlet
     gain = p.add_textbox("gain~")
-    metro = p.add_textbox("metro 500")  # message (bang) outlet
+    freq = p.add_textbox("mtof")  # message (float) outlet
     p.add_line(osc, gain)  # signal cable
-    p.add_line(metro, osc)  # message cable
+    p.add_line(freq, osc)  # message cable
 
     s = export_svg_string(p)
     assert "#2e8b57" in s  # signal port color

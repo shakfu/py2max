@@ -10,6 +10,7 @@ This example is used in:
 """
 
 from py2max import Patcher
+from py2max.core.common import Rect
 
 
 def create_basic_subpatcher():
@@ -17,16 +18,16 @@ def create_basic_subpatcher():
     # Create main patch
     main = Patcher("main.maxpat")
 
-    # Create subpatcher
-    sub_box = main.add_subpatcher("voice")
-    sub = sub_box.subpatcher  # Access the actual subpatcher
+    # Create subpatcher; Max needs the "p" prefix
+    voice = main.add_subpatcher("p voice")
+    sub = voice.subpatcher  # Access the actual subpatcher
 
-    # Add objects to subpatcher
-    inlet = sub.add_textbox("inlet~")
-    filter_obj = sub.add_textbox("biquad~ 1000 0.707")
+    # Add objects to subpatcher; inlet/outlet carry signals too
+    inlet = sub.add_textbox("inlet")
+    filter_obj = sub.add_textbox("lores~ 1000 0.5")
     env = sub.add_textbox("adsr~ 10 100 0.3 500")
     vca = sub.add_textbox("*~")
-    outlet = sub.add_textbox("outlet~")
+    outlet = sub.add_textbox("outlet")
 
     # Connect subpatcher internals
     sub.add_line(inlet, filter_obj)
@@ -34,13 +35,12 @@ def create_basic_subpatcher():
     sub.add_line(env, vca, outlet=0, inlet=1)
     sub.add_line(vca, outlet)
 
-    # Use subpatcher in main patch
+    # Use the subpatcher box in the main patch
     osc = main.add_textbox("cycle~ 440")
-    voice_instance = main.add_textbox("p voice")
     output = main.add_textbox("dac~")
 
-    main.add_line(osc, voice_instance)
-    main.add_line(voice_instance, output)
+    main.add_line(osc, voice)
+    main.add_line(voice, output)
 
     main.save()
     return main
@@ -52,29 +52,31 @@ def create_nested_subpatchers():
     main = Patcher("complex.maxpat")
 
     # Level 1 subpatcher
-    synth_box = main.add_subpatcher("synthesizer")
+    synth_box = main.add_subpatcher("p synthesizer")
     synth = synth_box.subpatcher
 
     # Level 2 subpatcher inside synth
-    osc_bank_box = synth.add_subpatcher("oscillator-bank")
-    oscillator_bank = osc_bank_box.subpatcher
+    bank_box = synth.add_subpatcher("p oscillator-bank")
+    oscillator_bank = bank_box.subpatcher
 
-    # Add objects to nested subpatcher
+    # Add objects to nested subpatcher. Max numbers outlets by x, so each
+    # outlet sits right of the previous one.
     for i in range(4):
         osc = oscillator_bank.add_textbox(f"cycle~ {220 * (i + 1)}")
-        out = oscillator_bank.add_textbox(f"outlet~ {i}")
+        out = oscillator_bank.add_textbox(
+            "outlet", patching_rect=Rect(48 + 100 * i, 300, 30, 30)
+        )
         oscillator_bank.add_line(osc, out)
 
-    # Use nested subpatchers
-    bank_instance = synth.add_textbox("p oscillator-bank")
+    # Mix the bank's outlets; signals into one inlet sum
     mixer = synth.add_textbox("+~")
-    synth_out = synth.add_textbox("outlet~")
-
-    # Connect multiple outlets
+    synth_out = synth.add_textbox("outlet")
     for i in range(4):
-        synth.add_line(bank_instance, mixer, outlet=i, inlet=0)
-
+        synth.add_line(bank_box, mixer, outlet=i, inlet=0)
     synth.add_line(mixer, synth_out)
+
+    output = main.add_textbox("dac~")
+    main.add_line(synth_box, output)
 
     main.save()
     return main

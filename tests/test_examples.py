@@ -6,10 +6,13 @@ This test file imports and runs all examples to ensure they work correctly
 and don't break as the library evolves.
 """
 
-import pytest
 import os
 import sys
 from pathlib import Path
+
+import pytest
+
+from py2max.core.common import Rect
 
 # Add the tests/examples directory to the path so we can import examples
 examples_dir = Path(__file__).parent / "examples"
@@ -123,6 +126,15 @@ class TestTutorialExamples:
         # Complex system with many objects
         assert len(patch._boxes) >= 40
         assert len(patch._lines) >= 35
+        # [1( starts and [0( stops the master metro; metro has no "start"
+        metro = next(b for b in patch._boxes if b.text == "metro 500")
+        controls = sorted(
+            patch._objects[ln.src].text
+            for ln in patch._lines
+            if ln.dst == metro.id and patch._objects[ln.src].maxclass == "message"
+        )
+        assert controls == ["0", "1"]
+        assert all(isinstance(b.patching_rect, Rect) for b in patch._boxes)
 
 
 class TestLayoutExamples:
@@ -195,6 +207,19 @@ class TestLayoutExamples:
         assert len(f_patch._lines) >= 8
 
 
+def _assert_gated(patch, n_envelopes):
+    """Each adsr~ takes exactly [1( and [0( in its left inlet."""
+    envs = [b for b in patch._boxes if b.text and b.text.startswith("adsr~")]
+    assert len(envs) == n_envelopes
+    for env in envs:
+        gates = sorted(
+            patch._objects[ln.src].text
+            for ln in patch._lines
+            if ln.dst == env.id and ln.destination[1] == 0
+        )
+        assert gates == ["0", "1"]
+
+
 class TestAdvancedExamples:
     """Test advanced examples."""
 
@@ -244,6 +269,7 @@ class TestAdvancedExamples:
             create_fan_out_example,
             create_feedback_delay,
             create_matrix_mixer,
+            create_matrix_mixer_host,
         )
 
         # Test fan-out
@@ -256,10 +282,20 @@ class TestAdvancedExamples:
         assert len(feedback_patch._boxes) >= 6
         assert len(feedback_patch._lines) >= 6
 
-        # Test matrix mixer
+        # Test matrix mixer abstraction: 4 signal inlets + 1 control inlet,
+        # 4 outlets, each kind at distinct x (Max numbers ports by x)
         matrix_patch = create_matrix_mixer()
         assert len(matrix_patch._boxes) >= 24
         assert len(matrix_patch._lines) >= 32
+        for kind, count in (("inlet", 5), ("outlet", 4)):
+            xs = [b.patching_rect.x for b in matrix_patch._boxes if b.maxclass == kind]
+            assert len(set(xs)) == count
+
+        # The host instantiates the abstraction by file name
+        host = create_matrix_mixer_host()
+        mixer = next(b for b in host._boxes if b.text == "matrix-mixer")
+        assert (mixer.numinlets, mixer.numoutlets) == (5, 4)
+        assert sum(ln.dst == mixer.id for ln in host._lines) == 5
 
     def test_error_handling(self):
         """Test error handling examples."""
@@ -315,10 +351,12 @@ class TestAdvancedExamples:
         custom_patch = create_custom_synthesizer()
         assert custom_patch is not None
         assert len(custom_patch._boxes) >= 15
+        _assert_gated(custom_patch, 1)
 
         # Test modular system
         modular_patch = create_modular_system()
         assert modular_patch is not None
+        _assert_gated(modular_patch, 2)
         assert len(modular_patch._boxes) >= 25
 
 

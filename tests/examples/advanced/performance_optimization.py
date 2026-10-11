@@ -76,19 +76,22 @@ def create_optimized_signal_chain():
     input_obj = p.add_textbox("adc~")
     signal_chain.append(input_obj)
 
-    # Processing chain
+    # Processing chain: (object, outlet feeding the next box). svf~ outlets
+    # are low-pass, high-pass, band-pass, notch.
     processors = [
-        "biquad~ 100 0.707 highpass",
-        "*~ 2.0",
-        "tanh~",
-        "biquad~ 5000 0.707 lowpass",
-        "delay~ 250",
-        "*~ 0.7",
+        ("svf~ 100 0.5", 1),  # high-pass
+        ("*~ 2.0", 0),
+        ("tanh~", 0),
+        ("svf~ 5000 0.5", 0),  # low-pass
+        ("delay~ 44100 11025", 0),  # samples
+        ("*~ 0.7", 0),
     ]
 
-    for processor in processors:
+    outlets = [0]  # the source's outlet
+    for processor, outlet in processors:
         proc_obj = p.add_textbox(processor)
         signal_chain.append(proc_obj)
+        outlets.append(outlet)
 
     # Output
     output_obj = p.add_textbox("dac~")
@@ -96,7 +99,7 @@ def create_optimized_signal_chain():
 
     # Connect chain efficiently
     for i in range(len(signal_chain) - 1):
-        p.add_line(signal_chain[i], signal_chain[i + 1])
+        p.add_line(signal_chain[i], signal_chain[i + 1], outlet=outlets[i])
 
     # Single optimization pass
     p.optimize_layout()

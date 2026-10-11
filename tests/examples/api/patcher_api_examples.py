@@ -38,7 +38,7 @@ def demonstrate_object_creation():
 
     # Generic text-based objects
     p.add_textbox("cycle~ 440")
-    p.add_textbox("biquad~ 1000 0.707")
+    p.add_textbox("lores~ 1000 0.5")
     p.add_textbox("gain~")
 
     # UI objects
@@ -48,18 +48,18 @@ def demonstrate_object_creation():
     p.add_intparam("velocity", initial=127)
 
     # Container objects
-    p.add_table("wavetable", data=[0.5, 0.3, -0.2, 0.8])
-    p.add_coll("sequence", data=["0, 60 127", "1, 64 100"])
+    p.add_table("notes", array=[60, 62, 64, 67])  # a table holds ints
+    p.add_coll("sequence", dictionary={0: [60, 127], 1: [64, 100]})
     p.add_dict("patch-data")
 
     # Objects with custom positioning
     p.add_textbox("ezdac~", patching_rect=Rect(300, 200, 66, 22))
 
     # Subpatchers
-    sub_box = p.add_subpatcher("voice-processor")
+    sub_box = p.add_subpatcher("p voice-processor")
     sub = sub_box.subpatcher
-    sub_inlet = sub.add_textbox("inlet~")
-    sub_outlet = sub.add_textbox("outlet~")
+    sub_inlet = sub.add_textbox("inlet")  # inlet/outlet carry signals too
+    sub_outlet = sub.add_textbox("outlet")
     sub.add_line(sub_inlet, sub_outlet)
 
     p.save()
@@ -121,7 +121,7 @@ def demonstrate_layout_management():
 
     input_obj = p2.add_textbox("adc~")
     proc1 = p2.add_textbox("biquad~")
-    proc2 = p2.add_textbox("delay~ 250")
+    proc2 = p2.add_textbox("delay~ 44100 11025")  # samples
     output_obj = p2.add_textbox("dac~")
 
     p2.add_line(input_obj, proc1)
@@ -149,7 +149,7 @@ def demonstrate_file_operations():
     # Create a second patch (file loading can be complex)
     p2 = Patcher("modified.maxpat")
     osc2 = p2.add_textbox("cycle~ 330")
-    delay = p2.add_textbox("delay~ 250")
+    delay = p2.add_textbox("delay~ 44100 11025")  # samples
     gain2 = p2.add_textbox("gain~")
     output2 = p2.add_textbox("ezdac~")
 
