@@ -10,11 +10,33 @@ from py2max.core.common import Rect
 from py2max.maxref import MAXCLASS_DEFAULTS
 from py2max.utils import object_name
 
+from .graph import PatchGraph
+
 # Value/UI "param" objects: their role is to set a value on one object's inlet,
 # so they read better docked next to that object than spread through the graph.
 PARAM_MAXCLASSES = frozenset(
     {"flonum", "number", "message", "toggle", "slider", "dial"}
 )
+
+
+# approximate width of a Max inlet/outlet; ports spread edge to edge
+_PORT_W = 7.0
+
+
+def _port_x(rect: Rect, n_ports: int, port: int) -> float:
+    """Offset of ``port`` from the box's left edge (a lone port sits left)."""
+    if n_ports <= 1:
+        return 0.0
+    return (rect.w - _PORT_W) * min(port, n_ports - 1) / (n_ports - 1)
+
+
+def _overlaps(a: Rect, b: Rect, gap: float) -> bool:
+    return (
+        a.x < b.x + b.w + gap
+        and b.x < a.x + a.w + gap
+        and a.y < b.y + b.h + gap
+        and b.y < a.y + a.h + gap
+    )
 
 
 def _is_param(box: object) -> bool:
@@ -47,6 +69,9 @@ class LayoutManager(AbstractLayoutManager):
     DEFAULT_BOX_WIDTH = 66.0
     DEFAULT_BOX_HEIGHT = 22.0
     DEFAULT_COMMENT_PAD = 2
+
+    # optimize_layout()'s align_ports when the call leaves it unset
+    align_ports = False
 
     def __init__(
         self,
@@ -389,7 +414,7 @@ class LayoutManager(AbstractLayoutManager):
             return tx + tw / 2
         return tx + tw * min(inlet, n_inlets - 1) / (n_inlets - 1)
 
-    def optimize_layout(self) -> None:
+    def optimize_layout(self, *, align_ports: Optional[bool] = None) -> None:
         """Arrange every object in the patch (batch, whole-patch layout).
 
         This is py2max's batch layout entry point: it always performs a full
@@ -399,13 +424,70 @@ class LayoutManager(AbstractLayoutManager):
         Interactive, per-edit ("incremental") relayout is intentionally out of
         scope for py2max; it belongs to the editor/server that owns the live
         editing session. See ``docs/auto-layout.md`` in py2max-server.
+
+        Args:
+            align_ports: Shift boxes sideways so each cord from a box above
+                drops straight (see ``_align_ports``). ``None`` uses the
+                manager's ``align_ports``.
         """
         self._port_order_before = before = self._port_order()
         self._full_layout()
+        if self.align_ports if align_ports is None else align_ports:
+            self._align_ports()
         self._restore_port_order(before)
         # layouts and the overlap pass can run past the window; grow it so the
         # whole patch is visible when opened
         self._fit_window(list(self.parent._boxes))
+
+    def _signal_rank(self) -> Dict[str, int]:
+        """Each box id's position in signal order (ties by creation order)."""
+        ids = [b.id for b in self.parent._boxes if b.id]
+        order = PatchGraph(self.parent._lines, nodes=ids).signal_order()
+        return {box_id: i for i, box_id in enumerate(order)}
+
+    def _align_ports(self, gap: float = 10.0) -> None:
+        """Shift layout-placed boxes sideways so their input cord drops straight.
+
+        Each box takes the x that puts its lowest connected inlet under the
+        outlet feeding it; only cords from a box above qualify, in any layout.
+        Window-anchored boxes (``ezdac~``) move too, keeping their y. Boxes with
+        an explicit rect never move. A move is skipped if the box or the cord
+        would hit another box.
+        """
+        parent = self.parent
+        slots: Dict[str, Any] = getattr(parent, "_auto_slots", {})
+        feeds: Dict[str, Any] = {}
+        for line in cast(List[Any], parent._lines):
+            if len(line.source) < 2 or len(line.destination) < 2:
+                continue
+            cur = feeds.get(line.dst)
+            if cur is None or int(line.destination[1]) < int(cur.destination[1]):
+                feeds[line.dst] = line
+        rank = self._signal_rank()
+        boxes = sorted(
+            (b for b in parent._boxes if b.id in slots and b.id in feeds),
+            key=lambda b: rank[cast(str, b.id)],
+        )
+        for box in boxes:
+            line = feeds[cast(str, box.id)]
+            src = parent._objects.get(line.src)
+            if src is None or src is box:
+                continue
+            s, r = Rect(*src.patching_rect[:4]), Rect(*box.patching_rect[:4])
+            if s.y + s.h > r.y:  # source not above: no straight drop
+                continue
+            cx = s.x + _port_x(s, src.numoutlets, int(line.source[1]))
+            x = cx - _port_x(r, box.numinlets, int(line.destination[1]))
+            if x < 0 or x == r.x:
+                continue
+            moved = Rect(x, r.y, r.w, r.h)
+            cord = Rect(cx, s.y + s.h, _PORT_W, r.y - s.y - s.h)
+            others = [
+                o.patching_rect for o in parent._boxes if o is not box and o is not src
+            ]
+            if any(_overlaps(moved, o, gap) or _overlaps(cord, o, 0.0) for o in others):
+                continue
+            box.patching_rect = moved
 
     def _fit_window(self, boxes: List[Any]) -> None:
         """Grow the patcher window so every laid-out box is fully visible."""

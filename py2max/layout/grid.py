@@ -106,12 +106,6 @@ class GridLayoutManager(LayoutManager):
         # Prevent any remaining overlaps after clustering
         self.prevent_overlaps()
 
-    def _signal_rank(self) -> Dict[str, int]:
-        """Each box id's position in signal order (ties by creation order)."""
-        ids = [b.id for b in self.parent._boxes if b.id]
-        order = PatchGraph(self.parent._lines, nodes=ids).signal_order()
-        return {box_id: i for i, box_id in enumerate(order)}
-
     def _reorder_by_signal(self) -> None:
         """Give the grid slots, in creation order, to boxes in signal order.
 
@@ -383,3 +377,12 @@ class VerticalLayoutManager(GridLayoutManager):
             flow_direction="vertical",
             signal_order=signal_order,
         )
+
+
+class TopDownLayoutManager(VerticalLayoutManager):
+    """Vertical grid that also aligns ports on ``optimize_layout()``.
+
+    Selected via ``Patcher(..., layout="topdown")``.
+    """
+
+    align_ports = True

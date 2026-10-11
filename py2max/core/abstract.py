@@ -144,6 +144,7 @@ class AbstractPatcher(ABC):
     _signal_order: bool
     _layout_mgr: AbstractLayoutManager
     _auto_hints: bool
+    _auto_layout: bool
     _validate_connections: bool
     _on_invalid: str
     _validate_attrs: bool
@@ -173,6 +174,10 @@ class AbstractPatcher(ABC):
 
     def render(self, reset: bool = False) -> None:
         """Render boxes/lines to dicts (implemented by Patcher)."""
+        raise NotImplementedError
+
+    def _auto_arrange(self) -> None:
+        """Lay out before saving if ``auto_layout`` is on (implemented by Patcher)."""
         raise NotImplementedError
 
     def _process_pending_comments(self) -> None:

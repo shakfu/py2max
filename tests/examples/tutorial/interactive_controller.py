@@ -15,7 +15,8 @@ from py2max import Patcher
 def create_midi_controller():
     """Create an interactive MIDI controller interface."""
     # Create controller with automatic layout
-    p = Patcher("midi-controller.maxpat", layout="grid", cluster_connected=True)
+    p = Patcher("midi-controller.maxpat", layout="topdown", auto_layout=True)
+    # p = Patcher("midi-controller.maxpat", layout="grid", cluster_connected=True)
 
     # MIDI input
     midi_in = p.add_textbox("ctlin")

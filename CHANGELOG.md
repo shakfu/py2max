@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `optimize_layout(align_ports=True)` shifts boxes sideways so each cord from a box above drops straight; y is kept. It works with every layout manager and is off by default. Boxes with an explicit rect never move, and a shift that would put the box or its cord on another box is skipped. A window-anchored `ezdac~` shifts too, which is the common case: it no longer sits offset below a vertical chain.
+
+- `layout="topdown"`: the `"vertical"` grid with `align_ports` on by default, so `optimize_layout()` aligns without the flag. `optimize_layout(align_ports=False)` still turns it off. Also a `py2max new --layout` choice.
+
+- `Patcher(auto_layout=True)`: `save()`/`save_as()` runs `optimize_layout()` first, but only if boxes or cords changed since the last layout. A blanket re-run would discard an explicit `optimize_layout(...)` call's options, and flow recomputes every position. Moves made by hand after a layout are kept. Subpatchers inherit the setting; `to_dict()`/`to_json()` never lay out.
+
+  ```python
+  p = Patcher("patch.maxpat", layout="topdown", auto_layout=True)
+  ```
+
+### Removed
+
+- The `signal_order` A/B test fixture. Layout tests run once again, and `build/test-output/signal_order_ab.md` is no longer written. It saved every patcher under `test_layout*` twice, which produced too many files to inspect.
+
 ## [0.5.1]
 
 ### Fixed

@@ -36,7 +36,7 @@ def test_patcher_from_file():
 
 def test_optimize_layout_is_batch_only():
     """``optimize_layout`` is a batch, whole-patch operation that takes no
-    arguments.
+    positional arguments.
 
     Interactive, per-edit ("incremental") relayout was intentionally removed
     from py2max; it belongs to the editor/server that owns the live editing

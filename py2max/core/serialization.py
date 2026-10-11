@@ -87,6 +87,7 @@ class SerializationMixin(AbstractPatcher):
                 resolved_path.parent.mkdir(parents=True, exist_ok=True)
                 logger.debug(f"Created parent directories: {resolved_path.parent}")
 
+            self._auto_arrange()
             with log_operation(
                 logger, "render patcher", boxes=len(self._boxes), lines=len(self._lines)
             ):

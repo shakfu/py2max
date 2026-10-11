@@ -24,7 +24,7 @@ from .export.converters import maxpat_to_python, maxref_to_sqlite
 from .maxref import MaxRefCache, MaxRefDB
 from .transformers import available_transformers, create_transformer, run_pipeline
 
-LAYOUT_CHOICES = ["horizontal", "vertical", "grid", "flow", "matrix"]
+LAYOUT_CHOICES = ["horizontal", "vertical", "topdown", "grid", "flow", "matrix"]
 FLOW_CHOICES = ["horizontal", "vertical", "column"]
 
 

@@ -67,7 +67,7 @@ def test_attrui():
 
 # short-way
 def test_attr():
-    p = Patcher("outputs/test_attr.maxpat")
+    p = Patcher("outputs/test_attr.maxpat", layout="topdown", auto_layout=True)
     osc = p.add_textbox("cycle~")
     freq = p.add_attr("frequency", 440.0)
     phase = p.add_attr("phase", 0.6, show_label=True)

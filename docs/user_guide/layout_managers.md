@@ -440,6 +440,23 @@ p.save()
 
 This approach ensures the best performance and most coherent layout results.
 
+## Port Alignment and Auto Layout
+
+`optimize_layout(align_ports=True)` shifts boxes sideways so each cord from a box above drops straight. It works with every layout. `layout="topdown"` is the vertical grid with this on by default.
+
+`Patcher(auto_layout=True)` runs `optimize_layout()` on `save()` when boxes or cords changed since the last layout:
+
+``` python
+p = Patcher('synth.maxpat', layout="topdown", auto_layout=True)
+osc = p.add('cycle~ 440')
+gain = p.add('gain~')
+dac = p.add('ezdac~')
+p.link(osc, gain)
+p.link(gain, dac)
+p.link(gain, dac, inlet=1)
+p.save()  # laid out top to bottom, cords straight
+```
+
 ## Param Docking
 
 Value-setting UI objects -- number boxes, `toggle`, `slider`, `dial`, `message`, `live.*` -- usually belong *with* the object they control rather than as nodes in the signal flow. Enable `param_placement=True` to dock them next to their target:

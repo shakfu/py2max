@@ -1,7 +1,7 @@
 """py2max: a pure python library to generate .maxpat patcher files.
 
 GENERATED FILE -- DO NOT EDIT BY HAND.
-py2max 0.5.0, generated from 43f0c07 (working tree modified)
+py2max 0.5.1, generated from 74e30c5 (working tree modified)
 Regenerate with: python scripts/build_single_file.py
 
 This is the single-file edition: the package's core object model, layout
@@ -3056,6 +3056,7 @@ class AbstractPatcher(ABC):
     _signal_order: bool
     _layout_mgr: AbstractLayoutManager
     _auto_hints: bool
+    _auto_layout: bool
     _validate_connections: bool
     _on_invalid: str
     _validate_attrs: bool
@@ -3085,6 +3086,10 @@ class AbstractPatcher(ABC):
 
     def render(self, reset: bool = False) -> None:
         """Render boxes/lines to dicts (implemented by Patcher)."""
+        raise NotImplementedError
+
+    def _auto_arrange(self) -> None:
+        """Lay out before saving if ``auto_layout`` is on (implemented by Patcher)."""
         raise NotImplementedError
 
     def _process_pending_comments(self) -> None:
@@ -5740,6 +5745,7 @@ class SerializationMixin(AbstractPatcher):
                 resolved_path.parent.mkdir(parents=True, exist_ok=True)
                 logger.debug(f"Created parent directories: {resolved_path.parent}")
 
+            self._auto_arrange()
             with log_operation(
                 logger, "render patcher", boxes=len(self._boxes), lines=len(self._lines)
             ):
@@ -7983,6 +7989,25 @@ PARAM_MAXCLASSES = frozenset(
     {"flonum", "number", "message", "toggle", "slider", "dial"}
 )
 
+# approximate width of a Max inlet/outlet; ports spread edge to edge
+_PORT_W = 7.0
+
+
+def _port_x(rect: Rect, n_ports: int, port: int) -> float:
+    """Offset of ``port`` from the box's left edge (a lone port sits left)."""
+    if n_ports <= 1:
+        return 0.0
+    return (rect.w - _PORT_W) * min(port, n_ports - 1) / (n_ports - 1)
+
+
+def _overlaps(a: Rect, b: Rect, gap: float) -> bool:
+    return (
+        a.x < b.x + b.w + gap
+        and b.x < a.x + a.w + gap
+        and a.y < b.y + b.h + gap
+        and b.y < a.y + a.h + gap
+    )
+
 
 def _is_param(box: object) -> bool:
     """True for a value/UI control that parameterizes another object."""
@@ -8014,6 +8039,9 @@ class LayoutManager(AbstractLayoutManager):
     DEFAULT_BOX_WIDTH = 66.0
     DEFAULT_BOX_HEIGHT = 22.0
     DEFAULT_COMMENT_PAD = 2
+
+    # optimize_layout()'s align_ports when the call leaves it unset
+    align_ports = False
 
     def __init__(
         self,
@@ -8356,7 +8384,7 @@ class LayoutManager(AbstractLayoutManager):
             return tx + tw / 2
         return tx + tw * min(inlet, n_inlets - 1) / (n_inlets - 1)
 
-    def optimize_layout(self) -> None:
+    def optimize_layout(self, *, align_ports: Optional[bool] = None) -> None:
         """Arrange every object in the patch (batch, whole-patch layout).
 
         This is py2max's batch layout entry point: it always performs a full
@@ -8366,13 +8394,70 @@ class LayoutManager(AbstractLayoutManager):
         Interactive, per-edit ("incremental") relayout is intentionally out of
         scope for py2max; it belongs to the editor/server that owns the live
         editing session. See ``docs/auto-layout.md`` in py2max-server.
+
+        Args:
+            align_ports: Shift boxes sideways so each cord from a box above
+                drops straight (see ``_align_ports``). ``None`` uses the
+                manager's ``align_ports``.
         """
         self._port_order_before = before = self._port_order()
         self._full_layout()
+        if self.align_ports if align_ports is None else align_ports:
+            self._align_ports()
         self._restore_port_order(before)
         # layouts and the overlap pass can run past the window; grow it so the
         # whole patch is visible when opened
         self._fit_window(list(self.parent._boxes))
+
+    def _signal_rank(self) -> Dict[str, int]:
+        """Each box id's position in signal order (ties by creation order)."""
+        ids = [b.id for b in self.parent._boxes if b.id]
+        order = PatchGraph(self.parent._lines, nodes=ids).signal_order()
+        return {box_id: i for i, box_id in enumerate(order)}
+
+    def _align_ports(self, gap: float = 10.0) -> None:
+        """Shift layout-placed boxes sideways so their input cord drops straight.
+
+        Each box takes the x that puts its lowest connected inlet under the
+        outlet feeding it; only cords from a box above qualify, in any layout.
+        Window-anchored boxes (``ezdac~``) move too, keeping their y. Boxes with
+        an explicit rect never move. A move is skipped if the box or the cord
+        would hit another box.
+        """
+        parent = self.parent
+        slots: Dict[str, Any] = getattr(parent, "_auto_slots", {})
+        feeds: Dict[str, Any] = {}
+        for line in cast(List[Any], parent._lines):
+            if len(line.source) < 2 or len(line.destination) < 2:
+                continue
+            cur = feeds.get(line.dst)
+            if cur is None or int(line.destination[1]) < int(cur.destination[1]):
+                feeds[line.dst] = line
+        rank = self._signal_rank()
+        boxes = sorted(
+            (b for b in parent._boxes if b.id in slots and b.id in feeds),
+            key=lambda b: rank[cast(str, b.id)],
+        )
+        for box in boxes:
+            line = feeds[cast(str, box.id)]
+            src = parent._objects.get(line.src)
+            if src is None or src is box:
+                continue
+            s, r = Rect(*src.patching_rect[:4]), Rect(*box.patching_rect[:4])
+            if s.y + s.h > r.y:  # source not above: no straight drop
+                continue
+            cx = s.x + _port_x(s, src.numoutlets, int(line.source[1]))
+            x = cx - _port_x(r, box.numinlets, int(line.destination[1]))
+            if x < 0 or x == r.x:
+                continue
+            moved = Rect(x, r.y, r.w, r.h)
+            cord = Rect(cx, s.y + s.h, _PORT_W, r.y - s.y - s.h)
+            others = [
+                o.patching_rect for o in parent._boxes if o is not box and o is not src
+            ]
+            if any(_overlaps(moved, o, gap) or _overlaps(cord, o, 0.0) for o in others):
+                continue
+            box.patching_rect = moved
 
     def _fit_window(self, boxes: List[Any]) -> None:
         """Grow the patcher window so every laid-out box is fully visible."""
@@ -8521,12 +8606,6 @@ class GridLayoutManager(LayoutManager):
 
         # Prevent any remaining overlaps after clustering
         self.prevent_overlaps()
-
-    def _signal_rank(self) -> Dict[str, int]:
-        """Each box id's position in signal order (ties by creation order)."""
-        ids = [b.id for b in self.parent._boxes if b.id]
-        order = PatchGraph(self.parent._lines, nodes=ids).signal_order()
-        return {box_id: i for i, box_id in enumerate(order)}
 
     def _reorder_by_signal(self) -> None:
         """Give the grid slots, in creation order, to boxes in signal order.
@@ -8799,6 +8878,15 @@ class VerticalLayoutManager(GridLayoutManager):
             flow_direction="vertical",
             signal_order=signal_order,
         )
+
+
+class TopDownLayoutManager(VerticalLayoutManager):
+    """Vertical grid that also aligns ports on ``optimize_layout()``.
+
+    Selected via ``Patcher(..., layout="topdown")``.
+    """
+
+    align_ports = True
 
 
 # --------------------------------------------------------------------------
@@ -10069,8 +10157,12 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         parent: Parent patcher for hierarchical organization.
         classnamespace: Namespace for object classes (e.g., 'rnbo').
         reset_on_render: Whether to reset layout on render.
-        layout: Layout manager type ('horizontal', 'vertical', 'grid', 'flow', 'matrix', 'columnar').
+        layout: Layout manager type ('horizontal', 'vertical', 'topdown', 'grid', 'flow', 'matrix', 'columnar').
+            'topdown' is 'vertical' that also aligns ports on ``optimize_layout()``.
         auto_hints: Whether to automatically generate object hints.
+        auto_layout: Whether ``save()``/``save_as()`` runs ``optimize_layout()``
+            first, when boxes or cords changed since the last layout. Defaults
+            to the parent patcher's setting, else off.
         openinpresentation: Presentation mode setting.
         validate_connections: Shorthand for ``on_invalid``: ``True`` means
             ``"raise"``, ``False`` means ``"ignore"``.
@@ -10114,6 +10206,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         reset_on_render: bool = True,
         layout: str = "horizontal",
         auto_hints: bool = False,
+        auto_layout: Optional[bool] = None,
         openinpresentation: int = 0,
         validate_connections: Optional[bool] = None,
         on_invalid: Optional[str] = None,
@@ -10162,6 +10255,11 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._dimension_spacing = dimension_spacing
         self._layout_mgr: AbstractLayoutManager = self.set_layout_mgr(layout)
         self._auto_hints = auto_hints
+        if auto_layout is None:
+            auto_layout = getattr(parent, "_auto_layout", False)
+        self._auto_layout = auto_layout
+        # boxes and cords at the last optimize_layout(); None: never laid out
+        self._laid_out: Optional[tuple[Any, ...]] = None
         self._on_invalid = _resolve_on_invalid(validate_connections, on_invalid, parent)
         self._validate_connections = self._on_invalid != "ignore"
         if validate_attrs is None:
@@ -10640,6 +10738,10 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
             return layout_module.VerticalLayoutManager(
                 self, signal_order=self._signal_order
             )
+        elif name == "topdown":
+            return layout_module.TopDownLayoutManager(
+                self, signal_order=self._signal_order
+            )
         elif name == "flow":
             return layout_module.FlowLayoutManager(
                 self, flow_direction=self._flow_direction
@@ -10684,7 +10786,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._auto_xy = (rect.x, rect.y)
         return rect
 
-    def optimize_layout(self) -> None:
+    def optimize_layout(self, *, align_ports: Optional[bool] = None) -> None:
         """Arrange the whole patch based on the active layout manager.
 
         Calls the layout manager to lay out every object, then repositions any
@@ -10699,33 +10801,62 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         all objects and connections have been added. Interactive, per-edit
         relayout is out of scope for py2max (see ``docs/auto-layout.md`` in
         py2max-server).
+
+        Args:
+            align_ports: Shift layout-placed boxes sideways so each cord from a
+                box above drops straight. Works with every layout manager.
+                ``None`` uses the manager's default (on for ``"topdown"``).
         """
-        self._arrange()
+        self._arrange(align_ports)
 
         # Process pending comments after layout optimization
         self._process_pending_comments()
+        self._laid_out = self._layout_key()
 
-    def optimize_layout_subset(self, boxes: Iterable["AbstractBox"]) -> None:
+    def _layout_key(self) -> tuple[Any, ...]:
+        """The boxes and cords a layout depends on."""
+        lines = cast(List[Any], self._lines)
+        return (
+            tuple(b.id for b in self._boxes),
+            tuple((tuple(ln.source), tuple(ln.destination)) for ln in lines),
+        )
+
+    def _auto_arrange(self) -> None:
+        """Lay out this patcher and its subpatchers that have ``auto_layout``
+        on and changed since their last layout."""
+        for box in self._boxes:
+            sub = getattr(box, "_patcher", None)
+            if sub is not None:
+                sub._auto_arrange()
+        if self._auto_layout and self._laid_out != self._layout_key():
+            self.optimize_layout()
+
+    def optimize_layout_subset(
+        self, boxes: Iterable["AbstractBox"], *, align_ports: Optional[bool] = None
+    ) -> None:
         """Lay out only ``boxes`` and the cords between them.
 
         Every other box stays put, so logic can be arranged around fixed UI (a
         ``bpatcher`` view, a presentation area). The group keeps its top-left
         corner, and moves down as a whole if it then overlaps a fixed box.
-        Like ``optimize_layout``, this is a batch operation.
+        Like ``optimize_layout``, this is a batch operation; ``align_ports``
+        is as there.
         """
-        self._arrange_subset(list(boxes))
+        self._arrange_subset(list(boxes), align_ports)
         self._process_pending_comments()
 
-    def _arrange(self) -> None:
+    def _arrange(self, align_ports: Optional[bool] = None) -> None:
         """Run the layout manager, then dock params if enabled."""
         if hasattr(self._layout_mgr, "optimize_layout"):
-            self._layout_mgr.optimize_layout()
+            self._layout_mgr.optimize_layout(align_ports=align_ports)
 
         # Dock value/UI params next to the object they drive (opt-in).
         if self._param_placement and hasattr(self._layout_mgr, "place_params"):
             self._layout_mgr.place_params()
 
-    def _arrange_subset(self, subset: List["AbstractBox"]) -> None:
+    def _arrange_subset(
+        self, subset: List["AbstractBox"], align_ports: Optional[bool] = None
+    ) -> None:
         """Lay out ``subset`` alone, then put it back clear of the other boxes."""
         ids = {b.id for b in subset}
         if not ids:
@@ -10737,7 +10868,7 @@ class Patcher(BoxFactoryMixin, SerializationMixin, AbstractPatcher):
         self._objects = {k: v for k, v in self._objects.items() if k in ids}
         self._lines = [ln for ln in self._lines if ln.src in ids and ln.dst in ids]
         try:
-            self._arrange()
+            self._arrange(align_ports)
         finally:
             self._boxes, self._objects, self._lines = saved
 
